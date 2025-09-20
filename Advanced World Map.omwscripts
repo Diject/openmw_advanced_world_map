@@ -1,0 +1,3 @@
+GLOBAL: scripts/advanced_world_map/main.lua
+PLAYER: scripts/advanced_world_map/player.lua
+MENU: scripts/advanced_world_map/settings.lua
