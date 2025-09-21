@@ -16,17 +16,15 @@ local configLib = require("scripts.advanced_world_map.config.configLib")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 
-
 local realTimer = require("scripts.advanced_world_map.realTimer")
+
+local menuHandler = require("scripts.advanced_world_map.menuHandler")
 
 local l10n = core.l10n(commonData.l10nKey)
 
 
 ---@type table<string, any>
 local activeMenus = {}
-
-local questBoxUpdateQueue = {}
-local questBoxUpdateTimer = nil
 
 
 local function onInit()
@@ -49,18 +47,12 @@ end
 
 
 local function onMouseWheel(vertical)
-    for _, menu in pairs(activeMenus) do
-        menu:onMouseWheel(vertical)
-    end
+    menuHandler.onMouseWheelCallback(vertical)
 end
 
 
 local function onMouseButtonRelease(buttonId)
-    for _, menu in pairs(activeMenus) do
-        if menu.onMouseClick then
-            menu:onMouseClick(buttonId)
-        end
-    end
+    menuHandler.onMouseReleaseCallback(buttonId)
 end
 
 
@@ -71,10 +63,7 @@ end))
 
 local function onKeyRelease(key)
     if key.code == input.KEY.Escape then
-        for id, menuHandler in pairs(activeMenus) do
-            menuHandler.menu:destroy()
-            activeMenus[id] = nil
-        end
+        menuHandler.destroyAllMenus()
     end
 end
 
