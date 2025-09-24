@@ -196,6 +196,13 @@ function this.isWordChar(c)
 end
 
 
+function this.capitalizeFirst(str)
+    local first = this.utf8_sub(str, 1, 1)
+    local rest = this.utf8_sub(str, 2, this.length(str) - 1)
+    return this.utf8_upper(first) .. rest
+end
+
+
 ---@param pattern string should be lowercase
 ---@return boolean
 function this.fuzzySearch(text, pattern, threshold)
@@ -223,6 +230,21 @@ function this.getBeforeComma(str)
     else
         return str
     end
+end
+
+
+function this.getAfterComma(str)
+    local pos = string.find(str, ", ")
+    if pos then
+        return string.sub(str, pos + 2, #str)
+    else
+        return str
+    end
+end
+
+
+function this.isEndsWith(str, suf)
+    return #str >= #suf and str:sub(-#suf) == suf
 end
 
 
