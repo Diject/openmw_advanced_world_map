@@ -74,7 +74,7 @@ end
 function this.addValues(from, to)
     if not to then to = {} end
 
-	for _, v in pairs(from) do
+	for _, v in pairs(from or {}) do
 		table.insert(to, v)
 	end
 
