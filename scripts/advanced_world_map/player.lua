@@ -23,14 +23,12 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 
 local l10n = core.l10n(commonData.l10nKey)
 
-
----@type table<string, any>
-local activeMenus = {}
 
 
 local function onInit()
@@ -39,6 +37,7 @@ local function onInit()
     end
     playerPos.init()
     mapDataHandler.init()
+    discoveredLocs.init()
 end
 
 
@@ -46,6 +45,7 @@ local function onLoad(data)
     localStorage.initPlayerStorage(data)
     playerPos.init()
     mapDataHandler.init()
+    discoveredLocs.init()
 end
 
 
@@ -113,6 +113,10 @@ return {
         onMouseButtonRelease = onMouseButtonRelease,
     },
     eventHandlers = {
+        -- when changing location, a loading menu is displayed, which triggers this event
+        UiModeChanged = function()
+            discoveredLocs.addCell(self.cell)
+        end,
         ["AdvWMap:updateMapData"] = function (data)
             dynamicDataHandler.load(data)
         end,
