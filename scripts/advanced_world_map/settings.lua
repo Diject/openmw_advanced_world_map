@@ -134,7 +134,7 @@ end
 
 
 input.registerTrigger {
-    key = "AdvWMap:menuKey",
+    key = commonData.menuKeyId,
     l10n = commonData.l10nKey,
 }
 
@@ -163,6 +163,6 @@ I.Settings.registerGroup{
     permanentStorage = true,
     order = 0,
     settings = {
-        
+        inputKey{key = "main.menuKey", name = "customJournalKeyName", description = "customJournalKeyDescription", argType = "trigger", argKey = commonData.menuKeyId, default = config.default.main.menuKey},
     },
 }

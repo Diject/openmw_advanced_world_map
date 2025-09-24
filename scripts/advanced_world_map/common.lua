@@ -13,6 +13,12 @@ this.menuKeyId = "AdvWMap:menuKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 
+this.mapMenuId = "__MAP__"
+
+this.globalDataStorageName = "AdvancedWorldMap:globalDataStorage"
+
+this.lastZoomFieldId = "lastZoomValue"
+
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])
 
@@ -42,6 +48,22 @@ end)
 this.mapMarkerPath = "textures/icons/advanced_world_map/mapMarker.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"
 
+
+this.customMapDir = "textures/advanced_world_map/map/"
+this.defaultTRMapDir = "textures/advanced_world_map/TRmap/"
+this.defaultBaseMapDir = "textures/advanced_world_map/basemap/"
+this.questDataMapDir = "questData/"
+
+this.exteriorCellIdFormat = "Esm3ExteriorCell:%d:%d"
+this.localMapTexturesDir = "textures/advanced_world_map/localMap/"
+
+this.dataInitializerTypes = {
+    "Auto",
+    "Your custom",
+    "Quest Guider's Quest Data",
+    "Tamriel Rebuilt++",
+    "Base game",
+}
 
 
 function this.colorToArray(color)

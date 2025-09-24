@@ -3,16 +3,16 @@ local ui = require('openmw.ui')
 local util = require('openmw.util')
 local core = require('openmw.core')
 local input = require('openmw.input')
-local I = require('openmw.interfaces')
 local vfs = require('openmw.vfs')
-local playerRef = require("openmw.self")
 
 local config = require("scripts.advanced_world_map.config.configLib")
 local commonData = require("scripts.advanced_world_map.common")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
-local playerDataHandler = require("scripts.advanced_world_map.storage.playerDataHandler")
+local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local realTimer = require("scripts.advanced_world_map.realTimer")
+local playerPos = require("scripts.advanced_world_map.playerPosition")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -27,29 +27,69 @@ local l10n = core.l10n(commonData.l10nKey)
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 
+local mapTexture
+
+local preloadOffsetInWorldCoord = 24576
+local squareForEntranceMarkers = 2415919104
+
+
+local layerId = {
+    map = 1,
+    region = 2,
+    name = 3,
+    player = 4,
+    nonInteractive = 5,
+    marker = 6,
+}
+
 
 local this = {}
 
 
----@class questGuider.ui.mapWidgetMeta
+---@class advancedWorldMap.ui.mapWidget.region
+---@field left number
+---@field right number
+---@field top number
+---@field bottom number
+
+
+---@class advancedWorldMap.ui.mapWidgetMeta
 local mapWidgetMeta = {}
 mapWidgetMeta.__index = mapWidgetMeta
+
+mapWidgetMeta._uniqueId = 0
+mapWidgetMeta.getUniqueId = function (self)
+    self._uniqueId = self._uniqueId + 1
+    return self._uniqueId
+end
 
 
 function mapWidgetMeta:getMapImageWidget()
     return self.layout.content[2]
 end
 
-function mapWidgetMeta:getNameLayout()
+function mapWidgetMeta:getLayerLayout(id)
+    return self:getMapImageWidget().content[id]
+end
+
+function mapWidgetMeta:getMapLayout()
+    return self:getMapImageWidget().content[1]
+end
+
+function mapWidgetMeta:getRegionLayout()
     return self:getMapImageWidget().content[2]
 end
 
+function mapWidgetMeta:getNameLayout()
+    return self:getMapImageWidget().content[3]
+end
+
 function mapWidgetMeta:getMarkerLayout()
-    return self:getMapImageWidget().content[4]
+    return self:getMapImageWidget().content[6]
 end
 
 function mapWidgetMeta:getPlayerLayout()
-    return self:getMapImageWidget().content[3]
+    return self:getMapImageWidget().content[4]
 end
 
 
@@ -72,27 +112,133 @@ function mapWidgetMeta:getRelativePositionByWorldPosition(worldPos)
 end
 
 
+function mapWidgetMeta:getAbsolutePositionByWorldPosition(worldPos)
+    local cellX = worldPos.x / 8192
+    local cellY = worldPos.y / 8192
+    local x = (cellX - self.mapInfo.gridX.min) * self.mapInfo.pixelsPerCell
+    local y = (self.mapInfo.gridY.max - cellY) * self.mapInfo.pixelsPerCell
+    return util.vector2(x, y) * self.zoom
+end
+
+
 local function clampAndCenterPosition(pos, mapSize, mainSize)
     local newX, newY
 
-    if mapSize.x <= mainSize.x then
+    if mapSize.x * 1.25 <= mainSize.x then
         newX = (mainSize.x - mapSize.x) / 2
     else
-        newX = util.clamp(pos.x, mainSize.x - mapSize.x, 0)
+        newX = util.clamp(pos.x, mainSize.x - mapSize.x * 1.25, mapSize.x * 0.25)
     end
 
-    if mapSize.y <= mainSize.y then
+    if mapSize.y * 1.25 <= mainSize.y then
         newY = (mainSize.y - mapSize.y) / 2
     else
-        newY = util.clamp(pos.y, mainSize.y - mapSize.y, 0)
+        newY = util.clamp(pos.y, mainSize.y - mapSize.y * 1.25, mapSize.y * 0.25)
     end
 
     return util.vector2(newX, newY)
 end
 
 
----@param zoom number
-function mapWidgetMeta:setZoom(zoom)
+---@return advancedWorldMap.ui.mapWidget.region rect
+function mapWidgetMeta:getVisibleMapRect()
+    local widget = self:getMapImageWidget()
+    local mapPos = widget.props.position
+    local mapSize = widget.props.size
+    local mainSize = self.layout.props.size
+
+    local left = math.max(0, -mapPos.x)
+    local top = math.max(0, -mapPos.y)
+    local right = math.min(mapSize.x, -mapPos.x + mainSize.x)
+    local bottom = math.min(mapSize.y, -mapPos.y + mainSize.y)
+
+    return {
+        left = left,
+        top = top,
+        right = right,
+        bottom = bottom,
+    }
+end
+
+
+---@return advancedWorldMap.ui.mapWidget.region rectInWorldCoordinates
+---@return advancedWorldMap.ui.mapWidget.region rect
+function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
+    local rect = self:getVisibleMapRect()
+
+    local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
+    local pixelSize = 8192 / zoomedPixPerCell
+    local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
+    local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+
+    local left = (rect.left + xOffset) * pixelSize
+    local top = (-rect.top + yOffset) * pixelSize
+    local right = (rect.right + xOffset) * pixelSize
+    local bottom = (-rect.bottom + yOffset) * pixelSize
+
+    return { left = left, top = top, right = right, bottom = bottom }, rect
+end
+
+
+function mapWidgetMeta:getWorldPositionOfVisibleCenter()
+    local rect = self:getVisibleMapRect()
+
+    local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
+    local pixelSize = 8192 / zoomedPixPerCell
+    local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
+    local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+
+    local centerX = (rect.left + rect.right) / 2
+    local centerY = (rect.top + rect.bottom) / 2
+
+    return util.vector2(
+        (centerX + xOffset) * pixelSize,
+        (-centerY + yOffset) * pixelSize
+    )
+end
+
+
+function mapWidgetMeta:getRelativePositionOfVisibleCenter()
+    local rect = self:getVisibleMapRect()
+    local centerX = (rect.left + rect.right) / 2
+    local centerY = (rect.top + rect.bottom) / 2
+    local relX = centerX / (self.mapInfo.width * self.zoom)
+    local relY = centerY / (self.mapInfo.height * self.zoom)
+
+    return util.vector2(relX, relY)
+end
+
+
+function mapWidgetMeta:getSize()
+    return self.layout.props.size
+end
+
+function mapWidgetMeta:setSize(newSize)
+    self.maxZoom = math.min(newSize.x / self.mapInfo.pixelsPerCell, newSize.y / self.mapInfo.pixelsPerCell) * 3
+    self.minZoom = math.min(newSize.x / self.mapInfo.width, newSize.y / self.mapInfo.height) / 2
+    self.layout.props.size = newSize
+end
+
+
+function mapWidgetMeta:updateEntranceMarkers()
+    local visibleRect = self:getVisibleMapRectInWorldCoordinates()
+    local square = math.abs((visibleRect.right - visibleRect.left) * (visibleRect.top - visibleRect.bottom))
+    if square < squareForEntranceMarkers then
+        visibleRect.bottom = visibleRect.bottom - preloadOffsetInWorldCoord
+        visibleRect.top = visibleRect.top + preloadOffsetInWorldCoord
+        visibleRect.left = visibleRect.left - preloadOffsetInWorldCoord
+        visibleRect.right = visibleRect.right + preloadOffsetInWorldCoord
+        self:createEntranceNames(visibleRect)
+        self:placeGroundTextures(visibleRect)
+    else
+        self:removeEntranceMarkers()
+        self:removeGroundTextures()
+    end
+end
+
+
+
+local function setZoom(self, zoom, relativePos)
     local widget = self:getMapImageWidget()
 
     local oldZoom = self.zoom
@@ -103,20 +249,38 @@ function mapWidgetMeta:setZoom(zoom)
     local newSize = util.vector2(self.mapInfo.width * zoom, self.mapInfo.height * zoom)
     local oldPos = widget.props.position
 
-    local mouseOffset = self.layout.userData.mouseOffset
-    local mouseOnMap = mouseOffset - oldPos
-
-    local rel = util.vector2(mouseOnMap.x / oldSize.x, mouseOnMap.y / oldSize.y)
-    local newPos = mouseOffset - util.vector2(newSize.x * rel.x, newSize.y * rel.y)
-
     local mainSize = self.layout.props.size
+
+    local newPos
+    if relativePos then
+        newPos = util.vector2(
+            -relativePos.x * newSize.x + mainSize.x / 2,
+            -relativePos.y * newSize.y + mainSize.y / 2
+        )
+    else
+        local mouseOffset = self.layout.userData.mouseOffset
+        local mouseOnMap = mouseOffset - oldPos
+
+        local rel = util.vector2(mouseOnMap.x / oldSize.x, mouseOnMap.y / oldSize.y)
+        newPos = mouseOffset - rel:emul(newSize)
+    end
+
     newPos = clampAndCenterPosition(newPos, newSize, mainSize)
 
     widget.props.size = newSize
     widget.props.position = newPos
     self.zoom = zoom
 
+    self:updateEntranceMarkers()
+
     self:updateMarkersScale()
+
+    localStorage.data[commonData.lastZoomFieldId] = zoom
+end
+
+---@param zoom number
+function mapWidgetMeta:setZoom(zoom, relativePos)
+    setZoom(self, zoom, relativePos or self:getRelativePositionOfVisibleCenter())
 end
 
 
@@ -137,7 +301,7 @@ function mapWidgetMeta:focusOnWorldPosition(worldPos)
 end
 
 
-local function getCityNameFontSize(size, zoom)
+local function getCityNameSize(size, zoom)
     return size * zoom
 end
 
@@ -149,6 +313,7 @@ end
 
 function mapWidgetMeta:updateMarkersScale()
     local markerLayoutContent = self:getMarkerLayout().content
+    local regionLayoutContent = self:getRegionLayout().content
     local nameLayoutContent = self:getNameLayout().content
     local playerLayoutContent = self:getPlayerLayout().content
 
@@ -182,76 +347,102 @@ function mapWidgetMeta:updateMarkersScale()
         },
     }
 
-    for i = 1, #nameLayoutContent do
-        local elem = nameLayoutContent[i]
-        if not elem then break end
+    for _, content in pairs({nameLayoutContent, regionLayoutContent}) do
+        for i = 1, #content do
+            local elem = content[i]
+            if not elem then break end
 
-        nameLayoutContent[i] = {
-            type = ui.TYPE.Text,
-            props = {
-                text = elem.props.text,
-                autoSize = true,
-                anchor = util.vector2(0.5, 0.5),
-                relativePosition = elem.props.relativePosition,
-                textColor = config.data.ui.defaultColor,
-                textSize = getCityNameFontSize(elem.userData.size, self.zoom),
-                visible = true,
-                alpha = 0.4,
-            },
-            userData = {
-                size = elem.userData.size,
-            },
-            events = {
-                focusLoss = async:callback(function(e, layout)
-                    self.layout.userData.inFocus = false
-                    self.layout.events.focusLoss(e, layout)
-                end),
-
-                mouseMove = async:callback(function(e, layout)
-                    self.layout.userData.inFocus = true
-                    self.layout.events.mouseMove(e, layout)
-                end),
-
-                mousePress = async:callback(function(e, layout)
-                    self.layout.events.mousePress(e, layout)
-                end),
-
-                mouseRelease = async:callback(function(e, layout)
-                    self.layout.events.mouseRelease(e, layout)
-                end),
-            }
-        }
+            if elem.userData and elem.userData.autoScale then
+                if elem.userData.fontSize then
+                    elem.props = {
+                        text = elem.props.text,
+                        autoSize = true,
+                        anchor = elem.props.anchor,
+                        relativePosition = elem.props.relativePosition,
+                        textColor = elem.props.textColor,
+                        textSize = getCityNameSize(elem.userData.fontSize, self.zoom),
+                        visible = elem.props.visible,
+                        alpha = elem.props.alpha,
+                    }
+                elseif elem.userData.size then
+                    elem.props.size = getCityNameSize(elem.userData.size, self.zoom)
+                end
+            end
+        end
     end
 
-    for i = 1, #markerLayoutContent do
-        local elem = markerLayoutContent[i]
-        if not elem then break end
-
-        elem.props.size = getMarkerSize(elem.userData.size, self.zoom)
+    for _, layout in pairs({self:getLayerLayout(layerId.nonInteractive), self:getLayerLayout(layerId.marker)}) do
+        for i, elem in pairs(markerLayoutContent) do
+            if elem.userData and elem.userData.autoScale then
+                if elem.userData.fontSize then
+                    elem.props = {
+                        text = elem.props.text,
+                        autoSize = elem.props.autoSize,
+                        anchor = elem.props.anchor,
+                        relativePosition = elem.props.relativePosition,
+                        textColor = elem.props.textColor,
+                        textSize = (elem.userData.scaleFunc or getMarkerSize)(elem.userData.fontSize, self.zoom),
+                        visible = elem.props.visible,
+                        alpha = elem.props.alpha,
+                    }
+                elseif elem.userData.size then
+                    elem.props.size = (elem.userData.scaleFunc or getMarkerSize)(elem.userData.size, self.zoom)
+                end
+            end
+        end
     end
 end
 
 
-function mapWidgetMeta:createMarker(pos, color, events, tooltipContent)
-    if not events then events = {} end
-    local content = self:getMarkerLayout().content
-    local relPos = self:getRelativePositionByWorldPosition(pos)
+---@class advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+---@field layerId integer,
+---@field pos any in the game world
+---@field texture any ui.texture
+---@field events table?
+---@field tooltipContent any
+---@field size any util.vector2
+---@field color any util.color.rgb
+---@field anchor any util.vector2
+---@field alpha number?
+---@field visible boolean?
+---@field scaleFunc (fun(size: any, zoom: number): number)?
 
-    local size = util.vector2(24, 24)
+
+---@param params advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+function mapWidgetMeta:createImageMarker(params)
+    if not params then params = {layerId = layerId.marker} end
+    if not params.layerId then return end
+
+    local content = self:getLayerLayout(params.layerId).content
+    local relPos = self:getRelativePositionByWorldPosition(params.pos or util.vector3(0, 0, 0))
+
+    local size = params.size or util.vector2(18, 18)
+    local color = params.color or config.data.ui.defaultColor
+    local alpha = params.alpha or 1
+    local anchor = params.anchor or util.vector2(0.5, 0.5)
+    local texture = params.texture or mapMarkerTexture
+    local tooltipContent = params.tooltipContent
+
+    local events = params.events or {}
+
+    local markerName = tostring(self:getUniqueId())
 
     local marker
     marker = {
         type = ui.TYPE.Image,
+        name = markerName,
         props = {
-            resource = mapMarkerTexture,
+            resource = texture,
             size = getMarkerSize(size, self.zoom),
-            anchor = util.vector2(0.5, 1),
+            anchor = anchor,
             relativePosition = relPos,
             color = color,
-            visible = true,
-            alpha = 1,
+            visible = params.visible,
+            alpha = alpha,
         },
         userData = {
+            scaleFunc = params.scaleFunc,
+            autoScale = true,
             size = size,
         },
         events = {
@@ -287,17 +478,109 @@ function mapWidgetMeta:createMarker(pos, color, events, tooltipContent)
     }
     content:add(marker)
 
-    return marker
+    return markerName, params.layerId
+end
+
+
+---@class advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
+---@field layerId integer
+---@field pos any in the game world
+---@field text string
+---@field events table?
+---@field tooltipContent any
+---@field fontSize number?
+---@field color any util.color.rgb
+---@field anchor any util.vector2
+---@field textAlignH any ui.ALIGNMENT
+---@field alpha number?
+---@field visible boolean?
+---@field scaleFunc (fun(size: any, zoom: number): number)?
+
+
+---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
+function mapWidgetMeta:createTextMarker(params)
+    if not params then params = {text = "", layerId = layerId.marker} end
+    if not params.layerId then return end
+
+    local content = self:getLayerLayout(params.layerId).content
+    local relPos = self:getRelativePositionByWorldPosition(params.pos or util.vector3(0, 0, 0))
+
+    local fontSize = params.fontSize or 18
+    local color = params.color or config.data.ui.defaultColor
+    local alpha = params.alpha or 1
+    local anchor = params.anchor or util.vector2(0.5, 0.5)
+    local tooltipContent = params.tooltipContent
+
+    local events = params.events or {}
+
+    local markerName = tostring(self:getUniqueId())
+
+    local marker
+    marker = {
+        type = ui.TYPE.Text,
+        name = markerName,
+        props = {
+            text = params.text,
+            textSize = getMarkerSize(fontSize, self.zoom),
+            anchor = anchor,
+            relativePosition = relPos,
+            textColor = color,
+            visible = params.visible,
+            alpha = alpha,
+        },
+        userData = {
+            scaleFunc = params.scaleFunc,
+            autoScale = true,
+            fontSize = fontSize,
+        },
+        events = {
+            focusLoss = async:callback(function(e, layout)
+                self.layout.userData.inFocus = false
+                marker.userData.pressed = false
+                if events.focusLoss then events.focusLoss(e, layout) end
+                self.layout.events.focusLoss(e, layout)
+                tooltip.destroy(layout)
+            end),
+
+            mouseMove = async:callback(function(e, layout)
+                self.layout.userData.inFocus = true
+                if events.mouseMove then events.mouseMove(e, layout) end
+                self.layout.events.mouseMove(e, layout)
+
+                if not tooltipContent then return end
+                tooltip.createOrMove(e, layout, tooltipContent)
+            end),
+
+            mousePress = async:callback(function(e, layout)
+                marker.userData.pressed = true
+                if events.mousePress then events.mousePress(e, layout) end
+                self.layout.events.mousePress(e, layout)
+            end),
+
+            mouseRelease = async:callback(function(e, layout)
+                if events.mouseRelease then events.mouseRelease(e, layout, marker.userData.pressed) end
+                marker.userData.pressed = false
+                self.layout.events.mouseRelease(e, layout)
+            end),
+        }
+    }
+    content:add(marker)
+
+    return markerName, params.layerId
+end
+
+
+function mapWidgetMeta:removeMarker(id, layer)
+    local content = self:getLayerLayout(layer).content
+
+    uiUtils.removeFromContent(content, id)
 end
 
 
 function mapWidgetMeta:createCityNames()
     local content = self:getNameLayout().content
 
-    for _, info in ipairs(this.cityInfo or {}) do
-
-        local fontSize = 10 + math.min(8, info.count) * 2
-
+    local function createMarker(info, fontSize, alpha)
         local marker
         marker = {
             type = ui.TYPE.Text,
@@ -307,12 +590,13 @@ function mapWidgetMeta:createCityNames()
                 anchor = util.vector2(0.5, 0.5),
                 relativePosition = self:getRelativePositionByWorldPosition(util.vector2(info.posX, info.posY)),
                 textColor = config.data.ui.defaultColor,
-                textSize = getCityNameFontSize(fontSize, self.zoom),
+                textSize = getCityNameSize(fontSize, self.zoom),
                 visible = true,
-                alpha = 0.4,
+                alpha = alpha,
             },
             userData = {
-                size = fontSize,
+                autoScale = true,
+                fontSize = fontSize,
             },
             events = {
                 focusLoss = async:callback(function(e, layout)
@@ -337,14 +621,154 @@ function mapWidgetMeta:createCityNames()
 
         content:add(marker)
     end
+
+    for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
+        local fontSize = 14 + math.min(8, info.count) * 3
+        createMarker(info, fontSize, 0.12)
+    end
+
+    for _, info in pairs(dynamicDataHandler.cellNameData or {}) do
+        local fontSize = 10 + math.min(8, info.count) * 2
+        createMarker(info, fontSize, 0.4)
+    end
+end
+
+local entranceMarkers = {}
+---@param region advancedWorldMap.ui.mapWidget.region
+function mapWidgetMeta:createEntranceNames(region)
+    self:removeEntranceMarkers()
+
+    if not dynamicDataHandler.entrances then return end
+
+    local entranceByLine = {}
+    local lineHeight = 8192 / (self.mapInfo.pixelsPerCell * self.zoom) * 12
+    local lineDiff = lineHeight * 12
+
+    local minGridX = math.floor(region.left / 8192)
+    local maxGridX = math.ceil(region.right / 8192)
+    local minGridY = math.floor(region.bottom / 8192)
+    local maxGridY = math.ceil(region.top / 8192)
+    for x = minGridX, maxGridX do
+        for y = minGridY, maxGridY do
+            local cellData = dynamicDataHandler.entrances[commonData.exteriorCellIdFormat:format(x, y)]
+            if not cellData then goto continue end
+
+            for _, dt in pairs(cellData) do
+                local line = math.floor(dt.pos.y / lineHeight)
+                entranceByLine[line] = entranceByLine[line] or {}
+                table.insert(entranceByLine[line], dt)
+            end
+
+            ::continue::
+        end
+    end
+
+    for _, line in pairs(entranceByLine) do
+        table.sort(line, function (a, b)
+            return a.pos.x < b.pos.x
+        end)
+    end
+
+    for _, line in pairs(entranceByLine) do
+        for i, dt in ipairs(line) do
+            local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
+            table.insert(entranceMarkers, {self:createTextMarker{
+                layerId = layerId.nonInteractive,
+                text = (textAnchor == 0) and " "..dt.name or dt.name.." ",
+                alpha = 0.5,
+                anchor = util.vector2(textAnchor, 0.5),
+                fontSize = 6,
+                pos = dt.pos,
+            }})
+            table.insert(entranceMarkers, {self:createImageMarker{
+                layerId = layerId.marker,
+                alpha = 0.5,
+                anchor = util.vector2(0.5, 0.5),
+                size = util.vector2(6, 6),
+                pos = dt.pos,
+            }})
+        end
+    end
+
+    self.entranceMarkersCenter = util.vector2(
+        (minGridX + maxGridX) / 2 * 8192,
+        (minGridY + maxGridY) / 2 * 8192
+    )
 end
 
 
----@type {name : string, count : integer, posX : number, posY : number}[]?
-this.cityInfo = nil
+function mapWidgetMeta:removeEntranceMarkers()
+    for i, dt in pairs(entranceMarkers) do
+        self:removeMarker(dt[1], dt[2])
+        entranceMarkers[i] = nil
+    end
+end
 
 
----@class questGuider.ui.mapWidget.params
+function mapWidgetMeta:removeGroundTextures()
+    local mapLayoutContent = self:getMapLayout().content
+    for i = #mapLayoutContent, 2, -1 do
+        uiUtils.removeFromContent(mapLayoutContent, i)
+    end
+end
+
+
+---@param region advancedWorldMap.ui.mapWidget.region
+function mapWidgetMeta:placeGroundTextures(region)
+    self:removeGroundTextures()
+
+    local minGridX = math.floor(region.left / 8192)
+    local maxGridX = math.ceil(region.right / 8192)
+    local minGridY = math.floor(region.bottom / 8192)
+    local maxGridY = math.ceil(region.top / 8192)
+
+    local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
+    local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+    local tileSize = util.vector2(tileHeight, tileHeight)
+
+    local mapLayout = self:getMapLayout()
+    for x = 0, maxGridX - minGridX - 1 do
+        for y = 0, maxGridY - minGridY - 1 do
+            local texture = dataHandler.getLocalMapTexture(minGridX + x, minGridY + y)
+
+            if not texture then goto continue end
+
+            local pos = util.vector2(startPos.x + tileHeight * x, startPos.y - tileHeight * y)
+
+            mapLayout.content:add{
+                type = ui.TYPE.Image,
+                props = {
+                    resource = texture,
+                    size = tileSize,
+                    position = pos
+                }
+            }
+
+            ::continue::
+        end
+    end
+end
+
+
+
+---@return boolean
+function mapWidgetMeta:updatePlayerMarker()
+    local playerMarker = self:getPlayerLayout().content[1]
+    local exPos = playerPos.gexExteriorPos()
+    local dist = (playerMarker.userData.lastPos - exPos):length()
+
+    if dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom)) then return false end
+
+    local playerRelPos = self:getRelativePositionByWorldPosition(exPos)
+    playerMarker.props.relativePosition = playerRelPos
+    playerMarker.userData.lastPos = exPos
+
+    return true
+end
+
+
+
+---@class advancedWorldMap.ui.mapWidget.params
 ---@field size any
 ---@field fontSize integer?
 ---@field position any?
@@ -352,30 +776,32 @@ this.cityInfo = nil
 ---@field anchor any?
 ---@field updateFunc function
 
----@param params questGuider.ui.mapWidget.params
+---@param params advancedWorldMap.ui.mapWidget.params
 ---@return table?
----@return questGuider.ui.mapWidgetMeta?
+---@return advancedWorldMap.ui.mapWidgetMeta?
 function this.new(params)
-    if not playerDataHandler.data.mapInfo then return end
+    if not mapTexture then
+        if not dataHandler.mapInfo or not dataHandler.mapImagePath then return end
 
-    local mapImagePath = "questData/"..playerDataHandler.data.mapInfo.file
+        local mapImagePath = dataHandler.mapImagePath
 
-    if not vfs.fileExists(mapImagePath) then return end
+        if not vfs.fileExists(mapImagePath) then return end
 
-    local mapTexture = ui.texture{ path = mapImagePath }
+        mapTexture = ui.texture{ path = mapImagePath }
+    end
 
     params.fontSize = params.fontSize or 18
 
-    ---@class questGuider.ui.mapWidgetMeta
+    ---@class advancedWorldMap.ui.mapWidgetMeta
     local meta = setmetatable({}, mapWidgetMeta)
 
     meta.params = params
     meta.mapTexture = mapTexture
-    meta.mapInfo = playerDataHandler.data.mapInfo
+    meta.mapInfo = dataHandler.mapInfo
 
     meta.zoom = 1
-    meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) / 2
-    meta.minZoom = math.min(params.size.x / meta.mapInfo.width, params.size.y / meta.mapInfo.height)
+    meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
+    meta.minZoom = math.min(params.size.x / meta.mapInfo.width, params.size.y / meta.mapInfo.height) / 2
 
     meta.update = function(self)
         params.updateFunc()
@@ -394,7 +820,7 @@ function this.new(params)
             meta = meta,
             onMouseWheel = function(value)
                 if not meta.layout.userData.inFocus then return end
-                meta:setZoom(value > 0 and meta.zoom * 1.25 or meta.zoom * 0.75)
+                setZoom(meta, value > 0 and meta.zoom * 1.25 or meta.zoom * 0.75)
                 meta:update()
             end,
 
@@ -430,8 +856,17 @@ function this.new(params)
                 local newPos = util.vector2(newX, newY)
 
                 newPos = clampAndCenterPosition(newPos, mapSize, mainSize)
-
                 props.position = newPos
+
+                if meta.entranceMarkersCenter then
+                    local centerWorldPos = meta:getWorldPositionOfVisibleCenter()
+
+                    local dist = (meta.entranceMarkersCenter - centerWorldPos):length()
+                    if dist > preloadOffsetInWorldCoord * 0.5 then
+                        meta:updateEntranceMarkers()
+                    end
+                end
+
                 meta:update()
 
                 main.userData.lastMousePos = e.position
@@ -455,13 +890,35 @@ function this.new(params)
                 userData = {},
                 content = ui.content {
                     {
-                        type = ui.TYPE.Image,
+                        type = ui.TYPE.Widget,
                         props = {
-                            resource = meta.mapTexture,
+                            position = util.vector2(0, 0),
                             relativeSize = util.vector2(1, 1),
-                        }
+                        },
+                        userData = {},
+                        content = ui.content {
+                            {
+                                type = ui.TYPE.Image,
+                                props = {
+                                    resource = meta.mapTexture,
+                                    relativeSize = util.vector2(1, 1),
+                                }
+                            },
+                        },
                     },
-                    -- for city and region names
+                    -- for region names
+                    {
+                        type = ui.TYPE.Widget,
+                        props = {
+                            position = util.vector2(0, 0),
+                            relativeSize = util.vector2(1, 1),
+                        },
+                        userData = {},
+                        content = ui.content {
+
+                        },
+                    },
+                    -- for city names
                     {
                         type = ui.TYPE.Widget,
                         props = {
@@ -485,16 +942,18 @@ function this.new(params)
                             {
                                 type = ui.TYPE.Widget,
                                 props = {
-                                    relativePosition = meta:getRelativePositionByWorldPosition(playerRef.position),
-                                    size = util.vector2(14 * stringLib.length(l10n("you")), 58),
+                                    relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
+                                    size = util.vector2(14 * stringLib.length(l10n("You")), 58),
                                     anchor = util.vector2(0.5, 1),
                                 },
-                                userData = {},
+                                userData = {
+                                    lastPos = playerPos.gexExteriorPos(),
+                                },
                                 content = ui.content {
                                     {
                                         type = ui.TYPE.Text,
                                         props = {
-                                            text = l10n("you"),
+                                            text = l10n("You"),
                                             autoSize = true,
                                             anchor = util.vector2(0.5, 0),
                                             relativePosition = util.vector2(0.5, 0),
@@ -505,7 +964,7 @@ function this.new(params)
                                         },
                                         userData = {
                                             size = 14,
-                                            name = l10n("you"),
+                                            name = l10n("You"),
                                         },
                                     },
                                     {
@@ -514,7 +973,7 @@ function this.new(params)
                                             resource = playerMarkerTexture,
                                             size = util.vector2(22, 44),
                                             anchor = util.vector2(0.5, 0),
-                                            position = util.vector2((14 * stringLib.length(l10n("you"))) / 2, 14),
+                                            position = util.vector2((14 * stringLib.length(l10n("You"))) / 2, 14),
                                             color = config.data.ui.defaultColor,
                                             visible = true,
                                             alpha = 0.6,
@@ -527,7 +986,19 @@ function this.new(params)
                             },
                         },
                     },
-                    -- for markers
+                    -- for noninteractive markers
+                    {
+                        type = ui.TYPE.Widget,
+                        props = {
+                            position = util.vector2(0, 0),
+                            relativeSize = util.vector2(1, 1),
+                        },
+                        userData = {},
+                        content = ui.content {
+
+                        },
+                    },
+                    -- for interactive markers
                     {
                         type = ui.TYPE.Widget,
                         props = {
@@ -547,6 +1018,8 @@ function this.new(params)
     meta.layout = main
 
     meta:createCityNames()
+    meta:focusOnWorldPosition(playerPos.gexExteriorPos())
+    meta:setZoom(localStorage.data[commonData.lastZoomFieldId] or 1)
 
     return main, meta
 end

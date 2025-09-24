@@ -10,6 +10,17 @@ local this = {}
 this.default = {
     main = {
         menuKey = "M",
+        relativeSize = {
+            x = 70,
+            y = 70,
+        },
+        relativePosition = {
+            x = 15,
+            y = 15,
+        }
+    },
+    data = {
+        initializer = commonData.dataInitializerTypes[1],
     },
     ui = {
         fontSize = 18,
@@ -20,7 +31,7 @@ this.default = {
         shadowColor = commonData.selectedShadowColor,
         linkColor = commonData.linkColor,
         mouseScrollAmount = 36,
-        headerBackgroundAlpha = 50,
+        headerBackgroundAlpha = 100,
     },
 }
 

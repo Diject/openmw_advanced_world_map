@@ -17,8 +17,24 @@ function this.registerMenu(menuId, menu)
 end
 
 
+function this.destroyMenu(menuId)
+    local menuEl = this.activeMenus[menuId]
+    if not menuEl then return end
+
+    if menuEl.menu and menuEl.menu.layout then
+        menuEl.menu:destroy()
+    end
+    this.activeMenus[menuId] = nil
+end
+
+
 function this.getMenu(menuId)
-    return this.activeMenus[menuId]
+    local el = this.activeMenus[menuId]
+    if not el or not el.menu or not el.menu.layout then
+        return
+    end
+
+    return el
 end
 
 
@@ -41,7 +57,9 @@ end
 
 function this.onMouseWheelCallback(vertical)
     for _, menu in pairs(this.activeMenus) do
-        menu:onMouseWheel(vertical)
+        if menu.onMouseWheel then
+            menu:onMouseWheel(vertical)
+        end
     end
 end
 
