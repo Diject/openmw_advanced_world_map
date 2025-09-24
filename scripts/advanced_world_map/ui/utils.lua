@@ -10,6 +10,34 @@ local this = {}
 this.whiteTexture = ui.texture{ path = "white" }
 
 
+function this.removeFromContent(content, index)
+    if type(index) == "string" then
+        index = content.__nameIndex[index]
+    end
+
+    if not index then return end
+
+    local val = rawget(content, index)
+    if not val then return end
+
+    local oldName = val and val.name
+    if oldName then
+        content.__nameIndex[oldName] = nil
+    end
+
+    for i = index, #content - 1 do
+        local v = rawget(content, i + 1)
+        rawset(content, i, v)
+        if type(v.name) == 'string' then
+            content.__nameIndex[v.name] = i
+        end
+    end
+    rawset(content, #content, nil)
+
+    return true
+end
+
+
 function this.getTextHeight(text, fontSize, width, mul, extraRowCount, removeColors)
     if removeColors then
         text = this.removeColorMarkers(text)
