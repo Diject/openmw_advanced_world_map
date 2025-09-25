@@ -349,10 +349,10 @@ function this.create(params)
             if meta.mapWidget:updatePlayerMarker() then
                 meta:update()
             end
-            async:newUnsavableSimulationTimer(0.5, func)
+            async:newUnsavableSimulationTimer(0.15, func)
         end
     end
-    async:newUnsavableSimulationTimer(0.5, func)
+    async:newUnsavableSimulationTimer(0.15, func)
 
 
     return meta

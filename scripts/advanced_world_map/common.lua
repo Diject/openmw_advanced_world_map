@@ -52,6 +52,7 @@ end)
 
 this.mapMarkerPath = "textures/icons/advanced_world_map/mapMarker.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"
+this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
 
 
 this.customMapDir = "textures/advanced_world_map/map/"

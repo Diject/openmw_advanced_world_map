@@ -5,6 +5,8 @@ local core = require('openmw.core')
 local input = require('openmw.input')
 local vfs = require('openmw.vfs')
 
+local playerRef = require("openmw.self")
+
 local config = require("scripts.advanced_world_map.config.configLib")
 local commonData = require("scripts.advanced_world_map.common")
 
@@ -13,6 +15,7 @@ local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
+local playerMarker = require("scripts.advanced_world_map.ui.playerMarker")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
@@ -312,41 +315,24 @@ local function getMarkerSize(size, zoom)
 end
 
 
+local function getPlayerMarkerSize(size, zoom)
+    if zoom > 1 then
+        return size * zoom ^ 0.2
+    end
+    return size
+end
+
+
 function mapWidgetMeta:updateMarkersScale()
     local markerLayoutContent = self:getMarkerLayout().content
     local regionLayoutContent = self:getRegionLayout().content
     local nameLayoutContent = self:getNameLayout().content
-    local playerLayoutContent = self:getPlayerLayout().content
+    local playerMarkerLayout = self:getPlayerLayout()
 
-    local playerMarkerLayout = playerLayoutContent[1]
-    if not playerMarkerLayout then return end
+    local playerMarkerImageSize = getPlayerMarkerSize(playerMarkerLayout.content[1].userData.size, self.zoom)
 
-    local playerMarkerFontSize = getMarkerSize(playerMarkerLayout.content[1].userData.size, self.zoom)
-    local playerMarkerImageSize = getMarkerSize(playerMarkerLayout.content[2].userData.size, self.zoom)
-    playerMarkerLayout.props.size = util.vector2(
-        playerMarkerFontSize * stringLib.length(playerMarkerLayout.content[1].userData.name),
-        playerMarkerImageSize.y + playerMarkerFontSize
-    )
-
-    playerMarkerLayout.content[2].props.size = playerMarkerImageSize
-    playerMarkerLayout.content[2].props.position = util.vector2(playerMarkerLayout.props.size.x / 2, playerMarkerFontSize)
-    playerMarkerLayout.content[1] = {
-        type = ui.TYPE.Text,
-        props = {
-            text = playerMarkerLayout.content[1].props.text,
-            autoSize = true,
-            anchor = util.vector2(0.5, 0),
-            relativePosition = util.vector2(0.5, 0),
-            textColor = config.data.ui.shadowColor,
-            textSize = playerMarkerFontSize,
-            visible = true,
-            alpha = 0.6,
-        },
-        userData = {
-            size = playerMarkerLayout.content[1].userData.size,
-            name = playerMarkerLayout.content[1].userData.name,
-        },
-    }
+    playerMarkerLayout.content[1].props.size = playerMarkerImageSize
+    playerMarkerLayout.content[1].props.resource = playerMarker.getTexture() or playerMarkerTexture
 
     for _, content in pairs({nameLayoutContent, regionLayoutContent}) do
         for i = 1, #content do
@@ -755,15 +741,20 @@ end
 
 ---@return boolean
 function mapWidgetMeta:updatePlayerMarker()
-    local playerMarker = self:getPlayerLayout().content[1]
+    local playerMarkerLayout = self:getPlayerLayout().content[1]
     local exPos = playerPos.gexExteriorPos()
-    local dist = (playerMarker.userData.lastPos - exPos):length()
+    local dist = (playerMarkerLayout.userData.lastPos - exPos):length()
 
-    if dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom)) then return false end
+    local yaw = playerRef.rotation:getYaw()
+    local lastYaw = playerMarkerLayout.userData.lastYaw
+
+    if dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom)) and (math.abs(yaw - lastYaw) < 0.1) then return false end
 
     local playerRelPos = self:getRelativePositionByWorldPosition(exPos)
-    playerMarker.props.relativePosition = playerRelPos
-    playerMarker.userData.lastPos = exPos
+    playerMarkerLayout.props.relativePosition = playerRelPos
+    playerMarkerLayout.props.resource = playerMarker.getTexture() or playerMarkerTexture
+    playerMarkerLayout.userData.lastPos = exPos
+    playerMarkerLayout.userData.lastYaw = yaw
 
     return true
 end
@@ -942,48 +933,20 @@ function this.new(params)
                         userData = {},
                         content = ui.content {
                             {
-                                type = ui.TYPE.Widget,
+                                type = ui.TYPE.Image,
                                 props = {
                                     relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
-                                    size = util.vector2(14 * stringLib.length(l10n("You")), 58),
-                                    anchor = util.vector2(0.5, 1),
+                                    resource = playerMarker.getTexture() or playerMarkerTexture,
+                                    size = util.vector2(32, 32),
+                                    anchor = util.vector2(0.5, 0.5),
+                                    color = config.data.ui.defaultColor,
+                                    visible = true,
+                                    alpha = 0.6,
                                 },
                                 userData = {
+                                    size = util.vector2(32, 32),
                                     lastPos = playerPos.gexExteriorPos(),
-                                },
-                                content = ui.content {
-                                    {
-                                        type = ui.TYPE.Text,
-                                        props = {
-                                            text = l10n("You"),
-                                            autoSize = true,
-                                            anchor = util.vector2(0.5, 0),
-                                            relativePosition = util.vector2(0.5, 0),
-                                            textColor = config.data.ui.shadowColor,
-                                            textSize = 14,
-                                            visible = true,
-                                            alpha = 0.6,
-                                        },
-                                        userData = {
-                                            size = 14,
-                                            name = l10n("You"),
-                                        },
-                                    },
-                                    {
-                                        type = ui.TYPE.Image,
-                                        props = {
-                                            resource = playerMarkerTexture,
-                                            size = util.vector2(22, 44),
-                                            anchor = util.vector2(0.5, 0),
-                                            position = util.vector2((14 * stringLib.length(l10n("You"))) / 2, 14),
-                                            color = config.data.ui.defaultColor,
-                                            visible = true,
-                                            alpha = 0.6,
-                                        },
-                                        userData = {
-                                            size = util.vector2(22, 44),
-                                        },
-                                    },
+                                    lastYaw = playerRef.rotation:getYaw()
                                 },
                             },
                         },
