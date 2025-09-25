@@ -25,6 +25,7 @@ this.default = {
     ui = {
         fontSize = 18,
         defaultColor = commonData.defaultColor,
+        defaultLightColor = commonData.defaultLightColor,
         backgroundColor = commonData.backgroundColor,
         disabledColor = commonData.disabledColor,
         selectionColor = commonData.selectedColor,

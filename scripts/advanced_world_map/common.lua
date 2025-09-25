@@ -24,6 +24,9 @@ this.discoveredLocsFieldId = "discoveredLocationsHashSet"
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])
 
+this.defaultLightColorData = {255/255, 255/255, 255/255}
+this.defaultLightColor = util.color.rgb(this.defaultLightColorData[1], this.defaultLightColorData[2], this.defaultLightColorData[3])
+
 this.selectedColorData = {0.2, 1, 0.2}
 this.selectedColor = util.color.rgb(this.selectedColorData[1], this.selectedColorData[2], this.selectedColorData[3])
 

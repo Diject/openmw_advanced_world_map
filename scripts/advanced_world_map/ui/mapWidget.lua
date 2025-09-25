@@ -13,6 +13,7 @@ local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
+local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -589,7 +590,7 @@ function mapWidgetMeta:createCityNames()
                 autoSize = true,
                 anchor = util.vector2(0.5, 0.5),
                 relativePosition = self:getRelativePositionByWorldPosition(util.vector2(info.posX, info.posY)),
-                textColor = config.data.ui.defaultColor,
+                textColor = discoveredLocs.isDiscovered(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
                 textSize = getCityNameSize(fontSize, self.zoom),
                 visible = true,
                 alpha = alpha,
@@ -679,6 +680,7 @@ function mapWidgetMeta:createEntranceNames(region)
                 anchor = util.vector2(textAnchor, 0.5),
                 fontSize = 6,
                 pos = dt.pos,
+                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor
             }})
             table.insert(entranceMarkers, {self:createImageMarker{
                 layerId = layerId.marker,
