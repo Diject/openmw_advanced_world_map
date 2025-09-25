@@ -661,10 +661,10 @@ function mapWidgetMeta:createEntranceNames(region)
             local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
             table.insert(entranceMarkers, {self:createTextMarker{
                 layerId = layerId.nonInteractive,
-                text = (textAnchor == 0) and " "..dt.name or dt.name.." ",
+                text = (textAnchor == 0) and "  "..dt.name or dt.name.."  ",
                 alpha = 0.5,
                 anchor = util.vector2(textAnchor, 0.5),
-                fontSize = 6,
+                fontSize = 7,
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor
             }})
@@ -672,7 +672,7 @@ function mapWidgetMeta:createEntranceNames(region)
                 layerId = layerId.marker,
                 alpha = 0.5,
                 anchor = util.vector2(0.5, 0.5),
-                size = util.vector2(6, 6),
+                size = util.vector2(7, 7),
                 pos = dt.pos,
             }})
         end

@@ -50,7 +50,7 @@ pcall(function ()
     this.whiteTexture = constants.whiteTexture
 end)
 
-this.mapMarkerPath = "textures/icons/advanced_world_map/mapMarker.dds"
+this.mapMarkerPath = "textures/icons/advanced_world_map/squareMarker.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"
 this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
 
