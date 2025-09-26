@@ -38,6 +38,15 @@ function this.removeFromContent(content, index)
 end
 
 
+function this.isExistsInContent(content, index)
+    if type(index) == "string" then
+        return rawget(content.__nameIndex, index) ~= nil
+    else
+        return rawget(content, index) ~= nil
+    end
+end
+
+
 ---@return boolean success
 function this.safeAddToContent(content, elem)
     local success = pcall(function()
