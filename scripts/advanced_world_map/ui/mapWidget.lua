@@ -21,6 +21,7 @@ local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
+local cellLib = require("scripts.advanced_world_map.utils.cell")
 local log = require("scripts.advanced_world_map.utils.log")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
@@ -49,6 +50,11 @@ local layerId = {
 
 local this = {}
 
+local uniquesId = 0
+this.getUniqueId = function ()
+    uniquesId = uniquesId + 1
+    return uniquesId
+end
 
 ---@class advancedWorldMap.ui.mapWidget.region
 ---@field left number
@@ -61,11 +67,16 @@ local this = {}
 local mapWidgetMeta = {}
 mapWidgetMeta.__index = mapWidgetMeta
 
-mapWidgetMeta._uniqueId = 0
 mapWidgetMeta.getUniqueId = function (self)
-    self._uniqueId = self._uniqueId + 1
-    return self._uniqueId
+    return this.getUniqueId()
 end
+
+---@type table<string, table<string, {id : string, params : any}>> by cell id, by marker id
+mapWidgetMeta.onZoomMarkers = {}
+---@type table<string, string>
+mapWidgetMeta.onZoomMarkersCellIdById = {}
+---@type {[2] : string, [1] : integer}[] {marker Id, layer}
+mapWidgetMeta.activeOnZoomMarkers = {}
 
 
 function mapWidgetMeta:getMapImageWidget()
@@ -224,7 +235,7 @@ function mapWidgetMeta:setSize(newSize)
 end
 
 
-function mapWidgetMeta:updateEntranceMarkers()
+function mapWidgetMeta:updateOnZoomMarkers()
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
     local square = math.abs((visibleRect.right - visibleRect.left) * (visibleRect.top - visibleRect.bottom))
     if square < squareForEntranceMarkers then
@@ -232,10 +243,11 @@ function mapWidgetMeta:updateEntranceMarkers()
         visibleRect.top = visibleRect.top + preloadOffsetInWorldCoord
         visibleRect.left = visibleRect.left - preloadOffsetInWorldCoord
         visibleRect.right = visibleRect.right + preloadOffsetInWorldCoord
-        self:createEntranceNames(visibleRect)
+        self:removeOnZoomMarkers()
+        self:createOnZoomMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)
     else
-        self:removeEntranceMarkers()
+        self:removeOnZoomMarkers()
         self:removeGroundTextures()
     end
 end
@@ -275,7 +287,7 @@ local function setZoom(self, zoom, relativePos)
     widget.props.position = newPos
     self.zoom = zoom
 
-    self:updateEntranceMarkers()
+    self:updateOnZoomMarkers()
 
     self:updateMarkersScale()
 
@@ -392,16 +404,18 @@ end
 ---@field anchor any util.vector2
 ---@field alpha number?
 ---@field visible boolean?
+---@field onlyOnZoom boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
-function mapWidgetMeta:createImageMarker(params)
+function mapWidgetMeta:createImageMarker(params, id)
     if not params then params = {layerId = layerId.marker} end
     if not params.layerId then return end
 
     local content = self:getLayerLayout(params.layerId).content
-    local relPos = self:getRelativePositionByWorldPosition(params.pos or util.vector3(0, 0, 0))
+    params.pos = params.pos or util.vector3(0, 0, 0)
+    local relPos = self:getRelativePositionByWorldPosition(params.pos)
 
     local size = params.size or util.vector2(18, 18)
     local color = params.color or config.data.ui.defaultColor
@@ -412,7 +426,7 @@ function mapWidgetMeta:createImageMarker(params)
 
     local events = params.events or {}
 
-    local markerName = tostring(self:getUniqueId())
+    local markerName = id or tostring(self:getUniqueId())
 
     local marker
     marker = {
@@ -463,6 +477,16 @@ function mapWidgetMeta:createImageMarker(params)
             end),
         }
     }
+
+    if params.onlyOnZoom then
+        local cellId = cellLib.getCellIdByPos(params.pos)
+        self.onZoomMarkers[cellId] = self.onZoomMarkers[cellId] or {}
+        self.onZoomMarkers[cellId][markerName] = {
+            id = markerName,
+            params = params
+        }
+        self.onZoomMarkersCellIdById[markerName] = cellId
+    end
     content:add(marker)
 
     return markerName, params.layerId
@@ -481,16 +505,18 @@ end
 ---@field textAlignH any ui.ALIGNMENT
 ---@field alpha number?
 ---@field visible boolean?
+---@field onlyOnZoom boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
-function mapWidgetMeta:createTextMarker(params)
+function mapWidgetMeta:createTextMarker(params, id)
     if not params then params = {text = "", layerId = layerId.marker} end
     if not params.layerId then return end
 
     local content = self:getLayerLayout(params.layerId).content
-    local relPos = self:getRelativePositionByWorldPosition(params.pos or util.vector3(0, 0, 0))
+    params.pos = params.pos or util.vector3(0, 0, 0)
+    local relPos = self:getRelativePositionByWorldPosition(params.pos)
 
     local fontSize = params.fontSize or 18
     local color = params.color or config.data.ui.defaultColor
@@ -500,7 +526,7 @@ function mapWidgetMeta:createTextMarker(params)
 
     local events = params.events or {}
 
-    local markerName = tostring(self:getUniqueId())
+    local markerName = id or tostring(self:getUniqueId())
 
     local marker
     marker = {
@@ -551,16 +577,34 @@ function mapWidgetMeta:createTextMarker(params)
             end),
         }
     }
+
+    if params.onlyOnZoom then
+        local cellId = cellLib.getCellIdByPos(params.pos)
+        self.onZoomMarkers[cellId] = self.onZoomMarkers[cellId] or {}
+        self.onZoomMarkers[cellId][markerName] = {
+            id = markerName,
+            params = params
+        }
+        self.onZoomMarkersCellIdById[markerName] = cellId
+    end
     content:add(marker)
 
     return markerName, params.layerId
 end
 
 
-function mapWidgetMeta:removeMarker(id, layer)
+local function removeMarker(self, id, layer)
     local content = self:getLayerLayout(layer).content
 
     uiUtils.removeFromContent(content, id)
+end
+
+function mapWidgetMeta:removeMarker(id, layer)
+    removeMarker(self, id, layer)
+    if self.onZoomMarkersCellIdById[id] then
+        (self.onZoomMarkers[self.onZoomMarkersCellIdById[id]] or {})[id] = nil
+        self.onZoomMarkersCellIdById[id] = nil
+    end
 end
 
 
@@ -620,11 +664,9 @@ function mapWidgetMeta:createCityNames()
     end
 end
 
-local entranceMarkers = {}
+
 ---@param region advancedWorldMap.ui.mapWidget.region
 function mapWidgetMeta:createEntranceNames(region)
-    self:removeEntranceMarkers()
-
     if not dynamicDataHandler.entrances then return end
 
     local entranceByLine = {}
@@ -659,16 +701,16 @@ function mapWidgetMeta:createEntranceNames(region)
     for _, line in pairs(entranceByLine) do
         for i, dt in ipairs(line) do
             local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
-            table.insert(entranceMarkers, {self:createTextMarker{
+            table.insert(self.activeOnZoomMarkers, {self:createTextMarker{
                 layerId = layerId.nonInteractive,
                 text = (textAnchor == 0) and "  "..dt.name or dt.name.."  ",
                 alpha = 0.5,
                 anchor = util.vector2(textAnchor, 0.5),
                 fontSize = 7,
                 pos = dt.pos,
-                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor
+                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
             }})
-            table.insert(entranceMarkers, {self:createImageMarker{
+            table.insert(self.activeOnZoomMarkers, {self:createImageMarker{
                 layerId = layerId.marker,
                 alpha = 0.5,
                 anchor = util.vector2(0.5, 0.5),
@@ -678,17 +720,85 @@ function mapWidgetMeta:createEntranceNames(region)
         end
     end
 
-    self.entranceMarkersCenter = util.vector2(
+    self.onZoomMarkersCenter = util.vector2(
         (minGridX + maxGridX) / 2 * 8192,
         (minGridY + maxGridY) / 2 * 8192
     )
 end
 
 
-function mapWidgetMeta:removeEntranceMarkers()
-    for i, dt in pairs(entranceMarkers) do
-        self:removeMarker(dt[1], dt[2])
-        entranceMarkers[i] = nil
+---@param region advancedWorldMap.ui.mapWidget.region
+function mapWidgetMeta:createOnZoomMarkers(region)
+    local entrances = dynamicDataHandler.entrances or {}
+
+    local entranceByLine = {}
+    local lineHeight = 8192 / (self.mapInfo.pixelsPerCell * self.zoom) * 12
+    local lineDiff = lineHeight * 12
+
+    local minGridX = math.floor(region.left / 8192)
+    local maxGridX = math.ceil(region.right / 8192)
+    local minGridY = math.floor(region.bottom / 8192)
+    local maxGridY = math.ceil(region.top / 8192)
+    for x = minGridX, maxGridX do
+        for y = minGridY, maxGridY do
+            local cellId = commonData.exteriorCellIdFormat:format(x, y)
+
+            for _, dt in pairs(entrances[cellId] or {}) do
+                local line = math.floor(dt.pos.y / lineHeight)
+                entranceByLine[line] = entranceByLine[line] or {}
+                table.insert(entranceByLine[line], dt)
+            end
+
+            for _, dt in pairs(self.onZoomMarkers[cellId] or {}) do
+                if dt.params.text then
+                    table.insert(self.activeOnZoomMarkers, {self:createTextMarker(dt.params, dt.id)})
+                else
+                    table.insert(self.activeOnZoomMarkers, {self:createImageMarker(dt.params, dt.id)})
+                end
+            end
+
+        end
+    end
+
+    for _, line in pairs(entranceByLine) do
+        table.sort(line, function (a, b)
+            return a.pos.x < b.pos.x
+        end)
+    end
+
+    for _, line in pairs(entranceByLine) do
+        for i, dt in ipairs(line) do
+            local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
+            table.insert(self.activeOnZoomMarkers, {self:createTextMarker{
+                layerId = layerId.nonInteractive,
+                text = (textAnchor == 0) and "  "..dt.name or dt.name.."  ",
+                alpha = 0.5,
+                anchor = util.vector2(textAnchor, 0.5),
+                fontSize = 7,
+                pos = dt.pos,
+                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
+            }})
+            table.insert(self.activeOnZoomMarkers, {self:createImageMarker{
+                layerId = layerId.marker,
+                alpha = 0.5,
+                anchor = util.vector2(0.5, 0.5),
+                size = util.vector2(7, 7),
+                pos = dt.pos,
+            }})
+        end
+    end
+
+    self.onZoomMarkersCenter = util.vector2(
+        (minGridX + maxGridX) / 2 * 8192,
+        (minGridY + maxGridY) / 2 * 8192
+    )
+end
+
+
+function mapWidgetMeta:removeOnZoomMarkers()
+    for i, dt in pairs(self.activeOnZoomMarkers) do
+        removeMarker(self, dt[1], dt[2])
+        self.activeOnZoomMarkers[i] = nil
     end
 end
 
@@ -851,12 +961,12 @@ function this.new(params)
                 newPos = clampAndCenterPosition(newPos, mapSize, mainSize)
                 props.position = newPos
 
-                if meta.entranceMarkersCenter then
+                if meta.onZoomMarkersCenter then
                     local centerWorldPos = meta:getWorldPositionOfVisibleCenter()
 
-                    local dist = (meta.entranceMarkersCenter - centerWorldPos):length()
+                    local dist = (meta.onZoomMarkersCenter - centerWorldPos):length()
                     if dist > preloadOffsetInWorldCoord * 0.5 then
-                        meta:updateEntranceMarkers()
+                        meta:updateOnZoomMarkers()
                     end
                 end
 
