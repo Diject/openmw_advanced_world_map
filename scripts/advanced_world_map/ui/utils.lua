@@ -38,6 +38,15 @@ function this.removeFromContent(content, index)
 end
 
 
+---@return boolean success
+function this.safeAddToContent(content, elem)
+    local success = pcall(function()
+        content:add(elem)
+    end)
+    return success
+end
+
+
 function this.getTextHeight(text, fontSize, width, mul, extraRowCount, removeColors)
     if removeColors then
         text = this.removeColorMarkers(text)
