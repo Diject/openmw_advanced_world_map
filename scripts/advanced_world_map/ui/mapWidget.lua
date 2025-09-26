@@ -397,6 +397,7 @@ local createMarkerFuncCache = {}
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@field layerId integer,
+---@field id string?
 ---@field pos any in the game world
 ---@field texture any ui.texture
 ---@field events table?
@@ -408,16 +409,20 @@ local createMarkerFuncCache = {}
 ---@field visible boolean?
 ---@field onlyOnZoom boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
+---@field useCache boolean?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
-function mapWidgetMeta:createImageMarker(params, id, useCache)
+function mapWidgetMeta:createImageMarker(params)
     if not params then params = {layerId = layerId.marker} end
     if not params.layerId then return end
 
     local content = self:getLayerLayout(params.layerId).content
+
+    local id = params.id
+    local useCache = params.useCache
 
     if useCache and id then
         local cacheId = id.."_"..tostring(params.layerId)
@@ -514,6 +519,7 @@ end
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@field layerId integer
+---@field id string?
 ---@field pos any in the game world
 ---@field text string
 ---@field events table?
@@ -526,16 +532,20 @@ end
 ---@field visible boolean?
 ---@field onlyOnZoom boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
+---@field useCache boolean?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@return string? id
 ---@return integer? layerId
-function mapWidgetMeta:createTextMarker(params, id, useCache)
+function mapWidgetMeta:createTextMarker(params)
     if not params then params = {text = "", layerId = layerId.marker} end
     if not params.layerId then return end
 
     local content = self:getLayerLayout(params.layerId).content
+
+    local id = params.id
+    local useCache = params.useCache
 
     if useCache and id then
         local cacheId = id.."_"..tostring(params.layerId)
@@ -727,9 +737,9 @@ function mapWidgetMeta:createOnZoomMarkers(region)
 
             for _, dt in pairs(self.onZoomMarkers[cellId] or {}) do
                 if dt.params.text then
-                    table.insert(self.activeOnZoomMarkers, {self:createTextMarker(dt.params, dt.id, true)})
+                    table.insert(self.activeOnZoomMarkers, {self:createTextMarker(dt.params)})
                 else
-                    table.insert(self.activeOnZoomMarkers, {self:createImageMarker(dt.params, dt.id, true)})
+                    table.insert(self.activeOnZoomMarkers, {self:createImageMarker(dt.params)})
                 end
             end
 
@@ -745,10 +755,12 @@ function mapWidgetMeta:createOnZoomMarkers(region)
     for _, line in pairs(entranceByLine) do
         for i, dt in ipairs(line) do
             local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
-            local ImId = string.format("%d_%d", dt.pos.x, dt.pos.y)
-            local textId = ImId..tostring(textAnchor)
+            local imId = string.format("%d_%d", dt.pos.x, dt.pos.y)
+            local textId = imId..tostring(textAnchor)
 
-            local mId, lId = self:createTextMarker({
+            local mId, lId = self:createTextMarker{
+                id = textId,
+                useCache = true,
                 layerId = layerId.nonInteractive,
                 text = (textAnchor == 0) and "  "..dt.name or dt.name.."  ",
                 alpha = 0.5,
@@ -756,19 +768,21 @@ function mapWidgetMeta:createOnZoomMarkers(region)
                 fontSize = 7,
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
-            }, textId, true)
+            }
 
             if mId then
                 table.insert(self.activeOnZoomMarkers, {mId, lId})
             end
 
-            mId, lId = self:createImageMarker({
+            mId, lId = self:createImageMarker{
+                id = imId,
+                useCache = true,
                 layerId = layerId.marker,
                 alpha = 0.5,
                 anchor = util.vector2(0.5, 0.5),
                 size = util.vector2(7, 7),
                 pos = dt.pos,
-            }, ImId, true)
+            }
 
             if mId then
                 table.insert(self.activeOnZoomMarkers, {mId, lId})
