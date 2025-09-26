@@ -15,5 +15,10 @@ function this.getCellIdByPos(pos)
 end
 
 
+function this.getCellIdByGrid(gridX, gridY)
+    return commonData.exteriorCellIdFormat:format(gridX, gridY)
+end
+
+
 
 return this
