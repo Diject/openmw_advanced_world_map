@@ -14,6 +14,11 @@ local mathlib = require("scripts.advanced_world_map.utils.math")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local log = require("scripts.advanced_world_map.utils.log")
 
+local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+
+local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
+
 local l10n = core.l10n(commonData.l10nKey)
 
 local button = require("scripts.advanced_world_map.ui.button")
@@ -21,6 +26,9 @@ local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
+
+
+local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 
 
 local this = {}
@@ -32,6 +40,64 @@ menuMeta.__index = menuMeta
 
 menuMeta.menu = nil
 
+
+
+function menuMeta:createMarkers()
+    local widget = self.mapWidget
+    local entrances = dynamicDataHandler.entrances or {}
+
+    local entranceByLine = {}
+    local lineHeight = 256
+    local lineDiff = lineHeight * 12
+
+    for cellId, list in pairs(entrances) do
+        for _, dt in pairs(list) do
+            local line = math.floor(dt.pos.y / lineHeight)
+            entranceByLine[line] = entranceByLine[line] or {}
+            table.insert(entranceByLine[line], dt)
+        end
+    end
+
+    for _, line in pairs(entranceByLine) do
+        table.sort(line, function (a, b)
+            return a.pos.x < b.pos.x
+        end)
+    end
+
+    for _, line in pairs(entranceByLine) do
+        for i, dt in ipairs(line) do
+            local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
+            local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
+            local textId = imId..tostring(textAnchor)
+
+            widget:createTextMarker{
+                id = textId,
+                useCache = true,
+                layerId = mapWidget.layerId.nonInteractive,
+                text = (textAnchor == 0) and "  "..dt.name or dt.name.."  ",
+                alpha = 0.5,
+                anchor = util.vector2(textAnchor, 0.5),
+                fontSize = 7,
+                pos = dt.pos,
+                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
+                showWhenZoomedIn = true,
+            }
+
+            widget:createImageMarker{
+                id = imId,
+                texture = mapMarkerTexture,
+                useCache = true,
+                layerId = mapWidget.layerId.marker,
+                alpha = 0.5,
+                anchor = util.vector2(0.5, 0.5),
+                size = util.vector2(7, 7),
+                pos = dt.pos,
+                showWhenZoomedIn = true,
+            }
+
+        end
+    end
+end
 
 
 ---@class advencedWorldMap.ui.menu.map.create.params
@@ -147,6 +213,9 @@ function this.create(params)
     }
     ---@type advancedWorldMap.ui.mapWidgetMeta
     meta.mapWidget = mapMeta ---@diagnostic disable-line: assign-type-mismatch
+
+    meta:createMarkers()
+    meta.mapWidget:setZoom(meta.mapWidget.zoom)
 
     local mainLayout
     mainLayout = {
