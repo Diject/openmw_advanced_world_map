@@ -33,14 +33,17 @@ local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 
 local this = {}
 
+local markersInitialized = false
+
+local cachedMapWidgetLayout = nil
+local cachedMapWidgetMetatable = nil
+
 
 ---@class advancedWorldMap.ui.menu.map
 local menuMeta = {}
 menuMeta.__index = menuMeta
 
 menuMeta.menu = nil
-
-
 
 function menuMeta:createMarkers()
     local widget = self.mapWidget
@@ -70,7 +73,7 @@ function menuMeta:createMarkers()
             local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
             local textId = imId..tostring(textAnchor)
 
-            widget:createTextMarker{
+            widget:createTextMarker({
                 id = textId,
                 useCache = true,
                 layerId = mapWidget.layerId.nonInteractive,
@@ -81,9 +84,9 @@ function menuMeta:createMarkers()
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
                 showWhenZoomedIn = true,
-            }
+            }, true)
 
-            widget:createImageMarker{
+            widget:createImageMarker({
                 id = imId,
                 texture = mapMarkerTexture,
                 useCache = true,
@@ -93,7 +96,7 @@ function menuMeta:createMarkers()
                 size = util.vector2(7, 7),
                 pos = dt.pos,
                 showWhenZoomedIn = true,
-            }
+            }, true)
 
         end
     end
@@ -205,16 +208,24 @@ function this.create(params)
         }
     }
 
+    if not cachedMapWidgetLayout then
+        cachedMapWidgetLayout, cachedMapWidgetMetatable = mapWidget.new{
+            updateFunc = meta.update,
+            size = mainSize,
+            position = util.vector2(0, 0)
+        }
+    end
+    local mapWidgetLayout, mapMeta = cachedMapWidgetLayout, cachedMapWidgetMetatable
 
-    local mapWidgetLayout, mapMeta = mapWidget.new{
-        updateFunc = meta.update,
-        size = mainSize,
-        position = util.vector2(0, 0)
-    }
     ---@type advancedWorldMap.ui.mapWidgetMeta
     meta.mapWidget = mapMeta ---@diagnostic disable-line: assign-type-mismatch
+    meta.mapWidget:setUpdateFunction(meta.update)
 
-    meta:createMarkers()
+    if not markersInitialized then
+        meta:createMarkers()
+        markersInitialized = true
+    end
+
     meta.mapWidget:setZoom(meta.mapWidget.zoom)
 
     local mainLayout

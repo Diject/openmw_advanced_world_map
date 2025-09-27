@@ -334,9 +334,6 @@ end
 
 
 function mapWidgetMeta:updateMarkersScale()
-    local markerLayoutContent = self:getMarkerLayout().content
-    local regionLayoutContent = self:getRegionLayout().content
-    local nameLayoutContent = self:getNameLayout().content
     local playerMarkerLayout = self:getPlayerLayout()
 
     local playerMarkerImageSize = getPlayerMarkerSize(playerMarkerLayout.content[1].userData.size, self.zoom)
@@ -409,7 +406,7 @@ local createMarkerFuncCache = {}
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
-local function createMarker(self, params)
+local function createMarker(self, params, onlyInitialize)
     if not params then params = {layerId = this.layerId.marker} end
     if not params.layerId then return end
 
@@ -448,7 +445,7 @@ local function createMarker(self, params)
         end
     end
 
-    if params.useCache and params.id then
+    if not onlyInitialize and params.useCache and params.id then
         local id = params.id
         local cacheId = id.."_"..tostring(params.layerId)
         local cachedLayout = createMarkerFuncCache[cacheId]
@@ -540,10 +537,11 @@ local function createMarker(self, params)
         }
     }
 
-    if not uiUtils.safeAddToContent(content, marker) then return end
     createMarkerFuncCache[markerName.."_"..tostring(params.layerId)] = marker
 
     addZoomInOutData(markerName, marker)
+
+    if onlyInitialize or not uiUtils.safeAddToContent(content, marker) then return end
 
     return markerName, params.layerId
 end
@@ -552,17 +550,17 @@ end
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
-function mapWidgetMeta:createImageMarker(params)
+function mapWidgetMeta:createImageMarker(params, onlyInitialize)
     if not params.texture then return end
-    return createMarker(self, params)
+    return createMarker(self, params, onlyInitialize)
 end
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@return string? id
 ---@return integer? layerId
-function mapWidgetMeta:createTextMarker(params)
+function mapWidgetMeta:createTextMarker(params, onlyInitialize)
     if not params.text then return end
-    return createMarker(self, params)
+    return createMarker(self, params, onlyInitialize)
 end
 
 
@@ -750,6 +748,11 @@ function mapWidgetMeta:updatePlayerMarker()
     playerMarkerLayout.userData.lastYaw = yaw
 
     return true
+end
+
+
+function mapWidgetMeta:setUpdateFunction(func)
+    self.update = func
 end
 
 
