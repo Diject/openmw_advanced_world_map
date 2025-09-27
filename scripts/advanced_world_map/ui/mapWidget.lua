@@ -553,17 +553,17 @@ end
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
-function mapWidgetMeta:createImageMarker(params, onlyInitialize)
+function mapWidgetMeta:createImageMarker(params)
     if not params.texture then return end
-    return createMarker(self, params, onlyInitialize)
+    return createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
 end
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@return string? id
 ---@return integer? layerId
-function mapWidgetMeta:createTextMarker(params, onlyInitialize)
+function mapWidgetMeta:createTextMarker(params)
     if not params.text then return end
-    return createMarker(self, params, onlyInitialize)
+    return createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
 end
 
 
@@ -598,9 +598,9 @@ function mapWidgetMeta:createZoomOutMarkers(region)
 
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
                 if dt.params.text then
-                    table.insert(self.activeZoomMarkers, {self:createTextMarker(dt.params)})
+                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
                 else
-                    table.insert(self.activeZoomMarkers, {self:createImageMarker(dt.params)})
+                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
                 end
             end
         end
@@ -626,9 +626,9 @@ function mapWidgetMeta:createZoomInMarkers(region)
 
             for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
                 if dt.params.text then
-                    table.insert(self.activeZoomMarkers, {self:createTextMarker(dt.params)})
+                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
                 else
-                    table.insert(self.activeZoomMarkers, {self:createImageMarker(dt.params)})
+                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
                 end
             end
 

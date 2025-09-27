@@ -74,7 +74,7 @@ function menuMeta:createMarkers()
             local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
             local textId = imId..tostring(textAnchor)
 
-            widget:createTextMarker({
+            widget:createTextMarker{
                 id = textId,
                 useCache = true,
                 layerId = mapWidget.layerId.nonInteractive,
@@ -85,9 +85,9 @@ function menuMeta:createMarkers()
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
                 showWhenZoomedIn = true,
-            }, true)
+            }
 
-            widget:createImageMarker({
+            widget:createImageMarker{
                 id = imId,
                 texture = mapMarkerTexture,
                 useCache = true,
@@ -97,7 +97,7 @@ function menuMeta:createMarkers()
                 size = util.vector2(7, 7),
                 pos = dt.pos,
                 showWhenZoomedIn = true,
-            }, true)
+            }
 
         end
     end
