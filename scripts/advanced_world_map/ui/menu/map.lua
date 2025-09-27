@@ -11,6 +11,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local mathlib = require("scripts.advanced_world_map.utils.math")
+local cellLib = require("scripts.advanced_world_map.utils.cell")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local log = require("scripts.advanced_world_map.utils.log")
 
@@ -99,6 +100,41 @@ function menuMeta:createMarkers()
             }, true)
 
         end
+    end
+
+
+    for _, dt in pairs(dynamicDataHandler.cellNameData or {}) do
+        local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
+
+        widget:createTextMarker{
+            id = id,
+            layerId = mapWidget.layerId.name,
+            text = dt.name,
+            anchor = util.vector2(0.5, 0.5),
+            pos = util.vector2(dt.posX, dt.posY),
+            color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            fontSize = 10 + math.min(8, dt.count) * 2,
+            scaleFunc = mapWidget.scaleFunction.linear,
+            alpha = 0.4,
+            useCache = true,
+            showWhenZoomedOut = true,
+        }
+    end
+
+    for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
+        local fontSize = 14 + math.min(8, info.count) * 3
+        widget:createTextMarker{
+            layerId = mapWidget.layerId.region,
+            text = info.name,
+            anchor = util.vector2(0.5, 0.5),
+            pos = util.vector2(info.posX, info.posY),
+            color = discoveredLocs.isDiscovered(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            fontSize = fontSize,
+            scaleFunc = mapWidget.scaleFunction.linear,
+            alpha = 0.12,
+            showWhenZoomedOut = true,
+            useCache = true,
+        }
     end
 end
 

@@ -57,6 +57,27 @@ this.layerId = {
     marker = 6,
 }
 
+
+this.scaleFunction = {}
+
+function this.scaleFunction.linear(size, zoom)
+    return size * zoom
+end
+
+
+function this.scaleFunction.marker(size, zoom)
+    return size * math.sqrt(math.sqrt(zoom))
+end
+
+
+function this.scaleFunction.playerMarker(size, zoom)
+    if zoom > 1 then
+        return size * zoom ^ 0.2
+    end
+    return size
+end
+
+
 ---@class advancedWorldMap.ui.mapWidget.region
 ---@field left number
 ---@field right number
@@ -315,28 +336,10 @@ function mapWidgetMeta:focusOnWorldPosition(worldPos)
 end
 
 
-local function getCityNameSize(size, zoom)
-    return size * zoom
-end
-
-
-local function getMarkerSize(size, zoom)
-    return size * math.sqrt(math.sqrt(zoom))
-end
-
-
-local function getPlayerMarkerSize(size, zoom)
-    if zoom > 1 then
-        return size * zoom ^ 0.2
-    end
-    return size
-end
-
-
 function mapWidgetMeta:updateMarkersScale()
     local playerMarkerLayout = self:getPlayerLayout()
 
-    local playerMarkerImageSize = getPlayerMarkerSize(playerMarkerLayout.content[1].userData.size, self.zoom)
+    local playerMarkerImageSize = this.scaleFunction.playerMarker(playerMarkerLayout.content[1].userData.size, self.zoom)
 
     playerMarkerLayout.content[1].props.size = playerMarkerImageSize
     playerMarkerLayout.content[1].props.resource = playerMarker.getTexture() or playerMarkerTexture
@@ -352,12 +355,12 @@ function mapWidgetMeta:updateMarkersScale()
                         anchor = elem.props.anchor,
                         relativePosition = elem.props.relativePosition,
                         textColor = elem.props.textColor,
-                        textSize = (elem.userData.scaleFunc or getMarkerSize)(elem.userData.fontSize, self.zoom),
+                        textSize = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.fontSize, self.zoom),
                         visible = elem.props.visible,
                         alpha = elem.props.alpha,
                     }
                 elseif elem.userData.size then
-                    elem.props.size = (elem.userData.scaleFunc or getMarkerSize)(elem.userData.size, self.zoom)
+                    elem.props.size = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.size, self.zoom)
                 end
             end
         end
@@ -452,9 +455,9 @@ local function createMarker(self, params, onlyInitialize)
         if cachedLayout then
             addZoomInOutData(id, cachedLayout)
             if cachedLayout.props.textSize then
-                cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or getMarkerSize)(cachedLayout.userData.fontSize, self.zoom)
+                cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.fontSize, self.zoom)
             else
-                cachedLayout.props.size = (cachedLayout.userData.scaleFunc or getMarkerSize)(cachedLayout.userData.size, self.zoom)
+                cachedLayout.props.size = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.size, self.zoom)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
@@ -489,14 +492,14 @@ local function createMarker(self, params, onlyInitialize)
         name = markerName,
         props = {
             text = params.text,
-            textSize = params.text and (params.scaleFunc or getMarkerSize)(fontSize, self.zoom),
+            textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(fontSize, self.zoom),
             anchor = anchor,
             relativePosition = relPos,
             textColor = params.text and color,
             visible = params.visible,
             alpha = alpha,
             resource = texture,
-            size = getMarkerSize(size, self.zoom),
+            size = this.scaleFunction.marker(size, self.zoom),
             color = params.texture and color,
         },
         userData = {
@@ -593,25 +596,6 @@ function mapWidgetMeta:createZoomOutMarkers(region)
         for y = minGridY, maxGridY do
             local cellId = cellLib.getCellIdByGrid(x, y)
 
-            for name, dt in pairs(self.cellNamePosByCellId[cellId] or {}) do
-                local id = string.format("%s%d_%d", name, x, y)
-
-                table.insert(self.activeZoomMarkers, {self:createTextMarker{
-                    id = id,
-                    layerId = this.layerId.name,
-                    text = dt.name,
-                    anchor = util.vector2(0.5, 0.5),
-                    pos = util.vector2(dt.posX, dt.posY),
-                    color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
-                    fontSize = 10 + math.min(8, dt.count) * 2,
-                    scaleFunc = getCityNameSize,
-                    alpha = 0.4,
-                    useCache = true,
-                }})
-
-            end
-
-
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
                 if dt.params.text then
                     table.insert(self.activeZoomMarkers, {self:createTextMarker(dt.params)})
@@ -626,24 +610,6 @@ function mapWidgetMeta:createZoomOutMarkers(region)
         (minGridX + maxGridX) / 2 * 8192,
         (minGridY + maxGridY) / 2 * 8192
     )
-end
-
-
-function mapWidgetMeta:createRegionNames()
-    for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
-        local fontSize = 14 + math.min(8, info.count) * 3
-        self:createTextMarker{
-            layerId = this.layerId.region,
-            text = info.name,
-            anchor = util.vector2(0.5, 0.5),
-            pos = util.vector2(info.posX, info.posY),
-            color = discoveredLocs.isDiscovered(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
-            fontSize = fontSize,
-            scaleFunc = getCityNameSize,
-            alpha = 0.12,
-            showWhenZoomedOut = true,
-        }
-    end
 end
 
 
@@ -800,14 +766,6 @@ function this.new(params)
     meta.zoom = 1
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
     meta.minZoom = math.min(params.size.x / meta.mapInfo.width, params.size.y / meta.mapInfo.height) / 2
-
-    ---@type table<string, table<string, advancedWorldMap.dynamicDataHandler.cellData>> by cell id, by city name
-    meta.cellNamePosByCellId = {}
-    for cellName, info in pairs(dynamicDataHandler.cellNameData or {}) do
-        local id = cellLib.getCellIdByPos({x = info.posX, y = info.posY})
-        meta.cellNamePosByCellId[id] = meta.cellNamePosByCellId[id] or {}
-        meta.cellNamePosByCellId[id][cellName] = info
-    end
 
     meta.update = function(self)
         params.updateFunc()
@@ -995,7 +953,6 @@ function this.new(params)
 
     meta.layout = main
 
-    meta:createRegionNames()
     meta:focusOnWorldPosition(playerPos.gexExteriorPos())
     meta:setZoom(localStorage.data[commonData.lastZoomFieldId] or 1)
 
