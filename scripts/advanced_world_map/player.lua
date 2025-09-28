@@ -68,8 +68,20 @@ end
 
 local function toggleMenu()
     if menuHandler.getMenu(commonData.mapMenuId) then
-        menuHandler.destroyMenu(commonData.mapMenuId)
+        local isModeActive = false
+        for _, mode in pairs(I.UI.modes) do
+            if mode == "Journal" then
+                isModeActive = true
+                break
+            end
+        end
+        if isModeActive then
+            I.UI.removeMode("Journal")
+        else
+            menuHandler.destroyMenu(commonData.mapMenuId)
+        end
     else
+        I.UI.addMode("Journal", {windows = {}})
         menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{})
     end
 end
