@@ -23,14 +23,13 @@ this.cellDirections = nil
 ---@field posX number
 ---@field posY number
 ---@field name string
----@field fullName string?
 ---@field count integer
 
 ---@class advancedWorldMap.dynamicDataHandler.entranceData
 ---@field pos any
 ---@field id string
 ---@field name string
-
+---@field fullName string
 
 local function isContentFile(name)
     name = name:lower()
@@ -75,7 +74,7 @@ local function buildData()
         local cellDt = cellNameData[name]
         if not cellDt then
             cellDt = {
-                fullName = cell.name, name = name, count = 0,
+                name = name, count = 0,
                 minX = math.huge, maxX = -math.huge,
                 minY = math.huge, maxY = -math.huge,
             }
@@ -133,6 +132,7 @@ local function buildData()
                 pos = door.position,
                 id = dest.id,
                 name = name,
+                fullName = dest.name,
             }
 
             ::continue::
