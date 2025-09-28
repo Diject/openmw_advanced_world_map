@@ -17,6 +17,7 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
 local playerMarker = require("scripts.advanced_world_map.ui.playerMarker")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
+local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -148,6 +149,33 @@ function mapWidgetMeta:getAbsolutePositionByWorldPosition(worldPos)
     local x = (cellX - self.mapInfo.gridX.min) * self.mapInfo.pixelsPerCell
     local y = (self.mapInfo.gridY.max - cellY) * self.mapInfo.pixelsPerCell
     return util.vector2(x, y) * self.zoom
+end
+
+
+function mapWidgetMeta:getRelativePositionOfCursor()
+    local main = self.layout
+    local mouseOffset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset
+    local widget = self:getMapImageWidget()
+    local mapPos = widget.props.position
+    local mapSize = widget.props.size
+
+    local relX = (mouseOffset.x - mapPos.x) / mapSize.x
+    local relY = (mouseOffset.y - mapPos.y) / mapSize.y
+
+    return util.vector2(relX, relY)
+end
+
+
+function mapWidgetMeta:getWorldPositionByRelativePosition(relPos)
+    local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
+    local pixelSize = 8192 / zoomedPixPerCell
+    local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
+    local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+
+    return util.vector2(
+        (relPos.x * self.mapInfo.width + xOffset) * pixelSize,
+        (-relPos.y * self.mapInfo.height + yOffset) * pixelSize
+    )
 end
 
 
@@ -725,6 +753,12 @@ function mapWidgetMeta:setUpdateFunction(func)
 end
 
 
+function mapWidgetMeta:closeRightMouseMenu()
+    local interactiveLayout = self:getLayerLayout(this.layerId.marker)
+    uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
+end
+
+
 
 ---@class advancedWorldMap.ui.mapWidget.params
 ---@field size any
@@ -797,16 +831,72 @@ function this.new(params)
         },
         events = {
             mousePress = async:callback(function(e, layout)
-                main.userData.lastMousePos = e.position
+                if meta.layout.userData.hasActiveMenu then
+                    local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
+                    uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
+                    meta:update()
+                    meta.layout.userData.hasActiveMenu = nil
+                end
+
+                if eventSys.triggerEvent(eventSys.events["onMousePress"], e) then
+                    main.userData.lastMousePos = nil
+                    return
+                end
+
+                if e.button == 1 then
+                    main.userData.lastMousePos = e.position
+                end
             end),
 
-            mouseRelease = async:callback(function(_, layout)
-                main.userData.lastMousePos = nil
+            mouseRelease = async:callback(function(e, layout)
+                if eventSys.triggerEvent(eventSys.events["onMouseRelease"], e) then
+                    main.userData.lastMousePos = nil
+                    return
+                end
+
+                if e.button == 3 then
+                    if eventSys.isContainsHandler(eventSys.events["onRightMouseMenu"]) then
+                        local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
+                        uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
+
+                        local relPos = meta:getRelativePositionOfCursor()
+                        local lay = {
+                            name = commonData.rightClickMenuId,
+                            type = ui.TYPE.Flex,
+                            props = {
+                                autoSize = true,
+                                relativePosition = relPos,
+                                propagateEvents = false,
+                            },
+                            content = ui.content{
+
+                            },
+                        }
+                        local layContent = lay.content
+
+                        eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
+                            cursorRelPos = relPos,
+                            content = layContent,
+                        })
+
+                        if #layContent > 0 then
+                            interactiveLayout.content:add(lay)
+                            meta:update()
+                            meta.layout.userData.hasActiveMenu = true
+                        end
+                    end
+                elseif e.button == 1 then
+                    main.userData.lastMousePos = nil
+                end
             end),
 
             focusLoss = async:callback(function(_, layout)
                 main.userData.lastMousePos = nil
                 main.userData.inFocus = false
+                if eventSys.triggerEvent(eventSys.events["onFocusLoss"]) then
+                    main.userData.lastMousePos = nil
+                    return
+                end
             end),
 
             mouseMove = async:callback(function(e, layout)
@@ -815,6 +905,12 @@ function this.new(params)
                     main.userData.additiveMouseOffset = util.vector2(0, 0)
                 end
                 main.userData.inFocus = true
+
+                if eventSys.triggerEvent(eventSys.events["onMouseMove"],
+                        {position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset}) then
+                    main.userData.lastMousePos = nil
+                    return
+                end
 
                 if not main.userData.lastMousePos then return end
 
