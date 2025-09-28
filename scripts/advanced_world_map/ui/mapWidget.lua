@@ -293,7 +293,7 @@ local function setZoom(self, zoom, relativePos)
             -relativePos.y * newSize.y + mainSize.y / 2
         )
     else
-        local mouseOffset = self.layout.userData.mouseOffset
+        local mouseOffset = self.layout.userData.mainMouseOffset + self.layout.userData.additiveMouseOffset
         local mouseOnMap = mouseOffset - oldPos
 
         local rel = util.vector2(mouseOnMap.x / oldSize.x, mouseOnMap.y / oldSize.y)
@@ -501,6 +501,7 @@ local function createMarker(self, params, onlyInitialize)
             resource = texture,
             size = this.scaleFunction.marker(size, self.zoom),
             color = params.texture and color,
+            propagateEvents = false,
         },
         userData = {
             scaleFunc = params.scaleFunc,
@@ -519,8 +520,10 @@ local function createMarker(self, params, onlyInitialize)
 
             mouseMove = async:callback(function(e, layout)
                 self.layout.userData.inFocus = true
+                self.layout.userData.additiveMouseOffset = e.offset
+
                 if events.mouseMove then events.mouseMove(e, layout) end
-                self.layout.events.mouseMove(e, layout)
+                self.layout.events.mouseMove({offset = e.offset, position = e.position}, layout)
 
                 if not tooltipContent then return end
                 tooltip.createOrMove(e, layout, tooltipContent)
@@ -789,7 +792,8 @@ function this.new(params)
             end,
 
             inFocus = false,
-            mouseOffset = util.vector2(0, 0),
+            mainMouseOffset = util.vector2(0, 0),
+            additiveMouseOffset = util.vector2(0, 0),
         },
         events = {
             mousePress = async:callback(function(e, layout)
@@ -806,7 +810,10 @@ function this.new(params)
             end),
 
             mouseMove = async:callback(function(e, layout)
-                main.userData.mouseOffset = e.offset
+                if e.offset then
+                    main.userData.mainMouseOffset = e.offset
+                    main.userData.additiveMouseOffset = util.vector2(0, 0)
+                end
                 main.userData.inFocus = true
 
                 if not main.userData.lastMousePos then return end
