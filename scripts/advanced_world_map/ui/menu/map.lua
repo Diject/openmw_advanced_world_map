@@ -20,6 +20,8 @@ local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandle
 
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 
+local eventSys = require("scripts.advanced_world_map.eventSys")
+
 local l10n = core.l10n(commonData.l10nKey)
 
 local button = require("scripts.advanced_world_map.ui.button")
@@ -36,8 +38,43 @@ local this = {}
 
 local markersInitialized = false
 
-local cachedMapWidgetLayout = nil
-local cachedMapWidgetMetatable = nil
+this.cachedMapWidgetLayout = nil
+this.cachedMapWidgetMetatable = nil
+
+
+function this.updateDiscoveredForCell(cell)
+    local names = {}
+
+    if cell.isExterior then
+        for i = -1, 1 do
+            for j = -1, 1 do
+                names[commonData.exteriorCellIdFormat:format(cell.gridX + i, cell.gridY + j)] = true
+            end
+        end
+    end
+    names[cell.id] = true
+    names[cell.name] = true
+    names[stringLib.getBeforeComma(cell.name)] = true
+    names[stringLib.getAfterComma(cell.name)] = true
+
+    this.updateDiscovered(tableLib.keys(names))
+end
+
+
+---@param newDiscovered string[]
+function this.updateDiscovered(newDiscovered)
+    if not this.markersByName or not this.entranceMarkersByCellId then return end
+
+    for _, name in pairs(newDiscovered or {}) do
+        for _, handler in pairs(this.entranceMarkersByCellId[name] or {}) do
+            handler:setVisibility(true)
+        end
+        for _, handler in pairs(this.markersByName[name] or {}) do
+            handler:setVisibility(true)
+            handler:setColor(config.data.ui.defaultLightColor)
+        end
+    end
+end
 
 
 ---@class advancedWorldMap.ui.menu.map
@@ -51,7 +88,7 @@ function menuMeta:createMarkers()
     local entrances = dynamicDataHandler.entrances or {}
 
     local entranceByLine = {}
-    local lineHeight = 256
+    local lineHeight = 256 * uiUtils.getUIScale()
     local lineDiff = lineHeight * 12
 
     for cellId, list in pairs(entrances) do
@@ -68,13 +105,22 @@ function menuMeta:createMarkers()
         end)
     end
 
+    local markersByCellId = {}
+    local markersByName = {}
+
     for _, line in pairs(entranceByLine) do
         for i, dt in ipairs(line) do
             local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
             local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
             local textId = imId..tostring(textAnchor)
 
-            widget:createTextMarker{
+            local cellId = cellLib.getCellIdByPos(dt.pos)
+            markersByCellId[cellId] = markersByCellId[cellId] or {}
+            markersByName[dt.name] = markersByName[dt.name] or {}
+
+            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+
+            local textMarkerHandler = widget:createTextMarker{
                 id = textId,
                 useCache = true,
                 layerId = mapWidget.layerId.nonInteractive,
@@ -85,9 +131,14 @@ function menuMeta:createMarkers()
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
                 showWhenZoomedIn = true,
+                visible = isCellDiscovered,
             }
+            if textMarkerHandler then
+                table.insert(markersByCellId[cellId], textMarkerHandler)
+                table.insert(markersByName[dt.name], textMarkerHandler)
+            end
 
-            widget:createImageMarker{
+            local imageMarkerHandler = widget:createImageMarker{
                 id = imId,
                 texture = mapMarkerTexture,
                 useCache = true,
@@ -97,16 +148,27 @@ function menuMeta:createMarkers()
                 size = util.vector2(7, 7),
                 pos = dt.pos,
                 showWhenZoomedIn = true,
+                visible = isCellDiscovered,
             }
+            if imageMarkerHandler then
+                table.insert(markersByCellId[cellId], imageMarkerHandler)
+                table.insert(markersByName[dt.name], imageMarkerHandler)
+            end
 
         end
     end
 
+    ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+    this.entranceMarkersByCellId = markersByCellId
 
     for _, dt in pairs(dynamicDataHandler.cellNameData or {}) do
         local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
 
-        widget:createTextMarker{
+        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name)
+
+        markersByName[dt.name] = markersByName[dt.name] or {}
+
+        local textMarkerHandler = widget:createTextMarker{
             id = id,
             layerId = mapWidget.layerId.name,
             text = dt.name,
@@ -118,8 +180,15 @@ function menuMeta:createMarkers()
             alpha = 0.4,
             useCache = true,
             showWhenZoomedOut = true,
+            visible = isCellDiscovered,
         }
+        if textMarkerHandler then
+            table.insert(markersByName[dt.name], textMarkerHandler)
+        end
     end
+
+    ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+    this.markersByName = markersByName
 
     for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
         local fontSize = 14 + math.min(8, info.count) * 3
@@ -244,14 +313,14 @@ function this.create(params)
         }
     }
 
-    if not cachedMapWidgetLayout then
-        cachedMapWidgetLayout, cachedMapWidgetMetatable = mapWidget.new{
+    if not this.cachedMapWidgetLayout then
+        this.cachedMapWidgetLayout, this.cachedMapWidgetMetatable = mapWidget.new{
             updateFunc = meta.update,
             size = mainSize,
             position = util.vector2(0, 0)
         }
     end
-    local mapWidgetLayout, mapMeta = cachedMapWidgetLayout, cachedMapWidgetMetatable
+    local mapWidgetLayout, mapMeta = this.cachedMapWidgetLayout, this.cachedMapWidgetMetatable
 
     ---@type advancedWorldMap.ui.mapWidgetMeta
     meta.mapWidget = mapMeta ---@diagnostic disable-line: assign-type-mismatch

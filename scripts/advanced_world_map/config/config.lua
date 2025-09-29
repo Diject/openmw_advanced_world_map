@@ -17,7 +17,13 @@ this.default = {
         relativePosition = {
             x = 15,
             y = 15,
-        }
+        },
+    },
+    legend = {
+        onlyDiscovered = false,
+    },
+    tileset = {
+        onlyDiscovered = false,
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],

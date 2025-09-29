@@ -128,6 +128,10 @@ return {
         -- when changing location, a loading menu is displayed, which triggers this event
         UiModeChanged = function()
             discoveredLocs.addCell(self.cell)
+            mapMenu.updateDiscoveredForCell(self.cell)
+            if mapMenu.cachedMapWidgetMetatable then
+                mapMenu.cachedMapWidgetMetatable:updateOnZoomMarkers()
+            end
         end,
         ["AdvWMap:updateMapData"] = function (data)
             dynamicDataHandler.load(data)

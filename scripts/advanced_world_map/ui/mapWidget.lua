@@ -27,6 +27,8 @@ local log = require("scripts.advanced_world_map.utils.log")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
+local mapElement = require("scripts.advanced_world_map.ui.mapElement")
+
 local l10n = core.l10n(commonData.l10nKey)
 
 
@@ -49,6 +51,7 @@ this.getUniqueId = function ()
 end
 
 
+---@class advancedWorldMap.ui.mapWidget.layerId
 this.layerId = {
     map = 1,
     region = 2,
@@ -59,6 +62,7 @@ this.layerId = {
 }
 
 
+---@class advancedWorldMap.ui.mapWidget.scaleFunctions
 this.scaleFunction = {}
 
 function this.scaleFunction.linear(size, zoom)
@@ -89,6 +93,9 @@ end
 ---@class advancedWorldMap.ui.mapWidgetMeta
 local mapWidgetMeta = {}
 mapWidgetMeta.__index = mapWidgetMeta
+
+mapWidgetMeta.layerIds = this.layerId
+mapWidgetMeta.scaleFunctions = this.scaleFunction
 
 mapWidgetMeta.getUniqueId = function (self)
     return this.getUniqueId()
@@ -437,6 +444,7 @@ local createMarkerFuncCache = {}
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
+---@return advancedWorldMap.ui.mapElementMeta?
 local function createMarker(self, params, onlyInitialize)
     if not params then params = {layerId = this.layerId.marker} end
     if not params.layerId then return end
@@ -444,7 +452,7 @@ local function createMarker(self, params, onlyInitialize)
     local content = self:getLayerLayout(params.layerId).content
 
     if params.id and uiUtils.isExistsInContent(content, params.id) then
-        return params.id, params.layerId
+        return params.id, params.layerId, content[params.id].userData.markerElement
     end
 
     local function addZoomInOutData(id, layout)
@@ -489,7 +497,7 @@ local function createMarker(self, params, onlyInitialize)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
-                return id, params.layerId
+                return id, params.layerId, cachedLayout.userData.markerElement
             else
                 return
             end
@@ -575,26 +583,33 @@ local function createMarker(self, params, onlyInitialize)
 
     addZoomInOutData(markerName, marker)
 
-    if onlyInitialize or not uiUtils.safeAddToContent(content, marker) then return end
+    local markerELement = mapElement.new(self, markerName, params.layerId, params, marker)
+    marker.userData.markerElement = markerELement
 
-    return markerName, params.layerId
+    if onlyInitialize then
+        return markerName, params.layerId, markerELement
+    end
+
+    if not uiUtils.safeAddToContent(content, marker) then return end
+
+    return markerName, params.layerId, markerELement
 end
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
----@return string? id
----@return integer? layerId
+---@return advancedWorldMap.ui.mapElementMeta?
 function mapWidgetMeta:createImageMarker(params)
     if not params.texture then return end
-    return createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
+    local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
+    return element
 end
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
----@return string? id
----@return integer? layerId
+---@return advancedWorldMap.ui.mapElementMeta?
 function mapWidgetMeta:createTextMarker(params)
     if not params.text then return end
-    return createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
+    local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
+    return element
 end
 
 
@@ -707,7 +722,10 @@ function mapWidgetMeta:placeGroundTextures(region)
         for y = 0, maxGridY - minGridY - 1 do
             local texture = dataHandler.getLocalMapTexture(minGridX + x, minGridY + y)
 
-            if not texture then goto continue end
+            local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y)
+            local isDiscovered = not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+
+            if not texture or not isDiscovered then goto continue end
 
             local pos = util.vector2(startPos.x + tileHeight * x, startPos.y - tileHeight * y)
 
