@@ -8,7 +8,7 @@ this.activeMenus = {}
 function this.registerMenu(menuId, menu)
     if this.activeMenus[menuId] then
         for id, handler in pairs(this.activeMenus) do
-            handler.menu:destroy()
+            handler:close()
             this.activeMenus[id] = nil
         end
     end

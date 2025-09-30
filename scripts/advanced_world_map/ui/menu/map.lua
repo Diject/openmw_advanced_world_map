@@ -208,6 +208,12 @@ function menuMeta:createMarkers()
 end
 
 
+function menuMeta:close()
+    if not self.menu then return end
+    self.menu:destroy()
+end
+
+
 ---@class advencedWorldMap.ui.menu.map.create.params
 ---@field relativePosition any?
 ---@field relativeSize any?
