@@ -208,6 +208,75 @@ function menuMeta:createMarkers()
 end
 
 
+---@class advancedWorldMap.ui.menu.addHeaderElement.params
+---@field id string
+---@field layout table
+---@field onOpen fun(content)?
+---@field onClose fun()?
+
+---@param params advancedWorldMap.ui.menu.addHeaderElement.params
+function menuMeta:addWidget(params)
+    if not params or not params.id or not params.layout then return end
+
+    local origEvents = params.layout.events or {}
+
+    params.layout.props = params.layout.props or {}
+    params.layout.props.anchor = util.vector2(0.5, 0.5)
+
+    local pressed = false
+
+    params.layout.events = {
+        focusLoss = async:callback(function(e, layout)
+            pressed = false
+            if origEvents.focusLoss then origEvents.focusLoss(e, layout) end
+        end),
+
+        mousePress = async:callback(function(e, layout)
+            pressed = true
+            if origEvents.mousePress then origEvents.mousePress(e, layout) end
+        end),
+
+        mouseRelease = async:callback(function(e, layout)
+            if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
+
+            if pressed then
+                if self.activeWidgetId == params.id then
+                    if params.onClose then params.onClose() end
+                    self.widgetWindowLayout.content = ui.content{}
+                    self.activeWidgetId = nil
+                else
+                    if self.activeWidgetId then
+                        local widgetData = self.widgets[self.activeWidgetId]
+                        if widgetData and widgetData.params.onClose then
+                            widgetData.params.onClose()
+                        end
+                        self.widgetWindowLayout.content = ui.content{}
+                        self.activeWidgetId = nil
+                    end
+
+                    if params.onOpen then params.onOpen(self.widgetWindowLayout.content) end
+                    self.activeWidgetId = params.id
+                end
+
+                self:update()
+            end
+            pressed = false
+        end),
+    }
+
+    self.widgets[params.id] = {layout = params.layout, params = params}
+
+    uiUtils.removeFromContent(self.widgetHeaderLayout.content, params.id)
+    self.widgetHeaderLayout.content:add(interval(self.params.fontSize, 1))
+    self.widgetHeaderLayout.content:add(params.layout)
+end
+
+
+function menuMeta:getHeaderHeight()
+    return self.headerHeight
+end
+
+
 function menuMeta:close()
     if not self.menu then return end
     self.menu:destroy()
@@ -242,10 +311,49 @@ function this.create(params)
     local screenSize = uiUtils.getScaledScreenSize()
     meta.size = screenSize:emul(params.relativeSize)
 
-    local headerHeight = params.fontSize * 1.5
+    local headerHeight = params.fontSize * 1.25
+    meta.headerHeight = headerHeight
     local headerSize = util.vector2(meta.size.x, headerHeight)
 
     local mainSize = util.vector2(meta.size.x, meta.size.y - headerHeight)
+
+    ---@type table<string, {layout : table, params : advancedWorldMap.ui.menu.addHeaderElement.params}>
+    menuMeta.widgets = {}
+    ---@type string?
+    menuMeta.activeWidgetId = nil
+
+    meta.widgetHeaderLayout = {
+        type = ui.TYPE.Flex,
+        name = commonData.mapWidgetHeaderLayoutId,
+        props = {
+            horizontal = true,
+            anchor = util.vector2(0, 0.5),
+            relativePosition = util.vector2(0, 0.5),
+        },
+        userData = {
+
+        },
+        content = ui.content {
+
+        }
+    }
+
+    meta.widgetWindowLayout = {
+        type = ui.TYPE.Flex,
+        name = commonData.mapWidgetHeaderLayoutId,
+        props = {
+            horizontal = true,
+            position = util.vector2(2, 2),
+            align = ui.ALIGNMENT.Center,
+            arrange = ui.ALIGNMENT.Center,
+        },
+        userData = {
+
+        },
+        content = ui.content {
+
+        }
+    }
 
     meta.update = function ()
         meta.menu:update()
@@ -295,6 +403,7 @@ function this.create(params)
                     alpha = config.data.ui.headerBackgroundAlpha / 100,
                 }
             },
+            meta.widgetHeaderLayout,
             {
                 type = ui.TYPE.Text,
                 props = {
@@ -351,6 +460,7 @@ function this.create(params)
         },
         content = ui.content {
             mapWidgetLayout,
+            meta.widgetWindowLayout,
             {
                 type = ui.TYPE.Image,
                 props = {

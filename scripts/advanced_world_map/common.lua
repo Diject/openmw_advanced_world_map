@@ -22,6 +22,8 @@ this.lastZoomFieldId = "lastZoomValue"
 this.discoveredLocsFieldId = "discoveredLocationsHashSet"
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
+this.mapWidgetHeaderLayoutId = "__MAP:WIDGETHEADERLAYOUT__"
+this.mapWidgetWindowLayoutId = "__MAP:WIDGETWINDOWLAYOUT__"
 
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])
