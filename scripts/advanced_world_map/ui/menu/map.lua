@@ -655,6 +655,7 @@ function this.create(params)
     end
     async:newUnsavableSimulationTimer(0.15, func)
 
+    eventSys.triggerEvent(eventSys.events["onMenuOpened"], {menu = meta})
 
     return meta
 end
