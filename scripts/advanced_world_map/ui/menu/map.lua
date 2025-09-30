@@ -29,6 +29,7 @@ local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
+local borders = require("scripts.advanced_world_map.ui.borders")
 
 
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
@@ -464,90 +465,6 @@ function this.create(params)
             {
                 type = ui.TYPE.Image,
                 props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_left.dds" },
-                    tileH = false,
-                    tileV = true,
-                    size = util.vector2(2, 0),
-                    relativeSize = util.vector2(0, 1),
-                    anchor = util.vector2(0, 0),
-                    relativePosition = util.vector2(0, 0),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_right.dds" },
-                    tileH = false,
-                    tileV = true,
-                    size = util.vector2(2, 0),
-                    relativeSize = util.vector2(0, 1),
-                    anchor = util.vector2(1, 0),
-                    relativePosition = util.vector2(1, 0),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_top.dds" },
-                    tileH = true,
-                    tileV = false,
-                    size = util.vector2(0, 2),
-                    relativeSize = util.vector2(1, 0),
-                    anchor = util.vector2(0, 0),
-                    relativePosition = util.vector2(0, 0),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_bottom.dds" },
-                    tileH = true,
-                    tileV = false,
-                    size = util.vector2(0, 2),
-                    relativeSize = util.vector2(1, 0),
-                    anchor = util.vector2(0, 1),
-                    relativePosition = util.vector2(0, 1),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_top_left_corner.dds" },
-                    size = util.vector2(2, 2),
-                    anchor = util.vector2(0, 0),
-                    relativePosition = util.vector2(0, 0),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_top_right_corner.dds" },
-                    size = util.vector2(2, 2),
-                    anchor = util.vector2(1, 0),
-                    relativePosition = util.vector2(1, 0),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_bottom_left_corner.dds" },
-                    size = util.vector2(2, 2),
-                    anchor = util.vector2(0, 1),
-                    relativePosition = util.vector2(0, 1),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = "textures/menu_thin_border_bottom_right_corner.dds" },
-                    size = util.vector2(2, 2),
-                    anchor = util.vector2(1, 1),
-                    relativePosition = util.vector2(1, 1),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
                     resource = uiUtils.whiteTexture,
                     alpha = 0.3,
                     size = util.vector2(14, 14),
@@ -596,6 +513,7 @@ function this.create(params)
                     end),
                 },
             },
+            borders(),
         },
     }
 
