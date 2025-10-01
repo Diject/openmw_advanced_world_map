@@ -20,7 +20,7 @@ this.default = {
         },
     },
     legend = {
-        onlyDiscovered = false,
+        onlyDiscovered = true,
     },
     tileset = {
         onlyDiscovered = false,
@@ -35,10 +35,13 @@ this.default = {
         backgroundColor = commonData.backgroundColor,
         disabledColor = commonData.disabledColor,
         selectionColor = commonData.selectedColor,
-        shadowColor = commonData.selectedShadowColor,
+        shadowColor = commonData.textShadowColor,
         linkColor = commonData.linkColor,
         mouseScrollAmount = 36,
         headerBackgroundAlpha = 100,
+        scrollArrowSize = 16,
+        resizerSize = 16,
+        textHeightMul = 0.7,
     },
 }
 

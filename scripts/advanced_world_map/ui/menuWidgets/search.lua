@@ -1,0 +1,326 @@
+local async = require("openmw.async")
+local ui = require("openmw.ui")
+local util = require("openmw.util")
+local core = require("openmw.core")
+local input = require('openmw.input')
+
+local commonData = require("scripts.advanced_world_map.common")
+local config = require("scripts.advanced_world_map.config.configLib")
+
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
+local stringLib = require("scripts.advanced_world_map.utils.string")
+
+local playerPos = require("scripts.advanced_world_map.playerPosition")
+
+local eventSys = require("scripts.advanced_world_map.eventSys")
+
+local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
+local borders = require("scripts.advanced_world_map.ui.borders")
+local button = require("scripts.advanced_world_map.ui.button")
+local interval = require('scripts.advanced_world_map.ui.interval')
+local checkBox = require("scripts.advanced_world_map.ui.checkBox")
+
+local l10n = core.l10n(commonData.l10nKey)
+
+
+local searchIcoTexture = ui.texture{ path = commonData.searchWidgetIcon }
+
+
+---@param menu advancedWorldMap.ui.menu.map
+---@return {id : string, layerId : integer, name : string, pos : {x : number, y : number}, dist : number?}[]
+local function getResults(menu, str, hideUnrevealed)
+    str = stringLib.utf8_lower(str)
+
+    local res = {}
+
+    local addedHashset = {}
+
+    for _, content in ipairs({
+                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.region).content,
+                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.map).content,
+                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.marker).content,
+                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.nonInteractive).content,
+            }) do
+        for _, marker in ipairs(content) do
+            if not marker.userData or not marker.userData.params then goto continue end
+
+            ---@type advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params|advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
+            local params = marker.userData.params
+
+            if not params.searchText or not params.pos or not params.searchText:find(str)
+                or params.showWhenZoomedIn or params.showWhenZoomedOut
+                or hideUnrevealed and params.visible == false then goto continue end
+
+            addedHashset[params] = true
+            table.insert(res, {id = params.id, layerId = params.layerId, name = params.searchLabel or params.text or params.searchText, pos = params.pos})
+
+            ::continue::
+        end
+    end
+
+    for _, tb in pairs({menu.mapWidget.zoomOutMarkers, menu.mapWidget.zoomInMarkers}) do
+        for _, cellData in pairs(tb) do
+            for _, dt in pairs(cellData) do
+                if not dt.params.searchText or not dt.params.pos or not dt.params.searchText:find(str)
+                        or hideUnrevealed and dt.params.visible == false
+                        or addedHashset[dt.params] then goto continue end
+
+                table.insert(res, {id = dt.params.id, layerId = dt.params.layerId,
+                    name = dt.params.searchLabel or dt.params.text or dt.params.searchText, pos = dt.params.pos})
+
+                ::continue::
+            end
+        end
+    end
+
+    return res
+end
+
+
+---@param menu advancedWorldMap.ui.menu.map
+local function create(menu)
+
+    local iconLayout = {
+        type = ui.TYPE.Image,
+        props = {
+            resource = searchIcoTexture,
+            anchor = util.vector2(0.5, 0.5),
+            size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
+            color = config.data.ui.defaultColor,
+        }
+    }
+
+    local mapWidgetSize = menu.mapWidget:getSize()
+
+    local size = util.vector2(
+        math.max(mapWidgetSize.x / 3, 250),
+        mapWidgetSize.y
+    )
+
+    local scrollBoxContent = ui.content{}
+
+    local scrollBoxSize = util.vector2(size.x, size.y - config.data.ui.fontSize * 4 - 6)
+
+    local scrollBoxLayout = scrollBox{
+        updateFunc = menu.update,
+        contentHeight = 0,
+        leftOffset = 2,
+        size = scrollBoxSize,
+        position = util.vector2(0, config.data.ui.fontSize * 4 + 4),
+        scrollAmount = config.data.ui.fontSize * 2,
+        content = scrollBoxContent,
+    }
+
+    ---@type advancedWorldMap.ui.scrollBox
+    local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
+
+    local textFilter = ""
+
+    local function fill(sortByDistance, hideUnrevealed)
+        uiUtils.clearContent(scrollBoxContent)
+
+        if textFilter == "" then return end
+
+        local results = getResults(menu, textFilter, hideUnrevealed)
+
+        if sortByDistance then ---@diagnostic disable-line: need-check-nil
+            for _, res in pairs(results) do
+                res.dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
+            end
+
+            table.sort(results, function (a, b)
+                return a.dist < b.dist
+            end)
+        end
+
+        local height = 0
+
+        for _, dt in ipairs(results) do
+            local text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+
+            local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
+
+            local textLay
+            textLay = {
+                type = ui.TYPE.Text,
+                props = {
+                    text = text,
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                    autoSize = false,
+                    size = util.vector2(size.x, textHeight),
+                    multiline = true,
+                    wordWrap = true,
+                    textShadow = true,
+                    textShadowColor = config.data.ui.shadowColor,
+                    propagateEvents = false,
+                },
+                events = {
+                    mousePress = async:callback(function(e, layout)
+                        scrollBoxMeta:mousePress(e)
+                    end),
+
+                    focusLoss = async:callback(function(e, layout)
+                        scrollBoxMeta:focusLoss(e)
+                        textLay.props.textShadowColor = config.data.ui.shadowColor
+                    end),
+
+                    mouseMove = async:callback(function(e, layout)
+                        scrollBoxMeta:mouseMove(e)
+                        textLay.props.textShadowColor = config.data.ui.selectionColor
+                        menu:update()
+                    end),
+
+                    mouseRelease = async:callback(function(e, layout)
+                        if e.button ~= 1 then return end
+
+                        scrollBoxMeta:mouseRelease(e)
+
+                        if scrollBoxMeta.lastMovedDistance < 20 then
+                            menu.mapWidget:focusOnWorldPosition(dt.pos)
+                            menu.mapWidget:setZoom(math.max(8, menu.mapWidget.zoom))
+                            menu.mapWidget:forceChangeMarker(dt.id, dt.layerId, {
+                                visible = true,
+                                size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
+                                color = config.data.ui.selectionColor
+                            })
+                        end
+                    end),
+                },
+            }
+
+            scrollBoxContent:add(textLay)
+            scrollBoxContent:add(interval(0, config.data.ui.fontSize))
+
+            height = height + config.data.ui.fontSize + textHeight
+        end
+
+        scrollBoxMeta:setScrollPosition(0)
+        scrollBoxMeta:setContentHeight(height)
+    end
+
+    local sortByDistance = false
+    local hideUnrevealed = false
+
+    local sortByDistanceCBLayout = checkBox{
+        updateFunc = menu.update,
+        text = l10n("sortByDistance"),
+        textSize = config.data.ui.fontSize * 0.9,
+        position = util.vector2(2, config.data.ui.fontSize + 6),
+        checked = sortByDistance,
+        event = function (checked, layout)
+            sortByDistance = checked
+            fill(sortByDistance, hideUnrevealed)
+        end
+    }
+
+    local hideUnrevealedCBLayout = checkBox{
+        updateFunc = menu.update,
+        text = l10n("hideUnrevealed"),
+        textSize = config.data.ui.fontSize * 0.9,
+        position = util.vector2(2, config.data.ui.fontSize * 2 + 9),
+        event = function (checked, layout)
+            hideUnrevealed = checked
+            fill(sortByDistance, hideUnrevealed)
+        end
+    }
+
+    local searchBarLayout
+    searchBarLayout = {
+        type = ui.TYPE.Widget,
+        props = {
+            size = util.vector2(size.x, config.data.ui.fontSize + 4),
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.TextEdit,
+                props = {
+                    text = "",
+                    anchor = util.vector2(0, 0.5),
+                    size = util.vector2(size.x - 114, config.data.ui.fontSize),
+                    textAlignV = ui.ALIGNMENT.Center,
+                    textSize = config.data.ui.fontSize,
+                    position = util.vector2(2, config.data.ui.fontSize / 2 + 2),
+                    textColor = config.data.ui.defaultColor,
+                },
+                events = {
+                    textChanged = async:callback(function(text, layout)
+                        textFilter = text
+                    end),
+                    keyRelease = async:callback(function(e, layout)
+                        if e.code == input.KEY.Enter then
+                            searchBarLayout.content[1].props.text = textFilter
+                            fill(sortByDistance, hideUnrevealed)
+                            menu:update()
+                        end
+                    end),
+                    focusLoss = async:callback(function(layout)
+                        searchBarLayout.content[1].props.text = textFilter
+                    end),
+                }
+            },
+            button{
+                updateFunc = menu.update,
+                text = l10n("Search"),
+                size = util.vector2(100, config.data.ui.fontSize * 0.9),
+                textSize = config.data.ui.fontSize * 0.9,
+                anchor = util.vector2(1, 0.5),
+                position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
+                event = function (layout)
+                    fill(sortByDistance, hideUnrevealed)
+                end
+            },
+            borders()
+        }
+    }
+
+
+    local windowLayout = {
+        type = ui.TYPE.Widget,
+        props = {
+            size = size,
+            color = config.data.ui.defaultColor,
+        },
+        userData = {
+
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    relativeSize = util.vector2(1, 1),
+                    color = config.data.ui.backgroundColor,
+                    alpha = math.max(config.data.ui.headerBackgroundAlpha / 100, 0.25),
+                    resource = uiUtils.whiteTexture,
+                },
+            },
+            sortByDistanceCBLayout,
+            hideUnrevealedCBLayout,
+            searchBarLayout,
+            scrollBoxLayout,
+            borders()
+        }
+    }
+
+    local function onOpen(content)
+        iconLayout.props.color = config.data.ui.defaultLightColor
+
+        content:add(windowLayout)
+    end
+
+    local function onClose()
+        iconLayout.props.color = config.data.ui.defaultColor
+    end
+
+    menu:addWidget{
+        id = "AdvancedWorldMap:Search",
+        layout = iconLayout,
+        onOpen = onOpen,
+        onClose = onClose,
+    }
+end
+
+
+eventSys.registerHandler(eventSys.events["onMenuOpened"], function (e)
+    create(e.menu)
+end, math.huge)

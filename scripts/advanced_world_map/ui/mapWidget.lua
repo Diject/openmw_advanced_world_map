@@ -421,6 +421,8 @@ local createMarkerFuncCache = {}
 ---@field showWhenZoomedOut boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
 ---@field useCache boolean?
+---@field searchText string? lowercase
+---@field searchLabel string?
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@field layerId integer
@@ -439,12 +441,15 @@ local createMarkerFuncCache = {}
 ---@field showWhenZoomedOut boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
 ---@field useCache boolean?
+---@field searchText string? lowercase
+---@field searchLabel string?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
 ---@return advancedWorldMap.ui.mapElementMeta?
+---@return any? layout
 local function createMarker(self, params, onlyInitialize)
     if not params then params = {layerId = this.layerId.marker} end
     if not params.layerId then return end
@@ -452,7 +457,7 @@ local function createMarker(self, params, onlyInitialize)
     local content = self:getLayerLayout(params.layerId).content
 
     if params.id and uiUtils.isExistsInContent(content, params.id) then
-        return params.id, params.layerId, content[params.id].userData.markerElement
+        return params.id, params.layerId, content[params.id].userData.markerElement, content[params.id]
     end
 
     local function addZoomInOutData(id, layout)
@@ -490,6 +495,24 @@ local function createMarker(self, params, onlyInitialize)
         local cachedLayout = createMarkerFuncCache[cacheId]
         if cachedLayout then
             addZoomInOutData(id, cachedLayout)
+
+            if cachedLayout.userData.forceChanged then
+                cachedLayout.props = {
+                    text = params.text,
+                    textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(params.fontSize or 18, self.zoom),
+                    anchor = params.anchor or util.vector2(0.5, 0.5),
+                    relativePosition = cachedLayout.props.relativePosition,
+                    textColor = params.text and (params.color or config.data.ui.defaultColor),
+                    visible = params.visible,
+                    alpha = params.alpha or 1,
+                    resource = params.texture,
+                    size = (params.scaleFunc or this.scaleFunction.marker)(params.size or util.vector2(18, 18), self.zoom),
+                    color = params.texture and (params.color or config.data.ui.defaultColor),
+                    propagateEvents = false,
+                }
+                cachedLayout.userData.forceChanged = false
+            end
+
             if cachedLayout.props.textSize then
                 cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.fontSize, self.zoom)
             else
@@ -497,7 +520,7 @@ local function createMarker(self, params, onlyInitialize)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
-                return id, params.layerId, cachedLayout.userData.markerElement
+                return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
             else
                 return
             end
@@ -535,7 +558,7 @@ local function createMarker(self, params, onlyInitialize)
             visible = params.visible,
             alpha = alpha,
             resource = texture,
-            size = this.scaleFunction.marker(size, self.zoom),
+            size = (params.scaleFunc or this.scaleFunction.marker)(size, self.zoom),
             color = params.texture and color,
             propagateEvents = false,
         },
@@ -544,6 +567,7 @@ local function createMarker(self, params, onlyInitialize)
             autoScale = true,
             fontSize = params.text and fontSize,
             size = params.texture and size,
+            params = params,
         },
         events = {
             focusLoss = async:callback(function(e, layout)
@@ -587,12 +611,12 @@ local function createMarker(self, params, onlyInitialize)
     marker.userData.markerElement = markerELement
 
     if onlyInitialize then
-        return markerName, params.layerId, markerELement
+        return markerName, params.layerId, markerELement, marker
     end
 
     if not uiUtils.safeAddToContent(content, marker) then return end
 
-    return markerName, params.layerId, markerELement
+    return markerName, params.layerId, markerELement, marker
 end
 
 
@@ -626,6 +650,34 @@ function mapWidgetMeta:removeMarker(id, layer)
         (self.zoomInMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
         (self.zoomOutMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
         self.zoomMarkersCellIdById[id] = nil
+    end
+end
+
+
+---@return advancedWorldMap.ui.mapElementMeta?
+function mapWidgetMeta:forceChangeMarker(id, layerId, propsParams)
+    local success, markerLayout = pcall(function ()
+        local layout = self:getLayerLayout(layerId)
+        return layout.content[id]
+    end)
+
+    if success and markerLayout then
+        tableLib.copy(propsParams, markerLayout.props)
+        markerLayout.userData.forceChanged = true
+        return
+    end
+
+    local cellId = self.zoomMarkersCellIdById[id]
+    if not cellId then return end
+
+    for _, tb in pairs({self.zoomOutMarkers, self.zoomInMarkers}) do
+        if tb[cellId] and tb[cellId][id] then
+            local mId, lId, markerELement, lay = createMarker(self, tb[cellId][id].params)
+            if lay then
+                tableLib.copy(propsParams, lay.props)
+                lay.userData.forceChanged = true
+            end
+        end
     end
 end
 
@@ -809,9 +861,9 @@ function this.new(params)
     meta.mapTexture = mapTexture
     meta.mapInfo = dataHandler.mapInfo
 
-    ---@type table<string, table<string, {id : string, params : any}>> by cell id, by marker id
+    ---@type table<string, table<string, {id : string, params : advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params}>> by cell id, by marker id
     meta.zoomInMarkers = {}
-    ---@type table<string, table<string, {id : string, params : any}>> by cell id, by marker id
+    ---@type table<string, table<string, {id : string, params : advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params}>> by cell id, by marker id
     meta.zoomOutMarkers = {}
     ---@type table<string, string>
     meta.zoomMarkersCellIdById = {}

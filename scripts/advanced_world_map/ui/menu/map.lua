@@ -150,6 +150,8 @@ function menuMeta:createMarkers()
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,
+                searchText = stringLib.utf8_lower(dt.fullName),
+                searchLabel = dt.fullName,
             }
             if imageMarkerHandler then
                 table.insert(markersByCellId[cellId], imageMarkerHandler)
@@ -182,6 +184,7 @@ function menuMeta:createMarkers()
             useCache = true,
             showWhenZoomedOut = true,
             visible = isCellDiscovered,
+            searchText = stringLib.utf8_lower(dt.name),
         }
         if textMarkerHandler then
             table.insert(markersByName[dt.name], textMarkerHandler)
@@ -204,6 +207,8 @@ function menuMeta:createMarkers()
             alpha = 0.12,
             showWhenZoomedOut = true,
             useCache = true,
+            searchText = stringLib.utf8_lower(info.name),
+            searchLabel = l10n("Region")..": "..info.name
         }
     end
 end
@@ -259,6 +264,7 @@ function menuMeta:addWidget(params)
                     self.activeWidgetId = params.id
                 end
 
+                self:updateMapWidgetWidth()
                 self:update()
             end
             pressed = false
@@ -317,6 +323,7 @@ function this.create(params)
     local headerSize = util.vector2(meta.size.x, headerHeight)
 
     local mainSize = util.vector2(meta.size.x, meta.size.y - headerHeight)
+    meta.mainSize = mainSize
 
     ---@type table<string, {layout : table, params : advancedWorldMap.ui.menu.addHeaderElement.params}>
     menuMeta.widgets = {}
@@ -435,6 +442,8 @@ function this.create(params)
             size = mainSize,
             position = util.vector2(0, 0)
         }
+    else
+        this.cachedMapWidgetMetatable:setSize(mainSize)
     end
     local mapWidgetLayout, mapMeta = this.cachedMapWidgetLayout, this.cachedMapWidgetMetatable
 
@@ -449,6 +458,21 @@ function this.create(params)
 
     meta.mapWidget:setZoom(meta.mapWidget.zoom)
 
+    meta.getWidgetWindowWidth = function (self)
+        local widgetWindowWidth = 0
+        for _, el in pairs(meta.widgetWindowLayout.content) do
+            if el.props and el.props.size then
+                widgetWindowWidth = widgetWindowWidth + el.props.size.x
+            end
+        end
+        return widgetWindowWidth
+    end
+
+    meta.updateMapWidgetWidth = function (self)
+        local mapWidgetSize = util.vector2(math.max(1, self.mainSize.x - meta:getWidgetWindowWidth()), self.mainSize.y)
+        self.mapWidget:setSize(mapWidgetSize)
+    end
+
     local mainLayout
     mainLayout = {
         type = ui.TYPE.Widget,
@@ -460,14 +484,26 @@ function this.create(params)
 
         },
         content = ui.content {
-            mapWidgetLayout,
-            meta.widgetWindowLayout,
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    size = mainSize,
+                    horizontal = true
+                },
+                userData = {
+
+                },
+                content = ui.content {
+                    meta.widgetWindowLayout,
+                    mapWidgetLayout,
+                }
+            },
             {
                 type = ui.TYPE.Image,
                 props = {
                     resource = uiUtils.whiteTexture,
                     alpha = 0.3,
-                    size = util.vector2(14, 14),
+                    size = util.vector2(config.data.ui.resizerSize, config.data.ui.resizerSize),
                     anchor = util.vector2(1, 1),
                     relativePosition = util.vector2(1, 1),
                 },
@@ -490,22 +526,24 @@ function this.create(params)
                         if not lastPos then return end
 
                         local posDif = util.vector2(e.position.x - lastPos.x, e.position.y - lastPos.y)
+                        local minSize = util.vector2(100, 100)
 
                         local mapSize = meta.mapWidget:getSize()
-                        local newSize = util.vector2(mapSize.x + posDif.x, mapSize.y + posDif.y)
+                        local newSize = util.vector2(math.max(minSize.x, mapSize.x + posDif.x), math.max(minSize.y, mapSize.y + posDif.y))
+
                         meta.mapWidget:setSize(newSize)
-                        mainLayout.props.size = newSize
+                        mainLayout.props.size = util.vector2(meta:getWidgetWindowWidth() + newSize.x, newSize.y)
+                        meta.mainSize = mainLayout.props.size
 
                         local hSize = headerLayout.props.size
-                        headerLayout.props.size = util.vector2(hSize.x + posDif.x, hSize.y)
+                        headerLayout.props.size = util.vector2(mainLayout.props.size.x, hSize.y)
 
-                        local mSize = meta.size
-                        mSize = util.vector2(mSize.x + posDif.x, mSize.y + posDif.y)
-                        meta.menu.layout.props.size = mSize
-                        meta.size = mSize
+                        local size = util.vector2(meta.mainSize.x, meta.mainSize.y + hSize.y)
+                        meta.menu.layout.props.size = size
+                        meta.size = size
 
-                        config.setValue("main.relativeSize.x", mSize.x / screenSize.x * 100)
-                        config.setValue("main.relativeSize.y", mSize.y / screenSize.y * 100)
+                        config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
+                        config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
 
                         meta:update()
 

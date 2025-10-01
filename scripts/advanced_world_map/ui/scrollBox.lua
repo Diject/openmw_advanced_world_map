@@ -18,7 +18,7 @@ local iconDown = "textures/omw_menu_scroll_down.dds"
 
 local whiteTexture = ui.texture { path = "white" }
 
----@class questGuider.ui.scrollBox
+---@class advancedWorldMap.ui.scrollBox
 local scrollBoxMeta = {}
 scrollBoxMeta.__index = scrollBoxMeta
 
@@ -177,6 +177,7 @@ end
 ---@class questGuider.ui.scrollBox.params
 ---@field name string?
 ---@field size any -- util.vector2
+---@field position any -- util.vector2
 ---@field scrollAmount integer?
 ---@field maxNegativeShift integer?
 ---@field leftOffset integer?
@@ -192,7 +193,7 @@ end
 return function(params)
     if not params then return end
 
-    ---@class questGuider.ui.scrollBox
+    ---@class advancedWorldMap.ui.scrollBox
     local meta = setmetatable({}, scrollBoxMeta)
 
     if not params.leftOffset then params.leftOffset = 2 end
@@ -307,11 +308,11 @@ return function(params)
     meta:updateScrollBarVisibility()
 
     contentData = {
-        template = templates.box,
         type = ui.TYPE.Widget,
         props = {
             autoSize = false,
             size = params.size,
+            position = params.position,
         },
         name = params.name,
         events = {

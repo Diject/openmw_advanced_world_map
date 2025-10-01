@@ -4,3 +4,6 @@ modDescription: "New interactive world map menu."
 
 You: "You"
 Map: "Map"
+Search: "Search"
+sortByDistance: "sort by distance"
+hideUnrevealed: "hide unrevealed"

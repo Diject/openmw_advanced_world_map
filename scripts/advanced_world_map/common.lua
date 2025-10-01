@@ -40,8 +40,8 @@ this.linkColor = util.color.rgb(this.linkColorData[1], this.linkColorData[2], th
 this.disabledColorData = {0.5, 0.5, 0.5}
 this.disabledColor = util.color.rgb(this.disabledColorData[1], this.disabledColorData[2], this.disabledColorData[3])
 
-this.selectedShadowColorData = {1, 1, 1}
-this.selectedShadowColor = util.color.rgb(this.selectedShadowColorData[1], this.selectedShadowColorData[2], this.selectedShadowColorData[3])
+this.textShadowColorData = {0.1, 0.1, 0.1}
+this.textShadowColor = util.color.rgb(this.textShadowColorData[1], this.textShadowColorData[2], this.textShadowColorData[3])
 
 this.backgroundColorData = {0, 0, 0}
 this.backgroundColor = util.color.rgb(this.backgroundColorData[1], this.backgroundColorData[2], this.backgroundColorData[3])
@@ -57,6 +57,8 @@ end)
 this.mapMarkerPath = "textures/icons/advanced_world_map/squareMarker.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"
 this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
+
+this.searchWidgetIcon = "textures/icons/advanced_world_map/widget/searchIco.dds"
 
 
 this.customMapDir = "textures/advanced_world_map/map/"

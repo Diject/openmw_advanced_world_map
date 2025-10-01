@@ -38,6 +38,13 @@ function this.removeFromContent(content, index)
 end
 
 
+function this.clearContent(content)
+    for i = #content, 1, -1 do
+        this.removeFromContent(content, i)
+    end
+end
+
+
 function this.isExistsInContent(content, index)
     if type(index) == "string" then
         return rawget(content.__nameIndex, index) ~= nil
@@ -101,6 +108,9 @@ function this.getContentHeight(content, isHorisontal)
         if elem.props and elem.props.size then
             add(elem.props.size.y)
         elseif elem.props and elem.props.textSize then
+            if elem.props.textShadow then
+                add(1)
+            end
             add(elem.props.textSize)
         elseif elem.userData and elem.userData.height then
             add(elem.userData.height)

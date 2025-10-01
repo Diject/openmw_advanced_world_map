@@ -9,7 +9,7 @@ local configData = require("scripts.advanced_world_map.config.config")
 local interval = require("scripts.advanced_world_map.ui.interval")
 
 
----@class questGuider.ui.checkBox.params
+---@class advancedWorldMap.ui.checkBox.params
 ---@field text string?
 ---@field checked boolean?
 ---@field textSize integer?
@@ -21,10 +21,9 @@ local interval = require("scripts.advanced_world_map.ui.interval")
 ---@field updateFunc fun()
 
 
----@param params questGuider.ui.checkBox.params
+---@param params advancedWorldMap.ui.checkBox.params
 return function(params)
-    if not params then return end
-    local boxSize = util.vector2((params.textSize or 18) - 10, (params.textSize or 18) - 10)
+    local boxSize = util.vector2((params.textSize or 18) - 2, (params.textSize or 18) - 2)
     local texture = ui.texture { path = "white" }
 
     local visible
@@ -44,6 +43,7 @@ return function(params)
             horizontal = true,
             propagateEvents = false,
             visible = visible,
+            arrange = ui.ALIGNMENT.Center,
         },
         userData = {
             checked = params.checked or false
@@ -77,6 +77,7 @@ return function(params)
                         props = {
                             resource = texture,
                             size = boxSize,
+                            anchor = util.vector2(0, 0.5),
                             inheritAlpha = false,
                             alpha = params.checked and 1 or 0,
                             color = configData.data.ui.defaultColor,
@@ -92,6 +93,7 @@ return function(params)
                     text = params.text or "Enable",
                     textColor = configData.data.ui.defaultColor,
                     textSize = params.textSize or 18,
+                    anchor = util.vector2(0, 0.5),
                     multiline = false,
                     wordWrap = false,
                     textAlignH = ui.ALIGNMENT.Start,
