@@ -134,271 +134,272 @@ local function create(menu)
         }
     }
 
-    local mapWidgetSize = menu.mapWidget:getSize()
+    local function onOpen(content)
+        local mapWidgetSize = menu.mapWidget:getSize()
 
-    local size = util.vector2(
-        math.max(mapWidgetSize.x / 3, 250),
-        mapWidgetSize.y
-    )
+        local size = util.vector2(
+            math.max(mapWidgetSize.x / 3, 250),
+            mapWidgetSize.y
+        )
 
-    local scrollBoxContent = ui.content{}
+        local scrollBoxContent = ui.content{}
 
-    local scrollBoxSize = util.vector2(size.x, size.y - config.data.ui.fontSize * 5 - 6)
+        local scrollBoxSize = util.vector2(size.x, size.y - config.data.ui.fontSize * 5 - 6)
 
-    local scrollBoxLayout = scrollBox{
-        updateFunc = menu.update,
-        contentHeight = 0,
-        leftOffset = 2,
-        size = scrollBoxSize,
-        position = util.vector2(0, config.data.ui.fontSize * 5 + 4),
-        scrollAmount = config.data.ui.fontSize * 2,
-        content = scrollBoxContent,
-    }
+        local scrollBoxLayout = scrollBox{
+            updateFunc = menu.update,
+            contentHeight = 0,
+            leftOffset = 2,
+            size = scrollBoxSize,
+            position = util.vector2(0, config.data.ui.fontSize * 5 + 4),
+            scrollAmount = config.data.ui.fontSize * 2,
+            content = scrollBoxContent,
+        }
 
-    ---@type advancedWorldMap.ui.scrollBox
-    local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
+        ---@type advancedWorldMap.ui.scrollBox
+        local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
 
-    local textFilter = ""
+        local textFilter = ""
 
-    local function fill(sortByDistance, hideUnrevealed, searchInInteriors)
-        uiUtils.clearContent(scrollBoxContent)
+        local function fill(sortByDistance, hideUnrevealed, searchInInteriors)
+            uiUtils.clearContent(scrollBoxContent)
 
-        if textFilter == "" then return end
+            if textFilter == "" then return end
 
-        local results = getResults(menu, textFilter, hideUnrevealed, searchInInteriors)
+            local results = getResults(menu, textFilter, hideUnrevealed, searchInInteriors)
 
-        if sortByDistance then ---@diagnostic disable-line: need-check-nil
-            for _, res in pairs(results) do
-                res.dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
-            end
+            if sortByDistance then ---@diagnostic disable-line: need-check-nil
+                for _, res in pairs(results) do
+                    res.dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
+                end
 
-            table.sort(results, function (a, b)
-                return a.dist < b.dist
-            end)
-        else
-            table.sort(results, function (a, b)
-                return a.priority < b.priority
-            end)
-        end
-
-        local height = 0
-
-        for _, dt in ipairs(results) do
-            local text
-            if dt.parent and dt.parent ~= dt.name then
-                text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), dt.parent, dt.pos.x, dt.pos.y)
+                table.sort(results, function (a, b)
+                    return a.dist < b.dist
+                end)
             else
-                text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+                table.sort(results, function (a, b)
+                    return a.priority < b.priority
+                end)
             end
 
-            local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
+            local height = 0
 
-            local textLay
-            textLay = {
-                type = ui.TYPE.Text,
-                props = {
-                    text = text,
-                    textSize = config.data.ui.fontSize,
-                    textColor = config.data.ui.defaultColor,
-                    autoSize = false,
-                    size = util.vector2(size.x, textHeight),
-                    multiline = true,
-                    wordWrap = true,
-                    textShadow = true,
-                    textShadowColor = config.data.ui.shadowColor,
-                    propagateEvents = false,
-                },
-                userData = {
-                    shadowColor = config.data.ui.shadowColor,
-                },
-                events = {
-                    mousePress = async:callback(function(e, layout)
-                        scrollBoxMeta:mousePress(e)
-                    end),
+            for _, dt in ipairs(results) do
+                local text
+                if dt.parent and dt.parent ~= dt.name then
+                    text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), dt.parent, dt.pos.x, dt.pos.y)
+                else
+                    text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+                end
 
-                    focusLoss = async:callback(function(e, layout)
-                        scrollBoxMeta:focusLoss(e)
+                local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
 
-                        if layout.userData.shadowColor ~= config.data.ui.shadowColor then
-                            textLay.props.textShadowColor = config.data.ui.shadowColor
-                            layout.userData.shadowColor = config.data.ui.shadowColor
-                            menu:update()
-                        end
-                    end),
+                local textLay
+                textLay = {
+                    type = ui.TYPE.Text,
+                    props = {
+                        text = text,
+                        textSize = config.data.ui.fontSize,
+                        textColor = config.data.ui.defaultColor,
+                        autoSize = false,
+                        size = util.vector2(size.x, textHeight),
+                        multiline = true,
+                        wordWrap = true,
+                        textShadow = true,
+                        textShadowColor = config.data.ui.shadowColor,
+                        propagateEvents = false,
+                    },
+                    userData = {
+                        shadowColor = config.data.ui.shadowColor,
+                    },
+                    events = {
+                        mousePress = async:callback(function(e, layout)
+                            scrollBoxMeta:mousePress(e)
+                        end),
 
-                    mouseMove = async:callback(function(e, layout)
-                        scrollBoxMeta:mouseMove(e)
+                        focusLoss = async:callback(function(e, layout)
+                            scrollBoxMeta:focusLoss(e)
 
-                        if layout.userData.shadowColor ~= config.data.ui.selectionColor then
-                            textLay.props.textShadowColor = config.data.ui.selectionColor
-                            layout.userData.shadowColor = config.data.ui.selectionColor
-                            menu:update()
-                        end
-                    end),
+                            if layout.userData.shadowColor ~= config.data.ui.shadowColor then
+                                textLay.props.textShadowColor = config.data.ui.shadowColor
+                                layout.userData.shadowColor = config.data.ui.shadowColor
+                                menu:update()
+                            end
+                        end),
 
-                    mouseRelease = async:callback(function(e, layout)
-                        if e.button ~= 1 then return end
+                        mouseMove = async:callback(function(e, layout)
+                            scrollBoxMeta:mouseMove(e)
 
-                        scrollBoxMeta:mouseRelease(e)
+                            if layout.userData.shadowColor ~= config.data.ui.selectionColor then
+                                textLay.props.textShadowColor = config.data.ui.selectionColor
+                                layout.userData.shadowColor = config.data.ui.selectionColor
+                                menu:update()
+                            end
+                        end),
 
-                        if scrollBoxMeta.lastMovedDistance < 20 then
-                            menu.mapWidget:focusOnWorldPosition(dt.pos)
-                            menu.mapWidget:setZoom(math.max(8, menu.mapWidget.zoom))
-                            menu.mapWidget:forceChangeMarker(dt.id, dt.layerId, {
-                                visible = true,
-                                size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
-                                color = config.data.ui.selectionColor
-                            })
-                            menu:update()
-                        end
-                    end),
-                },
-            }
+                        mouseRelease = async:callback(function(e, layout)
+                            if e.button ~= 1 then return end
 
-            scrollBoxContent:add(textLay)
-            scrollBoxContent:add(interval(0, config.data.ui.fontSize))
+                            scrollBoxMeta:mouseRelease(e)
 
-            height = height + config.data.ui.fontSize + textHeight
+                            if scrollBoxMeta.lastMovedDistance < 20 then
+                                menu.mapWidget:focusOnWorldPosition(dt.pos)
+                                menu.mapWidget:setZoom(math.max(8, menu.mapWidget.zoom))
+                                menu.mapWidget:forceChangeMarker(dt.id, dt.layerId, {
+                                    visible = true,
+                                    size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
+                                    color = config.data.ui.selectionColor
+                                })
+                                menu:update()
+                            end
+                        end),
+                    },
+                }
+
+                scrollBoxContent:add(textLay)
+                scrollBoxContent:add(interval(0, config.data.ui.fontSize))
+
+                height = height + config.data.ui.fontSize + textHeight
+            end
+
+            scrollBoxMeta:setScrollPosition(0)
+            scrollBoxMeta:setContentHeight(height)
         end
 
-        scrollBoxMeta:setScrollPosition(0)
-        scrollBoxMeta:setContentHeight(height)
-    end
+        local sortByDistance = localStorage.data[commonData.sortByDistanceFieldId] ~= nil and localStorage.data[commonData.sortByDistanceFieldId] or false
 
-    local sortByDistance = localStorage.data[commonData.sortByDistanceFieldId] ~= nil and localStorage.data[commonData.sortByDistanceFieldId] or false
-
-    local hideUnrevealed
-    if localStorage.data[commonData.hideUnrevealedFieldId] ~= nil then
-        hideUnrevealed = localStorage.data[commonData.hideUnrevealedFieldId]
-    else
-        hideUnrevealed = config.data.legend.onlyDiscovered
-    end
-
-    local searchInInteriors = false
-    if localStorage.data[commonData.searchInInteriorsFieldId] ~= nil then
-        searchInInteriors = localStorage.data[commonData.searchInInteriorsFieldId]
-    else
-        searchInInteriors = true
-    end
-
-    local sortByDistanceCBLayout = checkBox{
-        updateFunc = menu.update,
-        text = l10n("sortByDistance"),
-        textSize = config.data.ui.fontSize * 0.9,
-        position = util.vector2(2, config.data.ui.fontSize + 9),
-        checked = sortByDistance,
-        event = function (checked, layout)
-            sortByDistance = checked
-            localStorage.data[commonData.sortByDistanceFieldId] = checked
-            fill(sortByDistance, hideUnrevealed, searchInInteriors)
+        local hideUnrevealed
+        if localStorage.data[commonData.hideUnrevealedFieldId] ~= nil then
+            hideUnrevealed = localStorage.data[commonData.hideUnrevealedFieldId]
+        else
+            hideUnrevealed = config.data.legend.onlyDiscovered
         end
-    }
 
-    local hideUnrevealedCBLayout = checkBox{
-        updateFunc = menu.update,
-        text = l10n("hideUnrevealed"),
-        textSize = config.data.ui.fontSize * 0.9,
-        position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
-        checked = hideUnrevealed,
-        event = function (checked, layout)
-            hideUnrevealed = checked
-            localStorage.data[commonData.hideUnrevealedFieldId] = checked
-            fill(sortByDistance, hideUnrevealed, searchInInteriors)
+        local searchInInteriors = false
+        if localStorage.data[commonData.searchInInteriorsFieldId] ~= nil then
+            searchInInteriors = localStorage.data[commonData.searchInInteriorsFieldId]
+        else
+            searchInInteriors = true
         end
-    }
+
+        local sortByDistanceCBLayout = checkBox{
+            updateFunc = menu.update,
+            text = l10n("sortByDistance"),
+            textSize = config.data.ui.fontSize * 0.9,
+            position = util.vector2(2, config.data.ui.fontSize + 9),
+            checked = sortByDistance,
+            event = function (checked, layout)
+                sortByDistance = checked
+                localStorage.data[commonData.sortByDistanceFieldId] = checked
+                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+            end
+        }
+
+        local hideUnrevealedCBLayout = checkBox{
+            updateFunc = menu.update,
+            text = l10n("hideUnrevealed"),
+            textSize = config.data.ui.fontSize * 0.9,
+            position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
+            checked = hideUnrevealed,
+            event = function (checked, layout)
+                hideUnrevealed = checked
+                localStorage.data[commonData.hideUnrevealedFieldId] = checked
+                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+            end
+        }
 
         local searchInInteriorsCBLayout = checkBox{
-        updateFunc = menu.update,
-        text = l10n("searchInAllInteriors"),
-        textSize = config.data.ui.fontSize * 0.9,
-        position = util.vector2(2, config.data.ui.fontSize * 3 + 15),
-        checked = searchInInteriors,
-        event = function (checked, layout)
-            searchInInteriors = checked
-            localStorage.data[commonData.searchInInteriorsFieldId] = checked
-            fill(sortByDistance, hideUnrevealed, searchInInteriors)
-        end
-    }
+            updateFunc = menu.update,
+            text = l10n("searchInAllInteriors"),
+            textSize = config.data.ui.fontSize * 0.9,
+            position = util.vector2(2, config.data.ui.fontSize * 3 + 15),
+            checked = searchInInteriors,
+            event = function (checked, layout)
+                searchInInteriors = checked
+                localStorage.data[commonData.searchInInteriorsFieldId] = checked
+                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+            end
+        }
 
-    local searchBarLayout
-    searchBarLayout = {
-        type = ui.TYPE.Widget,
-        props = {
-            size = util.vector2(size.x, config.data.ui.fontSize + 4),
-        },
-        content = ui.content {
-            {
-                type = ui.TYPE.TextEdit,
-                props = {
-                    text = "",
-                    anchor = util.vector2(0, 0.5),
-                    size = util.vector2(size.x - 114, config.data.ui.fontSize),
-                    textAlignV = ui.ALIGNMENT.Center,
-                    textSize = config.data.ui.fontSize,
-                    position = util.vector2(2, config.data.ui.fontSize / 2 + 2),
-                    textColor = config.data.ui.defaultColor,
-                },
-                events = {
-                    textChanged = async:callback(function(text, layout)
-                        textFilter = text
-                    end),
-                    keyRelease = async:callback(function(e, layout)
-                        if e.code == input.KEY.Enter then
+        local searchBarLayout
+        searchBarLayout = {
+            type = ui.TYPE.Widget,
+            props = {
+                size = util.vector2(size.x, config.data.ui.fontSize + 4),
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.TextEdit,
+                    props = {
+                        text = "",
+                        anchor = util.vector2(0, 0.5),
+                        size = util.vector2(size.x - 114, config.data.ui.fontSize),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        textSize = config.data.ui.fontSize,
+                        position = util.vector2(2, config.data.ui.fontSize / 2 + 2),
+                        textColor = config.data.ui.defaultColor,
+                    },
+                    events = {
+                        textChanged = async:callback(function(text, layout)
+                            textFilter = text
+                        end),
+                        keyRelease = async:callback(function(e, layout)
+                            if e.code == input.KEY.Enter then
+                                searchBarLayout.content[1].props.text = textFilter
+                                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+                                menu:update()
+                            end
+                        end),
+                        focusLoss = async:callback(function(layout)
                             searchBarLayout.content[1].props.text = textFilter
-                            fill(sortByDistance, hideUnrevealed, searchInInteriors)
-                            menu:update()
-                        end
-                    end),
-                    focusLoss = async:callback(function(layout)
-                        searchBarLayout.content[1].props.text = textFilter
-                    end),
-                }
-            },
-            button{
-                updateFunc = menu.update,
-                text = l10n("Search"),
-                size = util.vector2(100, config.data.ui.fontSize * 0.9),
-                textSize = config.data.ui.fontSize * 0.9,
-                anchor = util.vector2(1, 0.5),
-                position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
-                event = function (layout)
-                    fill(sortByDistance, hideUnrevealed, searchInInteriors)
-                end
-            },
-            borders()
-        }
-    }
-
-
-    local windowLayout = {
-        type = ui.TYPE.Widget,
-        props = {
-            size = size,
-            color = config.data.ui.defaultColor,
-        },
-        userData = {
-
-        },
-        content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    relativeSize = util.vector2(1, 1),
-                    color = config.data.ui.backgroundColor,
-                    alpha = math.max(config.data.ui.headerBackgroundAlpha / 100, 0.25),
-                    resource = uiUtils.whiteTexture,
+                        end),
+                    }
                 },
-            },
-            sortByDistanceCBLayout,
-            hideUnrevealedCBLayout,
-            searchInInteriorsCBLayout,
-            searchBarLayout,
-            scrollBoxLayout,
-            borders()
+                button{
+                    updateFunc = menu.update,
+                    text = l10n("Search"),
+                    size = util.vector2(100, config.data.ui.fontSize * 0.9),
+                    textSize = config.data.ui.fontSize * 0.9,
+                    anchor = util.vector2(1, 0.5),
+                    position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
+                    event = function (layout)
+                        fill(sortByDistance, hideUnrevealed, searchInInteriors)
+                    end
+                },
+                borders()
+            }
         }
-    }
 
-    local function onOpen(content)
+
+        local windowLayout = {
+            type = ui.TYPE.Widget,
+            props = {
+                size = size,
+                color = config.data.ui.defaultColor,
+            },
+            userData = {
+
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(1, 1),
+                        color = config.data.ui.backgroundColor,
+                        alpha = math.max(config.data.ui.headerBackgroundAlpha / 100, 0.25),
+                        resource = uiUtils.whiteTexture,
+                    },
+                },
+                sortByDistanceCBLayout,
+                hideUnrevealedCBLayout,
+                searchInInteriorsCBLayout,
+                searchBarLayout,
+                scrollBoxLayout,
+                borders()
+            }
+        }
+
+
         iconLayout.props.color = config.data.ui.defaultLightColor
 
         content:add(windowLayout)
@@ -419,4 +420,4 @@ end
 
 eventSys.registerHandler(eventSys.events["onMenuOpened"], function (e)
     create(e.menu)
-end, math.huge)
+end, 9999998)
