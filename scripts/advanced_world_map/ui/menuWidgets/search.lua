@@ -197,6 +197,9 @@ local function create(menu)
                     textShadowColor = config.data.ui.shadowColor,
                     propagateEvents = false,
                 },
+                userData = {
+                    shadowColor = config.data.ui.shadowColor,
+                },
                 events = {
                     mousePress = async:callback(function(e, layout)
                         scrollBoxMeta:mousePress(e)
@@ -204,13 +207,22 @@ local function create(menu)
 
                     focusLoss = async:callback(function(e, layout)
                         scrollBoxMeta:focusLoss(e)
-                        textLay.props.textShadowColor = config.data.ui.shadowColor
+
+                        if layout.userData.shadowColor ~= config.data.ui.shadowColor then
+                            textLay.props.textShadowColor = config.data.ui.shadowColor
+                            layout.userData.shadowColor = config.data.ui.shadowColor
+                            menu:update()
+                        end
                     end),
 
                     mouseMove = async:callback(function(e, layout)
                         scrollBoxMeta:mouseMove(e)
-                        textLay.props.textShadowColor = config.data.ui.selectionColor
-                        menu:update()
+
+                        if layout.userData.shadowColor ~= config.data.ui.selectionColor then
+                            textLay.props.textShadowColor = config.data.ui.selectionColor
+                            layout.userData.shadowColor = config.data.ui.selectionColor
+                            menu:update()
+                        end
                     end),
 
                     mouseRelease = async:callback(function(e, layout)
