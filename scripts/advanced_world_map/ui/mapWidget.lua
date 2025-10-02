@@ -577,7 +577,7 @@ local function createMarker(self, params, onlyInitialize)
                 self.layout.userData.inFocus = false
                 marker.userData.pressed = false
                 if events.focusLoss then events.focusLoss(e, layout) end
-                self.layout.events.focusLoss(e, layout)
+                self.layout.events.focusLoss(e, layout, layout.userData.markerElement)
                 tooltip.destroy(layout)
             end),
 
@@ -586,7 +586,7 @@ local function createMarker(self, params, onlyInitialize)
                 self.layout.userData.additiveMouseOffset = e.offset
 
                 if events.mouseMove then events.mouseMove(e, layout) end
-                self.layout.events.mouseMove({offset = e.offset, position = e.position}, layout)
+                self.layout.events.mouseMove({offset = e.offset, position = e.position}, layout, layout.userData.markerElement)
 
                 if not tooltipContent then return end
                 tooltip.createOrMove(e, layout, tooltipContent)
@@ -595,13 +595,13 @@ local function createMarker(self, params, onlyInitialize)
             mousePress = async:callback(function(e, layout)
                 marker.userData.pressed = true
                 if events.mousePress then events.mousePress(e, layout) end
-                self.layout.events.mousePress(e, layout)
+                self.layout.events.mousePress(e, layout, layout.userData.markerElement)
             end),
 
             mouseRelease = async:callback(function(e, layout)
                 if events.mouseRelease then events.mouseRelease(e, layout, marker.userData.pressed) end
                 marker.userData.pressed = false
-                self.layout.events.mouseRelease(e, layout)
+                self.layout.events.mouseRelease(e, layout, layout.userData.markerElement)
             end),
         }
     }
@@ -903,7 +903,7 @@ function this.new(params)
             additiveMouseOffset = util.vector2(0, 0),
         },
         events = {
-            mousePress = async:callback(function(e, layout)
+            mousePress = async:callback(function(e, layout, markerElement)
                 if meta.layout.userData.hasActiveMenu then
                     local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
                     uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
@@ -911,7 +911,7 @@ function this.new(params)
                     meta.layout.userData.hasActiveMenu = nil
                 end
 
-                if eventSys.triggerEvent(eventSys.events["onMousePress"], e) then
+                if eventSys.triggerEvent(eventSys.events["onMousePress"], {e = e, marker = markerElement}) then
                     main.userData.lastMousePos = nil
                     return
                 end
@@ -921,8 +921,8 @@ function this.new(params)
                 end
             end),
 
-            mouseRelease = async:callback(function(e, layout)
-                if eventSys.triggerEvent(eventSys.events["onMouseRelease"], e) then
+            mouseRelease = async:callback(function(e, layout, markerElement)
+                if eventSys.triggerEvent(eventSys.events["onMouseRelease"], {e = e, marker = markerElement}) then
                     main.userData.lastMousePos = nil
                     return
                 end
@@ -963,24 +963,25 @@ function this.new(params)
                 end
             end),
 
-            focusLoss = async:callback(function(_, layout)
+            focusLoss = async:callback(function(_, layout, markerElement)
                 main.userData.lastMousePos = nil
                 main.userData.inFocus = false
-                if eventSys.triggerEvent(eventSys.events["onFocusLoss"]) then
+                if eventSys.triggerEvent(eventSys.events["onFocusLoss"], {marker = markerElement}) then
                     main.userData.lastMousePos = nil
                     return
                 end
             end),
 
-            mouseMove = async:callback(function(e, layout)
+            mouseMove = async:callback(function(e, layout, markerElement)
                 if e.offset then
                     main.userData.mainMouseOffset = e.offset
                     main.userData.additiveMouseOffset = util.vector2(0, 0)
                 end
                 main.userData.inFocus = true
 
-                if eventSys.triggerEvent(eventSys.events["onMouseMove"],
-                        {position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset}) then
+                if eventSys.triggerEvent(eventSys.events["onMouseMove"], {
+                        e = {position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset},
+                        marker = markerElement}) then
                     main.userData.lastMousePos = nil
                     return
                 end
