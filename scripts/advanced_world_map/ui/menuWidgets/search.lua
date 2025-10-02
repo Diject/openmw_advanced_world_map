@@ -29,21 +29,23 @@ local searchIcoTexture = ui.texture{ path = commonData.searchWidgetIcon }
 
 
 ---@return table<string, string> res by cell id - cell name
-local function getAvailableCellNamesFromInterior(cellId, checked)
+local function getAvailableCellNamesFromInterior(cellId, checked, res)
     checked = checked or {}
+    res = res or {}
 
-    if checked[cellId] then return checked end
+    if checked[cellId] then return res end
 
     for destId, destDt in pairs(dynamicDataHandler.cellDirections[cellId] or {}) do
         if not checked[destId] then
-            checked[destId] = destDt.name
+            checked[destId] = true
             if not destDt.isEx then
-                getAvailableCellNamesFromInterior(destId, checked)
+                res[destId] = destDt.name
+                getAvailableCellNamesFromInterior(destId, checked, res)
             end
         end
     end
 
-    return checked
+    return res
 end
 
 
@@ -59,17 +61,21 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
     local function add(params)
 
         if inAllInteriors and params.userData and params.userData.cellId then
-            for _, cellName in pairs(getAvailableCellNamesFromInterior(params.userData.cellId)) do
-                local lower = stringLib.utf8_lower(cellName)
-                if lower:find(str) then
+
+            for cellId, cellName in pairs(getAvailableCellNamesFromInterior(params.userData.cellId)) do
+
+                if cellId ~= params.userData.cellId and stringLib.utf8_lower(cellName):find(str) then
                     local parentName = params.searchLabel or params.text or params.searchText
 
                     table.insert(res, {id = params.id, layerId = params.layerId, parent = parentName,
                         name = cellName, pos = params.pos})
                 end
+
             end
 
-        elseif params.searchText:find(str) then
+        end
+
+        if params.searchText:find(str) then
             table.insert(res, {id = params.id, layerId = params.layerId,
                 name = params.searchLabel or params.text or params.searchText, pos = params.pos})
         end
