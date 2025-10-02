@@ -463,6 +463,8 @@ local function createMarker(self, params, onlyInitialize)
     end
 
     local function addZoomInOutData(id, layout)
+        if self.zoomMarkersCellIdById[id] then return end
+
         if params.showWhenZoomedIn then
             local cellId = layout.userData.cellId or cellLib.getCellIdByPos(params.pos)
             self.zoomInMarkers[cellId] = self.zoomInMarkers[cellId] or {}
@@ -473,7 +475,6 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedIn = true
             layout.userData.cellId = cellId
-            params.showWhenZoomedIn = false
             table.insert(self.activeZoomMarkers, {id, params.layerId})
         end
         if params.showWhenZoomedOut then
@@ -486,7 +487,6 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedOut = true
             layout.userData.cellId = cellId
-            params.showWhenZoomedOut = false
             table.insert(self.activeZoomMarkers, {id, params.layerId})
         end
     end
