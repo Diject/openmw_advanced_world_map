@@ -215,6 +215,48 @@ function menuMeta:createMarkers()
 end
 
 
+---@return boolean
+function menuMeta:openWidget(id)
+    local widget = self.widgets[id]
+    if not widget then return false end
+
+    if self.activeWidgetId == id then
+        if widget.params.onClose then widget.params.onClose() end
+        self.widgetWindowLayout.content = ui.content{}
+        self.activeWidgetId = nil
+    else
+        if self.activeWidgetId then
+            local widgetData = self.widgets[self.activeWidgetId]
+            if widgetData and widgetData.params.onClose then
+                widgetData.params.onClose()
+            end
+            self.widgetWindowLayout.content = ui.content{}
+            self.activeWidgetId = nil
+        end
+
+        if widget.params.onOpen then widget.params.onOpen(self.widgetWindowLayout.content) end
+        self.activeWidgetId = id
+    end
+
+    self:updateMapWidgetWidth()
+    return true
+end
+
+
+function menuMeta:closeActiveWidget()
+    if not self.activeWidgetId then return end
+
+    local widgetData = self.widgets[self.activeWidgetId]
+    if widgetData and widgetData.params.onClose then
+        widgetData.params.onClose()
+    end
+    self.widgetWindowLayout.content = ui.content{}
+    self.activeWidgetId = nil
+
+    self:updateMapWidgetWidth()
+end
+
+
 ---@class advancedWorldMap.ui.menu.addHeaderElement.params
 ---@field id string
 ---@field layout table
@@ -247,25 +289,7 @@ function menuMeta:addWidget(params)
             if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
 
             if pressed then
-                if self.activeWidgetId == params.id then
-                    if params.onClose then params.onClose() end
-                    self.widgetWindowLayout.content = ui.content{}
-                    self.activeWidgetId = nil
-                else
-                    if self.activeWidgetId then
-                        local widgetData = self.widgets[self.activeWidgetId]
-                        if widgetData and widgetData.params.onClose then
-                            widgetData.params.onClose()
-                        end
-                        self.widgetWindowLayout.content = ui.content{}
-                        self.activeWidgetId = nil
-                    end
-
-                    if params.onOpen then params.onOpen(self.widgetWindowLayout.content) end
-                    self.activeWidgetId = params.id
-                end
-
-                self:updateMapWidgetWidth()
+                self:openWidget(params.id)
                 self:update()
             end
             pressed = false
@@ -526,6 +550,8 @@ function this.create(params)
                         local lastPos = layout.userData.lastMousePos
                         if not lastPos then return end
 
+                        meta:closeActiveWidget()
+
                         local posDif = util.vector2(e.position.x - lastPos.x, e.position.y - lastPos.y)
                         local minSize = util.vector2(100, 100)
 
@@ -545,6 +571,11 @@ function this.create(params)
 
                         config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
                         config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
+
+                        eventSys.triggerEvent(eventSys.events["onResized"], {
+                            menuSize = size,
+                            mapWidgetSize = newSize
+                        })
 
                         meta:update()
 

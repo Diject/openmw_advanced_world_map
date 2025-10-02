@@ -15,6 +15,7 @@ this.events = {
     ["onFocusLoss"] = "onFocusLoss",
     ["onMouseMove"] = "onMouseMove",
     ["onRightMouseMenu"] = "onRightMouseMenu",
+    ["onResized"] = "onResized"
 }
 
 
