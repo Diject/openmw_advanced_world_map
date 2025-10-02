@@ -76,6 +76,11 @@ function mapElementMeta:setColor(color)
 end
 
 
+function mapElementMeta:getUserData()
+    return self._elemLayout.userData.userData
+end
+
+
 ---@return string
 function mapElementMeta:getId()
     return self._id

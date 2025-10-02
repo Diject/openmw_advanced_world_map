@@ -423,6 +423,7 @@ local createMarkerFuncCache = {}
 ---@field useCache boolean?
 ---@field searchText string? lowercase
 ---@field searchLabel string?
+---@field userData table?
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@field layerId integer
@@ -443,6 +444,7 @@ local createMarkerFuncCache = {}
 ---@field useCache boolean?
 ---@field searchText string? lowercase
 ---@field searchLabel string?
+---@field userData table?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
@@ -568,6 +570,7 @@ local function createMarker(self, params, onlyInitialize)
             fontSize = params.text and fontSize,
             size = params.texture and size,
             params = params,
+            userData = params.userData,
         },
         events = {
             focusLoss = async:callback(function(e, layout)
