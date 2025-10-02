@@ -832,6 +832,24 @@ function mapWidgetMeta:closeRightMouseMenu()
 end
 
 
+function mapWidgetMeta:setLayerVisibility(layerId, visible)
+    local layout = self:getLayerLayout(layerId)
+    if layout then
+        layout.props.visible = visible
+        return true
+    end
+    return false
+end
+
+---@return boolean?
+function mapWidgetMeta:getLayerVisibility(layerId)
+    local layout = self:getLayerLayout(layerId)
+    if layout then
+        return layout.props.visible
+    end
+end
+
+
 
 ---@class advancedWorldMap.ui.mapWidget.params
 ---@field size any
