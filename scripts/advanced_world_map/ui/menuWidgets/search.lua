@@ -50,7 +50,7 @@ end
 
 
 ---@param menu advancedWorldMap.ui.menu.map
----@return {id : string, layerId : integer, name : string, pos : {x : number, y : number}, dist : number?, parent : string?}[]
+---@return {id : string, layerId : integer, name : string, pos : {x : number, y : number}, dist : number?, parent : string?, priority : number}[]
 local function getResults(menu, str, hideUnrevealed, inAllInteriors)
     str = stringLib.utf8_lower(str)
 
@@ -58,7 +58,7 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
 
     local addedHashset = {}
 
-    local function add(params)
+    local function add(params, priority)
 
         if inAllInteriors and params.userData and params.userData.cellId then
 
@@ -68,7 +68,7 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
                     local parentName = params.searchLabel or params.text or params.searchText
 
                     table.insert(res, {id = params.id, layerId = params.layerId, parent = parentName,
-                        name = cellName, pos = params.pos})
+                        name = cellName, pos = params.pos, priority = priority or 0})
                 end
 
             end
@@ -76,12 +76,12 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
         end
 
         if params.searchText:find(str) then
-            table.insert(res, {id = params.id, layerId = params.layerId,
+            table.insert(res, {id = params.id, layerId = params.layerId, priority = priority or 0,
                 name = params.searchLabel or params.text or params.searchText, pos = params.pos})
         end
     end
 
-    for _, content in ipairs({
+    for i, content in ipairs({
                 menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.region).content,
                 menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.map).content,
                 menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.marker).content,
@@ -98,7 +98,7 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
                 or hideUnrevealed and params.visible == false then goto continue end
 
             addedHashset[params] = true
-            add(params)
+            add(params, i)
 
             ::continue::
         end
@@ -110,7 +110,7 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
                 if not dt.params.searchText or not dt.params.pos or hideUnrevealed and dt.params.visible == false
                         or addedHashset[dt.params] then goto continue end
 
-                add(dt.params)
+                add(dt.params, dt.params.showWhenZoomedOut and 2 or dt.params.showWhenZoomedIn and 3 or 4)
 
                 ::continue::
             end
@@ -174,6 +174,10 @@ local function create(menu)
 
             table.sort(results, function (a, b)
                 return a.dist < b.dist
+            end)
+        else
+            table.sort(results, function (a, b)
+                return a.priority < b.priority
             end)
         end
 
