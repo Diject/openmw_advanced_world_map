@@ -249,6 +249,7 @@ local function create(menu)
                                 size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
                                 color = config.data.ui.selectionColor
                             })
+                            menu:update()
                         end
                     end),
                 },
