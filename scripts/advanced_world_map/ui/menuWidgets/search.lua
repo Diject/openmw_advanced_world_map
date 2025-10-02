@@ -10,6 +10,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 
+local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
 
@@ -253,9 +254,21 @@ local function create(menu)
         scrollBoxMeta:setContentHeight(height)
     end
 
-    local sortByDistance = false
-    local hideUnrevealed = false
+    local sortByDistance = localStorage.data[commonData.sortByDistanceFieldId] ~= nil and localStorage.data[commonData.sortByDistanceFieldId] or false
+
+    local hideUnrevealed
+    if localStorage.data[commonData.hideUnrevealedFieldId] ~= nil then
+        hideUnrevealed = localStorage.data[commonData.hideUnrevealedFieldId]
+    else
+        hideUnrevealed = config.data.legend.onlyDiscovered
+    end
+
     local searchInInteriors = false
+    if localStorage.data[commonData.searchInInteriorsFieldId] ~= nil then
+        searchInInteriors = localStorage.data[commonData.searchInInteriorsFieldId]
+    else
+        searchInInteriors = true
+    end
 
     local sortByDistanceCBLayout = checkBox{
         updateFunc = menu.update,
@@ -265,6 +278,7 @@ local function create(menu)
         checked = sortByDistance,
         event = function (checked, layout)
             sortByDistance = checked
+            localStorage.data[commonData.sortByDistanceFieldId] = checked
             fill(sortByDistance, hideUnrevealed, searchInInteriors)
         end
     }
@@ -274,8 +288,10 @@ local function create(menu)
         text = l10n("hideUnrevealed"),
         textSize = config.data.ui.fontSize * 0.9,
         position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
+        checked = hideUnrevealed,
         event = function (checked, layout)
             hideUnrevealed = checked
+            localStorage.data[commonData.hideUnrevealedFieldId] = checked
             fill(sortByDistance, hideUnrevealed, searchInInteriors)
         end
     }
@@ -285,8 +301,10 @@ local function create(menu)
         text = l10n("searchInAllInteriors"),
         textSize = config.data.ui.fontSize * 0.9,
         position = util.vector2(2, config.data.ui.fontSize * 3 + 15),
+        checked = searchInInteriors,
         event = function (checked, layout)
             searchInInteriors = checked
+            localStorage.data[commonData.searchInInteriorsFieldId] = checked
             fill(sortByDistance, hideUnrevealed, searchInInteriors)
         end
     }

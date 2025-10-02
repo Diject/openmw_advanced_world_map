@@ -17,9 +17,13 @@ this.mapMenuId = "__MAP__"
 
 this.globalDataStorageName = "AdvancedWorldMap:globalDataStorage"
 
+-- local storage
 this.lastZoomFieldId = "lastZoomValue"
-
 this.discoveredLocsFieldId = "discoveredLocationsHashSet"
+this.sortByDistanceFieldId = "searchSortByDistance"
+this.hideUnrevealedFieldId = "searchHideUnrevealed"
+this.searchInInteriorsFieldId = "searchSearchInInteriors"
+
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
 this.mapWidgetHeaderLayoutId = "__MAP:WIDGETHEADERLAYOUT__"
