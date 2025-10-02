@@ -152,6 +152,7 @@ function menuMeta:createMarkers()
                 visible = isCellDiscovered,
                 searchText = stringLib.utf8_lower(dt.fullName),
                 searchLabel = dt.fullName,
+                userData = {cellId = dt.id}
             }
             if imageMarkerHandler then
                 table.insert(markersByCellId[cellId], imageMarkerHandler)

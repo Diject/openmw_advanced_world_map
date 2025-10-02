@@ -10,6 +10,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 
+local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
@@ -26,14 +27,52 @@ local l10n = core.l10n(commonData.l10nKey)
 local searchIcoTexture = ui.texture{ path = commonData.searchWidgetIcon }
 
 
+---@return table<string, string> res by cell id - cell name
+local function getAvailableCellNamesFromInterior(cellId, checked)
+    checked = checked or {}
+
+    if checked[cellId] then return checked end
+
+    for destId, destDt in pairs(dynamicDataHandler.cellDirections[cellId] or {}) do
+        if not checked[destId] then
+            checked[destId] = destDt.name
+            if not destDt.isEx then
+                getAvailableCellNamesFromInterior(destId, checked)
+            end
+        end
+    end
+
+    return checked
+end
+
+
 ---@param menu advancedWorldMap.ui.menu.map
----@return {id : string, layerId : integer, name : string, pos : {x : number, y : number}, dist : number?}[]
-local function getResults(menu, str, hideUnrevealed)
+---@return {id : string, layerId : integer, name : string, pos : {x : number, y : number}, dist : number?, parent : string?}[]
+local function getResults(menu, str, hideUnrevealed, inAllInteriors)
     str = stringLib.utf8_lower(str)
 
     local res = {}
 
     local addedHashset = {}
+
+    local function add(params)
+
+        if inAllInteriors and params.userData and params.userData.cellId then
+            for _, cellName in pairs(getAvailableCellNamesFromInterior(params.userData.cellId)) do
+                local lower = stringLib.utf8_lower(cellName)
+                if lower:find(str) then
+                    local parentName = params.searchLabel or params.text or params.searchText
+
+                    table.insert(res, {id = params.id, layerId = params.layerId, parent = parentName,
+                        name = cellName, pos = params.pos})
+                end
+            end
+
+        elseif params.searchText:find(str) then
+            table.insert(res, {id = params.id, layerId = params.layerId,
+                name = params.searchLabel or params.text or params.searchText, pos = params.pos})
+        end
+    end
 
     for _, content in ipairs({
                 menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.region).content,
@@ -52,7 +91,7 @@ local function getResults(menu, str, hideUnrevealed)
                 or hideUnrevealed and params.visible == false then goto continue end
 
             addedHashset[params] = true
-            table.insert(res, {id = params.id, layerId = params.layerId, name = params.searchLabel or params.text or params.searchText, pos = params.pos})
+            add(params)
 
             ::continue::
         end
@@ -61,12 +100,10 @@ local function getResults(menu, str, hideUnrevealed)
     for _, tb in pairs({menu.mapWidget.zoomOutMarkers, menu.mapWidget.zoomInMarkers}) do
         for _, cellData in pairs(tb) do
             for _, dt in pairs(cellData) do
-                if not dt.params.searchText or not dt.params.pos or not dt.params.searchText:find(str)
-                        or hideUnrevealed and dt.params.visible == false
+                if not dt.params.searchText or not dt.params.pos or hideUnrevealed and dt.params.visible == false
                         or addedHashset[dt.params] then goto continue end
 
-                table.insert(res, {id = dt.params.id, layerId = dt.params.layerId,
-                    name = dt.params.searchLabel or dt.params.text or dt.params.searchText, pos = dt.params.pos})
+                add(dt.params)
 
                 ::continue::
             end
@@ -99,14 +136,14 @@ local function create(menu)
 
     local scrollBoxContent = ui.content{}
 
-    local scrollBoxSize = util.vector2(size.x, size.y - config.data.ui.fontSize * 4 - 6)
+    local scrollBoxSize = util.vector2(size.x, size.y - config.data.ui.fontSize * 5 - 6)
 
     local scrollBoxLayout = scrollBox{
         updateFunc = menu.update,
         contentHeight = 0,
         leftOffset = 2,
         size = scrollBoxSize,
-        position = util.vector2(0, config.data.ui.fontSize * 4 + 4),
+        position = util.vector2(0, config.data.ui.fontSize * 5 + 4),
         scrollAmount = config.data.ui.fontSize * 2,
         content = scrollBoxContent,
     }
@@ -116,12 +153,12 @@ local function create(menu)
 
     local textFilter = ""
 
-    local function fill(sortByDistance, hideUnrevealed)
+    local function fill(sortByDistance, hideUnrevealed, searchInInteriors)
         uiUtils.clearContent(scrollBoxContent)
 
         if textFilter == "" then return end
 
-        local results = getResults(menu, textFilter, hideUnrevealed)
+        local results = getResults(menu, textFilter, hideUnrevealed, searchInInteriors)
 
         if sortByDistance then ---@diagnostic disable-line: need-check-nil
             for _, res in pairs(results) do
@@ -136,7 +173,12 @@ local function create(menu)
         local height = 0
 
         for _, dt in ipairs(results) do
-            local text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+            local text
+            if dt.parent and dt.parent ~= dt.name then
+                text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), dt.parent, dt.pos.x, dt.pos.y)
+            else
+                text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+            end
 
             local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
 
@@ -201,16 +243,17 @@ local function create(menu)
 
     local sortByDistance = false
     local hideUnrevealed = false
+    local searchInInteriors = false
 
     local sortByDistanceCBLayout = checkBox{
         updateFunc = menu.update,
         text = l10n("sortByDistance"),
         textSize = config.data.ui.fontSize * 0.9,
-        position = util.vector2(2, config.data.ui.fontSize + 6),
+        position = util.vector2(2, config.data.ui.fontSize + 9),
         checked = sortByDistance,
         event = function (checked, layout)
             sortByDistance = checked
-            fill(sortByDistance, hideUnrevealed)
+            fill(sortByDistance, hideUnrevealed, searchInInteriors)
         end
     }
 
@@ -218,10 +261,21 @@ local function create(menu)
         updateFunc = menu.update,
         text = l10n("hideUnrevealed"),
         textSize = config.data.ui.fontSize * 0.9,
-        position = util.vector2(2, config.data.ui.fontSize * 2 + 9),
+        position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
         event = function (checked, layout)
             hideUnrevealed = checked
-            fill(sortByDistance, hideUnrevealed)
+            fill(sortByDistance, hideUnrevealed, searchInInteriors)
+        end
+    }
+
+        local searchInInteriorsCBLayout = checkBox{
+        updateFunc = menu.update,
+        text = l10n("searchInAllInteriors"),
+        textSize = config.data.ui.fontSize * 0.9,
+        position = util.vector2(2, config.data.ui.fontSize * 3 + 15),
+        event = function (checked, layout)
+            searchInInteriors = checked
+            fill(sortByDistance, hideUnrevealed, searchInInteriors)
         end
     }
 
@@ -250,7 +304,7 @@ local function create(menu)
                     keyRelease = async:callback(function(e, layout)
                         if e.code == input.KEY.Enter then
                             searchBarLayout.content[1].props.text = textFilter
-                            fill(sortByDistance, hideUnrevealed)
+                            fill(sortByDistance, hideUnrevealed, searchInInteriors)
                             menu:update()
                         end
                     end),
@@ -267,7 +321,7 @@ local function create(menu)
                 anchor = util.vector2(1, 0.5),
                 position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
                 event = function (layout)
-                    fill(sortByDistance, hideUnrevealed)
+                    fill(sortByDistance, hideUnrevealed, searchInInteriors)
                 end
             },
             borders()
@@ -296,6 +350,7 @@ local function create(menu)
             },
             sortByDistanceCBLayout,
             hideUnrevealedCBLayout,
+            searchInInteriorsCBLayout,
             searchBarLayout,
             scrollBoxLayout,
             borders()

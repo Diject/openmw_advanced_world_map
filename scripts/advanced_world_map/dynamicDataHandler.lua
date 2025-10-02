@@ -16,8 +16,12 @@ this.cellNameData = nil
 this.regionNameData = nil
 ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]> by cell id
 this.entrances = nil
----@type table<string, table<string, string>> by cell id, by destination cell id - destination cell name
+---@type table<string, table<string, advancedWorldMap.dynamicDataHandler.cellDirectionData>> by cell id, by destination cell id - destination cell data
 this.cellDirections = nil
+
+---@class advancedWorldMap.dynamicDataHandler.cellDirectionData
+---@field name string
+---@field isEx boolean
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
 ---@field posX number
@@ -245,7 +249,12 @@ local function buildData()
         for _, door in pairs(doors) do
             if not types.Door.isTeleport(door) then goto continue end
             local dest = types.Door.destCell(door)
-            cellDirections[cell.id][dest.id] = dest.name
+
+            if dest.isExterior then
+                cellDirections[cell.id][dest.id] = {name = dest.name == "" and getRegionName(dest.region) or dest.name, isEx = dest.isExterior}
+            else
+                cellDirections[cell.id][dest.id] = {name = dest.name, isEx = dest.isExterior}
+            end
 
             ::continue::
         end
