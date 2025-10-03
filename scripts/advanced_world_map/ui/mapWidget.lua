@@ -102,32 +102,36 @@ mapWidgetMeta.getUniqueId = function (self)
 end
 
 
-function mapWidgetMeta:getMapImageWidget()
+function mapWidgetMeta:getMapLayersLayout()
     return self.layout.content[2]
 end
 
 function mapWidgetMeta:getLayerLayout(id)
-    return self:getMapImageWidget().content[id]
+    if id == this.layerId.map or id == this.layerId.player then
+        return self:getMapLayersLayout().content[id]
+    else
+        return self.layers[id - 1]
+    end
 end
 
 function mapWidgetMeta:getMapLayout()
-    return self:getMapImageWidget().content[1]
+    return self:getLayerLayout(this.layerId.map)
 end
 
 function mapWidgetMeta:getRegionLayout()
-    return self:getMapImageWidget().content[2]
+    return self:getLayerLayout(this.layerId.region)
 end
 
 function mapWidgetMeta:getNameLayout()
-    return self:getMapImageWidget().content[3]
+    return self:getLayerLayout(this.layerId.name)
 end
 
 function mapWidgetMeta:getMarkerLayout()
-    return self:getMapImageWidget().content[6]
+    return self:getLayerLayout(this.layerId.marker)
 end
 
 function mapWidgetMeta:getPlayerLayout()
-    return self:getMapImageWidget().content[4]
+    return self:getLayerLayout(this.layerId.player)
 end
 
 
@@ -162,7 +166,7 @@ end
 function mapWidgetMeta:getRelativePositionOfCursor()
     local main = self.layout
     local mouseOffset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset
-    local widget = self:getMapImageWidget()
+    local widget = self:getMapLayersLayout()
     local mapPos = widget.props.position
     local mapSize = widget.props.size
 
@@ -207,7 +211,7 @@ end
 
 ---@return advancedWorldMap.ui.mapWidget.region rect
 function mapWidgetMeta:getVisibleMapRect()
-    local widget = self:getMapImageWidget()
+    local widget = self:getMapLayersLayout()
     local mapPos = widget.props.position
     local mapSize = widget.props.size
     local mainSize = self.layout.props.size
@@ -309,7 +313,7 @@ end
 
 
 local function setZoom(self, zoom, relativePos)
-    local widget = self:getMapImageWidget()
+    local widget = self:getMapLayersLayout()
 
     local oldZoom = self.zoom
     local oldSize = util.vector2(self.mapInfo.width * oldZoom, self.mapInfo.height * oldZoom)
@@ -355,7 +359,7 @@ end
 
 
 function mapWidgetMeta:focusOnWorldPosition(worldPos)
-    local widget = self:getMapImageWidget()
+    local widget = self:getMapLayersLayout()
     local mainSize = self.layout.props.size
 
     local relPos = self:getRelativePositionByWorldPosition(worldPos)
@@ -803,7 +807,10 @@ end
 ---@param focusOnPlayer boolean?
 ---@return boolean
 function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
-    local playerMarkerLayout = self:getPlayerLayout().content[1]
+    local lay = self:getPlayerLayout()
+    if lay.props.visible == false then return false end
+
+    local playerMarkerLayout = lay.content[1]
     local exPos = playerPos.gexExteriorPos()
     local dist = (playerMarkerLayout.userData.lastPos - exPos):length()
 
@@ -837,20 +844,44 @@ function mapWidgetMeta:closeRightMouseMenu()
 end
 
 
+local function getDefaultLayerLayout()
+    return {
+        type = ui.TYPE.Widget,
+        props = {
+            position = util.vector2(0, 0),
+            relativeSize = util.vector2(1, 1),
+            visible = false,
+        },
+        userData = {},
+        content = ui.content {
+
+        },
+    }
+end
+
+
 function mapWidgetMeta:setLayerVisibility(layerId, visible)
     local layout = self:getLayerLayout(layerId)
-    if layout then
+
+    if not layout then return false end
+
+    if layerId == this.layerId.map or layerId == this.layerId.player then
         layout.props.visible = visible
-        return true
+    else
+        if visible then
+            self:getMapLayersLayout().content[layerId] = self.layers[layerId - 1]
+        else
+            self:getMapLayersLayout().content[layerId] = getDefaultLayerLayout()
+        end
     end
-    return false
+    return true
 end
 
 ---@return boolean?
 function mapWidgetMeta:getLayerVisibility(layerId)
     local layout = self:getLayerLayout(layerId)
     if layout then
-        return layout.props.visible
+        return layout.props.visible ~= false
     end
 end
 
@@ -903,6 +934,85 @@ function this.new(params)
     meta.update = function(self)
         params.updateFunc()
     end
+
+    meta.layers = {
+        -- for region names
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+        -- for city names
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+        -- player marker
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
+                        resource = playerMarker.getTexture() or playerMarkerTexture,
+                        size = util.vector2(32, 32),
+                        anchor = util.vector2(0.5, 0.5),
+                        color = config.data.ui.defaultColor,
+                        visible = true,
+                        alpha = 0.6,
+                    },
+                    userData = {
+                        size = util.vector2(32, 32),
+                        lastPos = playerPos.gexExteriorPos(),
+                        lastYaw = playerRef.rotation:getYaw()
+                    },
+                },
+            },
+        },
+        -- for noninteractive markers
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+        -- for interactive markers
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+    }
 
     local main
     main = {
@@ -1011,7 +1121,7 @@ function this.new(params)
 
                 if not main.userData.lastMousePos then return end
 
-                local props = meta:getMapImageWidget().props
+                local props = meta:getMapLayersLayout().props
                 local mainSize = main.props.size
                 local mapSize = props.size
 
@@ -1070,82 +1180,7 @@ function this.new(params)
                             },
                         },
                     },
-                    -- for region names
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            position = util.vector2(0, 0),
-                            relativeSize = util.vector2(1, 1),
-                        },
-                        userData = {},
-                        content = ui.content {
-
-                        },
-                    },
-                    -- for city names
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            position = util.vector2(0, 0),
-                            relativeSize = util.vector2(1, 1),
-                        },
-                        userData = {},
-                        content = ui.content {
-
-                        },
-                    },
-                    -- player marker
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            position = util.vector2(0, 0),
-                            relativeSize = util.vector2(1, 1),
-                        },
-                        userData = {},
-                        content = ui.content {
-                            {
-                                type = ui.TYPE.Image,
-                                props = {
-                                    relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
-                                    resource = playerMarker.getTexture() or playerMarkerTexture,
-                                    size = util.vector2(32, 32),
-                                    anchor = util.vector2(0.5, 0.5),
-                                    color = config.data.ui.defaultColor,
-                                    visible = true,
-                                    alpha = 0.6,
-                                },
-                                userData = {
-                                    size = util.vector2(32, 32),
-                                    lastPos = playerPos.gexExteriorPos(),
-                                    lastYaw = playerRef.rotation:getYaw()
-                                },
-                            },
-                        },
-                    },
-                    -- for noninteractive markers
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            position = util.vector2(0, 0),
-                            relativeSize = util.vector2(1, 1),
-                        },
-                        userData = {},
-                        content = ui.content {
-
-                        },
-                    },
-                    -- for interactive markers
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            position = util.vector2(0, 0),
-                            relativeSize = util.vector2(1, 1),
-                        },
-                        userData = {},
-                        content = ui.content {
-
-                        },
-                    },
+                    table.unpack(meta.layers)
                 }
             }
         }
