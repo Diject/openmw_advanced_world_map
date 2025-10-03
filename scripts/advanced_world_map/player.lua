@@ -28,6 +28,7 @@ local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 
 -- widgets
+require("scripts.advanced_world_map.ui.menuWidgets.legend")
 require("scripts.advanced_world_map.ui.menuWidgets.search")
 
 local l10n = core.l10n(commonData.l10nKey)

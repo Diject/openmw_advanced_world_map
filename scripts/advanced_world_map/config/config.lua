@@ -18,9 +18,17 @@ this.default = {
             x = 15,
             y = 15,
         },
+        centerOnPlayer = true,
     },
     legend = {
         onlyDiscovered = true,
+        visibility = {
+            regions = true,
+            cities = true,
+            playerMarker = true,
+            labels = true,
+            markers = true,
+        }
     },
     tileset = {
         onlyDiscovered = false,
