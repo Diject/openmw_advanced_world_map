@@ -350,6 +350,8 @@ function this.create(params)
     local mainSize = util.vector2(meta.size.x, meta.size.y - headerHeight)
     meta.mainSize = mainSize
 
+    meta.centerOnPlayer = false
+
     ---@type table<string, {layout : table, params : advancedWorldMap.ui.menu.addHeaderElement.params}>
     menuMeta.widgets = {}
     ---@type string?
@@ -475,6 +477,8 @@ function this.create(params)
     ---@type advancedWorldMap.ui.mapWidgetMeta
     meta.mapWidget = mapMeta ---@diagnostic disable-line: assign-type-mismatch
     meta.mapWidget:setUpdateFunction(meta.update)
+
+    meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer)
 
     if not markersInitialized then
         meta:createMarkers()
@@ -635,7 +639,7 @@ function this.create(params)
     local func
     func = function ()
         if meta.menu.layout then
-            if meta.mapWidget:updatePlayerMarker() then
+            if meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer) then
                 meta:update()
             end
             async:newUnsavableSimulationTimer(0.15, func)

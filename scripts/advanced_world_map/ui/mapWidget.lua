@@ -800,8 +800,9 @@ end
 
 
 
+---@param focusOnPlayer boolean?
 ---@return boolean
-function mapWidgetMeta:updatePlayerMarker()
+function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
     local playerMarkerLayout = self:getPlayerLayout().content[1]
     local exPos = playerPos.gexExteriorPos()
     local dist = (playerMarkerLayout.userData.lastPos - exPos):length()
@@ -816,6 +817,10 @@ function mapWidgetMeta:updatePlayerMarker()
     playerMarkerLayout.props.resource = playerMarker.getTexture() or playerMarkerTexture
     playerMarkerLayout.userData.lastPos = exPos
     playerMarkerLayout.userData.lastYaw = yaw
+
+    if focusOnPlayer then
+        self:focusOnWorldPosition(exPos)
+    end
 
     return true
 end
