@@ -37,7 +37,7 @@ local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 
 local mapTexture
 
-local zoomInOffsetInWorldCoord = 24576
+local zoomInOffsetInWorldCoord = 16384
 local zoomOutOffsetInWorldCoord = 24576
 
 
