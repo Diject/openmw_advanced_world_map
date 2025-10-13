@@ -21,7 +21,7 @@ this.default = {
         centerOnPlayer = true,
     },
     legend = {
-        onlyDiscovered = true,
+        onlyDiscovered = false,
         visibility = {
             regions = true,
             cities = true,
@@ -32,6 +32,11 @@ this.default = {
     },
     tileset = {
         onlyDiscovered = false,
+    },
+    fastTravel = {
+        onlyDiscovered = false,
+        baseMagickaCost = 80,
+        additionalCost = 2,
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],

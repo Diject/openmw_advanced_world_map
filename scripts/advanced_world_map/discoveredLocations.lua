@@ -10,8 +10,12 @@ local this = {}
 ---@type table<string, boolean> by cell id or cell name
 this.visited = nil
 
+this.blockDiscovery = false
+
 
 function this.addCell(cell)
+    if this.blockDiscovery then return end
+
     if cell.isExterior then
         for i = -1, 1 do
             for j = -1, 1 do

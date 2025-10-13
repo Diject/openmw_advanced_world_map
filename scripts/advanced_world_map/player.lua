@@ -8,6 +8,8 @@ local I = require('openmw.interfaces')
 local util = require('openmw.util')
 local storage = require('openmw.storage')
 local types = require("openmw.types")
+local debug = require('openmw.debug')
+local ambient = require('openmw.ambient')
 
 local log = require("scripts.advanced_world_map.utils.log")
 
@@ -27,12 +29,16 @@ local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 
+local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
+
 -- widgets
 require("scripts.advanced_world_map.ui.menuWidgets.legend")
 require("scripts.advanced_world_map.ui.menuWidgets.search")
+require("scripts.advanced_world_map.ui.menuWidgets.fastTravel")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+local fightingActors = {}
 
 
 local function onInit()
@@ -67,6 +73,19 @@ end
 
 local function onMouseButtonRelease(buttonId)
     menuHandler.onMouseReleaseCallback(buttonId)
+end
+
+
+local function onCombatTargetsChanged(eventData)
+    pcall(function ()
+        if eventData.actor == nil then return end
+
+        if next(eventData.targets) ~= nil then
+            fightingActors[eventData.actor.id] = true
+        else
+            fightingActors[eventData.actor.id] = nil
+        end
+    end)
 end
 
 
@@ -130,15 +149,69 @@ return {
     },
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
-        UiModeChanged = function()
-            discoveredLocs.addCell(self.cell)
-            mapMenu.updateDiscoveredForCell(self.cell)
-            if mapMenu.cachedMapWidgetMetatable then
-                mapMenu.cachedMapWidgetMetatable:updateOnZoomMarkers()
+        UiModeChanged = function(e)
+            if e.oldMode == "Loading" then
+                discoveredLocs.addCell(self.cell)
+                mapMenu.updateDiscoveredForCell(self.cell)
+                if mapMenu.cachedMapWidgetMetatable then
+                    mapMenu.cachedMapWidgetMetatable:updateOnZoomMarkers()
+                end
             end
         end,
+
+        OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
+
         ["AdvWMap:updateMapData"] = function (data)
             dynamicDataHandler.load(data)
+        end,
+
+        ["AdvWMap:showMessage"] = function (str)
+            ui.showMessage(str)
+        end,
+
+        ["AdvWMap:playSound"] = function (data)
+            ambient.playSound(data.soundId, {})
+        end,
+
+        ["AdvWMap:fastTravelMessage"] = function (data)
+            if next(fightingActors) ~= nil and debug.isAIEnabled() then
+                ui.showMessage(l10n("fastTravelWhileInCombat"))
+                return
+            end
+
+            local cost = configLib.data.fastTravel.baseMagickaCost
+            if not self.cell.isExterior then
+                cost = cost * 1.5
+            end
+
+            cost = cost + (playerPos.gexExteriorPos() - types.Door.destPosition(data.targetDoor)):length() / 8192 * configLib.data.fastTravel.additionalCost
+            cost = math.floor(math.max(0, cost * (1.75 - types.NPC.stats.skills.mysticism(self).modified / 100)))
+
+            menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
+                message = data.message.."\n"..l10n("fastTraveMagickaCost"):format(cost),
+                relativeSize = util.vector2(0.25, 0.2),
+                yesCallback = function ()
+                    local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
+                    if currentMagicka < cost then
+                        ui.showMessage(l10n("NotEnoughMagicka"))
+                        return
+                    end
+
+                    types.Actor.stats.dynamic.magicka(self).current = currentMagicka - cost
+
+                    discoveredLocs.blockDiscovery = true
+                    core.sendGlobalEvent("AdvWMap:fastTravelTeleport", data)
+                    async:newUnsavableSimulationTimer(0.5, function ()
+                        discoveredLocs.blockDiscovery = false
+                    end)
+
+                    if I.SkillProgression then
+                        I.SkillProgression.skillUsed("mysticism", {
+                            useType = I.SkillProgression.SKILL_USE_TYPES.Spellcast_Success,
+                        })
+                    end
+                end,
+            })
         end,
     },
 }

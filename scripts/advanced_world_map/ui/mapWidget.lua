@@ -178,10 +178,9 @@ end
 
 
 function mapWidgetMeta:getWorldPositionByRelativePosition(relPos)
-    local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
-    local pixelSize = 8192 / zoomedPixPerCell
-    local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
-    local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+    local pixelSize = 8192 / self.mapInfo.pixelsPerCell
+    local xOffset = self.mapInfo.gridX.min * self.mapInfo.pixelsPerCell
+    local yOffset = (self.mapInfo.gridY.max + 1) * self.mapInfo.pixelsPerCell
 
     return util.vector2(
         (relPos.x * self.mapInfo.width + xOffset) * pixelSize,
@@ -1044,7 +1043,12 @@ function this.new(params)
                     meta.layout.userData.hasActiveMenu = nil
                 end
 
-                if eventSys.triggerEvent(eventSys.events["onMousePress"], {e = e, marker = markerElement}) then
+                e.marker = markerElement
+                if markerElement then
+                    e.offset = main.userData.mainMouseOffset + e.offset
+                end
+
+                if eventSys.triggerEvent(eventSys.events["onMousePress"], e) then
                     main.userData.lastMousePos = nil
                     return
                 end
@@ -1055,7 +1059,11 @@ function this.new(params)
             end),
 
             mouseRelease = async:callback(function(e, layout, markerElement)
-                if eventSys.triggerEvent(eventSys.events["onMouseRelease"], {e = e, marker = markerElement}) then
+                e.marker = markerElement
+                if markerElement then
+                    e.offset = main.userData.mainMouseOffset + e.offset
+                end
+                if eventSys.triggerEvent(eventSys.events["onMouseRelease"], e) then
                     main.userData.lastMousePos = nil
                     return
                 end
@@ -1106,14 +1114,14 @@ function this.new(params)
             end),
 
             mouseMove = async:callback(function(e, layout, markerElement)
-                if e.offset then
+                if not markerElement then
                     main.userData.mainMouseOffset = e.offset
                     main.userData.additiveMouseOffset = util.vector2(0, 0)
                 end
                 main.userData.inFocus = true
 
                 if eventSys.triggerEvent(eventSys.events["onMouseMove"], {
-                        e = {position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset},
+                        position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset,
                         marker = markerElement}) then
                     main.userData.lastMousePos = nil
                     return

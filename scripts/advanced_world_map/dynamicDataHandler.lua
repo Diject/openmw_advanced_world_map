@@ -118,7 +118,7 @@ local function buildData()
 
         local doors = cell:getAll(types.Door)
         for _, door in pairs(doors) do
-            if not types.Door.isTeleport(door) then goto continue end
+            if not types.Door.isTeleport(door) or not door.enabled then goto continue end
 
             local dest = types.Door.destCell(door)
             if dest.isExterior then goto continue end
