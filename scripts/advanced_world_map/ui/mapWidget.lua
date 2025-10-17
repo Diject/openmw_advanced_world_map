@@ -35,7 +35,7 @@ local l10n = core.l10n(commonData.l10nKey)
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 
-local mapTexture
+local worldMapTexture
 
 local zoomInOffsetInWorldCoord = 16384
 local zoomOutOffsetInWorldCoord = 24576
@@ -107,11 +107,7 @@ function mapWidgetMeta:getMapLayersLayout()
 end
 
 function mapWidgetMeta:getLayerLayout(id)
-    if id == this.layerId.map or id == this.layerId.player then
-        return self:getMapLayersLayout().content[id]
-    else
-        return self.layers[id - 1]
-    end
+    return self.layers[id]
 end
 
 function mapWidgetMeta:getMapLayout()
@@ -290,7 +286,7 @@ end
 
 function mapWidgetMeta:updateOnZoomMarkers()
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
-    if self.zoom > 6 then
+    if self.cellId or self.zoom > 6 then
         visibleRect.bottom = visibleRect.bottom - zoomInOffsetInWorldCoord
         visibleRect.top = visibleRect.top + zoomInOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomInOffsetInWorldCoord
@@ -450,6 +446,7 @@ local createMarkerFuncCache = {}
 ---@field userData table?
 
 
+---@param self advancedWorldMap.ui.mapWidgetMeta
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@return string? id
 ---@return integer? layerId
@@ -766,37 +763,71 @@ end
 function mapWidgetMeta:placeGroundTextures(region)
     self:removeGroundTextures()
 
-    local minGridX = math.floor(region.left / 8192)
-    local maxGridX = math.ceil(region.right / 8192)
-    local minGridY = math.floor(region.bottom / 8192)
-    local maxGridY = math.ceil(region.top / 8192)
+    if self.localCellInfo then
+        local mapLayout = self:getMapLayout()
 
-    local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
-    local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
-    local tileSize = util.vector2(tileHeight, tileHeight)
+        local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+        local tileSize = util.vector2(tileHeight, tileHeight)
+        local startPos = self:getAbsolutePositionByWorldPosition(
+            util.vector2(
+                self.mapInfo.gridX.min * 8192,
+                self.mapInfo.gridY.min * 8192
+            )
+        )
 
-    local mapLayout = self:getMapLayout()
-    for x = 0, maxGridX - minGridX - 1 do
-        for y = 0, maxGridY - minGridY - 1 do
-            local texture = dataHandler.getLocalMapTexture(minGridX + x, minGridY + y)
+        for y = 1, self.localCellInfo.height do
+            for x = 1, self.localCellInfo.width do
+                local texture = (self.mapTexture[y] or {})[x]
+                if not texture then goto continue end
 
-            local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y)
-            local isDiscovered = not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+                local pos = util.vector2(startPos.x + tileHeight * (x - 1), startPos.y - tileHeight * (y - 1))
 
-            if not texture or not isDiscovered then goto continue end
-
-            local pos = util.vector2(startPos.x + tileHeight * x, startPos.y - tileHeight * y)
-
-            mapLayout.content:add{
-                type = ui.TYPE.Image,
-                props = {
-                    resource = texture,
-                    size = tileSize,
-                    position = pos
+                mapLayout.content:add{
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = texture,
+                        size = tileSize,
+                        position = pos
+                    }
                 }
-            }
 
-            ::continue::
+                ::continue::
+            end
+        end
+
+    else
+        local minGridX = math.floor(region.left / 8192)
+        local maxGridX = math.ceil(region.right / 8192)
+        local minGridY = math.floor(region.bottom / 8192)
+        local maxGridY = math.ceil(region.top / 8192)
+
+        local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
+        local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+        local tileSize = util.vector2(tileHeight, tileHeight)
+
+        local mapLayout = self:getMapLayout()
+        for x = 0, maxGridX - minGridX - 1 do
+            for y = 0, maxGridY - minGridY - 1 do
+                local texture = dataHandler.getLocalMapTexture(minGridX + x, minGridY + y)
+
+                local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y)
+                local isDiscovered = not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+
+                if not texture or not isDiscovered then goto continue end
+
+                local pos = util.vector2(startPos.x + tileHeight * x, startPos.y - tileHeight * y)
+
+                mapLayout.content:add{
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = texture,
+                        size = tileSize,
+                        position = pos
+                    }
+                }
+
+                ::continue::
+            end
         end
     end
 end
@@ -810,7 +841,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
     if lay.props.visible == false then return false end
 
     local playerMarkerLayout = lay.content[1]
-    local exPos = playerPos.gexExteriorPos()
+    local exPos = self.cellId and playerRef.position or playerPos.gexExteriorPos()
     local dist = (playerMarkerLayout.userData.lastPos - exPos):length()
 
     local yaw = playerRef.rotation:getYaw()
@@ -864,15 +895,12 @@ function mapWidgetMeta:setLayerVisibility(layerId, visible)
 
     if not layout then return false end
 
-    if layerId == this.layerId.map or layerId == this.layerId.player then
-        layout.props.visible = visible
+    if visible then
+        self:getMapLayersLayout().content[layerId] = self.layers[layerId]
     else
-        if visible then
-            self:getMapLayersLayout().content[layerId] = self.layers[layerId - 1]
-        else
-            self:getMapLayersLayout().content[layerId] = getDefaultLayerLayout()
-        end
+        self:getMapLayersLayout().content[layerId] = getDefaultLayerLayout()
     end
+
     return true
 end
 
@@ -892,21 +920,13 @@ end
 ---@field position any?
 ---@field relativePosition any?
 ---@field anchor any?
+---@field cellId string?
 ---@field updateFunc function
 
 ---@param params advancedWorldMap.ui.mapWidget.params
 ---@return table?
 ---@return advancedWorldMap.ui.mapWidgetMeta?
 function this.new(params)
-    if not mapTexture then
-        if not dataHandler.mapInfo or not dataHandler.mapImagePath then return end
-
-        local mapImagePath = dataHandler.mapImagePath
-
-        if not vfs.fileExists(mapImagePath) then return end
-
-        mapTexture = ui.texture{ path = mapImagePath }
-    end
 
     params.fontSize = params.fontSize or 18
 
@@ -914,8 +934,86 @@ function this.new(params)
     local meta = setmetatable({}, mapWidgetMeta)
 
     meta.params = params
-    meta.mapTexture = mapTexture
-    meta.mapInfo = dataHandler.mapInfo
+    meta.cellId = params.cellId
+
+    local mapLayout
+
+    if params.cellId then
+        local localCellInfo = dataHandler.getLocalCellInfo(params.cellId)
+        if not localCellInfo.mX then return end
+
+        local mapTextures = dataHandler.getLocalCellMapTextures(params.cellId)
+        if not mapTextures then return end
+
+        local width = localCellInfo.width * 256
+        local height = localCellInfo.height * 256
+
+        local mapInfo = {
+            width = width,
+            height = height,
+            pixelsPerCell = 256,
+            gridX = {
+                min = -localCellInfo.mX / 512,
+                max = -localCellInfo.mX / 512 + localCellInfo.width - 1,
+            },
+            gridY = {
+                min = (-localCellInfo.height - localCellInfo.mY / 512),
+                max = (-localCellInfo.height - localCellInfo.mY / 512) + localCellInfo.height - 1
+            },
+        }
+
+        meta.localCellInfo = localCellInfo
+        meta.mapTexture = mapTextures
+        meta.mapInfo = mapInfo
+        meta.northDirectionAngle = localCellInfo.nA or 0
+
+        mapLayout = {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content{
+                {
+                    type = ui.TYPE.Widget,
+                },
+            },
+        }
+
+    else
+        if not worldMapTexture then
+            if not dataHandler.mapInfo or not dataHandler.mapImagePath then return end
+
+            local mapImagePath = dataHandler.mapImagePath
+
+            if not vfs.fileExists(mapImagePath) then return end
+
+            worldMapTexture = ui.texture{ path = mapImagePath }
+        end
+
+        meta.mapTexture = worldMapTexture
+        meta.mapInfo = dataHandler.mapInfo
+
+        mapLayout = {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = worldMapTexture,
+                        relativeSize = util.vector2(1, 1),
+                    }
+                },
+            },
+        }
+    end
+
 
     ---@type table<string, table<string, {id : string, params : advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params}>> by cell id, by marker id
     meta.zoomInMarkers = {}
@@ -934,7 +1032,8 @@ function this.new(params)
         params.updateFunc()
     end
 
-    meta.layers = {
+    local mapLayers = {
+        mapLayout,
         -- for region names
         {
             type = ui.TYPE.Widget,
@@ -1013,6 +1112,8 @@ function this.new(params)
         },
     }
 
+    meta.layers = tableLib.copy(mapLayers)
+
     local main
     main = {
         type = ui.TYPE.Widget,
@@ -1087,11 +1188,11 @@ function this.new(params)
                             },
                         }
                         local layContent = lay.content
-
-                        eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
-                            cursorRelPos = relPos,
-                            content = layContent,
-                        })
+print(meta:getWorldPositionByRelativePosition(relPos))
+                        -- eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
+                        --     cursorRelPos = relPos,
+                        --     content = layContent,
+                        -- })
 
                         if #layContent > 0 then
                             interactiveLayout.content:add(lay)
@@ -1171,23 +1272,6 @@ function this.new(params)
                 },
                 userData = {},
                 content = ui.content {
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            position = util.vector2(0, 0),
-                            relativeSize = util.vector2(1, 1),
-                        },
-                        userData = {},
-                        content = ui.content {
-                            {
-                                type = ui.TYPE.Image,
-                                props = {
-                                    resource = meta.mapTexture,
-                                    relativeSize = util.vector2(1, 1),
-                                }
-                            },
-                        },
-                    },
                     table.unpack(meta.layers)
                 }
             }
