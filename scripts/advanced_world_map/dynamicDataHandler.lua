@@ -58,6 +58,7 @@ local function buildData()
     local world = require("openmw.world")
 
     local function getRegionName(id)
+        if not id then return "" end
         if not core.regions then return stringLib.capitalizeFirst(id) end
 
         local region = core.regions[id]
