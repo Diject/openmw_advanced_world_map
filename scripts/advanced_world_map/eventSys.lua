@@ -6,6 +6,8 @@ local this = {}
 
 this.events = {
     ["onMenuOpened"] = "onMenuOpened",
+    ["onMapInitialized"] = "onMapInitialized",
+    ["onMapShown"] = "onMapShown",
     ["onMarkerClick"] = "onMarkerClick",
     ["onMarkerClicked"] = "onMarkerClicked",
     ["onMarkerTooltipShow"] = "onMarkerTooltipShow",

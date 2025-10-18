@@ -38,7 +38,6 @@ local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 
 local this = {}
 
-local markersInitialized = false
 
 this.cachedMapWidgetLayout = {}
 this.cachedMapWidgetMetatable = {}
@@ -308,9 +307,11 @@ end
 ---@param cellId string?
 ---@return table? layout
 ---@return advancedWorldMap.ui.mapWidgetMeta? meta
+---@return boolean? isNew
 function menuMeta:getMapWidgetForCell(cellId)
     local cellKeyId = cellId or commonData.exteriorMapId
 
+    local isNew = false
     if not this.cachedMapWidgetLayout[cellKeyId] then
         this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId] = mapWidget.new{
             updateFunc = self.update,
@@ -318,11 +319,12 @@ function menuMeta:getMapWidgetForCell(cellId)
             position = util.vector2(0, 0),
             cellId = cellId
         }
+        isNew = true
     else
         this.cachedMapWidgetMetatable[cellKeyId]:setSize(self.mainSize)
     end
 
-    return this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId]
+    return this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId], isNew
 end
 
 
@@ -330,19 +332,25 @@ end
 ---@return boolean changed
 function menuMeta:updateMapWidgetCell(cellId)
     if cellId == commonData.exteriorMapId or cellId and cellId:find(commonData.exteriorCellLabel) then cellId = nil end
-    if self.mapWidget.cellId == cellId then return false end
+    if self.mapWidget and self.mapWidget.cellId == cellId then return false end
 
-    local lay, meta = self:getMapWidgetForCell(cellId)
+    local lay, meta, isNew = self:getMapWidgetForCell(cellId)
     if not lay or not meta then return false end
 
-    local oldZoom = self.mapWidget.zoom
+    local oldZoom = self.mapWidget and self.mapWidget.zoom or meta.zoom or 1
 
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
 
+    if isNew then
+        eventSys.triggerEvent(eventSys.events.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
+    end
+
     self.mapWidget:setUpdateFunction(self.update)
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
     self.mapWidget:setZoom(oldZoom)
+
+    eventSys.triggerEvent(eventSys.events.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
 
     return true
 end
@@ -507,20 +515,10 @@ function this.create(params)
         }
     }
 
-    local mapWidgetLayout, mapMeta = meta:getMapWidgetForCell()
-
-    ---@type advancedWorldMap.ui.mapWidgetMeta
-    meta.mapWidget = mapMeta ---@diagnostic disable-line: assign-type-mismatch
-    meta.mapWidget:setUpdateFunction(meta.update)
-
-    meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer)
-
-    if not markersInitialized then
+    eventSys.registerHandler(eventSys.events.onMapInitialized, function (e)
+        if e.cellId ~= nil then return end
         meta:createMarkers()
-        markersInitialized = true
-    end
-
-    meta.mapWidget:setZoom(meta.mapWidget.zoom)
+    end)
 
     meta.getWidgetWindowWidth = function (self)
         local widgetWindowWidth = 0
@@ -559,7 +557,9 @@ function this.create(params)
                 },
                 content = ui.content {
                     meta.widgetWindowLayout,
-                    mapWidgetLayout,
+                    {
+                        type = ui.TYPE.Widget,
+                    },
                 }
             },
             {
