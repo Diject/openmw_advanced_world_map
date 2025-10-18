@@ -2,6 +2,7 @@ local vfs = require("openmw.vfs")
 local markup = require("openmw.markup")
 local core = require("openmw.core")
 local ui = require("openmw.ui")
+local util = require("openmw.util")
 
 local log = require("scripts.advanced_world_map.utils.log")
 
@@ -20,6 +21,13 @@ local config = require("scripts.advanced_world_map.config.config")
 ---@field gridX {min : integer, max : integer}
 ---@field gridY {min : integer, max : integer}
 
+---@class advancedWorldMap.localCellInfo
+---@field mX integer?
+---@field mY integer
+---@field nA number
+---@field width integer
+---@field height integer
+
 local this = {}
 
 
@@ -29,6 +37,11 @@ this.mapImagePath = nil
 this.mapInfo = nil
 
 this.localMapTextureCache = {}
+
+this.localCellTextureCache = {}
+
+---@type table<string, advancedWorldMap.localCellInfo>
+this.localCellInfo = {}
 
 
 ---@return string?
@@ -106,7 +119,7 @@ end
 
 
 function this.getLocalMapTexture(gridX, gridY)
-    local path = string.format("%s%d,%d.png", commonData.localMapTexturesDir, gridX, gridY)
+    local path = string.format("%s(%d,%d).png", commonData.localMapTexturesDir, gridX, gridY)
 
     if this.localMapTextureCache[path] then return this.localMapTextureCache[path] end
 
@@ -116,6 +129,48 @@ function this.getLocalMapTexture(gridX, gridY)
     this.localMapTextureCache[path] = texture
 
     return texture
+end
+
+
+function this.getLocalCellInfo(cellId)
+    if this.localCellInfo[cellId] then
+        return this.localCellInfo[cellId]
+    end
+
+    local path = string.format("%s%s.yaml", commonData.localMapTexturesDir, cellId:gsub(":", ""))
+    if not vfs.fileExists(path) then
+        this.localCellInfo[cellId] = {} ---@diagnostic disable-line: missing-fields
+    else
+        this.localCellInfo[cellId] = markup.loadYaml(path)
+    end
+
+    return this.localCellInfo[cellId]
+end
+
+
+function this.getLocalCellMapTextures(cellId)
+    if this.localCellTextureCache[cellId] then
+        return this.localCellTextureCache[cellId]
+    end
+
+    local cellInfo = this.getLocalCellInfo(cellId)
+    if not cellInfo.mX then return end
+
+    local res = {}
+    for y = 1, cellInfo.height do
+        local arr = {}
+        for x = 1, cellInfo.width do
+            local path = string.format("%s%s [%d,%d].png", commonData.localMapTexturesDir, cellId:gsub(":", ""), x - 1, y - 1)
+            if not vfs.fileExists(path) then return end
+
+            local texture = ui.texture{ path = path, offset = util.vector2(1, 1), size = util.vector2(254, 254) }
+            arr[x] = texture
+        end
+        res[y] = arr
+    end
+
+    this.localCellTextureCache[cellId] = res
+    return res
 end
 
 

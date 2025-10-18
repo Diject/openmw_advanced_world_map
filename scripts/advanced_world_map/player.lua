@@ -150,11 +150,16 @@ return {
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
         UiModeChanged = function(e)
-            if e.oldMode == "Loading" then
+            if e.oldMode == "Loading" or e.oldMode == nil and e.newMode == nil then
                 discoveredLocs.addCell(self.cell)
                 mapMenu.updateDiscoveredForCell(self.cell)
-                if mapMenu.cachedMapWidgetMetatable then
-                    mapMenu.cachedMapWidgetMetatable:updateOnZoomMarkers()
+                local cellId = self.cell.isExterior and commonData.exteriorMapId or self.cell.id
+                if mapMenu.cachedMapWidgetMetatable[cellId] then
+                    mapMenu.cachedMapWidgetMetatable[cellId]:updateOnZoomMarkers()
+                end
+                local menu = menuHandler.getMenu(commonData.mapMenuId)
+                if menu and menu:updateMapWidgetCell(cellId) then
+                    menu:update()
                 end
             end
         end,

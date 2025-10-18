@@ -138,24 +138,64 @@ function mapWidgetMeta:getRelativeCenter()
     )
 end
 
+
+function mapWidgetMeta:getRelativeRotationPivot()
+    local center = self:getRelativeCenter()
+    return util.vector2(center.x, 1 - center.y)
+end
+
+
+function mapWidgetMeta:getRotationPivot(scale)
+    local pivot = self:getRelativeRotationPivot()
+
+    local width = self.mapInfo.width * (scale or 1)
+    local height = self.mapInfo.height * (scale or 1)
+
+    return util.vector2(pivot.x * width, pivot.y * height)
+end
+
+
 function mapWidgetMeta:getRelativePositionByWorldPosition(worldPos)
     local center = self:getRelativeCenter()
     local x = worldPos.x / 8192
     local y = worldPos.y / 8192
 
-    return util.vector2(
-        center.x + x * self.mapInfo.pixelsPerCell / self.mapInfo.width,
-        1 - center.y - y * self.mapInfo.pixelsPerCell / self.mapInfo.height
-    )
+    local relX = center.x + x * self.mapInfo.pixelsPerCell / self.mapInfo.width
+    local relY = 1 - center.y - y * self.mapInfo.pixelsPerCell / self.mapInfo.height
+
+    local relPos = util.vector2(relX, relY)
+
+    if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
+        local width = self.mapInfo.width
+        local height = self.mapInfo.height
+
+        local pivot = self:getRelativeRotationPivot()
+        local pivotRel = util.vector2(pivot.x * width, pivot.y * height)
+
+        local relPosRotated = util.vector2(relPos.x * width, relPos.y * height)
+        relPosRotated = (relPosRotated - pivotRel):rotate(-self.northDirectionAngle) + pivotRel
+
+        relPos = util.vector2(relPosRotated.x / width, relPosRotated.y / height)
+    end
+
+    return relPos
 end
 
 
-function mapWidgetMeta:getAbsolutePositionByWorldPosition(worldPos)
+function mapWidgetMeta:getAbsolutePositionByWorldPosition(worldPos, ignoreNorthAngle)
     local cellX = worldPos.x / 8192
     local cellY = worldPos.y / 8192
     local x = (cellX - self.mapInfo.gridX.min) * self.mapInfo.pixelsPerCell
     local y = (self.mapInfo.gridY.max - cellY) * self.mapInfo.pixelsPerCell
-    return util.vector2(x, y) * self.zoom
+
+    local pos = util.vector2(x, y)
+
+    if not ignoreNorthAngle and self.northDirectionAngle and self.northDirectionAngle ~= 0 then
+        local pivot = self:getRotationPivot()
+        pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
+    end
+
+    return pos * self.zoom
 end
 
 
@@ -177,10 +217,19 @@ function mapWidgetMeta:getWorldPositionByRelativePosition(relPos)
     local pixelSize = 8192 / self.mapInfo.pixelsPerCell
     local xOffset = self.mapInfo.gridX.min * self.mapInfo.pixelsPerCell
     local yOffset = (self.mapInfo.gridY.max + 1) * self.mapInfo.pixelsPerCell
+    local x = relPos.x * self.mapInfo.width
+    local y = relPos.y * self.mapInfo.height
+
+    if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
+        local pivot = self:getRotationPivot()
+        local rotated = (util.vector2(x, y) - pivot):rotate(self.northDirectionAngle) + pivot
+        x = rotated.x
+        y = rotated.y
+    end
 
     return util.vector2(
-        (relPos.x * self.mapInfo.width + xOffset) * pixelSize,
-        (-relPos.y * self.mapInfo.height + yOffset) * pixelSize
+        (x + xOffset) * pixelSize,
+        (-y + yOffset) * pixelSize
     )
 end
 
@@ -235,10 +284,21 @@ function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
     local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
     local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
 
-    local left = (rect.left + xOffset) * pixelSize
-    local top = (-rect.top + yOffset) * pixelSize
-    local right = (rect.right + xOffset) * pixelSize
-    local bottom = (-rect.bottom + yOffset) * pixelSize
+    local function toWorld(x, y)
+        local pos = util.vector2(x, y)
+
+        if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
+            local pivot = self:getRotationPivot(self.zoom)
+            pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
+        end
+
+        return util.vector2((pos.x + xOffset) * pixelSize, (-pos.y + yOffset) * pixelSize)
+    end
+
+    local left = toWorld(rect.left, 0).x
+    local top = toWorld(0, rect.top).y
+    local right = toWorld(rect.right, 0).x
+    local bottom = toWorld(0, rect.bottom).y
 
     return { left = left, top = top, right = right, bottom = bottom }, rect
 end
@@ -255,10 +315,14 @@ function mapWidgetMeta:getWorldPositionOfVisibleCenter()
     local centerX = (rect.left + rect.right) / 2
     local centerY = (rect.top + rect.bottom) / 2
 
-    return util.vector2(
-        (centerX + xOffset) * pixelSize,
-        (-centerY + yOffset) * pixelSize
-    )
+    local pos = util.vector2(centerX, centerY)
+
+    if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
+        local pivot = self:getRotationPivot(self.zoom)
+        pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
+    end
+
+    return util.vector2((pos.x + xOffset) * pixelSize, (-pos.y + yOffset) * pixelSize)
 end
 
 
@@ -266,8 +330,16 @@ function mapWidgetMeta:getRelativePositionOfVisibleCenter()
     local rect = self:getVisibleMapRect()
     local centerX = (rect.left + rect.right) / 2
     local centerY = (rect.top + rect.bottom) / 2
-    local relX = centerX / (self.mapInfo.width * self.zoom)
-    local relY = centerY / (self.mapInfo.height * self.zoom)
+
+    local pos = util.vector2(centerX, centerY)
+
+    if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
+        local pivot = self:getRotationPivot(self.zoom)
+        pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
+    end
+
+    local relX = pos.x / (self.mapInfo.width * self.zoom)
+    local relY = pos.y / (self.mapInfo.height * self.zoom)
 
     return util.vector2(relX, relY)
 end
@@ -376,7 +448,7 @@ function mapWidgetMeta:updateMarkersScale()
     local playerMarkerImageSize = this.scaleFunction.playerMarker(playerMarkerLayout.content[1].userData.size, self.zoom)
 
     playerMarkerLayout.content[1].props.size = playerMarkerImageSize
-    playerMarkerLayout.content[1].props.resource = playerMarker.getTexture() or playerMarkerTexture
+    playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
 
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region)}) do
@@ -772,7 +844,8 @@ function mapWidgetMeta:placeGroundTextures(region)
             util.vector2(
                 self.mapInfo.gridX.min * 8192,
                 self.mapInfo.gridY.min * 8192
-            )
+            ),
+            true
         )
 
         for y = 1, self.localCellInfo.height do
@@ -851,7 +924,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
 
     local playerRelPos = self:getRelativePositionByWorldPosition(exPos)
     playerMarkerLayout.props.relativePosition = playerRelPos
-    playerMarkerLayout.props.resource = playerMarker.getTexture() or playerMarkerTexture
+    playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
     playerMarkerLayout.userData.lastPos = exPos
     playerMarkerLayout.userData.lastYaw = yaw
 
@@ -1071,7 +1144,7 @@ function this.new(params)
                     type = ui.TYPE.Image,
                     props = {
                         relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
-                        resource = playerMarker.getTexture() or playerMarkerTexture,
+                        resource = playerMarker.getTexture(meta.northDirectionAngle) or playerMarkerTexture,
                         size = util.vector2(32, 32),
                         anchor = util.vector2(0.5, 0.5),
                         color = config.data.ui.defaultColor,
@@ -1081,7 +1154,8 @@ function this.new(params)
                     userData = {
                         size = util.vector2(32, 32),
                         lastPos = playerPos.gexExteriorPos(),
-                        lastYaw = playerRef.rotation:getYaw()
+                        lastYaw = playerRef.rotation:getYaw(),
+                        lastNorthAngle = meta.northDirectionAngle or 0,
                     },
                 },
             },
@@ -1188,11 +1262,10 @@ function this.new(params)
                             },
                         }
                         local layContent = lay.content
-print(meta:getWorldPositionByRelativePosition(relPos))
-                        -- eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
-                        --     cursorRelPos = relPos,
-                        --     content = layContent,
-                        -- })
+                        eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
+                            cursorRelPos = relPos,
+                            content = layContent,
+                        })
 
                         if #layContent > 0 then
                             interactiveLayout.content:add(lay)
@@ -1261,7 +1334,7 @@ print(meta:getWorldPositionByRelativePosition(relPos))
                 props = {
                     resource = commonData.whiteTexture,
                     relativeSize = util.vector2(1, 1),
-                    color = commonData.mapWaterColor,
+                    color = meta.cellId and commonData.mapInteriorBackgroundColor or commonData.mapWaterColor,
                 }
             },
             {

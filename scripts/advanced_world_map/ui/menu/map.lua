@@ -2,6 +2,7 @@ local async = require("openmw.async")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
+local playerRef = require("openmw.self")
 
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 
@@ -39,8 +40,8 @@ local this = {}
 
 local markersInitialized = false
 
-this.cachedMapWidgetLayout = nil
-this.cachedMapWidgetMetatable = nil
+this.cachedMapWidgetLayout = {}
+this.cachedMapWidgetMetatable = {}
 
 
 function this.updateDiscoveredForCell(cell)
@@ -304,6 +305,49 @@ function menuMeta:addWidget(params)
 end
 
 
+---@param cellId string?
+---@return table? layout
+---@return advancedWorldMap.ui.mapWidgetMeta? meta
+function menuMeta:getMapWidgetForCell(cellId)
+    local cellKeyId = cellId or commonData.exteriorMapId
+
+    if not this.cachedMapWidgetLayout[cellKeyId] then
+        this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId] = mapWidget.new{
+            updateFunc = self.update,
+            size = self.mainSize,
+            position = util.vector2(0, 0),
+            cellId = cellId
+        }
+    else
+        this.cachedMapWidgetMetatable[cellKeyId]:setSize(self.mainSize)
+    end
+
+    return this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId]
+end
+
+
+---@param cellId string?
+---@return boolean changed
+function menuMeta:updateMapWidgetCell(cellId)
+    if cellId == commonData.exteriorMapId or cellId and cellId:find(commonData.exteriorCellLabel) then cellId = nil end
+    if self.mapWidget.cellId == cellId then return false end
+
+    local lay, meta = self:getMapWidgetForCell(cellId)
+    if not lay or not meta then return false end
+
+    local oldZoom = self.mapWidget.zoom
+
+    self.mainLayout.content[1].content[2] = lay
+    self.mapWidget = meta
+
+    self.mapWidget:setUpdateFunction(self.update)
+    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
+    self.mapWidget:setZoom(oldZoom)
+
+    return true
+end
+
+
 function menuMeta:getHeaderHeight()
     return self.headerHeight
 end
@@ -463,16 +507,7 @@ function this.create(params)
         }
     }
 
-    if not this.cachedMapWidgetLayout then
-        this.cachedMapWidgetLayout, this.cachedMapWidgetMetatable = mapWidget.new{
-            updateFunc = meta.update,
-            size = mainSize,
-            position = util.vector2(0, 0)
-        }
-    else
-        this.cachedMapWidgetMetatable:setSize(mainSize)
-    end
-    local mapWidgetLayout, mapMeta = this.cachedMapWidgetLayout, this.cachedMapWidgetMetatable
+    local mapWidgetLayout, mapMeta = meta:getMapWidgetForCell()
 
     ---@type advancedWorldMap.ui.mapWidgetMeta
     meta.mapWidget = mapMeta ---@diagnostic disable-line: assign-type-mismatch
@@ -591,6 +626,9 @@ function this.create(params)
         },
     }
 
+    meta.mainLayout = mainLayout
+
+    meta:updateMapWidgetCell(not playerRef.cell.isExterior and playerRef.cell.id or nil)
 
     local layout = {
         type = ui.TYPE.Widget,

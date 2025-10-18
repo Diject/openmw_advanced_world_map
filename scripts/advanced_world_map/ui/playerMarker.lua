@@ -13,9 +13,12 @@ for i = 0, 72 do
 end
 
 
-function this.getTexture()
-    local pitch, yaw  = playerRef.rotation:getAnglesXZ()
-    local angle = util.normalizeAngle(yaw - math.pi * 1 / 144)
+---@param angleOffset number?
+function this.getTexture(angleOffset)
+    local yaw  = playerRef.rotation:getYaw()
+
+    local offset = angleOffset or 0
+    local angle = util.normalizeAngle(yaw - offset - math.pi * 1 / 144)
     local index = (util.round((angle / (2 * math.pi)) * 72) + 72) % 72
 
     return this.textures[index] or this.textures[0]

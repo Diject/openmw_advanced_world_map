@@ -52,6 +52,7 @@ this.backgroundColorData = {0, 0, 0}
 this.backgroundColor = util.color.rgb(this.backgroundColorData[1], this.backgroundColorData[2], this.backgroundColorData[3])
 
 this.mapWaterColor = util.color.rgb(36 / 255, 53 / 255, 48 / 255)
+this.mapInteriorBackgroundColor = util.color.rgb(0, 0, 0)
 
 this.whiteTexture = nil
 pcall(function ()
@@ -71,6 +72,8 @@ this.defaultTRMapDir = "textures/advanced_world_map/TRmap/"
 this.defaultBaseMapDir = "textures/advanced_world_map/basemap/"
 this.questDataMapDir = "questData/"
 
+this.exteriorMapId = "__Esm3ExteriorMap__"
+this.exteriorCellLabel = "Esm3ExteriorCell:"
 this.exteriorCellIdFormat = "Esm3ExteriorCell:%d:%d"
 this.localMapTexturesDir = "textures/advanced_world_map/localMap/"
 
