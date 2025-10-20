@@ -237,16 +237,16 @@ end
 local function clampAndCenterPosition(pos, mapSize, mainSize)
     local newX, newY
 
-    if mapSize.x * 1.25 <= mainSize.x then
+    if mapSize.x * 4 <= mainSize.x then
         newX = (mainSize.x - mapSize.x) / 2
     else
-        newX = util.clamp(pos.x, mainSize.x - mapSize.x * 1.25, mapSize.x * 0.25)
+        newX = util.clamp(pos.x, mainSize.x - mapSize.x * 4, mapSize.x * 3)
     end
 
-    if mapSize.y * 1.25 <= mainSize.y then
+    if mapSize.y * 4 <= mainSize.y then
         newY = (mainSize.y - mapSize.y) / 2
     else
-        newY = util.clamp(pos.y, mainSize.y - mapSize.y * 1.25, mapSize.y * 0.25)
+        newY = util.clamp(pos.y, mainSize.y - mapSize.y * 4, mapSize.y * 3)
     end
 
     return util.vector2(newX, newY)
