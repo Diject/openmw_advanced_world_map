@@ -34,6 +34,7 @@ this.cellDirections = nil
 ---@field id string
 ---@field name string
 ---@field fullName string
+---@field doorHash string
 
 local function isContentFile(name)
     name = name:lower()
@@ -45,11 +46,6 @@ local function isContentFile(name)
         end
     end
     return false
-end
-
-
-local function getDoorPosHash(pos, destId)
-    return string.format("%d_%d_%s", math.floor(pos.x / 512), math.floor(pos.y / 512), destId)
 end
 
 
@@ -119,7 +115,7 @@ local function buildData()
 
         local doors = cell:getAll(types.Door)
         for _, door in pairs(doors) do
-            if not types.Door.isTeleport(door) or not door.enabled then goto continue end
+            if not types.Door.isTeleport(door) then goto continue end
 
             local dest = types.Door.destCell(door)
             if dest.isExterior then goto continue end
@@ -132,12 +128,15 @@ local function buildData()
                 end
             end
 
+            local doorHash = commonData.doorHash(door, dest.id)
+
             entrances[cell.id] = entrances[cell.id] or {}
-            entrances[cell.id][getDoorPosHash(door.position, dest.id)] = {
+            entrances[cell.id][doorHash] = {
                 pos = door.position,
                 id = dest.id,
                 name = name,
                 fullName = dest.name,
+                doorHash = doorHash,
             }
 
             ::continue::

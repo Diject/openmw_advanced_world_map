@@ -3,6 +3,8 @@ local world = require('openmw.world')
 local types = require("openmw.types")
 local core = require("openmw.core")
 
+local Door = types.Door
+
 local config = require("scripts.advanced_world_map.config.config")
 
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -13,17 +15,44 @@ local log = require("scripts.advanced_world_map.utils.log")
 
 local common = require("scripts.advanced_world_map.common")
 
+local saveStorage = require("scripts.advanced_world_map.storage.localStorage")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+
+local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
 local l10n = core.l10n(common.l10nKey)
 
 
+saveStorage.initPlayerStorage()
+
 dynamicDataHandler.init()
+
+
+local function checkDoor(ref)
+    if Door.objectIsInstance(ref) and Door.isTeleport(ref) then
+        local wasDisabled = disabledDoors.contains(ref.id)
+
+        if not ref.enabled then
+            disabledDoors.register(ref.id)
+            if not wasDisabled then
+                world.players[1]:sendEvent("AdvWMap:registerDisabledDoor", ref)
+            end
+
+        elseif wasDisabled then
+            disabledDoors.unregister(ref.id)
+            world.players[1]:sendEvent("AdvWMap:unregisterDisabledDoor", ref)
+        end
+
+    end
+end
 
 
 return {
     engineHandlers = {
-
+        onLoad = function (data)
+            saveStorage.initPlayerStorage(data)
+            disabledDoors.init()
+        end
     },
     eventHandlers = {
         ["AdvWMap:updateConfigData"] = function (data)
@@ -108,5 +137,26 @@ return {
                 {rotation = types.Door.destRotation(data.targetDoor), onGround = true})
             playerRef:sendEvent("AdvWMap:playSound", {soundId = "mysticism hit"})
         end,
+
+        ["AdvWMap:cellChanged"] = function ()
+            local cell = world.players[1].cell
+
+            if cell.isExterior then
+                for x = -1, 1 do
+                    for y = -1, 1 do
+                        local c = world.getExteriorCell(cell.gridX + x, cell.gridY + y)
+                        if c then
+                            for _, ref in pairs(c:getAll(Door)) do
+                                checkDoor(ref)
+                            end
+                        end
+                    end
+                end
+            else
+                for _, ref in pairs(cell:getAll(Door)) do
+                    checkDoor(ref)
+                end
+            end
+        end
     },
 }

@@ -26,6 +26,7 @@ local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
+local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 
@@ -56,6 +57,7 @@ local function onLoad(data)
     playerPos.init()
     mapDataHandler.init()
     discoveredLocs.init()
+    disabledDoors.init()
 end
 
 
@@ -134,6 +136,7 @@ end
 checkPos()
 
 
+local lastPlayerCellId
 
 return {
     engineHandlers = {
@@ -150,17 +153,23 @@ return {
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
         UiModeChanged = function(e)
-            if e.oldMode == "Loading" or e.oldMode == nil and e.newMode == nil then
+            if e.oldMode == "Loading" or e.oldMode == nil and e.newMode == nil and lastPlayerCellId ~= self.cell.id then
+                lastPlayerCellId = self.cell.id
+
                 discoveredLocs.addCell(self.cell)
                 mapMenu.updateDiscoveredForCell(self.cell)
+
                 local cellId = self.cell.isExterior and commonData.exteriorMapId or self.cell.id
                 if mapMenu.cachedMapWidgetMetatable[cellId] then
                     mapMenu.cachedMapWidgetMetatable[cellId]:updateOnZoomMarkers()
                 end
+
                 local menu = menuHandler.getMenu(commonData.mapMenuId)
                 if menu and menu:updateMapWidgetCell(cellId) then
                     menu:update()
                 end
+
+                core.sendGlobalEvent("AdvWMap:cellChanged")
             end
         end,
 
@@ -217,6 +226,16 @@ return {
                     end
                 end,
             })
+        end,
+
+        ["AdvWMap:registerDisabledDoor"] = function(ref)
+            disabledDoors.register(ref.id)
+            mapMenu.updateDoorMarkerVisibility(ref)
+        end,
+
+        ["AdvWMap:unregisterDisabledDoor"] = function(ref)
+            disabledDoors.unregister(ref.id)
+            mapMenu.updateDoorMarkerVisibility(ref)
         end,
     },
 }

@@ -3,6 +3,7 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
+local types = require("openmw.types")
 
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 
@@ -20,6 +21,7 @@ local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
+local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
@@ -41,6 +43,15 @@ local this = {}
 
 this.cachedMapWidgetLayout = {}
 this.cachedMapWidgetMetatable = {}
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+this.markersByName = nil
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+this.entranceMarkersByCellId = nil
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+this.markersByDoorHash = {}
 
 
 function this.updateDiscoveredForCell(cell)
@@ -68,12 +79,45 @@ function this.updateDiscovered(newDiscovered)
 
     for _, name in pairs(newDiscovered or {}) do
         for _, handler in pairs(this.entranceMarkersByCellId[name] or {}) do
-            handler:setVisibility(true)
+            local userData = handler:getUserData()
+            if not userData or not userData.disabled then
+                handler:setVisibility(true)
+            end
         end
         for _, handler in pairs(this.markersByName[name] or {}) do
-            handler:setVisibility(true)
+            local userData = handler:getUserData()
+            if not userData or not userData.disabled then
+                handler:setVisibility(true)
+            end
             handler:setColor(config.data.ui.defaultLightColor)
         end
+    end
+end
+
+
+---@param marker advancedWorldMap.ui.mapElementMeta
+local function updateDoorMarkerVisibility(marker, visible)
+    local userData = marker:getUserData()
+    if not userData then return end
+
+    if userData.type == "text" then
+        marker:setVisibility(visible)
+        userData.disabled = not visible
+    else
+        marker:setAlpha(visible and 1 or 0.25)
+    end
+end
+
+
+function this.updateDoorMarkerVisibility(doorRef)
+    local doorHash = commonData.doorHash(doorRef, types.Door.destCell(doorRef).id)
+    local visible = not disabledDoors.contains(doorRef.id)
+
+    local markers = this.markersByDoorHash[doorHash]
+    if not markers then return end
+
+    for _, marker in pairs(markers) do
+        updateDoorMarkerVisibility(marker, visible)
     end
 end
 
@@ -88,6 +132,7 @@ function menuMeta:createMarkers()
     local widget = self.mapWidget
     local entrances = dynamicDataHandler.entrances or {}
 
+    ---@type table<integer, advancedWorldMap.dynamicDataHandler.entranceData[]>
     local entranceByLine = {}
     local lineHeight = 256 * uiUtils.getUIScale()
     local lineDiff = lineHeight * 12
@@ -118,6 +163,7 @@ function menuMeta:createMarkers()
             local cellId = cellLib.getCellIdByPos(dt.pos)
             markersByCellId[cellId] = markersByCellId[cellId] or {}
             markersByName[dt.name] = markersByName[dt.name] or {}
+            this.markersByDoorHash[dt.doorHash] = this.markersByDoorHash[dt.doorHash] or {}
 
             local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
 
@@ -133,10 +179,17 @@ function menuMeta:createMarkers()
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,
+                userData = {
+                    type = "text",
+                },
             }
             if textMarkerHandler then
                 table.insert(markersByCellId[cellId], textMarkerHandler)
                 table.insert(markersByName[dt.name], textMarkerHandler)
+                table.insert(this.markersByDoorHash[dt.doorHash], textMarkerHandler)
+                if disabledDoors.contains(dt.doorHash) then
+                    updateDoorMarkerVisibility(textMarkerHandler, false)
+                end
             end
 
             local imageMarkerHandler = widget:createImageMarker{
@@ -152,11 +205,18 @@ function menuMeta:createMarkers()
                 visible = isCellDiscovered,
                 searchText = stringLib.utf8_lower(dt.fullName),
                 searchLabel = dt.fullName,
-                userData = {cellId = dt.id}
+                userData = {
+                    type = "image",
+                    cellId = dt.id
+                },
             }
             if imageMarkerHandler then
                 table.insert(markersByCellId[cellId], imageMarkerHandler)
                 table.insert(markersByName[dt.name], imageMarkerHandler)
+                table.insert(this.markersByDoorHash[dt.doorHash], imageMarkerHandler)
+                if disabledDoors.contains(dt.doorHash) then
+                    updateDoorMarkerVisibility(imageMarkerHandler, false)
+                end
             end
 
         end

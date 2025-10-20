@@ -24,6 +24,7 @@ this.discoveredLocsFieldId = "discoveredLocationsHashSet"
 this.sortByDistanceFieldId = "searchSortByDistance"
 this.hideUnrevealedFieldId = "searchHideUnrevealed"
 this.searchInInteriorsFieldId = "searchSearchInInteriors"
+this.disabledDoorsFieldId = "disabledDoors"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
@@ -96,6 +97,15 @@ end
 
 function this.distance2D(vector1, vector2)
     return math.sqrt((vector1.x - vector2.x)^2 + (vector1.y - vector2.y)^2)
+end
+
+
+---@return string
+function this.doorHash(doorRef, destCellId)
+    local doorPos = doorRef.position
+    local destCellIdHash = destCellId:sub(-10)
+    local cellIdHash = doorRef.cell.id:sub(-10)
+    return string.format("%s_%d_%d_%s", cellIdHash, math.floor(doorPos.x / 512), math.floor(doorPos.y / 512), destCellIdHash)
 end
 
 return this
