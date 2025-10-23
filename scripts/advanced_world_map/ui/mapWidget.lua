@@ -1017,6 +1017,17 @@ function mapWidgetMeta:getLayerVisibility(layerId)
 end
 
 
+---@return advancedWorldMap.ui.mapElementMeta[]
+function mapWidgetMeta:getActiveMarkers()
+    local markers = {}
+    for _, dt in pairs(self.activeZoomMarkers) do
+        if dt[3] then
+            table.insert(markers, dt[3])
+        end
+    end
+    return markers
+end
+
 
 ---@class advancedWorldMap.ui.mapWidget.params
 ---@field size any
@@ -1145,7 +1156,7 @@ function this.new(params)
     meta.zoomOutMarkers = {}
     ---@type table<string, string>
     meta.zoomMarkersCellIdById = {}
-    ---@type {[2] : string, [1] : integer}[] {marker Id, layer}
+    ---@type {[2] : string, [1] : integer, [3] : advancedWorldMap.ui.mapElementMeta}[] {marker Id, layer}
     meta.activeZoomMarkers = {}
 
     meta.zoom = 1
