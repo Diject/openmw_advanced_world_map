@@ -33,9 +33,9 @@ local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
 
 -- widgets
-require("scripts.advanced_world_map.ui.menuWidgets.legend")
-require("scripts.advanced_world_map.ui.menuWidgets.search")
-require("scripts.advanced_world_map.ui.menuWidgets.fastTravel")
+require("scripts.advanced_world_map.widgets.legend")
+require("scripts.advanced_world_map.widgets.search")
+require("scripts.advanced_world_map.widgets.fastTravel")
 
 local l10n = core.l10n(commonData.l10nKey)
 
