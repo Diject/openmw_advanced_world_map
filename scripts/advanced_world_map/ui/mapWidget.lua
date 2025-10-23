@@ -102,6 +102,24 @@ mapWidgetMeta.getUniqueId = function (self)
 end
 
 
+function mapWidgetMeta:getDisplaySize(scale)
+    local baseSize = self.displayMapSize or util.vector2(self.mapInfo.width, self.mapInfo.height)
+    if scale then
+        return baseSize * scale
+    end
+    return baseSize
+end
+
+
+function mapWidgetMeta:getPadding(scale)
+    local padding = self.borderPadding or util.vector2(0, 0)
+    if scale then
+        return padding * scale
+    end
+    return padding
+end
+
+
 function mapWidgetMeta:getMapLayersLayout()
     return self.layout.content[2]
 end
@@ -150,8 +168,9 @@ function mapWidgetMeta:getRotationPivot(scale)
 
     local width = self.mapInfo.width * (scale or 1)
     local height = self.mapInfo.height * (scale or 1)
+    local padding = self:getPadding(scale or 1)
 
-    return util.vector2(pivot.x * width, pivot.y * height)
+    return util.vector2(padding.x + pivot.x * width, padding.y + pivot.y * height)
 end
 
 
@@ -163,22 +182,19 @@ function mapWidgetMeta:getRelativePositionByWorldPosition(worldPos)
     local relX = center.x + x * self.mapInfo.pixelsPerCell / self.mapInfo.width
     local relY = 1 - center.y - y * self.mapInfo.pixelsPerCell / self.mapInfo.height
 
-    local relPos = util.vector2(relX, relY)
+    local mapWidth = self.mapInfo.width
+    local mapHeight = self.mapInfo.height
+    local padding = self:getPadding()
+    local displaySize = self:getDisplaySize()
+
+    local containerPos = util.vector2(relX * mapWidth + padding.x, relY * mapHeight + padding.y)
 
     if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
-        local width = self.mapInfo.width
-        local height = self.mapInfo.height
-
-        local pivot = self:getRelativeRotationPivot()
-        local pivotRel = util.vector2(pivot.x * width, pivot.y * height)
-
-        local relPosRotated = util.vector2(relPos.x * width, relPos.y * height)
-        relPosRotated = (relPosRotated - pivotRel):rotate(-self.northDirectionAngle) + pivotRel
-
-        relPos = util.vector2(relPosRotated.x / width, relPosRotated.y / height)
+        local pivot = self:getRotationPivot()
+        containerPos = (containerPos - pivot):rotate(-self.northDirectionAngle) + pivot
     end
 
-    return relPos
+    return util.vector2(containerPos.x / displaySize.x, containerPos.y / displaySize.y)
 end
 
 
@@ -188,7 +204,8 @@ function mapWidgetMeta:getAbsolutePositionByWorldPosition(worldPos, ignoreNorthA
     local x = (cellX - self.mapInfo.gridX.min) * self.mapInfo.pixelsPerCell
     local y = (self.mapInfo.gridY.max - cellY) * self.mapInfo.pixelsPerCell
 
-    local pos = util.vector2(x, y)
+    local padding = self:getPadding()
+    local pos = util.vector2(x + padding.x, y + padding.y)
 
     if not ignoreNorthAngle and self.northDirectionAngle and self.northDirectionAngle ~= 0 then
         local pivot = self:getRotationPivot()
@@ -214,22 +231,27 @@ end
 
 
 function mapWidgetMeta:getWorldPositionByRelativePosition(relPos)
-    local pixelSize = 8192 / self.mapInfo.pixelsPerCell
-    local xOffset = self.mapInfo.gridX.min * self.mapInfo.pixelsPerCell
-    local yOffset = (self.mapInfo.gridY.max + 1) * self.mapInfo.pixelsPerCell
-    local x = relPos.x * self.mapInfo.width
-    local y = relPos.y * self.mapInfo.height
+    local displaySize = self:getDisplaySize()
+    local paddingScaled = self:getPadding(self.zoom)
+
+    local containerBasePos = util.vector2(relPos.x * displaySize.x, relPos.y * displaySize.y)
+    local containerPos = containerBasePos * self.zoom
 
     if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
-        local pivot = self:getRotationPivot()
-        local rotated = (util.vector2(x, y) - pivot):rotate(self.northDirectionAngle) + pivot
-        x = rotated.x
-        y = rotated.y
+        local pivot = self:getRotationPivot(self.zoom)
+        containerPos = (containerPos - pivot):rotate(self.northDirectionAngle) + pivot
     end
 
+    local mapPos = util.vector2(containerPos.x - paddingScaled.x, containerPos.y - paddingScaled.y)
+
+    local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
+    local zoomedPixelSize = 8192 / zoomedPixPerCell
+    local zoomedXOffset = self.mapInfo.gridX.min * zoomedPixPerCell
+    local zoomedYOffset = (self.mapInfo.gridY.max + 1) * zoomedPixPerCell
+
     return util.vector2(
-        (x + xOffset) * pixelSize,
-        (-y + yOffset) * pixelSize
+        (mapPos.x + zoomedXOffset) * zoomedPixelSize,
+        (-mapPos.y + zoomedYOffset) * zoomedPixelSize
     )
 end
 
@@ -283,6 +305,7 @@ function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
     local pixelSize = 8192 / zoomedPixPerCell
     local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
     local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+    local paddingScaled = self:getPadding(self.zoom)
 
     local function toWorld(x, y)
         local pos = util.vector2(x, y)
@@ -291,6 +314,8 @@ function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
             local pivot = self:getRotationPivot(self.zoom)
             pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
         end
+
+        pos = util.vector2(pos.x - paddingScaled.x, pos.y - paddingScaled.y)
 
         return util.vector2((pos.x + xOffset) * pixelSize, (-pos.y + yOffset) * pixelSize)
     end
@@ -311,6 +336,7 @@ function mapWidgetMeta:getWorldPositionOfVisibleCenter()
     local pixelSize = 8192 / zoomedPixPerCell
     local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
     local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+    local paddingScaled = self:getPadding(self.zoom)
 
     local centerX = (rect.left + rect.right) / 2
     local centerY = (rect.top + rect.bottom) / 2
@@ -321,6 +347,8 @@ function mapWidgetMeta:getWorldPositionOfVisibleCenter()
         local pivot = self:getRotationPivot(self.zoom)
         pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
     end
+
+    pos = util.vector2(pos.x - paddingScaled.x, pos.y - paddingScaled.y)
 
     return util.vector2((pos.x + xOffset) * pixelSize, (-pos.y + yOffset) * pixelSize)
 end
@@ -338,8 +366,10 @@ function mapWidgetMeta:getRelativePositionOfVisibleCenter()
         pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
     end
 
-    local relX = pos.x / (self.mapInfo.width * self.zoom)
-    local relY = pos.y / (self.mapInfo.height * self.zoom)
+    local displaySize = self:getDisplaySize()
+    local posBase = pos / self.zoom
+    local relX = posBase.x / displaySize.x
+    local relY = posBase.y / displaySize.y
 
     return util.vector2(relX, relY)
 end
@@ -351,7 +381,8 @@ end
 
 function mapWidgetMeta:setSize(newSize)
     self.maxZoom = math.min(newSize.x / self.mapInfo.pixelsPerCell, newSize.y / self.mapInfo.pixelsPerCell) * 3
-    self.minZoom = math.min(newSize.x / self.mapInfo.width, newSize.y / self.mapInfo.height) / 2
+    local displaySize = self:getDisplaySize()
+    self.minZoom = math.min(newSize.x / displaySize.x, newSize.y / displaySize.y) / 2
     self.layout.props.size = newSize
 end
 
@@ -383,11 +414,11 @@ local function setZoom(self, zoom, relativePos)
     local widget = self:getMapLayersLayout()
 
     local oldZoom = self.zoom
-    local oldSize = util.vector2(self.mapInfo.width * oldZoom, self.mapInfo.height * oldZoom)
+    local oldSize = self:getDisplaySize(oldZoom)
 
     zoom = util.clamp(zoom, self.minZoom, self.maxZoom)
 
-    local newSize = util.vector2(self.mapInfo.width * zoom, self.mapInfo.height * zoom)
+    local newSize = self:getDisplaySize(zoom)
     local oldPos = widget.props.position
 
     local mainSize = self.layout.props.size
@@ -1040,6 +1071,10 @@ function this.new(params)
         meta.mapInfo = mapInfo
         meta.northDirectionAngle = localCellInfo.nA or 0
 
+        local padding = mapInfo.pixelsPerCell * 0.5
+        meta.borderPadding = util.vector2(padding, padding)
+        meta.displayMapSize = util.vector2(mapInfo.width + padding * 2, mapInfo.height + padding * 2)
+
         mapLayout = {
             type = ui.TYPE.Widget,
             props = {
@@ -1068,6 +1103,10 @@ function this.new(params)
         meta.mapTexture = worldMapTexture
         meta.mapInfo = dataHandler.mapInfo
 
+        local padding = dataHandler.mapInfo.pixelsPerCell * 0.5
+        meta.borderPadding = util.vector2(padding, padding)
+        meta.displayMapSize = util.vector2(meta.mapInfo.width + padding * 2, meta.mapInfo.height + padding * 2)
+
         mapLayout = {
             type = ui.TYPE.Widget,
             props = {
@@ -1080,13 +1119,17 @@ function this.new(params)
                     type = ui.TYPE.Image,
                     props = {
                         resource = worldMapTexture,
-                        relativeSize = util.vector2(1, 1),
+                        relativePosition = util.vector2(meta.borderPadding.x / meta.displayMapSize.x, meta.borderPadding.y / meta.displayMapSize.y),
+                        relativeSize = util.vector2(meta.mapInfo.width / meta.displayMapSize.x, meta.mapInfo.height / meta.displayMapSize.y),
                     }
                 },
             },
         }
     end
 
+
+    meta.borderPadding = meta.borderPadding or util.vector2(0, 0)
+    meta.displayMapSize = meta.displayMapSize or util.vector2(meta.mapInfo.width, meta.mapInfo.height)
 
     ---@type table<string, table<string, {id : string, params : advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params}>> by cell id, by marker id
     meta.zoomInMarkers = {}
@@ -1099,7 +1142,8 @@ function this.new(params)
 
     meta.zoom = 1
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
-    meta.minZoom = math.min(params.size.x / meta.mapInfo.width, params.size.y / meta.mapInfo.height) / 2
+    local displaySize = meta:getDisplaySize()
+    meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
 
     meta.update = function(self)
         params.updateFunc()
@@ -1341,7 +1385,7 @@ function this.new(params)
                 type = ui.TYPE.Widget,
                 props = {
                     position = util.vector2(0, 0),
-                    size = util.vector2(meta.mapInfo.width, meta.mapInfo.height),
+                    size = util.vector2(meta.displayMapSize.x, meta.displayMapSize.y),
                 },
                 userData = {},
                 content = ui.content {
