@@ -139,8 +139,8 @@ local function createMarkers(widget, cellId)
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
     local cellTypeMul = cellId and 2 or 1
-    local lineHeight = cellTypeMul * 4 * 7 * uiUtils.getUIScale()
-    local charWidth = cellTypeMul * 2 * 4 * 7 * uiUtils.getUIScale()
+    local lineHeight = cellTypeMul * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local charWidth = cellTypeMul * 2 * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
     local maxLine
     local minLine
 
@@ -356,7 +356,7 @@ local function createMarkers(widget, cellId)
                 text = text,
                 alpha = 0.5,
                 anchor = textAnchor,
-                fontSize = cellTypeMul * 7,
+                fontSize = cellTypeMul * config.data.legend.markerSize,
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
                 showWhenZoomedIn = true,
@@ -381,7 +381,7 @@ local function createMarkers(widget, cellId)
                 layerId = mapWidget.layerId.marker,
                 alpha = 0.5,
                 anchor = util.vector2(0.5, 0.5),
-                size = util.vector2(7, 7) * cellTypeMul,
+                size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize) * cellTypeMul,
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,

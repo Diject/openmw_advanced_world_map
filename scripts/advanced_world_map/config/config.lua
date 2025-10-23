@@ -21,6 +21,7 @@ this.default = {
         centerOnPlayer = true,
     },
     legend = {
+        markerSize = 6,
         onlyDiscovered = false,
         visibility = {
             regions = true,
