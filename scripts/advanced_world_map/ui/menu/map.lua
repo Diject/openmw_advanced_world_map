@@ -128,19 +128,40 @@ menuMeta.__index = menuMeta
 
 menuMeta.menu = nil
 
-function menuMeta:createMarkers()
-    local widget = self.mapWidget
+---@param self advancedWorldMap.ui.menu.map
+---@param widget advancedWorldMap.ui.mapWidgetMeta
+local function createMarkers(self, widget, cellId)
     local entrances = dynamicDataHandler.entrances or {}
 
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
-    local lineHeight = 4 * 7 * uiUtils.getUIScale()
-    local charWidth = 2 * 4 * 7 * uiUtils.getUIScale()
+    local cellTypeMul = cellId and 2 or 1
+    local lineHeight = cellTypeMul * 4 * 7 * uiUtils.getUIScale()
+    local charWidth = cellTypeMul * 2 * 4 * 7 * uiUtils.getUIScale()
     local maxLine
     local minLine
 
-    for cellId, list in pairs(entrances) do
-        for _, dt in pairs(list) do
+    if cellId == nil then
+        for cellId, list in pairs(entrances) do
+            if not cellId:find(commonData.exteriorCellLabel) then
+                goto continue
+            end
+
+            for _, dt in pairs(list) do
+                local line = math.floor(dt.pos.y / lineHeight)
+                entranceByLine[line] = entranceByLine[line] or {}
+                table.insert(entranceByLine[line], {dt = dt})
+                maxLine = math.max(maxLine or line, line)
+                minLine = math.min(minLine or line, line)
+            end
+
+            ::continue::
+        end
+    else
+        local entranceData = entrances[cellId]
+        if not entranceData then return end
+
+        for _, dt in pairs(entranceData) do
             local line = math.floor(dt.pos.y / lineHeight)
             entranceByLine[line] = entranceByLine[line] or {}
             table.insert(entranceByLine[line], {dt = dt})
@@ -303,7 +324,6 @@ function menuMeta:createMarkers()
                 if funcs[1][1] ~= 0 then
                     funcs[1][2]()
                 else
-                    print(funcs[1][1], text)
                     tableLib.shuffle(funcs)
                     funcs[1][2]()
                 end
@@ -333,7 +353,7 @@ function menuMeta:createMarkers()
                 text = text,
                 alpha = 0.5,
                 anchor = textAnchor,
-                fontSize = 7,
+                fontSize = cellTypeMul * 7,
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
                 showWhenZoomedIn = true,
@@ -358,7 +378,7 @@ function menuMeta:createMarkers()
                 layerId = mapWidget.layerId.marker,
                 alpha = 0.5,
                 anchor = util.vector2(0.5, 0.5),
-                size = util.vector2(7, 7),
+                size = util.vector2(7, 7) * cellTypeMul,
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,
@@ -735,8 +755,7 @@ function this.create(params)
     }
 
     eventSys.registerHandler(eventSys.events.onMapInitialized, function (e)
-        if e.cellId ~= nil then return end
-        meta:createMarkers()
+        createMarkers(meta, e.mapWidget, e.cellId)
     end)
 
     meta.getWidgetWindowWidth = function (self)

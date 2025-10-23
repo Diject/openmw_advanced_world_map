@@ -110,20 +110,21 @@ local function buildData()
     end
 
     for _, cell in pairs(world.cells) do
-        if not cell.isExterior then goto continue end
-
 
         local doors = cell:getAll(types.Door)
         for _, door in pairs(doors) do
             if not types.Door.isTeleport(door) then goto continue end
 
             local dest = types.Door.destCell(door)
-            if dest.isExterior then goto continue end
 
             local name = dest.name
             if name:find(",") then
-                local cellNameMark = stringLib.getBeforeComma(name)
-                if cellNameData[cellNameMark] then
+                if cell.isExterior then
+                    local cellNameMark = stringLib.getBeforeComma(name)
+                    if cellNameData[cellNameMark] then
+                        name = stringLib.getAfterComma(name)
+                    end
+                else
                     name = stringLib.getAfterComma(name)
                 end
             end
