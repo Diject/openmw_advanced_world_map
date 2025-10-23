@@ -1044,10 +1044,18 @@ function this.new(params)
 
     if params.cellId then
         local localCellInfo = dataHandler.getLocalCellInfo(params.cellId)
-        if not localCellInfo.mX then return end
+        if not localCellInfo.mX then
+            localCellInfo = {
+                height = 5,
+                width = 5,
+                mX = 0,
+                mY = 0,
+                nA = 0,
+            }
+        end
 
         local mapTextures = dataHandler.getLocalCellMapTextures(params.cellId)
-        if not mapTextures then return end
+        if not mapTextures then mapTextures = {} end
 
         local width = localCellInfo.width * 256
         local height = localCellInfo.height * 256
