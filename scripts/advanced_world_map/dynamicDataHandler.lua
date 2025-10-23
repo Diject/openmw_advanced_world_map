@@ -32,6 +32,7 @@ this.cellDirections = nil
 ---@class advancedWorldMap.dynamicDataHandler.entranceData
 ---@field pos any
 ---@field id string
+---@field destPos any
 ---@field name string
 ---@field fullName string
 ---@field doorHash string
@@ -116,6 +117,7 @@ local function buildData()
             if not types.Door.isTeleport(door) then goto continue end
 
             local dest = types.Door.destCell(door)
+            local destPos = types.Door.destPosition(door)
 
             local name = dest.name
             if name:find(",") then
@@ -135,6 +137,7 @@ local function buildData()
             entrances[cell.id][doorHash] = {
                 pos = door.position,
                 id = dest.id,
+                destPos = destPos,
                 name = name,
                 fullName = dest.name,
                 doorHash = doorHash,

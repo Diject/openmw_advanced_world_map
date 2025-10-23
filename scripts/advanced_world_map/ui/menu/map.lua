@@ -53,6 +53,9 @@ this.entranceMarkersByCellId = nil
 ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
 this.markersByDoorHash = {}
 
+---@type advancedWorldMap.ui.menu.map
+this.activeMenuMeta = nil
+
 
 function this.updateDiscoveredForCell(cell)
     local names = {}
@@ -128,9 +131,9 @@ menuMeta.__index = menuMeta
 
 menuMeta.menu = nil
 
----@param self advancedWorldMap.ui.menu.map
+
 ---@param widget advancedWorldMap.ui.mapWidgetMeta
-local function createMarkers(self, widget, cellId)
+local function createMarkers(widget, cellId)
     local entrances = dynamicDataHandler.entrances or {}
 
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
@@ -388,6 +391,17 @@ local function createMarkers(self, widget, cellId)
                     type = "image",
                     cellId = dt.id
                 },
+                events = {
+                    mouseRelease = function (e, layout, pressed)
+                        if not pressed or not this.activeMenuMeta then return end
+
+                        this.activeMenuMeta:updateMapWidgetCell(dt.id)
+                        if this.activeMenuMeta.mapWidget and dt.destPos then
+                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.destPos)
+                        end
+                        this.activeMenuMeta:update()
+                    end
+                }
             }
             if imageMarkerHandler then
                 table.insert(markersByCellId[cellId], imageMarkerHandler)
@@ -602,6 +616,7 @@ end
 
 function menuMeta:close()
     if not self.menu then return end
+    this.activeMenuMeta = nil
     self.menu:destroy()
 end
 
@@ -754,10 +769,6 @@ function this.create(params)
         }
     }
 
-    eventSys.registerHandler(eventSys.events.onMapInitialized, function (e)
-        createMarkers(meta, e.mapWidget, e.cellId)
-    end)
-
     meta.getWidgetWindowWidth = function (self)
         local widgetWindowWidth = 0
         for _, el in pairs(meta.widgetWindowLayout.content) do
@@ -885,6 +896,7 @@ function this.create(params)
     }
 
     meta.menu = ui.create(layout)
+    this.activeMenuMeta = meta
 
 
     local function onMouseWheelCallback(content, value)
@@ -927,6 +939,11 @@ function this.create(params)
 
     return meta
 end
+
+
+eventSys.registerHandler(eventSys.events.onMapInitialized, function (e)
+    createMarkers(e.mapWidget, e.cellId)
+end)
 
 
 return this
