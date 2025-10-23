@@ -132,31 +132,190 @@ function menuMeta:createMarkers()
     local widget = self.mapWidget
     local entrances = dynamicDataHandler.entrances or {}
 
-    ---@type table<integer, advancedWorldMap.dynamicDataHandler.entranceData[]>
+    ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
-    local lineHeight = 256 * uiUtils.getUIScale()
-    local lineDiff = lineHeight * 12
+    local lineHeight = 4 * 7 * uiUtils.getUIScale()
+    local charWidth = 2 * 4 * 7 * uiUtils.getUIScale()
+    local maxLine
+    local minLine
 
     for cellId, list in pairs(entrances) do
         for _, dt in pairs(list) do
             local line = math.floor(dt.pos.y / lineHeight)
             entranceByLine[line] = entranceByLine[line] or {}
-            table.insert(entranceByLine[line], dt)
+            table.insert(entranceByLine[line], {dt = dt})
+            maxLine = math.max(maxLine or line, line)
+            minLine = math.min(minLine or line, line)
         end
     end
 
     for _, line in pairs(entranceByLine) do
         table.sort(line, function (a, b)
-            return a.pos.x < b.pos.x
+            return a.dt.pos.x < b.dt.pos.x
         end)
     end
 
     local markersByCellId = {}
     local markersByName = {}
 
-    for _, line in pairs(entranceByLine) do
-        for i, dt in ipairs(line) do
-            local textAnchor = line[i + 1] and ((line[i + 1].pos.x - dt.pos.x) < lineDiff) and 1 or 0
+    ---@type {[1] : number, [2] : number}[][]
+    local textLines = {}
+    for i = minLine - 1, maxLine + 1 do
+        textLines[i] = {}
+    end
+
+    local anchors = {
+        util.vector2(0, 0.5),
+        util.vector2(1, 0.5),
+        util.vector2(0.5, 1.5),
+        util.vector2(0.5, -0.5),
+        util.vector2(0.25, 1.5),
+        util.vector2(0.75, 1.5),
+        util.vector2(0.25, -0.5),
+        util.vector2(0.75, -0.5),
+    }
+
+    local function isOverlap(s, e, intervals)
+        for _, interv in ipairs(intervals) do
+            local is, ie = interv[1], interv[2]
+            if s <= ie and e >= is then
+                return true
+            end
+        end
+        return false
+    end
+
+    for j, line in pairs(entranceByLine) do
+        for i = #line, 1, -1 do
+            local data = line[i]
+            local dt = data.dt
+
+            local textAnchor = anchors[1]
+            local text = "  "..dt.name
+            local textWidth = (charWidth + 2) * stringLib.length(dt.name)
+
+            local currentLines = {}
+            for k = -1, 1 do
+                if textLines[j + k] then
+                    table.insert(currentLines, textLines[j + k])
+                end
+            end
+            local currentLine = textLines[j]
+
+            do
+                local upperLine = textLines[j + 1]
+                local upperLines = {}
+                for k = 2, 4 do
+                    if textLines[j + k] then
+                        table.insert(upperLines, textLines[j + k])
+                    end
+                end
+
+                local lowerLine = textLines[j - 1]
+                local lowerLines = {}
+                for k = -4, -2 do
+                    if textLines[j + k] then
+                        table.insert(lowerLines, textLines[j + k])
+                    end
+                end
+
+                local funcs = {}
+
+                local function calcTextAnchor(arr, s, e, anchor, name)
+                    local valid = true
+                    local cnt = 0
+                    for _, lin in pairs(arr) do
+                        if isOverlap(s, e, lin) then
+                            valid = false
+                        else
+                            cnt = cnt + 1
+                        end
+                    end
+
+                    local func = function ()
+                        textAnchor = anchor
+                        text = name
+                        for _, lin in pairs(arr) do
+                            table.insert(lin, {s, e})
+                        end
+                    end
+
+                    if valid then
+                        func()
+                        return true
+                    else
+                        table.insert(funcs, {cnt, func})
+                    end
+                end
+
+                if currentLine then
+                    local s, e = dt.pos.x, dt.pos.x + textWidth
+                    if calcTextAnchor(currentLines, s, e, anchors[1], "  "..dt.name) then
+                        goto next
+                    end
+
+                    s, e = dt.pos.x - textWidth, dt.pos.x
+                    if calcTextAnchor(currentLines, s, e, anchors[2], dt.name.."  ") then
+                        goto next
+                    end
+                end
+
+                if upperLine then
+                    local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
+                    if calcTextAnchor(upperLines, s, e, anchors[3], dt.name) then
+                        goto next
+                    end
+                end
+
+                if lowerLine then
+                    local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
+                    if calcTextAnchor(lowerLines, s, e, anchors[4], dt.name) then
+                        goto next
+                    end
+                end
+
+                if upperLine then
+                    local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
+                    if calcTextAnchor(upperLines, s, e, anchors[5], dt.name) then
+                        goto next
+                    end
+                    s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
+                    if calcTextAnchor(upperLines, s, e, anchors[6], dt.name) then
+                        goto next
+                    end
+                end
+
+                if lowerLine then
+                    local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
+                    if calcTextAnchor(lowerLines, s, e, anchors[7], dt.name) then
+                        goto next
+                    end
+                    s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
+                    if calcTextAnchor(lowerLines, s, e, anchors[8], dt.name) then
+                        goto next
+                    end
+                end
+
+                table.sort(funcs, function (a, b)
+                    return a[1] > b[1]
+                end)
+
+                if funcs[1][1] ~= 0 then
+                    funcs[1][2]()
+                else
+                    print(funcs[1][1], text)
+                    tableLib.shuffle(funcs)
+                    funcs[1][2]()
+                end
+
+            end
+
+            ::next::
+
+            for _, ln in pairs(currentLines) do
+                table.insert(ln, {dt.pos.x - charWidth / 2, dt.pos.x + charWidth / 2})
+            end
+
             local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
             local textId = imId..tostring(textAnchor)
 
@@ -171,9 +330,9 @@ function menuMeta:createMarkers()
                 id = textId,
                 useCache = true,
                 layerId = mapWidget.layerId.nonInteractive,
-                text = (textAnchor == 0) and "  "..dt.name or dt.name.."  ",
+                text = text,
                 alpha = 0.5,
-                anchor = util.vector2(textAnchor, 0.5),
+                anchor = textAnchor,
                 fontSize = 7,
                 pos = dt.pos,
                 color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
