@@ -32,6 +32,8 @@ local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 
 local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
 
+local markers = require("scripts.advanced_world_map.widgets.markers")
+
 -- widgets
 require("scripts.advanced_world_map.widgets.legend")
 require("scripts.advanced_world_map.widgets.search")
@@ -157,7 +159,7 @@ return {
                 lastPlayerCellId = self.cell.id
 
                 discoveredLocs.addCell(self.cell)
-                mapMenu.updateDiscoveredForCell(self.cell)
+                markers.updateDiscoveredForCell(self.cell)
 
                 local cellId = self.cell.isExterior and commonData.exteriorMapId or self.cell.id
                 if mapMenu.cachedMapWidgetMetatable[cellId] then
@@ -230,12 +232,12 @@ return {
 
         ["AdvWMap:registerDisabledDoor"] = function(ref)
             disabledDoors.register(ref.id)
-            mapMenu.updateDoorMarkerVisibility(ref)
+            markers.updateDoorMarkerVisibility(ref)
         end,
 
         ["AdvWMap:unregisterDisabledDoor"] = function(ref)
             disabledDoors.unregister(ref.id)
-            mapMenu.updateDoorMarkerVisibility(ref)
+            markers.updateDoorMarkerVisibility(ref)
         end,
     },
 }

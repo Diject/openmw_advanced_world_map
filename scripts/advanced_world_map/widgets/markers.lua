@@ -1,0 +1,456 @@
+local core = require("openmw.core")
+local util = require("openmw.util")
+local ui = require("openmw.ui")
+local types = require("openmw.types")
+
+local eventSys = require("scripts.advanced_world_map.eventSys")
+
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
+local stringLib = require("scripts.advanced_world_map.utils.string")
+local tableLib = require("scripts.advanced_world_map.utils.table")
+local cellLib = require("scripts.advanced_world_map.utils.cell")
+
+local commonData = require("scripts.advanced_world_map.common")
+local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
+local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
+
+local config = require("scripts.advanced_world_map.config.configLib")
+
+local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
+
+local l10n = core.l10n(commonData.l10nKey)
+
+local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
+
+
+local this = {}
+
+
+---@type advancedWorldMap.ui.menu.map?
+this.activeMenuMeta = nil
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+this.markersByName = nil
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+this.entranceMarkersByCellId = nil
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+this.markersByDoorHash = {}
+
+
+function this.updateDiscoveredForCell(cell)
+    local names = {}
+
+    if cell.isExterior then
+        for i = -1, 1 do
+            for j = -1, 1 do
+                names[commonData.exteriorCellIdFormat:format(cell.gridX + i, cell.gridY + j)] = true
+            end
+        end
+    end
+    names[cell.id] = true
+    names[cell.name] = true
+    names[stringLib.getBeforeComma(cell.name)] = true
+    names[stringLib.getAfterComma(cell.name)] = true
+
+    this.updateDiscovered(tableLib.keys(names))
+end
+
+
+---@param newDiscovered string[]
+function this.updateDiscovered(newDiscovered)
+    if not this.markersByName or not this.entranceMarkersByCellId then return end
+
+    for _, name in pairs(newDiscovered or {}) do
+        for _, handler in pairs(this.entranceMarkersByCellId[name] or {}) do
+            local userData = handler:getUserData()
+            if not userData or not userData.disabled then
+                handler:setVisibility(true)
+            end
+        end
+        for _, handler in pairs(this.markersByName[name] or {}) do
+            local userData = handler:getUserData()
+            if not userData or not userData.disabled then
+                handler:setVisibility(true)
+            end
+            handler:setColor(config.data.ui.defaultLightColor)
+        end
+    end
+end
+
+
+---@param marker advancedWorldMap.ui.mapElementMeta
+local function updateDoorMarkerVisibility(marker, visible)
+    local userData = marker:getUserData()
+    if not userData then return end
+
+    if userData.type == "text" then
+        marker:setVisibility(visible)
+        userData.disabled = not visible
+    else
+        marker:setAlpha(visible and 1 or 0.25)
+    end
+end
+
+
+function this.updateDoorMarkerVisibility(doorRef)
+    local doorHash = commonData.doorHash(doorRef, types.Door.destCell(doorRef).id)
+    local visible = not disabledDoors.contains(doorRef.id)
+
+    local markers = this.markersByDoorHash[doorHash]
+    if not markers then return end
+
+    for _, marker in pairs(markers) do
+        updateDoorMarkerVisibility(marker, visible)
+    end
+end
+
+
+---@param widget advancedWorldMap.ui.mapWidgetMeta
+local function createMarkers(widget, cellId)
+    local entrances = dynamicDataHandler.entrances or {}
+
+    ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
+    local entranceByLine = {}
+    local cellTypeMul = cellId and 2 or 1
+    local lineHeight = cellTypeMul * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local charWidth = cellTypeMul * 2 * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local maxLine
+    local minLine
+
+    if cellId == nil then
+        for cellId, list in pairs(entrances) do
+            if not cellId:find(commonData.exteriorCellLabel) then
+                goto continue
+            end
+
+            for _, dt in pairs(list) do
+                local line = math.floor(dt.pos.y / lineHeight)
+                entranceByLine[line] = entranceByLine[line] or {}
+                table.insert(entranceByLine[line], {dt = dt})
+                maxLine = math.max(maxLine or line, line)
+                minLine = math.min(minLine or line, line)
+            end
+
+            ::continue::
+        end
+    else
+        local entranceData = entrances[cellId]
+        if not entranceData then return end
+
+        for _, dt in pairs(entranceData) do
+            local line = math.floor(dt.pos.y / lineHeight)
+            entranceByLine[line] = entranceByLine[line] or {}
+            table.insert(entranceByLine[line], {dt = dt})
+            maxLine = math.max(maxLine or line, line)
+            minLine = math.min(minLine or line, line)
+        end
+    end
+
+    for _, line in pairs(entranceByLine) do
+        table.sort(line, function (a, b)
+            return a.dt.pos.x < b.dt.pos.x
+        end)
+    end
+
+    local markersByCellId = {}
+    local markersByName = {}
+
+    ---@type {[1] : number, [2] : number}[][]
+    local textLines = {}
+    for i = minLine - 1, maxLine + 1 do
+        textLines[i] = {}
+    end
+
+    local anchors = {
+        util.vector2(0, 0.5),
+        util.vector2(1, 0.5),
+        util.vector2(0.5, 1.5),
+        util.vector2(0.5, -0.5),
+        util.vector2(0.25, 1.5),
+        util.vector2(0.75, 1.5),
+        util.vector2(0.25, -0.5),
+        util.vector2(0.75, -0.5),
+    }
+
+    local function isOverlap(s, e, intervals)
+        for _, interv in ipairs(intervals) do
+            local is, ie = interv[1], interv[2]
+            if s <= ie and e >= is then
+                return true
+            end
+        end
+        return false
+    end
+
+    for j, line in pairs(entranceByLine) do
+        for i = #line, 1, -1 do
+            local data = line[i]
+            local dt = data.dt
+
+            local textAnchor = anchors[1]
+            local text = "  "..dt.name
+            local textWidth = (charWidth + 2) * stringLib.length(dt.name)
+
+            local currentLines = {}
+            for k = -1, 1 do
+                if textLines[j + k] then
+                    table.insert(currentLines, textLines[j + k])
+                end
+            end
+            local currentLine = textLines[j]
+
+            do
+                local upperLine = textLines[j + 1]
+                local upperLines = {}
+                for k = 2, 4 do
+                    if textLines[j + k] then
+                        table.insert(upperLines, textLines[j + k])
+                    end
+                end
+
+                local lowerLine = textLines[j - 1]
+                local lowerLines = {}
+                for k = -4, -2 do
+                    if textLines[j + k] then
+                        table.insert(lowerLines, textLines[j + k])
+                    end
+                end
+
+                local funcs = {}
+
+                local function calcTextAnchor(arr, s, e, anchor, name)
+                    local valid = true
+                    local cnt = 0
+                    for _, lin in pairs(arr) do
+                        if isOverlap(s, e, lin) then
+                            valid = false
+                        else
+                            cnt = cnt + 1
+                        end
+                    end
+
+                    local func = function ()
+                        textAnchor = anchor
+                        text = name
+                        for _, lin in pairs(arr) do
+                            table.insert(lin, {s, e})
+                        end
+                    end
+
+                    if valid then
+                        func()
+                        return true
+                    else
+                        table.insert(funcs, {cnt, func})
+                    end
+                end
+
+                if currentLine then
+                    local s, e = dt.pos.x, dt.pos.x + textWidth
+                    if calcTextAnchor(currentLines, s, e, anchors[1], "  "..dt.name) then
+                        goto next
+                    end
+
+                    s, e = dt.pos.x - textWidth, dt.pos.x
+                    if calcTextAnchor(currentLines, s, e, anchors[2], dt.name.."  ") then
+                        goto next
+                    end
+                end
+
+                if upperLine then
+                    local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
+                    if calcTextAnchor(upperLines, s, e, anchors[3], dt.name) then
+                        goto next
+                    end
+                end
+
+                if lowerLine then
+                    local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
+                    if calcTextAnchor(lowerLines, s, e, anchors[4], dt.name) then
+                        goto next
+                    end
+                end
+
+                if upperLine then
+                    local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
+                    if calcTextAnchor(upperLines, s, e, anchors[5], dt.name) then
+                        goto next
+                    end
+                    s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
+                    if calcTextAnchor(upperLines, s, e, anchors[6], dt.name) then
+                        goto next
+                    end
+                end
+
+                if lowerLine then
+                    local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
+                    if calcTextAnchor(lowerLines, s, e, anchors[7], dt.name) then
+                        goto next
+                    end
+                    s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
+                    if calcTextAnchor(lowerLines, s, e, anchors[8], dt.name) then
+                        goto next
+                    end
+                end
+
+                table.sort(funcs, function (a, b)
+                    return a[1] > b[1]
+                end)
+
+                if funcs[1][1] ~= 0 then
+                    funcs[1][2]()
+                else
+                    tableLib.shuffle(funcs)
+                    funcs[1][2]()
+                end
+
+            end
+
+            ::next::
+
+            for _, ln in pairs(currentLines) do
+                table.insert(ln, {dt.pos.x - charWidth / 2, dt.pos.x + charWidth / 2})
+            end
+
+            local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
+            local textId = imId..tostring(textAnchor)
+
+            local cellId = cellLib.getCellIdByPos(dt.pos)
+            markersByCellId[cellId] = markersByCellId[cellId] or {}
+            markersByName[dt.name] = markersByName[dt.name] or {}
+            this.markersByDoorHash[dt.doorHash] = this.markersByDoorHash[dt.doorHash] or {}
+
+            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+
+            local textMarkerHandler = widget:createTextMarker{
+                id = textId,
+                useCache = true,
+                layerId = mapWidget.layerId.nonInteractive,
+                text = text,
+                alpha = 0.5,
+                anchor = textAnchor,
+                fontSize = cellTypeMul * config.data.legend.markerSize,
+                pos = dt.pos,
+                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
+                showWhenZoomedIn = true,
+                visible = isCellDiscovered,
+                userData = {
+                    type = "text",
+                },
+            }
+            if textMarkerHandler then
+                table.insert(markersByCellId[cellId], textMarkerHandler)
+                table.insert(markersByName[dt.name], textMarkerHandler)
+                table.insert(this.markersByDoorHash[dt.doorHash], textMarkerHandler)
+                if disabledDoors.contains(dt.doorHash) then
+                    updateDoorMarkerVisibility(textMarkerHandler, false)
+                end
+            end
+
+            local imageMarkerHandler = widget:createImageMarker{
+                id = imId,
+                texture = mapMarkerTexture,
+                useCache = true,
+                layerId = mapWidget.layerId.marker,
+                alpha = 0.5,
+                anchor = util.vector2(0.5, 0.5),
+                size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize) * cellTypeMul,
+                pos = dt.pos,
+                showWhenZoomedIn = true,
+                visible = isCellDiscovered,
+                searchText = stringLib.utf8_lower(dt.fullName),
+                searchLabel = dt.fullName,
+                userData = {
+                    type = "image",
+                    cellId = dt.id
+                },
+                events = {
+                    mouseRelease = function (e, layout, pressed)
+                        if not pressed or not this.activeMenuMeta then return end
+
+                        this.activeMenuMeta:updateMapWidgetCell(dt.id)
+                        if this.activeMenuMeta.mapWidget and dt.destPos then
+                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.destPos)
+                        end
+                        this.activeMenuMeta:update()
+                    end
+                }
+            }
+            if imageMarkerHandler then
+                table.insert(markersByCellId[cellId], imageMarkerHandler)
+                table.insert(markersByName[dt.name], imageMarkerHandler)
+                table.insert(this.markersByDoorHash[dt.doorHash], imageMarkerHandler)
+                if disabledDoors.contains(dt.doorHash) then
+                    updateDoorMarkerVisibility(imageMarkerHandler, false)
+                end
+            end
+
+        end
+    end
+
+    ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+    this.entranceMarkersByCellId = markersByCellId
+
+    for _, dt in pairs(dynamicDataHandler.cellNameData or {}) do
+        local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
+
+        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name)
+
+        markersByName[dt.name] = markersByName[dt.name] or {}
+
+        local textMarkerHandler = widget:createTextMarker{
+            id = id,
+            layerId = mapWidget.layerId.name,
+            text = dt.name,
+            anchor = util.vector2(0.5, 0.5),
+            pos = util.vector2(dt.posX, dt.posY),
+            color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            fontSize = 10 + math.min(8, dt.count) * 2,
+            scaleFunc = mapWidget.scaleFunction.linear,
+            alpha = 0.4,
+            useCache = true,
+            showWhenZoomedOut = true,
+            visible = isCellDiscovered,
+            searchText = stringLib.utf8_lower(dt.name),
+        }
+        if textMarkerHandler then
+            table.insert(markersByName[dt.name], textMarkerHandler)
+        end
+    end
+
+    ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
+    this.markersByName = markersByName
+
+    for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
+        local fontSize = 14 + math.min(8, info.count) * 3
+        widget:createTextMarker{
+            layerId = mapWidget.layerId.region,
+            text = info.name,
+            anchor = util.vector2(0.5, 0.5),
+            pos = util.vector2(info.posX, info.posY),
+            color = discoveredLocs.isDiscovered(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            fontSize = fontSize,
+            scaleFunc = mapWidget.scaleFunction.linear,
+            alpha = 0.12,
+            showWhenZoomedOut = true,
+            useCache = true,
+            searchText = stringLib.utf8_lower(info.name),
+            searchLabel = l10n("Region")..": "..info.name
+        }
+    end
+end
+
+
+eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
+    this.activeMenuMeta = e.menu
+end)
+
+eventSys.registerHandler(eventSys.events.onMapInitialized, function (e)
+    createMarkers(e.mapWidget, e.cellId)
+end)
+
+
+return this
