@@ -485,7 +485,7 @@ function mapWidgetMeta:updateMarkersScale()
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region)}) do
         for i, elem in pairs(layout.content) do
             if elem.userData and elem.userData.autoScale then
-                if elem.userData.fontSize then
+                if elem.userData.text then
                     elem.props = {
                         text = elem.props.text,
                         autoSize = elem.props.autoSize,
@@ -496,7 +496,7 @@ function mapWidgetMeta:updateMarkersScale()
                         visible = elem.props.visible,
                         alpha = elem.props.alpha,
                     }
-                elseif elem.userData.size then
+                elseif elem.userData.texture then
                     elem.props.size = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.size, self.zoom)
                 end
             end
@@ -535,6 +535,7 @@ local createMarkerFuncCache = {}
 ---@field events table?
 ---@field tooltipContent any
 ---@field fontSize number?
+---@field size any util.vector2
 ---@field color any util.color.rgb
 ---@field anchor any util.vector2
 ---@field textAlignH any ui.ALIGNMENT
@@ -614,7 +615,7 @@ local function createMarker(self, params, onlyInitialize)
                     visible = params.visible,
                     alpha = params.alpha or 1,
                     resource = params.texture,
-                    size = (params.scaleFunc or this.scaleFunction.marker)(params.size or util.vector2(18, 18), self.zoom),
+                    size = params.size and (params.scaleFunc or this.scaleFunction.marker)(params.size, self.zoom),
                     color = params.texture and (params.color or config.data.ui.defaultColor),
                     propagateEvents = false,
                 }
@@ -625,7 +626,8 @@ local function createMarker(self, params, onlyInitialize)
 
             if cachedLayout.props.textSize then
                 cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.fontSize, self.zoom)
-            else
+            end
+            if cachedLayout.props.size then
                 cachedLayout.props.size = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.size, self.zoom)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
@@ -643,7 +645,7 @@ local function createMarker(self, params, onlyInitialize)
     local anchor = params.anchor or util.vector2(0.5, 0.5)
     local tooltipContent = params.tooltipContent
 
-    local size = params.size or util.vector2(18, 18)
+    local size = params.size
     local texture = params.texture
 
     local events = params.events or {}
@@ -658,14 +660,15 @@ local function createMarker(self, params, onlyInitialize)
         name = markerName,
         props = {
             text = params.text,
-            textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(fontSize, self.zoom),
+            textSize = params.text and fontSize and (params.scaleFunc or this.scaleFunction.marker)(fontSize, self.zoom),
+            autoSize = size == nil,
             anchor = anchor,
             relativePosition = relPos,
             textColor = params.text and color,
             visible = params.visible,
             alpha = alpha,
             resource = texture,
-            size = (params.scaleFunc or this.scaleFunction.marker)(size, self.zoom),
+            size = size and (params.scaleFunc or this.scaleFunction.marker)(size, self.zoom),
             color = params.texture and color,
             propagateEvents = false,
         },
@@ -673,7 +676,7 @@ local function createMarker(self, params, onlyInitialize)
             scaleFunc = params.scaleFunc,
             autoScale = true,
             fontSize = params.text and fontSize,
-            size = params.texture and size,
+            size = size,
             params = params,
             userData = params.userData,
         },
