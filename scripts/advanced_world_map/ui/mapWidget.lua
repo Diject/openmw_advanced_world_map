@@ -594,6 +594,9 @@ local function createMarker(self, params, onlyInitialize)
         end
     end
 
+    params.pos = params.pos or util.vector3(0, 0, 0)
+    local relPos = self:getRelativePositionByWorldPosition(params.pos)
+
     if not onlyInitialize and params.useCache and params.id then
         local id = params.id
         local cacheId = id.."_"..tostring(params.layerId)
@@ -606,7 +609,7 @@ local function createMarker(self, params, onlyInitialize)
                     text = params.text,
                     textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(params.fontSize or 18, self.zoom),
                     anchor = params.anchor or util.vector2(0.5, 0.5),
-                    relativePosition = cachedLayout.props.relativePosition,
+                    relativePosition = relPos,
                     textColor = params.text and (params.color or config.data.ui.defaultColor),
                     visible = params.visible,
                     alpha = params.alpha or 1,
@@ -616,6 +619,8 @@ local function createMarker(self, params, onlyInitialize)
                     propagateEvents = false,
                 }
                 cachedLayout.userData.forceChanged = false
+            else
+                cachedLayout.props.relativePosition = relPos
             end
 
             if cachedLayout.props.textSize then
@@ -631,9 +636,6 @@ local function createMarker(self, params, onlyInitialize)
             end
         end
     end
-
-    params.pos = params.pos or util.vector3(0, 0, 0)
-    local relPos = self:getRelativePositionByWorldPosition(params.pos)
 
     local fontSize = params.fontSize or 18
     local color = params.color or config.data.ui.defaultColor
