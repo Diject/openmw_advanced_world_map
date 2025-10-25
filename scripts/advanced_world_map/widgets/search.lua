@@ -3,6 +3,7 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local input = require('openmw.input')
+local playerRef = require("openmw.self")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -13,6 +14,7 @@ local stringLib = require("scripts.advanced_world_map.utils.string")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
+local discoveredLocations = require("scripts.advanced_world_map.discoveredLocations")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
@@ -50,70 +52,66 @@ end
 
 
 ---@param menu advancedWorldMap.ui.menu.map
----@return {id : string, layerId : integer, name : string, pos : {x : number, y : number}, dist : number?, parent : string?, priority : number}[]
+---@return {cellId : string?, name : string, pos : {x : number, y : number}, dist : number?, parentName : string?, priority : number?}[]
 local function getResults(menu, str, hideUnrevealed, inAllInteriors)
     str = stringLib.utf8_lower(str)
 
     local res = {}
 
-    local addedHashset = {}
+    local mapWidget = menu.mapWidget
 
-    local function add(params, priority)
+    local entrances = dynamicDataHandler.entrances or {}
 
-        if inAllInteriors and params.userData and params.userData.cellId then
+    local function processCell(cellId, isExterior)
+        ---@type advancedWorldMap.dynamicDataHandler.entranceData[]
+        local list = entrances[cellId]
 
-            for cellId, cellName in pairs(getAvailableCellNamesFromInterior(params.userData.cellId)) do
+        for _, dt in pairs(list or {}) do
+            local nameLower = stringLib.utf8_lower(dt.fullName)
 
-                if cellId ~= params.userData.cellId and stringLib.utf8_lower(cellName):find(str) then
-                    local parentName = params.searchLabel or params.text or params.searchText
-
-                    table.insert(res, {id = params.id, layerId = params.layerId, parent = parentName,
-                        name = cellName, pos = params.pos, priority = priority or 0})
+            if not hideUnrevealed or discoveredLocations.isDiscovered(dt.id) then
+                if nameLower:find(str) then
+                    table.insert(res, {
+                        name = dt.fullName,
+                        cellId = not isExterior and cellId or nil,
+                        pos = dt.pos,
+                        priority = 0,
+                    })
                 end
-
             end
 
-        end
+            if inAllInteriors then
+                local parentName = dynamicDataHandler.cellNameById[dt.id]
 
-        if params.searchText:find(str) then
-            table.insert(res, {id = params.id, layerId = params.layerId, priority = priority or 0,
-                name = params.searchLabel or params.text or params.searchText, pos = params.pos})
+                for cId, cellName in pairs(getAvailableCellNamesFromInterior(dt.id)) do
+
+                    if cId ~= dt.id and stringLib.utf8_lower(cellName):find(str)
+                            and (not hideUnrevealed or discoveredLocations.isDiscovered(cId)) then
+
+                        table.insert(res, {
+                            parentName = parentName,
+                            name = cellName,
+                            cellId = cId,
+                            pos = dt.pos,
+                            priority = 0,
+                        })
+                    end
+                end
+            end
         end
     end
 
-    for i, content in ipairs({
-                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.region).content,
-                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.map).content,
-                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.marker).content,
-                menu.mapWidget:getLayerLayout(menu.mapWidget.layerIds.nonInteractive).content,
-            }) do
-        for _, marker in ipairs(content) do
-            if not marker.userData or not marker.userData.params then goto continue end
+    if mapWidget.cellId then
+        processCell(mapWidget.cellId)
+    else
+        for cellId, list in pairs(entrances) do
+            if not cellId:find(commonData.exteriorCellLabel) then
+                goto continue
+            end
 
-            ---@type advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params|advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
-            local params = marker.userData.params
-
-            if not params.searchText or not params.pos or not params.searchText:find(str)
-                or params.showWhenZoomedIn or params.showWhenZoomedOut
-                or hideUnrevealed and params.visible == false then goto continue end
-
-            addedHashset[params] = true
-            add(params, i)
+            processCell(cellId, true)
 
             ::continue::
-        end
-    end
-
-    for _, tb in pairs({menu.mapWidget.zoomOutMarkers, menu.mapWidget.zoomInMarkers}) do
-        for _, cellData in pairs(tb) do
-            for _, dt in pairs(cellData) do
-                if not dt.params.searchText or not dt.params.pos or hideUnrevealed and dt.params.visible == false
-                        or addedHashset[dt.params] then goto continue end
-
-                add(dt.params, dt.params.showWhenZoomedOut and 2 or dt.params.showWhenZoomedIn and 3 or 4)
-
-                ::continue::
-            end
         end
     end
 
@@ -151,7 +149,7 @@ local function create(menu)
             contentHeight = 0,
             leftOffset = 2,
             size = scrollBoxSize,
-            position = util.vector2(0, config.data.ui.fontSize * 5 + 4),
+            position = util.vector2(0, config.data.ui.fontSize * 4 + 4),
             scrollAmount = config.data.ui.fontSize * 2,
             content = scrollBoxContent,
         }
@@ -161,33 +159,39 @@ local function create(menu)
 
         local textFilter = ""
 
-        local function fill(sortByDistance, hideUnrevealed, searchInInteriors)
+        local function fill(hideUnrevealed, searchInInteriors)
             uiUtils.clearContent(scrollBoxContent)
 
             if textFilter == "" then return end
 
             local results = getResults(menu, textFilter, hideUnrevealed, searchInInteriors)
 
-            if sortByDistance then ---@diagnostic disable-line: need-check-nil
-                for _, res in pairs(results) do
-                    res.dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
+            for _, res in pairs(results) do
+                local dist
+                if menu.mapWidget.cellId then
+                    if res.cellId == menu.mapWidget.cellId then
+                        dist = commonData.distance2D(res.pos, playerRef.position)
+                    end
+                else
+                    dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
                 end
-
-                table.sort(results, function (a, b)
-                    return a.dist < b.dist
-                end)
-            else
-                table.sort(results, function (a, b)
-                    return a.priority < b.priority
-                end)
+                res.dist = dist or 0
             end
+
+            table.sort(results, function (a, b)
+                return a.dist < b.dist
+            end)
+
+            table.sort(results, function (a, b)
+                return a.priority < b.priority
+            end)
 
             local height = 0
 
             for _, dt in ipairs(results) do
                 local text
-                if dt.parent and dt.parent ~= dt.name then
-                    text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), dt.parent, dt.pos.x, dt.pos.y)
+                if dt.parentName then
+                    text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), dt.parentName, dt.pos.x, dt.pos.y)
                 else
                     text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
                 end
@@ -243,13 +247,20 @@ local function create(menu)
                             scrollBoxMeta:mouseRelease(e)
 
                             if scrollBoxMeta.lastMovedDistance < 20 then
-                                menu.mapWidget:focusOnWorldPosition(dt.pos)
-                                menu.mapWidget:setZoom(math.max(8, menu.mapWidget.zoom))
-                                menu.mapWidget:forceChangeMarker(dt.id, dt.layerId, {
-                                    visible = true,
-                                    size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
-                                    color = config.data.ui.selectionColor
-                                })
+                                if menu.mapWidget.cellId ~= dt.cellId then
+                                    menu:updateMapWidgetCell(dt.cellId)
+                                end
+                                if not dt.parentName then
+                                    menu.mapWidget:focusOnWorldPosition(dt.pos)
+                                end
+
+                                menu.mapWidget:setZoom(math.max(dt.cellId and 16 or 8, menu.mapWidget.zoom))
+
+                                -- menu.mapWidget:forceChangeMarker(dt.id, dt.layerId, {
+                                --     visible = true,
+                                --     size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
+                                --     color = config.data.ui.selectionColor
+                                -- })
                                 menu:update()
                             end
                         end),
@@ -266,7 +277,6 @@ local function create(menu)
             scrollBoxMeta:setContentHeight(height)
         end
 
-        local sortByDistance = localStorage.data[commonData.sortByDistanceFieldId] ~= nil and localStorage.data[commonData.sortByDistanceFieldId] or false
 
         local hideUnrevealed
         if localStorage.data[commonData.hideUnrevealedFieldId] ~= nil then
@@ -282,29 +292,16 @@ local function create(menu)
             searchInInteriors = true
         end
 
-        local sortByDistanceCBLayout = checkBox{
-            updateFunc = menu.update,
-            text = l10n("sortByDistance"),
-            textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize + 9),
-            checked = sortByDistance,
-            event = function (checked, layout)
-                sortByDistance = checked
-                localStorage.data[commonData.sortByDistanceFieldId] = checked
-                fill(sortByDistance, hideUnrevealed, searchInInteriors)
-            end
-        }
-
         local hideUnrevealedCBLayout = checkBox{
             updateFunc = menu.update,
             text = l10n("hideUnrevealed"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
+            position = util.vector2(2, config.data.ui.fontSize + 9),
             checked = hideUnrevealed,
             event = function (checked, layout)
                 hideUnrevealed = checked
                 localStorage.data[commonData.hideUnrevealedFieldId] = checked
-                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+                fill(hideUnrevealed, searchInInteriors)
             end
         }
 
@@ -312,12 +309,12 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("searchInAllInteriors"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize * 3 + 15),
+            position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
             checked = searchInInteriors,
             event = function (checked, layout)
                 searchInInteriors = checked
                 localStorage.data[commonData.searchInInteriorsFieldId] = checked
-                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+                fill(hideUnrevealed, searchInInteriors)
             end
         }
 
@@ -346,7 +343,7 @@ local function create(menu)
                         keyRelease = async:callback(function(e, layout)
                             if e.code == input.KEY.Enter then
                                 searchBarLayout.content[1].props.text = textFilter
-                                fill(sortByDistance, hideUnrevealed, searchInInteriors)
+                                fill(hideUnrevealed, searchInInteriors)
                                 menu:update()
                             end
                         end),
@@ -363,7 +360,7 @@ local function create(menu)
                     anchor = util.vector2(1, 0.5),
                     position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
                     event = function (layout)
-                        fill(sortByDistance, hideUnrevealed, searchInInteriors)
+                        fill(hideUnrevealed, searchInInteriors)
                     end
                 },
                 borders()
@@ -390,7 +387,6 @@ local function create(menu)
                         resource = uiUtils.whiteTexture,
                     },
                 },
-                sortByDistanceCBLayout,
                 hideUnrevealedCBLayout,
                 searchInInteriorsCBLayout,
                 searchBarLayout,

@@ -18,6 +18,8 @@ this.regionNameData = nil
 this.entrances = nil
 ---@type table<string, table<string, advancedWorldMap.dynamicDataHandler.cellDirectionData>> by cell id, by destination cell id - destination cell data
 this.cellDirections = nil
+---@type table<string, string> by cell id
+this.cellNameById = nil
 
 ---@class advancedWorldMap.dynamicDataHandler.cellDirectionData
 ---@field name string
@@ -63,6 +65,8 @@ local function buildData()
 
         return region.name or ""
     end
+
+    this.cellNameById = {}
 
     local cellNameData = {}
     local regionNameData = {}
@@ -110,7 +114,19 @@ local function buildData()
         ::continue::
     end
 
+    local function getCellName(cell)
+        local name = cell.displayName or cell.name
+        if cell.isExterior then
+            if not name or name == "" then
+                name = getRegionName(cell.region)
+            end
+        end
+        return name
+    end
+
     for _, cell in pairs(world.cells) do
+
+        this.cellNameById[cell.id] = getCellName(cell)
 
         local doors = cell:getAll(types.Door)
         for _, door in pairs(doors) do
@@ -312,17 +328,19 @@ shouldRebuild = true
         cellNameData = this.cellNameData,
         regionNameData = this.regionNameData,
         entrances = this.entrances,
-        cellDirections = this.cellDirections
+        cellDirections = this.cellDirections,
+        cellNameById = this.cellNameById
     })
 end
 
 
 
 function this.load(data)
-    this.cellNameData = data.cellNameData
-    this.regionNameData = data.regionNameData
-    this.entrances = data.entrances
-    this.cellDirections = data.cellDirections
+    this.cellNameData = data.cellNameData or {}
+    this.regionNameData = data.regionNameData or {}
+    this.entrances = data.entrances or {}
+    this.cellDirections = data.cellDirections or {}
+    this.cellNameById = data.cellNameById or {}
 end
 
 
