@@ -1064,8 +1064,8 @@ function this.new(params)
             localCellInfo = {
                 height = 5,
                 width = 5,
-                mX = 0,
-                mY = 0,
+                mX = 1280,
+                mY = -1280,
                 nA = 0,
             }
         end
@@ -1420,8 +1420,12 @@ function this.new(params)
     }
 
     meta.layout = main
+    if meta.cellId then
+        meta:focusOnWorldPosition(util.vector2(0, 0))
+    else
+        meta:focusOnWorldPosition(playerPos.gexExteriorPos())
+    end
 
-    meta:focusOnWorldPosition(playerPos.gexExteriorPos())
     meta:setZoom(localStorage.data[commonData.lastZoomFieldId] or 1)
 
     return main, meta
