@@ -185,6 +185,7 @@ end
 
 function menuMeta:close()
     if not self.menu then return end
+    self:closeActiveWidget()
     this.activeMenuMeta = nil
     self.menu:destroy()
 end
