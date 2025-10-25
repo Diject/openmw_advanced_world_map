@@ -143,8 +143,6 @@ function menuMeta:getMapWidgetForCell(cellId)
             cellId = cellId
         }
         isNew = true
-    else
-        this.cachedMapWidgetMetatable[cellKeyId]:setSize(self.mainSize)
     end
 
     return this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId], isNew
@@ -165,13 +163,14 @@ function menuMeta:updateMapWidgetCell(cellId)
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
 
+    self.mapWidget:setUpdateFunction(self.update)
+    self:updateMapWidgetWidth()
+    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
+    self.mapWidget:setZoom(oldZoom)
+
     if isNew then
         eventSys.triggerEvent(eventSys.events.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
     end
-
-    self.mapWidget:setUpdateFunction(self.update)
-    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
-    self.mapWidget:setZoom(oldZoom)
 
     eventSys.triggerEvent(eventSys.events.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
 
