@@ -389,7 +389,7 @@ end
 
 function mapWidgetMeta:updateOnZoomMarkers()
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
-    if self.cellId or self.zoom > 6 then
+    if self.cellId or self.zoom >= config.data.tileset.zoomToShow then
         visibleRect.bottom = visibleRect.bottom - zoomInOffsetInWorldCoord
         visibleRect.top = visibleRect.top + zoomInOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomInOffsetInWorldCoord

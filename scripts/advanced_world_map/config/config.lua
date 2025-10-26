@@ -33,6 +33,7 @@ this.default = {
     },
     tileset = {
         onlyDiscovered = false,
+        zoomToShow = 6,
     },
     fastTravel = {
         onlyDiscovered = false,
