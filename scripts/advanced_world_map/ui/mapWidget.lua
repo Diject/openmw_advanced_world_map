@@ -409,7 +409,7 @@ function mapWidgetMeta:updateOnZoomMarkers()
 end
 
 
-
+---@param self advancedWorldMap.ui.mapWidgetMeta
 local function setZoom(self, zoom, relativePos)
     local widget = self:getMapLayersLayout()
 
@@ -502,6 +502,11 @@ function mapWidgetMeta:updateMarkersScale()
             end
         end
     end
+end
+
+
+function mapWidgetMeta:updateMarkers()
+    setZoom(self, self.zoom)
 end
 
 
