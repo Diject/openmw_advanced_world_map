@@ -385,13 +385,13 @@ local function createMarkers(widget, cellId)
                 searchLabel = dt.fullName,
                 userData = {
                     type = "image",
-                    cellId = dt.id
+                    cellId = dt.destCellId
                 },
                 events = {
                     mouseRelease = function (e, layout, pressed)
                         if not pressed or not this.activeMenuMeta then return end
 
-                        this.activeMenuMeta:updateMapWidgetCell(dt.id)
+                        this.activeMenuMeta:updateMapWidgetCell(dt.destCellId)
                         if this.activeMenuMeta.mapWidget and dt.destPos then
                             this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.destPos)
                         end

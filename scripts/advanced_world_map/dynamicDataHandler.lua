@@ -33,7 +33,7 @@ this.cellNameById = nil
 
 ---@class advancedWorldMap.dynamicDataHandler.entranceData
 ---@field pos any
----@field id string
+---@field destCellId string
 ---@field destPos any
 ---@field name string
 ---@field fullName string
@@ -152,7 +152,7 @@ local function buildData()
             entrances[cell.id] = entrances[cell.id] or {}
             entrances[cell.id][doorHash] = {
                 pos = door.position,
-                id = dest.id,
+                destCellId = dest.id,
                 destPos = destPos,
                 name = name,
                 fullName = dest.name,
@@ -319,9 +319,15 @@ shouldRebuild = true
         buildData()
         stor:set("cellNameData", this.cellNameData)
         stor:set("regionNameData", this.regionNameData)
+        stor:set("entrances", this.entrances)
+        stor:set("cellDirections", this.cellDirections)
+        stor:set("cellNameById", this.cellNameById)
     else
         this.cellNameData = stor:get("cellNameData") or {}
         this.regionNameData = stor:get("regionNameData") or {}
+        this.entrances = stor:get("entrances") or {}
+        this.cellDirections = stor:get("cellDirections") or {}
+        this.cellNameById = stor:get("cellNameById") or {}
     end
 
     require("openmw.world").players[1]:sendEvent("AdvWMap:updateMapData", {
