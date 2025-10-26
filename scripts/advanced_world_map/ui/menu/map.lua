@@ -242,6 +242,7 @@ function this.create(params)
             horizontal = true,
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
+            arrange = ui.ALIGNMENT.Center,
         },
         userData = {
 
