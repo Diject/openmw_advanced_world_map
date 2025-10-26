@@ -448,6 +448,10 @@ local function setZoom(self, zoom, relativePos)
     self:updateMarkersScale()
 
     localStorage.data[commonData.lastZoomFieldId] = zoom
+
+    if oldZoom ~= zoom then
+        eventSys.triggerEvent(eventSys.events.onZoomed, {mapWidget = self, zoom = zoom})
+    end
 end
 
 ---@param zoom number
