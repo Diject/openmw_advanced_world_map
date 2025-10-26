@@ -9,6 +9,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
+local tableLib = require("scripts.advanced_world_map.utils.table")
 local log = require("scripts.advanced_world_map.utils.log")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
@@ -90,34 +91,35 @@ end
 function menuMeta:addWidget(params)
     if not params or not params.id or not params.layout then return end
 
-    local origEvents = params.layout.events or {}
+    local origEvents = tableLib.copy(params.layout.events or {})
 
     params.layout.props = params.layout.props or {}
     params.layout.props.anchor = util.vector2(0.5, 0.5)
 
     local pressed = false
 
-    params.layout.events = {
-        focusLoss = async:callback(function(e, layout)
-            pressed = false
-            if origEvents.focusLoss then origEvents.focusLoss(e, layout) end
-        end),
+    params.layout.events = params.layout.events or {}
 
-        mousePress = async:callback(function(e, layout)
+    params.layout.events.focusLoss = async:callback(function(e, layout)
+        pressed = false
+        if origEvents.focusLoss then origEvents.focusLoss(e, layout) end
+    end)
+
+    params.layout.events.mousePress = async:callback(function(e, layout)
             pressed = true
             if origEvents.mousePress then origEvents.mousePress(e, layout) end
-        end),
+    end)
 
-        mouseRelease = async:callback(function(e, layout)
-            if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
+    params.layout.events.mouseRelease = async:callback(function(e, layout)
+        if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
 
-            if pressed then
-                self:openWidget(params.id)
-                self:update()
-            end
-            pressed = false
-        end),
-    }
+        if pressed then
+            self:openWidget(params.id)
+            self:update()
+        end
+        pressed = false
+    end)
+
 
     self.widgets[params.id] = {layout = params.layout, params = params}
 
