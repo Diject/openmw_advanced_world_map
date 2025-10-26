@@ -39,6 +39,9 @@ this.entranceMarkersByCellId = nil
 ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
 this.markersByDoorHash = {}
 
+---@type table<string, advancedWorldMap.ui.mapElementMeta>
+this.markerById = {}
+
 
 function this.updateDiscoveredForCell(cell)
     local names = {}
@@ -105,6 +108,22 @@ function this.updateDoorMarkerVisibility(doorRef)
     for _, marker in pairs(markers) do
         updateDoorMarkerVisibility(marker, visible)
     end
+end
+
+
+---@return advancedWorldMap.ui.mapElementMeta?
+function this.getMarkerById(id)
+    return this.markerById[id]
+end
+
+
+---@param cellId string?
+---@param x number
+---@param y number
+---@param label string?
+---@return string
+function this.getMarkerId(cellId, x, y, label)
+    return string.format("%s_%s_%d_%d", label, cellId, x, y)
 end
 
 
@@ -315,15 +334,15 @@ local function createMarkers(widget, cellId)
                 table.insert(ln, {dt.pos.x - charWidth / 2, dt.pos.x + charWidth / 2})
             end
 
-            local imId = string.format("%d_%d_", dt.pos.x, dt.pos.y)
-            local textId = imId..tostring(textAnchor)
+            local imId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "marker")
+            local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
 
-            local cellId = cellLib.getCellIdByPos(dt.pos)
-            markersByCellId[cellId] = markersByCellId[cellId] or {}
+            local cId = cellId or cellLib.getCellIdByPos(dt.pos)
+            markersByCellId[cId] = markersByCellId[cId] or {}
             markersByName[dt.name] = markersByName[dt.name] or {}
             this.markersByDoorHash[dt.doorHash] = this.markersByDoorHash[dt.doorHash] or {}
 
-            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
 
             local textMarkerHandler = widget:createTextMarker{
                 id = textId,
@@ -342,12 +361,13 @@ local function createMarkers(widget, cellId)
                 },
             }
             if textMarkerHandler then
-                table.insert(markersByCellId[cellId], textMarkerHandler)
+                table.insert(markersByCellId[cId], textMarkerHandler)
                 table.insert(markersByName[dt.name], textMarkerHandler)
                 table.insert(this.markersByDoorHash[dt.doorHash], textMarkerHandler)
                 if disabledDoors.contains(dt.doorHash) then
                     updateDoorMarkerVisibility(textMarkerHandler, false)
                 end
+                this.markerById[textId] = textMarkerHandler
             end
 
             local imageMarkerHandler = widget:createImageMarker{
@@ -380,12 +400,13 @@ local function createMarkers(widget, cellId)
                 }
             }
             if imageMarkerHandler then
-                table.insert(markersByCellId[cellId], imageMarkerHandler)
+                table.insert(markersByCellId[cId], imageMarkerHandler)
                 table.insert(markersByName[dt.name], imageMarkerHandler)
                 table.insert(this.markersByDoorHash[dt.doorHash], imageMarkerHandler)
                 if disabledDoors.contains(dt.doorHash) then
                     updateDoorMarkerVisibility(imageMarkerHandler, false)
                 end
+                this.markerById[imId] = imageMarkerHandler
             end
 
         end
@@ -418,6 +439,7 @@ local function createMarkers(widget, cellId)
         }
         if textMarkerHandler then
             table.insert(markersByName[dt.name], textMarkerHandler)
+            this.markerById[id] = textMarkerHandler
         end
     end
 
