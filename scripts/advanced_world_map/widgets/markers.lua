@@ -463,6 +463,8 @@ local function createMarkers(widget, cellId)
             searchLabel = l10n("Region")..": "..info.name
         }
     end
+
+    widget:updateMarkers()
 end
 
 
