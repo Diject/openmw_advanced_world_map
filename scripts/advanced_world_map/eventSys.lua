@@ -5,19 +5,19 @@ local this = {}
 
 
 this.events = {
-    ["onMenuOpened"] = "onMenuOpened",
-    ["onMapInitialized"] = "onMapInitialized",
-    ["onMapShown"] = "onMapShown",
-    ["onMarkerClick"] = "onMarkerClick",
-    ["onMarkerClicked"] = "onMarkerClicked",
-    ["onMarkerTooltipShow"] = "onMarkerTooltipShow",
-    ["onMarkerTooltipShowed"] = "onMarkerTooltipShowed",
-    ["onMousePress"] = "onMousePress",
-    ["onMouseRelease"] = "onMouseRelease",
-    ["onFocusLoss"] = "onFocusLoss",
-    ["onMouseMove"] = "onMouseMove",
-    ["onRightMouseMenu"] = "onRightMouseMenu",
-    ["onResized"] = "onResized"
+    onMenuOpened = "onMenuOpened",
+    onMapInitialized = "onMapInitialized",
+    onMapShown = "onMapShown",
+    onMarkerClick = "onMarkerClick",
+    onMarkerClicked = "onMarkerClicked",
+    onMarkerTooltipShow = "onMarkerTooltipShow",
+    onMarkerTooltipShowed = "onMarkerTooltipShowed",
+    onMousePress = "onMousePress",
+    onMouseRelease = "onMouseRelease",
+    onFocusLoss = "onFocusLoss",
+    onMouseMove = "onMouseMove",
+    onRightMouseMenu = "onRightMouseMenu",
+    onResized = "onResized"
 }
 
 
