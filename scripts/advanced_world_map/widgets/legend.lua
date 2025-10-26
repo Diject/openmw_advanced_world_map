@@ -184,4 +184,4 @@ end
 
 eventSys.registerHandler(eventSys.events["onMenuOpened"], function (e)
     create(e.menu)
-end, 9999999)
+end, 99999)
