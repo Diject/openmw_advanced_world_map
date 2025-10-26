@@ -16,14 +16,9 @@ this.cellNameData = nil
 this.regionNameData = nil
 ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]> by cell id
 this.entrances = nil
----@type table<string, table<string, advancedWorldMap.dynamicDataHandler.cellDirectionData>> by cell id, by destination cell id - destination cell data
-this.cellDirections = nil
 ---@type table<string, string> by cell id
 this.cellNameById = nil
 
----@class advancedWorldMap.dynamicDataHandler.cellDirectionData
----@field name string
----@field isEx boolean
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
 ---@field posX number
@@ -35,6 +30,7 @@ this.cellNameById = nil
 ---@field pos any
 ---@field destCellId string
 ---@field destPos any
+---@field isDestEx boolean
 ---@field name string
 ---@field fullName string
 ---@field doorHash string
@@ -154,6 +150,7 @@ local function buildData()
                 pos = door.position,
                 destCellId = dest.id,
                 destPos = destPos,
+                isDestEx = dest.isExterior,
                 name = name,
                 fullName = dest.name,
                 doorHash = doorHash,
@@ -258,30 +255,6 @@ local function buildData()
     end
     this.entrances = entrances
 
-
-    local cellDirections = {}
-    for _, cell in pairs(world.cells) do
-        if cell.isExterior then goto continue end
-
-        cellDirections[cell.id] = {}
-
-        local doors = cell:getAll(types.Door)
-        for _, door in pairs(doors) do
-            if not types.Door.isTeleport(door) then goto continue end
-            local dest = types.Door.destCell(door)
-
-            if dest.isExterior then
-                cellDirections[cell.id][dest.id] = {name = dest.name == "" and getRegionName(dest.region) or dest.name, isEx = dest.isExterior}
-            else
-                cellDirections[cell.id][dest.id] = {name = dest.name, isEx = dest.isExterior}
-            end
-
-            ::continue::
-        end
-        ::continue::
-    end
-
-    this.cellDirections = cellDirections
 end
 
 
