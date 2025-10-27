@@ -37,12 +37,12 @@ local function getAvailableCellNamesFromInterior(cellId, checked, res)
 
     if checked[cellId] then return res end
 
-    for destId, destDt in pairs(dynamicDataHandler.cellDirections[cellId] or {}) do
-        if not checked[destId] then
-            checked[destId] = true
-            if not destDt.isEx then
-                res[destId] = destDt.name
-                getAvailableCellNamesFromInterior(destId, checked, res)
+    for _, destDt in pairs(dynamicDataHandler.entrances[cellId] or {}) do
+        if not checked[destDt.destCellId] then
+            checked[destDt.destCellId] = true
+            if not destDt.isDestEx then
+                res[destDt.destCellId] = destDt.name
+                getAvailableCellNamesFromInterior(destDt.destCellId, checked, res)
             end
         end
     end
@@ -69,7 +69,7 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
         for _, dt in pairs(list or {}) do
             local nameLower = stringLib.utf8_lower(dt.fullName)
 
-            if not hideUnrevealed or discoveredLocations.isDiscovered(dt.id) then
+            if not hideUnrevealed or discoveredLocations.isDiscovered(dt.destCellId) then
                 if nameLower:find(str) then
                     table.insert(res, {
                         name = dt.fullName,
@@ -81,18 +81,30 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
             end
 
             if inAllInteriors then
-                local parentName = dynamicDataHandler.cellNameById[dt.id]
+                local parentName = dynamicDataHandler.cellNameById[dt.destCellId]
 
-                for cId, cellName in pairs(getAvailableCellNamesFromInterior(dt.id)) do
+                for cId, cellName in pairs(getAvailableCellNamesFromInterior(dt.destCellId)) do
 
-                    if cId ~= dt.id and stringLib.utf8_lower(cellName):find(str)
+                    if cId ~= dt.destCellId and stringLib.utf8_lower(cellName):find(str)
                             and (not hideUnrevealed or discoveredLocations.isDiscovered(cId)) then
+
+                        local doors = dynamicDataHandler.entrances[cId]
+                        local pos = {x = 0, y = 0}
+                        if doors then
+                            local cnt = #doors
+                            for _, d in pairs(doors) do
+                                pos.x = pos.x + d.pos.x
+                                pos.y = pos.y + d.pos.y
+                            end
+                            pos.x = pos.x / cnt
+                            pos.y = pos.y / cnt
+                        end
 
                         table.insert(res, {
                             parentName = parentName,
                             name = cellName,
                             cellId = cId,
-                            pos = dt.pos,
+                            pos = pos,
                             priority = 0,
                         })
                     end
@@ -250,9 +262,7 @@ local function create(menu)
                                 if menu.mapWidget.cellId ~= dt.cellId then
                                     menu:updateMapWidgetCell(dt.cellId)
                                 end
-                                if not dt.parentName then
-                                    menu.mapWidget:focusOnWorldPosition(dt.pos)
-                                end
+                                menu.mapWidget:focusOnWorldPosition(dt.pos)
 
                                 menu.mapWidget:setZoom(math.max(dt.cellId and 16 or 8, menu.mapWidget.zoom))
 
@@ -416,4 +426,4 @@ end
 
 eventSys.registerHandler(eventSys.events["onMenuOpened"], function (e)
     create(e.menu)
-end, 9999998)
+end, 99998)
