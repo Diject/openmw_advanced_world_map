@@ -90,6 +90,15 @@ end
 ---@field bottom number
 
 
+---@param region advancedWorldMap.ui.mapWidget.region
+---@param x number
+---@param y number
+---@return boolean
+function this.isPointInRegion(region, x, y)
+    return x >= region.left and x <= region.right and y >= region.bottom and y <= region.top
+end
+
+
 ---@class advancedWorldMap.ui.mapWidgetMeta
 local mapWidgetMeta = {}
 mapWidgetMeta.__index = mapWidgetMeta
@@ -394,7 +403,7 @@ function mapWidgetMeta:updateOnZoomMarkers()
         visibleRect.top = visibleRect.top + zoomInOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomInOffsetInWorldCoord
         visibleRect.right = visibleRect.right + zoomInOffsetInWorldCoord
-        self:removeOnZoomMarkers()
+        self:removeOnZoomMarkers(self._lastOnZoomCell == self.cellId and visibleRect or nil)
         self:createZoomInMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)
     else
@@ -402,10 +411,11 @@ function mapWidgetMeta:updateOnZoomMarkers()
         visibleRect.top = visibleRect.top + zoomOutOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomOutOffsetInWorldCoord
         visibleRect.right = visibleRect.right + zoomOutOffsetInWorldCoord
-        self:removeOnZoomMarkers()
+        self:removeOnZoomMarkers(self._lastOnZoomCell == self.cellId and visibleRect or nil)
         self:createZoomOutMarkers(visibleRect)
         self:removeGroundTextures()
     end
+    self._lastOnZoomCell = self.cellId
 end
 
 
@@ -588,7 +598,7 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedIn = true
             layout.userData.cellId = cellId
-            table.insert(self.activeZoomMarkers, {id, params.layerId})
+            table.insert(self.activeZoomMarkers, {id, params.layerId, layout.userData.markerElement})
         end
         if params.showWhenZoomedOut then
             local cellId = layout.userData.cellId or cellLib.getCellIdByPos(params.pos)
@@ -600,7 +610,7 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedOut = true
             layout.userData.cellId = cellId
-            table.insert(self.activeZoomMarkers, {id, params.layerId})
+            table.insert(self.activeZoomMarkers, {id, params.layerId, layout.userData.markerElement})
         end
     end
 
@@ -615,20 +625,25 @@ local function createMarker(self, params, onlyInitialize)
             addZoomInOutData(id, cachedLayout)
 
             if cachedLayout.userData.forceChanged then
-                cachedLayout.props = {
-                    text = params.text,
-                    textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(params.fontSize or 18, self.zoom),
-                    anchor = params.anchor or util.vector2(0.5, 0.5),
-                    relativePosition = relPos,
-                    textColor = params.text and (params.color or config.data.ui.defaultColor),
-                    visible = params.visible,
-                    alpha = params.alpha or 1,
-                    resource = params.texture,
-                    size = params.size and (params.scaleFunc or this.scaleFunction.marker)(params.size, self.zoom),
-                    color = params.texture and (params.color or config.data.ui.defaultColor),
-                    propagateEvents = false,
-                }
-                cachedLayout.userData.forceChanged = false
+                cachedLayout.userData.markerElement:restoreLayout()
+                -- cachedLayout.props = {
+                --     text = params.text,
+                --     textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(params.fontSize or 18, self.zoom),
+                --     anchor = params.anchor or util.vector2(0.5, 0.5),
+                --     relativePosition = relPos,
+                --     textColor = params.text and (params.color or config.data.ui.defaultColor),
+                --     visible = params.visible,
+                --     alpha = params.alpha or 1,
+                --     resource = params.texture,
+                --     size = params.size and (params.scaleFunc or this.scaleFunction.marker)(params.size, self.zoom),
+                --     color = params.texture and (params.color or config.data.ui.defaultColor),
+                --     propagateEvents = false,
+                -- }
+                -- cachedLayout.userData.scaleFunc = params.scaleFunc
+                -- cachedLayout.userData.autoScale = true
+                -- cachedLayout.userData.fontSize = params.text and (params.fontSize or 18) or nil
+                -- cachedLayout.userData.size = params.size
+                -- cachedLayout.userData.forceChanged = false
             else
                 cachedLayout.props.relativePosition = relPos
             end
@@ -725,10 +740,10 @@ local function createMarker(self, params, onlyInitialize)
 
     createMarkerFuncCache[markerName.."_"..tostring(params.layerId)] = marker
 
-    addZoomInOutData(markerName, marker)
-
     local markerELement = mapElement.new(self, markerName, params.layerId, params, marker)
     marker.userData.markerElement = markerELement
+
+    addZoomInOutData(markerName, marker)
 
     if onlyInitialize then
         return markerName, params.layerId, markerELement, marker
@@ -860,10 +875,21 @@ function mapWidgetMeta:createZoomInMarkers(region)
 end
 
 
-function mapWidgetMeta:removeOnZoomMarkers()
-    for i, dt in pairs(self.activeZoomMarkers) do
-        removeMarker(self, dt[1], dt[2])
-        self.activeZoomMarkers[i] = nil
+---@param allowRect advancedWorldMap.ui.mapWidget.region?
+function mapWidgetMeta:removeOnZoomMarkers(allowRect)
+    if allowRect then
+        for i, dt in pairs(self.activeZoomMarkers) do
+            local markerPos = dt[3]._params.pos or {x = 0, y = 0}
+            if not this.isPointInRegion(allowRect, markerPos.x, markerPos.y) then
+                removeMarker(self, dt[1], dt[2])
+                self.activeZoomMarkers[i] = nil
+            end
+        end
+    else
+        for i, dt in pairs(self.activeZoomMarkers) do
+            removeMarker(self, dt[1], dt[2])
+            self.activeZoomMarkers[i] = nil
+        end
     end
 end
 
@@ -1177,6 +1203,8 @@ function this.new(params)
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
     local displaySize = meta:getDisplaySize()
     meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
+
+    meta._lastOnZoomCell = true
 
     meta.update = function(self)
         params.updateFunc()
