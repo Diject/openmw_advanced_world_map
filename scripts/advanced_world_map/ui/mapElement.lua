@@ -125,14 +125,14 @@ end
 function mapElementMeta:restoreLayout()
     self._elemLayout.props = {
         text = self._params.text,
-        textSize = self._params.text and (self._params.scaleFunc or this.scaleFunction.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
+        textSize = self._params.text and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
         anchor = self._params.anchor or util.vector2(0.5, 0.5),
         relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos),
         textColor = self._params.text and (self._params.color or config.data.ui.defaultColor) or nil,
         visible = self._params.visible,
         alpha = self._params.alpha or 1,
         resource = self._params.texture,
-        size = self._params.size and (self._params.scaleFunc or this.scaleFunction.marker)(self._params.size, self._parent.zoom),
+        size = self._params.size and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(self._params.size, self._parent.zoom),
         color = self._params.texture and (self._params.color or config.data.ui.defaultColor),
         propagateEvents = false,
     }
