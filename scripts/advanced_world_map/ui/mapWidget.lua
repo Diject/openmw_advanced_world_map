@@ -403,7 +403,7 @@ function mapWidgetMeta:updateOnZoomMarkers()
         visibleRect.top = visibleRect.top + zoomInOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomInOffsetInWorldCoord
         visibleRect.right = visibleRect.right + zoomInOffsetInWorldCoord
-        self:removeOnZoomMarkers(self._lastOnZoomCell == self.cellId and visibleRect or nil)
+        self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
         self:createZoomInMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)
     else
@@ -411,11 +411,11 @@ function mapWidgetMeta:updateOnZoomMarkers()
         visibleRect.top = visibleRect.top + zoomOutOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomOutOffsetInWorldCoord
         visibleRect.right = visibleRect.right + zoomOutOffsetInWorldCoord
-        self:removeOnZoomMarkers(self._lastOnZoomCell == self.cellId and visibleRect or nil)
+        self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
         self:createZoomOutMarkers(visibleRect)
         self:removeGroundTextures()
     end
-    self._lastOnZoomCell = self.cellId
+    self._lastOnZoomZoom = self.zoom
 end
 
 
@@ -1211,7 +1211,7 @@ function this.new(params)
     local displaySize = meta:getDisplaySize()
     meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
 
-    meta._lastOnZoomCell = true
+    meta._lastOnZoomZoom = -1
 
     meta.update = function(self)
         params.updateFunc()
