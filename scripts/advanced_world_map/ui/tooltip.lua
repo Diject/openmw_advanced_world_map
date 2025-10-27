@@ -28,13 +28,14 @@ function this.calcTooltipPosAnchor(cursorPos)
     return tooltipPos, anchor
 end
 
+---@return boolean? new
 function this.createOrMove(coord, parent, layoutContent)
     if not parent.userData then parent.userData = {} end
 
     local position, anchor = this.calcTooltipPosAnchor(coord.position)
 
     if not parent.userData.tooltip then
-        if not layoutContent then return end
+        if not layoutContent or #layoutContent == 0 then return end
 
         local tooltipLayout = {
             template = customTemplates.boxSolid,
@@ -49,6 +50,7 @@ function this.createOrMove(coord, parent, layoutContent)
                     type = ui.TYPE.Flex,
                     props = {
                         horizontal = false,
+                        align = ui.ALIGNMENT.Center,
                     },
                     content = layoutContent,
                 }
@@ -77,7 +79,7 @@ function this.createOrMove(coord, parent, layoutContent)
             end, 0.2)
         end
 
-        return
+        return true
     end
 
 
@@ -101,6 +103,11 @@ end
 
 function this.isExists(parent)
     return parent and parent.userData and parent.userData.tooltip and parent.userData.tooltip.valid
+end
+
+
+function this.get(parent)
+    return parent and parent.userData and parent.userData.tooltip
 end
 
 

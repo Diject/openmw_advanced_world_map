@@ -18,6 +18,7 @@ local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 local config = require("scripts.advanced_world_map.config.configLib")
 
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -370,7 +371,10 @@ local function createMarkers(widget, cellId)
                 this.markerById[textId] = textMarkerHandler
             end
 
-            local imageMarkerHandler = widget:createImageMarker{
+            local tooltipContent = ui.content{}
+
+            local imageMarkerHandler
+            imageMarkerHandler = widget:createImageMarker{
                 id = imId,
                 texture = mapMarkerTexture,
                 useCache = true,
@@ -390,14 +394,33 @@ local function createMarkers(widget, cellId)
                 events = {
                     mouseRelease = function (e, layout, pressed)
                         if not pressed or not this.activeMenuMeta then return end
+                        if eventSys.triggerEvent(eventSys.events.onMarkerClick, {marker = imageMarkerHandler}) then
+                            return
+                        end
 
                         this.activeMenuMeta:updateMapWidgetCell(dt.destCellId)
                         if this.activeMenuMeta.mapWidget and dt.destPos then
                             this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.destPos)
                         end
+
+                        eventSys.triggerEvent(eventSys.events.onMarkerClicked, {marker = imageMarkerHandler})
                         this.activeMenuMeta:update()
-                    end
-                }
+                    end,
+
+                    mouseMove = function(e, layout)
+                        if #tooltipContent > 0 and not tooltip.isExists(layout) then
+                            if eventSys.triggerEvent(eventSys.events.onMarkerTooltipShow, {content = tooltipContent}) then
+                                return
+                            end
+                            if tooltip.createOrMove(e, layout, tooltipContent) then
+                                eventSys.triggerEvent(eventSys.events.onMarkerTooltipShowed, {
+                                    content = tooltipContent,
+                                    tooltip = tooltip.get(layout)
+                                })
+                            end
+                        end
+                    end,
+                },
             }
             if imageMarkerHandler then
                 table.insert(markersByCellId[cId], imageMarkerHandler)
