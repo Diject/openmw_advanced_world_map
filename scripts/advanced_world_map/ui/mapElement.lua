@@ -1,5 +1,7 @@
 local util = require("openmw.util")
 
+local config = require("scripts.advanced_world_map.config.config")
+
 local this = {}
 
 
@@ -73,6 +75,73 @@ function mapElementMeta:setColor(color)
         self._elemLayout.props.color = color
         self._params.color = color
     end
+end
+
+
+---@param data advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+function mapElementMeta:updateLayout(data)
+    if not data then data = {} end ---@diagnostic disable-line: missing-fields
+    local props = self._elemLayout.props
+    props.text = data.text or props.text
+    props.size = data.size and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(data.size, self._parent.zoom) or props.size
+    props.textSize = data.fontSize and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(data.fontSize, self._parent.zoom)
+        or props.textSize
+    props.autoSize = props.size == nil
+    props.anchor = data.anchor or props.anchor
+    if data.pos then
+        props.relativePosition = self._parent:getRelativePositionByWorldPosition(data.pos)
+    end
+    if data.color then
+        props.textColor = props.text and data.color or nil
+        props.color = props.texture and data.color
+    end
+    if data.visible ~= nil then
+        props.visible = data.visible
+    end
+    props.alpha = data.alpha or props.alpha
+    props.resource = data.texture or props.resource
+
+    self._elemLayout.userData.forceChanged = true
+end
+
+
+---@param data advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+function mapElementMeta:updateParams(data)
+    if not data then data = {} end ---@diagnostic disable-line: missing-fields
+
+    self._params.text = data.text or self._params.text
+    self._params.size = data.size or self._params.size
+    self._params.fontSize = data.fontSize or self._params.fontSize
+    self._params.anchor = data.anchor or self._params.anchor
+    self._params.pos = data.pos or self._params.pos
+    self._params.color = data.color or self._params.color
+    self._params.visible = data.visible ~= nil and data.visible or self._params.visible
+    self._params.alpha = data.alpha or self._params.alpha
+    self._params.texture = data.texture or self._params.texture
+    self._params.scaleFunc = data.scaleFunc or self._params.scaleFunc
+end
+
+
+function mapElementMeta:restoreLayout()
+    self._elemLayout.props = {
+        text = self._params.text,
+        textSize = self._params.text and (self._params.scaleFunc or this.scaleFunction.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
+        anchor = self._params.anchor or util.vector2(0.5, 0.5),
+        relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos),
+        textColor = self._params.text and (self._params.color or config.data.ui.defaultColor) or nil,
+        visible = self._params.visible,
+        alpha = self._params.alpha or 1,
+        resource = self._params.texture,
+        size = self._params.size and (self._params.scaleFunc or this.scaleFunction.marker)(self._params.size, self._parent.zoom),
+        color = self._params.texture and (self._params.color or config.data.ui.defaultColor),
+        propagateEvents = false,
+    }
+    self._elemLayout.userData.scaleFunc = self._params.scaleFunc
+    self._elemLayout.userData.autoScale = true
+    self._elemLayout.userData.fontSize = self._params.text and (self._params.fontSize or 18) or nil
+    self._elemLayout.userData.size = self._params.size
+
+    self._elemLayout.userData.forceChanged = false
 end
 
 
