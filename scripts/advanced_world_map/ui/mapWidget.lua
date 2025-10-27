@@ -656,6 +656,7 @@ local function createMarker(self, params, onlyInitialize)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
+                eventSys.triggerEvent(eventSys.events.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
                 return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
             else
                 return
@@ -749,7 +750,11 @@ local function createMarker(self, params, onlyInitialize)
         return markerName, params.layerId, markerELement, marker
     end
 
-    if not uiUtils.safeAddToContent(content, marker) then return end
+    if uiUtils.safeAddToContent(content, marker) then
+        eventSys.triggerEvent(eventSys.events.onMapElementCreated, {mapWidget = self, marker = markerELement})
+    else
+        return
+    end
 
     return markerName, params.layerId, markerELement, marker
 end
@@ -883,12 +888,14 @@ function mapWidgetMeta:removeOnZoomMarkers(allowRect)
             if not this.isPointInRegion(allowRect, markerPos.x, markerPos.y) then
                 removeMarker(self, dt[1], dt[2])
                 self.activeZoomMarkers[i] = nil
+                eventSys.triggerEvent(eventSys.events.onMapElementRemoved, {mapWidget = self, marker = dt[3]})
             end
         end
     else
         for i, dt in pairs(self.activeZoomMarkers) do
             removeMarker(self, dt[1], dt[2])
             self.activeZoomMarkers[i] = nil
+            eventSys.triggerEvent(eventSys.events.onMapElementRemoved, {mapWidget = self, marker = dt[3]})
         end
     end
 end
