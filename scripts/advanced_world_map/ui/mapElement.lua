@@ -93,7 +93,7 @@ function mapElementMeta:updateLayout(data)
     end
     if data.color then
         props.textColor = props.text and data.color or nil
-        props.color = props.texture and data.color
+        props.color = props.resource and data.color or nil
     end
     if data.visible ~= nil then
         props.visible = data.visible
@@ -158,6 +158,11 @@ end
 ---@return integer
 function mapElementMeta:getLayerId()
     return self._layerId
+end
+
+
+function mapElementMeta:destroy()
+    self._parent:removeMarker(self._id, self._layerId)
 end
 
 
