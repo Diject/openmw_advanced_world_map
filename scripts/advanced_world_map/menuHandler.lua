@@ -22,7 +22,7 @@ function this.destroyMenu(menuId)
     if not menuEl then return end
 
     if menuEl.menu and menuEl.menu.layout then
-        menuEl.menu:destroy()
+        menuEl:close()
     end
     this.activeMenus[menuId] = nil
 end
@@ -40,7 +40,7 @@ end
 
 function this.destroyAllMenus()
     for id, handler in pairs(this.activeMenus) do
-        handler.menu:destroy()
+        handler:close()
         this.activeMenus[id] = nil
     end
 end
