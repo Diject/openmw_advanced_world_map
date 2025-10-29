@@ -89,7 +89,7 @@ local function create(menu)
                 updateFunc = menu.update,
                 text = "Fast travel",
                 event = function (layout)
-                    fastTravel(menu, e.cursorRelPos)
+                    fastTravel(menu, e.relPos)
                     menu.mapWidget:closeRightMouseMenu()
                 end
             }

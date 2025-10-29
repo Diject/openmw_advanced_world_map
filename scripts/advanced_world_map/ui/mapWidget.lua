@@ -1375,7 +1375,7 @@ function this.new(params)
                         }
                         local layContent = lay.content
                         eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
-                            cursorRelPos = relPos,
+                            relPos = relPos,
                             content = layContent,
                         })
 

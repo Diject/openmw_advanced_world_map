@@ -420,11 +420,12 @@ local function createMarkers(widget, cellId)
 
                     mouseMove = function(e, layout)
                         if #tooltipContent > 0 and not tooltip.isExists(layout) then
-                            if eventSys.triggerEvent(eventSys.events.onMarkerTooltipShow, {content = tooltipContent}) then
+                            if eventSys.triggerEvent(eventSys.events.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
                                 return
                             end
                             if tooltip.createOrMove(e, layout, tooltipContent) then
                                 eventSys.triggerEvent(eventSys.events.onMarkerTooltipShowed, {
+                                    marker = imageMarkerHandler,
                                     content = tooltipContent,
                                     tooltip = tooltip.get(layout)
                                 })

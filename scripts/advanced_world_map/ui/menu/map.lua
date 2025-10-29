@@ -434,7 +434,8 @@ function this.create(params)
                         config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
 
                         eventSys.triggerEvent(eventSys.events["onResized"], {
-                            menuSize = size,
+                            menu = meta,
+                            size = size,
                             mapWidgetSize = newSize
                         })
 
