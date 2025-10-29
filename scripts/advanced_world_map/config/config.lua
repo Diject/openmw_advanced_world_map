@@ -50,6 +50,7 @@ this.default = {
         backgroundColor = commonData.backgroundColor,
         disabledColor = commonData.disabledColor,
         selectionColor = commonData.selectedColor,
+        selectionLightColor = commonData.selectedLightColor,
         shadowColor = commonData.textShadowColor,
         linkColor = commonData.linkColor,
         mouseScrollAmount = 36,

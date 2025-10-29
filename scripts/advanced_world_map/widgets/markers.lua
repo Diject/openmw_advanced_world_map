@@ -67,18 +67,23 @@ end
 function this.updateDiscovered(newDiscovered)
     if not this.markersByName or not this.entranceMarkersByCellId then return end
 
+    local function updateVisibility(handler)
+        local userData = handler:getUserData()
+        if not userData then return end
+        userData.discovered = true
+        if not userData.disabled and not userData.filtered then
+            handler:setVisibility(true)
+        else
+            handler:updateParams{visible = true} ---@diagnostic disable-line: missing-fields
+        end
+    end
+
     for _, name in pairs(newDiscovered or {}) do
         for _, handler in pairs(this.entranceMarkersByCellId[name] or {}) do
-            local userData = handler:getUserData()
-            if not userData or not userData.disabled then
-                handler:setVisibility(true)
-            end
+            updateVisibility(handler)
         end
         for _, handler in pairs(this.markersByName[name] or {}) do
-            local userData = handler:getUserData()
-            if not userData or not userData.disabled then
-                handler:setVisibility(true)
-            end
+            updateVisibility(handler)
             handler:setColor(config.data.ui.defaultLightColor)
         end
     end
@@ -90,10 +95,14 @@ local function updateDoorMarkerVisibility(marker, visible)
     local userData = marker:getUserData()
     if not userData then return end
 
-    if userData.type == "text" then
-        marker:setVisibility(visible)
+    if userData.type == commonData.doorDescrMarkerType then
+        if not userData.filtered then
+            marker:setVisibility(visible)
+        else
+            marker:updateParams{visible = visible} ---@diagnostic disable-line: missing-fields
+        end
         userData.disabled = not visible
-    else
+    elseif userData.type == commonData.doorMarkerType then
         marker:setAlpha(visible and 1 or 0.25)
     end
 end
@@ -358,7 +367,9 @@ local function createMarkers(widget, cellId)
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,
                 userData = {
-                    type = "text",
+                    type = commonData.doorDescrMarkerType,
+                    searchText = stringLib.utf8_lower(dt.name),
+                    allowSearchFilter = true,
                 },
             }
             if textMarkerHandler then
@@ -385,11 +396,11 @@ local function createMarkers(widget, cellId)
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,
-                searchText = stringLib.utf8_lower(dt.fullName),
-                searchLabel = dt.fullName,
                 userData = {
-                    type = "image",
-                    cellId = dt.destCellId
+                    type = commonData.doorMarkerType,
+                    cellId = dt.destCellId,
+                    searchText = stringLib.utf8_lower(dt.name),
+                    allowSearchFilter = true,
                 },
                 events = {
                     mouseRelease = function (e, layout, pressed)
@@ -458,7 +469,10 @@ local function createMarkers(widget, cellId)
             useCache = true,
             showWhenZoomedOut = true,
             visible = isCellDiscovered,
-            searchText = stringLib.utf8_lower(dt.name),
+            userData = {
+                searchText = stringLib.utf8_lower(dt.name),
+                allowSearchFilter = true,
+            },
         }
         if textMarkerHandler then
             table.insert(markersByName[dt.name], textMarkerHandler)

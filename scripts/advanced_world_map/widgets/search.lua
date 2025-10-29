@@ -26,8 +26,145 @@ local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+local defaultColor = util.color.rgb(0, 0, 0)
 
 local searchIcoTexture = ui.texture{ path = commonData.searchWidgetIcon }
+
+local worldMarkerTexture = ui.texture{ path = commonData.searchWorldMarkerPath }
+
+
+---@type table<string, advancedWorldMap.ui.mapElementMeta>
+local hiddenMarkers = {}
+---@type table<string, advancedWorldMap.ui.mapElementMeta>
+local modifiedMarkers = {}
+---@type table<any, advancedWorldMap.ui.mapElementMeta>
+local temporaryMarkers = {}
+---@type table<string, any[]> by pos hash
+local searchData = {}
+
+
+---@param handler advancedWorldMap.ui.mapElementMeta
+local function getMarkerId(handler)
+    return tostring(handler._parent.cellId).."_"..handler:getId()
+end
+
+
+---@return string
+local function getPosHash(cellId, pos)
+    return string.format("pos_%s_%d_%d", tostring(cellId), pos.x, pos.y)
+end
+
+
+---@param mapWidget advancedWorldMap.ui.mapWidgetMeta
+local function createTemporaryWorldMarker(id, mapWidget, pos, color)
+    if temporaryMarkers[id] then return end
+
+    local h = mapWidget:createImageMarker{
+        layerId = mapWidget.layerIds.marker,
+        pos = pos,
+        color = color or config.data.ui.selectionColor,
+        texture = worldMarkerTexture,
+        anchor = util.vector2(0.5, 1),
+        size = util.vector2(config.data.legend.markerSize * 2.5, config.data.legend.markerSize * 5),
+        showWhenZoomedOut = true,
+    }
+    temporaryMarkers[id] = h
+end
+
+
+local function removeTemporaryWorldMarkers()
+    for i, handler in pairs(temporaryMarkers) do
+        handler:destroy()
+        temporaryMarkers[i] = nil
+    end
+end
+
+
+---@param handler advancedWorldMap.ui.mapElementMeta
+local function setMarkerVisibility(handler, val)
+    if val then
+        handler:updateLayout{ ---@diagnostic disable-line: missing-fields
+            visible = (handler._params.visible == true or handler._params.visible == nil) and true or false,
+        }
+        hiddenMarkers[getMarkerId(handler)] = nil
+        local userData = handler:getUserData()
+        if userData and (userData.type == commonData.doorMarkerType or userData.type == commonData.doorDescrMarkerType) then
+            userData.filtered = nil
+        end
+    else
+        handler:updateLayout{visible = false} ---@diagnostic disable-line: missing-fields
+        hiddenMarkers[getMarkerId(handler)] = handler
+        local userData = handler:getUserData()
+        if userData and (userData.type == commonData.doorMarkerType or userData.type == commonData.doorDescrMarkerType) then
+            userData.filtered = true
+        end
+    end
+end
+
+local function resetMarkersVisibility()
+    for i, handler in pairs(hiddenMarkers) do
+        setMarkerVisibility(handler, true)
+        hiddenMarkers[i] = nil
+    end
+end
+
+---@param handler advancedWorldMap.ui.mapElementMeta
+local function setMarkerColor(handler, color, reset)
+    if not color and not reset then return end
+
+    if reset then
+        handler:updateLayout{ ---@diagnostic disable-line: missing-fields
+            color = handler._params.color or defaultColor,
+            alpha = handler._params.alpha or 1,
+        }
+        modifiedMarkers[getMarkerId(handler)] = nil
+    else
+        handler:updateLayout{ ---@diagnostic disable-line: missing-fields
+            color = color,
+            alpha = 1,
+        }
+        modifiedMarkers[getMarkerId(handler)] = handler
+    end
+end
+
+local function resetMarkersColor()
+    for i, handler in pairs(modifiedMarkers) do
+        setMarkerColor(handler, nil, true)
+        modifiedMarkers[i] = nil
+    end
+end
+
+---@param handler advancedWorldMap.ui.mapElementMeta
+---@param textFilter string
+local function updateLayoutForMarker(handler, textFilter)
+    local userData = handler:getUserData()
+    if not userData then return end
+
+    local changeVisibility = false
+
+    if userData.allowSearchFilter then
+        local posHash = getPosHash(handler._parent.cellId, handler._params.pos)
+        local data = searchData[posHash]
+
+        if data and next(data) then
+            local params = data[1]
+            setMarkerColor(handler, params.color)
+        elseif userData.searchText and userData.searchText:find(textFilter) then
+            setMarkerColor(handler, config.data.ui.selectionColor)
+        else
+            setMarkerVisibility(handler, false)
+        end
+    end
+end
+
+---@param mapWidget advancedWorldMap.ui.mapWidgetMeta
+local function updateVisibilityForActiveMarkers(mapWidget, textFilter)
+    local markers = mapWidget:getActiveMarkers()
+
+    for _, handler in pairs(markers or {}) do
+        updateLayoutForMarker(handler, textFilter)
+    end
+end
 
 
 ---@return table<string, string> res by cell id - cell name
@@ -52,35 +189,34 @@ end
 
 
 ---@param menu advancedWorldMap.ui.menu.map
----@return {cellId : string?, name : string, pos : {x : number, y : number}, dist : number?, parentName : string?, priority : number?}[]
+---@return {cellId : string?, pos : {x : number, y : number}, text : string, color : any, dist : number?, priority : number?, parent : {cellId : string?, pos : {x : number, y : number}, color : any}?}[]
 local function getResults(menu, str, hideUnrevealed, inAllInteriors)
-    str = stringLib.utf8_lower(str)
-
     local res = {}
 
     local mapWidget = menu.mapWidget
 
     local entrances = dynamicDataHandler.entrances or {}
 
-    local function processCell(cellId, isExterior)
+    local function processCell(cellId, isExterior, inInteriors)
         ---@type advancedWorldMap.dynamicDataHandler.entranceData[]
         local list = entrances[cellId]
 
         for _, dt in pairs(list or {}) do
-            local nameLower = stringLib.utf8_lower(dt.fullName)
+            local nameLower = stringLib.utf8_lower(dt.name)
 
             if not hideUnrevealed or discoveredLocations.isDiscovered(dt.destCellId) then
                 if nameLower:find(str) then
                     table.insert(res, {
-                        name = dt.fullName,
+                        text = string.format("%s\n(%d, %d)", dt.fullName, dt.pos.x, dt.pos.y),
                         cellId = not isExterior and cellId or nil,
                         pos = dt.pos,
                         priority = 0,
+                        color = config.data.ui.selectionColor
                     })
                 end
             end
 
-            if inAllInteriors then
+            if inInteriors then
                 local parentName = dynamicDataHandler.cellNameById[dt.destCellId]
 
                 for cId, cellName in pairs(getAvailableCellNamesFromInterior(dt.destCellId)) do
@@ -100,12 +236,24 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
                             pos.y = pos.y / cnt
                         end
 
+                        local text
+                        if parentName then
+                            text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), parentName, dt.pos.x, dt.pos.y)
+                        else
+                            text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+                        end
+
                         table.insert(res, {
-                            parentName = parentName,
-                            name = cellName,
+                            text = text,
                             cellId = cId,
                             pos = pos,
                             priority = 0,
+                            color = config.data.ui.selectionColor,
+                            parent = {
+                                cellId = not isExterior and cellId or nil,
+                                pos = dt.pos,
+                                color = config.data.ui.selectionLightColor
+                            },
                         })
                     end
                 end
@@ -114,16 +262,29 @@ local function getResults(menu, str, hideUnrevealed, inAllInteriors)
     end
 
     if mapWidget.cellId then
-        processCell(mapWidget.cellId)
+        processCell(mapWidget.cellId, inAllInteriors)
     else
         for cellId, list in pairs(entrances) do
             if not cellId:find(commonData.exteriorCellLabel) then
                 goto continue
             end
 
-            processCell(cellId, true)
+            processCell(cellId, true, inAllInteriors)
 
             ::continue::
+        end
+
+        local names = dynamicDataHandler.cellNameData
+        for name, dt in pairs(names) do
+            if stringLib.utf8_lower(name):find(str) then
+                table.insert(res, {
+                    text = string.format("%s\n(%d, %d)", dt.name, dt.posX, dt.posY),
+                    cellId = nil,
+                    pos = util.vector2(dt.posX, dt.posY),
+                    priority = 1,
+                    color = config.data.ui.selectionColor
+                })
+            end
         end
     end
 
@@ -133,6 +294,15 @@ end
 
 ---@param menu advancedWorldMap.ui.menu.map
 local function create(menu)
+
+    local textFilter = ""
+
+    local onMapElementCreatedCallback = function (e)
+        if textFilter == "" then return end
+
+        updateLayoutForMarker(e.marker, textFilter)
+    end
+
 
     local iconLayout = {
         type = ui.TYPE.Image,
@@ -146,6 +316,8 @@ local function create(menu)
 
     local function onOpen(content)
         local mapWidgetSize = menu.mapWidget:getSize()
+
+        eventSys.registerHandler(eventSys.events.onMapElementCreated, onMapElementCreatedCallback)
 
         local size = util.vector2(
             math.max(mapWidgetSize.x / 3, 250),
@@ -169,14 +341,21 @@ local function create(menu)
         ---@type advancedWorldMap.ui.scrollBox
         local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
 
-        local textFilter = ""
-
         local function fill(hideUnrevealed, searchInInteriors)
+            resetMarkersVisibility()
+            resetMarkersColor()
+            removeTemporaryWorldMarkers()
+            searchData = {}
             uiUtils.clearContent(scrollBoxContent)
 
             if textFilter == "" then return end
 
+            updateVisibilityForActiveMarkers(menu.mapWidget, textFilter)
+
             local results = getResults(menu, textFilter, hideUnrevealed, searchInInteriors)
+
+            eventSys.triggerEvent(eventSys.events.onSearch, {results = results, filter = textFilter,
+                params = {hideUnrevealed = hideUnrevealed, inInteriors = searchInInteriors}})
 
             for _, res in pairs(results) do
                 local dist
@@ -188,24 +367,36 @@ local function create(menu)
                     dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
                 end
                 res.dist = dist or 0
+                res.priority = res.priority or 0
             end
 
             table.sort(results, function (a, b)
-                return a.dist < b.dist
-            end)
-
-            table.sort(results, function (a, b)
-                return a.priority < b.priority
+                if a.priority ~= b.priority then
+                    return a.priority > b.priority
+                else
+                    return a.dist < b.dist
+                end
             end)
 
             local height = 0
 
             for _, dt in ipairs(results) do
-                local text
-                if dt.parentName then
-                    text = string.format("%s\n(%s %s)\n(%d, %d)", dt.name, l10n("from"), dt.parentName, dt.pos.x, dt.pos.y)
-                else
-                    text = string.format("%s\n(%d, %d)", dt.name, dt.pos.x, dt.pos.y)
+                local text = dt.text or ""
+
+                local posHash = getPosHash(dt.cellId, dt.pos)
+                local parentPosHash = dt.parent and dt.parent.pos and getPosHash(dt.parent.cellId, dt.parent.pos) or nil
+
+                searchData[posHash] = searchData[posHash] or {}
+                table.insert(searchData[posHash], dt)
+                if parentPosHash then
+                    searchData[parentPosHash] = searchData[parentPosHash] or {}
+                    table.insert(searchData[parentPosHash], dt.parent)
+                end
+
+                if dt.cellId == nil then
+                    createTemporaryWorldMarker(posHash, menu.mapWidget, dt.pos, config.data.ui.selectionColor)
+                elseif dt.parent and (dt.parent.cellId == nil and dt.parent.pos) then
+                    createTemporaryWorldMarker(parentPosHash, menu.mapWidget, dt.parent.pos, config.data.ui.selectionLightColor)
                 end
 
                 local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
@@ -348,12 +539,13 @@ local function create(menu)
                     },
                     events = {
                         textChanged = async:callback(function(text, layout)
-                            textFilter = text
+                            textFilter = stringLib.utf8_lower(text)
                         end),
                         keyRelease = async:callback(function(e, layout)
                             if e.code == input.KEY.Enter then
                                 searchBarLayout.content[1].props.text = textFilter
                                 fill(hideUnrevealed, searchInInteriors)
+                                menu.mapWidget:updateMarkers()
                                 menu:update()
                             end
                         end),
@@ -371,6 +563,8 @@ local function create(menu)
                     position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
                     event = function (layout)
                         fill(hideUnrevealed, searchInInteriors)
+                        menu.mapWidget:updateMarkers()
+                        menu:update()
                     end
                 },
                 borders()
@@ -413,6 +607,10 @@ local function create(menu)
 
     local function onClose()
         iconLayout.props.color = config.data.ui.defaultColor
+        resetMarkersVisibility()
+        resetMarkersColor()
+        searchData = {}
+        eventSys.unregisterHandler(eventSys.events.onMapElementCreated, onMapElementCreatedCallback)
     end
 
     menu:addWidget{

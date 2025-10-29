@@ -31,14 +31,20 @@ this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
 this.mapWidgetHeaderLayoutId = "__MAP:WIDGETHEADERLAYOUT__"
 this.mapWidgetWindowLayoutId = "__MAP:WIDGETWINDOWLAYOUT__"
 
+this.doorMarkerType = "AdvWMap:DoorMarker"
+this.doorDescrMarkerType = "AdvWMap:DoorDescrMarker"
+
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])
 
 this.defaultLightColorData = {255/255, 255/255, 255/255}
 this.defaultLightColor = util.color.rgb(this.defaultLightColorData[1], this.defaultLightColorData[2], this.defaultLightColorData[3])
 
-this.selectedColorData = {0.2, 1, 0.2}
+this.selectedColorData = {0.3, 1, 0.3}
 this.selectedColor = util.color.rgb(this.selectedColorData[1], this.selectedColorData[2], this.selectedColorData[3])
+
+this.selectedLightColorData = {0.6, 0.8, 0.6}
+this.selectedLightColor = util.color.rgb(this.selectedLightColorData[1], this.selectedLightColorData[2], this.selectedLightColorData[3])
 
 this.linkColorData = {112 / 255, 126 / 255, 207 / 255}
 this.linkColor = util.color.rgb(this.linkColorData[1], this.linkColorData[2], this.linkColorData[3])
@@ -66,6 +72,7 @@ this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dd
 this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
 
 this.searchWidgetIcon = "textures/icons/advanced_world_map/widget/searchIco.dds"
+this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"
 
 
 this.customMapDir = "textures/advanced_world_map/map/"

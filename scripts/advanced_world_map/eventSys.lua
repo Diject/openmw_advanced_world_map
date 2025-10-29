@@ -21,6 +21,7 @@ this.events = {
     onRightMouseMenu = "onRightMouseMenu",
     onResized = "onResized",
     onZoomed = "onZoomed",
+    onSearch = "onSearch",
 }
 
 
