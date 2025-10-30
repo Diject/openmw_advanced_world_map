@@ -914,6 +914,22 @@ function mapWidgetMeta:placeGroundTextures(region)
     self:removeGroundTextures()
 
     if self.localCellInfo then
+        if self.cellStatics then
+            for _, dt in pairs(self.cellStatics) do
+                createMarker(self, {
+                    layerId = self.layerIds.map,
+                    texture = uiUtils.whiteTexture,
+                    color = util.color.rgb(0.15, 0.15, 0.10),
+                    pos = util.vector2(dt[1], dt[2]),
+                    size = util.vector2(dt[3] / 8192 * self.mapInfo.pixelsPerCell + 1, dt[4] / 8192 * self.mapInfo.pixelsPerCell + 1),
+                    scaleFunc = self.scaleFunctions.linear,
+                    anchor = util.vector2(0.5, 0.5)
+                })
+            end
+
+            return
+        end
+
         local mapLayout = self:getMapLayout()
 
         local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
@@ -1097,6 +1113,8 @@ function this.new(params)
 
     meta.params = params
     meta.cellId = params.cellId
+    ---@type number[][] {x, y, width, height}
+    meta.cellStatics = nil
 
     local mapLayout
 
@@ -1110,6 +1128,7 @@ function this.new(params)
                 mY = -1280,
                 nA = 0,
             }
+            core.sendGlobalEvent("AdvWMap:getMapStatics", {cellId = params.cellId})
         end
 
         local mapTextures = dataHandler.getLocalCellMapTextures(params.cellId)

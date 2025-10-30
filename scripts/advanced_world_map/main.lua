@@ -157,6 +157,25 @@ return {
                     checkDoor(ref)
                 end
             end
+        end,
+
+        ["AdvWMap:getMapStatics"] = function (data)
+            local cellId = data.cellId or ""
+            local cell = world.getCellById(cellId)
+            if not cell then return end
+
+            local res = {}
+            for _, ref in pairs(cell:getAll(types.Static)) do
+                local box = ref:getBoundingBox()
+                local center = box.center
+                local halfSize = box.halfSize
+                local width = halfSize.x * 2
+                local height = halfSize.y * 2
+                if width < 128 or height < 128 then goto continue end
+                table.insert(res, {center.x, center.y, width, height})
+                ::continue::
+            end
+            world.players[1]:sendEvent("AdvWMap:getMapStatics", {res = res})
         end
     },
 }

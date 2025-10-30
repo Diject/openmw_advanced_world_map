@@ -242,5 +242,14 @@ return {
             disabledDoors.unregister(ref.id)
             markers.updateDoorMarkerVisibility(ref)
         end,
+
+        ["AdvWMap:getMapStatics"] = function (data)
+            local menu = menuHandler.getMenu(commonData.mapMenuId)
+            if menu then
+                menu.mapWidget.cellStatics = data.res
+                menu.mapWidget:updateMarkers()
+                menu:update()
+            end
+        end
     },
 }
