@@ -1,4 +1,4 @@
-
+local log = require("scripts.advanced_world_map.utils.log")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local this = {}
@@ -47,6 +47,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onZoomed", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, zoom : number}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onSearch", handlerFunc: fun(e : {results : any[], filter : string, params : any}) : (boolean?), priority : number?)
 function this.registerHandler(eventId, handlerFunc, priority)
+    if type(handlerFunc) ~= "function" then return end
     this.handlers[eventId] = this.handlers[eventId] or {}
     this.handlers[eventId][handlerFunc] = {handlerFunc, priority or 0}
 end
@@ -76,12 +77,18 @@ function this.triggerEvent(eventId, e)
 
     local block = false
     for _, hData in ipairs(handlerData) do
-        local cl, bl = hData[1](e or {})
+        local ss, cl, bl = pcall(hData[1], e or {})
+        if not ss then
+            log("error:", cl)
+            goto continue
+        end
         block = bl or block
 
         if cl then
             break
         end
+
+        ::continue::
     end
 
     return block
