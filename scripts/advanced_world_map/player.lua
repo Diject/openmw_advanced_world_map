@@ -10,6 +10,7 @@ local storage = require('openmw.storage')
 local types = require("openmw.types")
 local debug = require('openmw.debug')
 local ambient = require('openmw.ambient')
+local animation = require("openmw.animation")
 
 local log = require("scripts.advanced_world_map.utils.log")
 
@@ -231,6 +232,11 @@ return {
                     end
                 end,
             })
+        end,
+
+        ["AdvWMap:cancelAnimation"] = function (data)
+            if not data or not data.groupName then return end
+            animation.cancel(self, data.groupName)
         end,
 
         ["AdvWMap:registerDisabledDoor"] = function(ref)

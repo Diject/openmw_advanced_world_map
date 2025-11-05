@@ -136,6 +136,9 @@ return {
             playerRef:teleport(types.Door.destCell(data.targetDoor), types.Door.destPosition(data.targetDoor),
                 {rotation = types.Door.destRotation(data.targetDoor), onGround = true})
             playerRef:sendEvent("AdvWMap:playSound", {soundId = "mysticism hit"})
+            playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellcast"})
+            playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnleft"})
+            playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnright"})
         end,
 
         ["AdvWMap:cellChanged"] = function ()
