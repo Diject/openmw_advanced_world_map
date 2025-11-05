@@ -7,6 +7,7 @@ local types = require("openmw.types")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
+local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -160,15 +161,19 @@ function menuMeta:updateMapWidgetCell(cellId)
     local lay, meta, isNew = self:getMapWidgetForCell(cellId)
     if not lay or not meta then return false end
 
-    local oldZoom = self.mapWidget and self.mapWidget.zoom or meta.zoom or 1
-
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
 
     self.mapWidget:setUpdateFunction(self.update)
     self:updateMapWidgetWidth()
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
-    self.mapWidget:setZoom(oldZoom)
+
+    if cellId then
+        meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
+    else
+        meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
+    end
+
 
     if isNew then
         eventSys.triggerEvent(eventSys.events.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})

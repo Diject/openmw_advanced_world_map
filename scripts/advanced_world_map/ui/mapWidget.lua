@@ -457,7 +457,11 @@ local function setZoom(self, zoom, relativePos)
 
     self:updateMarkersScale()
 
-    localStorage.data[commonData.lastZoomFieldId] = zoom
+    if self.cellId then
+        localStorage.data[commonData.localMapZoomFieldId] = zoom
+    else
+        localStorage.data[commonData.worldMapZoomFieldId] = zoom
+    end
 
     if oldZoom ~= zoom then
         eventSys.triggerEvent(eventSys.events.onZoomed, {mapWidget = self, zoom = zoom})
@@ -1233,7 +1237,11 @@ function this.new(params)
     ---@type {[2] : string, [1] : integer, [3] : advancedWorldMap.ui.mapElementMeta}[] {marker Id, layer}
     meta.activeZoomMarkers = {}
 
-    meta.zoom = 1
+    if meta.cellId then
+        meta.zoom = localStorage.data[commonData.localMapZoomFieldId] or 2
+    else
+        meta.zoom = localStorage.data[commonData.worldMapZoomFieldId] or 1
+    end
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
     local displaySize = meta:getDisplaySize()
     meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
@@ -1491,13 +1499,8 @@ function this.new(params)
     }
 
     meta.layout = main
-    if meta.cellId then
-        meta:focusOnWorldPosition(util.vector2(0, 0))
-    else
-        meta:focusOnWorldPosition(playerPos.gexExteriorPos())
-    end
 
-    meta:setZoom(localStorage.data[commonData.lastZoomFieldId] or 1)
+    meta:setZoom(meta.zoom, meta:getRelativePositionByWorldPosition(meta.cellId and util.vector2(0, 0) or playerPos.gexExteriorPos()))
 
     return main, meta
 end

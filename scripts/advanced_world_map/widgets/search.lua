@@ -454,14 +454,8 @@ local function create(menu)
                                     menu:updateMapWidgetCell(dt.cellId)
                                 end
                                 menu.mapWidget:focusOnWorldPosition(dt.pos)
+                                menu.mapWidget:updateMarkers()
 
-                                menu.mapWidget:setZoom(math.max(dt.cellId and 16 or 8, menu.mapWidget.zoom))
-
-                                -- menu.mapWidget:forceChangeMarker(dt.id, dt.layerId, {
-                                --     visible = true,
-                                --     size = menu.mapWidget.scaleFunctions.marker(util.vector2(14, 14), menu.mapWidget.zoom),
-                                --     color = config.data.ui.selectionColor
-                                -- })
                                 menu:update()
                             end
                         end),

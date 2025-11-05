@@ -19,12 +19,13 @@ this.messageBoxMenuId = "__MESSAGEBOX__"
 this.globalDataStorageName = "AdvancedWorldMap:globalDataStorage"
 
 -- local storage
-this.lastZoomFieldId = "lastZoomValue"
 this.discoveredLocsFieldId = "discoveredLocationsHashSet"
 this.sortByDistanceFieldId = "searchSortByDistance"
 this.hideUnrevealedFieldId = "searchHideUnrevealed"
 this.searchInInteriorsFieldId = "searchSearchInInteriors"
 this.disabledDoorsFieldId = "disabledDoors"
+this.localMapZoomFieldId = "localMapScale"
+this.worldMapZoomFieldId = "worldMapScale"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
