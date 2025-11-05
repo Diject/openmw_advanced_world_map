@@ -141,6 +141,8 @@ end
 local function createMarkers(widget, cellId)
     local entrances = dynamicDataHandler.entrances or {}
 
+    local screenSize = uiUtils.getScaledScreenSize()
+
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
     local cellTypeMul = cellId and 2 or 1
@@ -383,6 +385,27 @@ local function createMarkers(widget, cellId)
             end
 
             local tooltipContent = ui.content{}
+
+            if dt.fullName ~= "" then
+                local tooltipWidth = math.max(200,
+                    math.min(screenSize.x / 6, stringLib.length(dt.fullName) * config.data.ui.fontSize * config.data.ui.textHeightMul))
+                tooltipContent:add{
+                    type = ui.TYPE.TextEdit,
+                    props = {
+                        text = dt.fullName,
+                        textColor = config.data.ui.defaultColor,
+                        textSize = config.data.ui.fontSize,
+                        anchor = util.vector2(0.5, 0),
+                        size = util.vector2(tooltipWidth, 0),
+                        multiline = true,
+                        wordWrap = true,
+                        textAlignH = ui.ALIGNMENT.Center,
+                        textAlignV = ui.ALIGNMENT.Center,
+                        readOnly = true,
+                        autoSize = true,
+                    },
+                }
+            end
 
             local imageMarkerHandler
             imageMarkerHandler = widget:createImageMarker{

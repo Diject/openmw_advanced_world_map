@@ -9,6 +9,8 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local this = {}
 
+this.lastTooltip = nil
+
 function this.calcTooltipPosAnchor(cursorPos)
     local screenSize = uiUtils.getScaledScreenSize()
 
@@ -35,6 +37,7 @@ function this.createOrMove(coord, parent, layoutContent)
     local position, anchor = this.calcTooltipPosAnchor(coord.position)
 
     if not parent.userData.tooltip then
+        this.destroyLast()
         if not layoutContent or #layoutContent == 0 then return end
 
         local tooltipLayout = {
@@ -57,13 +60,16 @@ function this.createOrMove(coord, parent, layoutContent)
             }
         }
 
-        parent.userData["tooltip"] = ui.create(tooltipLayout)
+        local tooltip = ui.create(tooltipLayout)
+        parent.userData["tooltip"] = tooltip
+        this.lastTooltip = tooltip
 
         if core.isWorldPaused() then
             local timer = async:newUnsavableSimulationTimer(0.1, function ()
                 if not parent.userData.tooltip then return end
                 local tooltipHandler = parent.userData.tooltip
                 parent.userData.tooltip = nil
+                this.lastTooltip = nil
                 tooltipHandler:destroy()
             end)
         else
@@ -74,6 +80,7 @@ function this.createOrMove(coord, parent, layoutContent)
                     if not parent.userData.tooltip then return end
                     local tooltipHandler = parent.userData.tooltip
                     parent.userData.tooltip = nil
+                    this.lastTooltip = nil
                     tooltipHandler:destroy()
                 end
             end, 0.2)
@@ -83,7 +90,10 @@ function this.createOrMove(coord, parent, layoutContent)
     end
 
 
-    if not parent.userData.tooltip then return end
+    if not parent.userData.tooltip or not parent.userData.tooltip.layout then
+        parent.userData.tooltip = nil
+        return
+    end
 
     local props = parent.userData.tooltip.layout.props
 
@@ -108,6 +118,14 @@ end
 
 function this.get(parent)
     return parent and parent.userData and parent.userData.tooltip
+end
+
+
+function this.destroyLast()
+    if this.lastTooltip and this.lastTooltip.layout then
+        this.lastTooltip:destroy()
+    end
+    this.lastTooltip = nil
 end
 
 

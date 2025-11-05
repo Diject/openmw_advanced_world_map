@@ -20,6 +20,7 @@ local l10n = core.l10n(commonData.l10nKey)
 local interval = require("scripts.advanced_world_map.ui.interval")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local borders = require("scripts.advanced_world_map.ui.borders")
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
 
 
@@ -160,6 +161,8 @@ function menuMeta:updateMapWidgetCell(cellId)
 
     local lay, meta, isNew = self:getMapWidgetForCell(cellId)
     if not lay or not meta then return false end
+
+    tooltip.destroyLast()
 
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
