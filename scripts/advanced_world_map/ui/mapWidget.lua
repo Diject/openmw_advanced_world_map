@@ -708,11 +708,12 @@ local function createMarker(self, params, onlyInitialize)
             size = size,
             params = params,
             userData = params.userData,
+            pressed = {}
         },
         events = {
             focusLoss = async:callback(function(e, layout)
                 self.layout.userData.inFocus = false
-                marker.userData.pressed = false
+                marker.userData.pressed = {}
                 if events.focusLoss then events.focusLoss(e, layout) end
                 self.layout.events.focusLoss(e, layout, layout.userData.markerElement)
                 tooltip.destroy(layout)
@@ -730,14 +731,14 @@ local function createMarker(self, params, onlyInitialize)
             end),
 
             mousePress = async:callback(function(e, layout)
-                marker.userData.pressed = true
+                marker.userData.pressed[e.button] = true
                 if events.mousePress then events.mousePress(e, layout) end
                 self.layout.events.mousePress(e, layout, layout.userData.markerElement)
             end),
 
             mouseRelease = async:callback(function(e, layout)
-                if events.mouseRelease then events.mouseRelease(e, layout, marker.userData.pressed) end
-                marker.userData.pressed = false
+                if events.mouseRelease then events.mouseRelease(e, layout, marker.userData.pressed[e.button] or false) end
+                marker.userData.pressed[e.button] = false
                 self.layout.events.mouseRelease(e, layout, layout.userData.markerElement)
             end),
         }
