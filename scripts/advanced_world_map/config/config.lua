@@ -37,7 +37,8 @@ this.default = {
     },
     fastTravel = {
         onlyDiscovered = false,
-        baseMagickaCost = 80,
+        allowToInterior = true,
+        baseMagickaCost = 60,
         additionalCost = 2,
     },
     data = {

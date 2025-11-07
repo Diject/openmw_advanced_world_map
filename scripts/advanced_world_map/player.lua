@@ -200,12 +200,13 @@ return {
             end
 
             local cost = configLib.data.fastTravel.baseMagickaCost
-            if not self.cell.isExterior then
-                cost = cost * 1.5
-            end
 
-            cost = cost + (playerPos.gexExteriorPos() - types.Door.destPosition(data.targetDoor)):length() / 8192 * configLib.data.fastTravel.additionalCost
-            cost = math.floor(math.max(0, cost * (1.75 - types.NPC.stats.skills.mysticism(self).modified / 100)))
+            cost = cost + data.worldDistance / 8192 * configLib.data.fastTravel.additionalCost
+            cost = cost + 2 * math.min(6, data.depthToPoint) * configLib.data.fastTravel.additionalCost
+            cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
+            if data.isInSameInteriorBlock then
+                cost = cost * 0.6
+            end
 
             menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
                 message = data.message.."\n"..l10n("fastTraveMagickaCost"):format(cost),

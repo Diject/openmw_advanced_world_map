@@ -21,14 +21,18 @@ local fastTravelFunc
 local rightBtnMenuFunc
 
 
-local function fastTravel(menu, relPos)
+local function fastTravel(menu, cellId, relPos)
     if not types.Player.isTeleportingEnabled(playerRef) then
         playerRef:sendEvent("AdvWMap:showMessage", core.getGMST("sTeleportDisabled") or "")
+        return
+    elseif cellId and not config.data.fastTravel.allowToInterior then
+        playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelNotAllowedToInterior"))
         return
     end
 
     core.sendGlobalEvent("AdvWMap:fastTravel", {
         pos = menu.mapWidget:getWorldPositionByRelativePosition(relPos),
+        cellId = cellId,
         availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.visited or nil
     })
 end
@@ -57,14 +61,18 @@ local function create(menu)
     end
 
     fastTravelFunc = function (e)
+        if e.button ~= 1 then return end
+
         local time = core.getRealTime()
         local relPos = menu.mapWidget:getRelativePositionOfCursor()
 
-        if time - lastClick >= 0.6 then clickCount = 0 end
-
-        if time - lastClick < 0.6 and (lastPos - relPos):length() < 0.002 then
+        if time - lastClick >= 0.6 then
+            clickCount = 0
+        elseif (lastPos - relPos):length() > 0.003 then
+            clickCount = -1
+        elseif time - lastClick < 0.6 then
             if clickCount == 2 then
-                fastTravel(menu, relPos)
+                fastTravel(menu, menu.mapWidget.cellId, relPos)
 
                 time = 0
                 clickCount = -1
@@ -89,7 +97,7 @@ local function create(menu)
                 updateFunc = menu.update,
                 text = "Fast travel",
                 event = function (layout)
-                    fastTravel(menu, e.relPos)
+                    fastTravel(menu, menu.mapWidget.cellId, e.relPos)
                     menu.mapWidget:closeRightMouseMenu()
                 end
             }

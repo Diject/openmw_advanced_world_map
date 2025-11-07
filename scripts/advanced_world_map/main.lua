@@ -61,37 +61,49 @@ return {
 
         ["AdvWMap:fastTravel"] = function (data)
             local pos = data.pos
-
-            local gridX, gridY = cellLib.getGridCoordinates(pos)
+            local cellId = data.cellId
+            local playerRef = world.players[1]
 
             local doors = {}
 
-            for x = gridX - 1, gridX + 1 do
-                for y = gridY - 1, gridY + 1 do
-                    local cell = world.getExteriorCell(x, y)
-                    if not cell then goto continue end
-
-                    if data.availableCells and not data.availableCells[cell.id] then goto continue end
-
-                    for _, ref in pairs(cell:getAll(types.Door)) do
-                        if types.Door.isTeleport(ref) then
-                            table.insert(doors, {
-                                dist = common.distance2D(pos, ref.position),
-                                ref = ref,
-                                pos = ref.position,
-                                rot = ref.rotation,
-                                cell = ref.cell,
-                                dest = types.Door.destCell(ref)
-                            })
-                        end
+            local function processCell(cell)
+                for _, ref in pairs(cell:getAll(types.Door)) do
+                    if types.Door.isTeleport(ref) then
+                        table.insert(doors, {
+                            dist = common.distance2D(pos, ref.position),
+                            ref = ref,
+                            pos = ref.position,
+                            rot = ref.rotation,
+                            cell = ref.cell,
+                            dest = types.Door.destCell(ref)
+                        })
                     end
+                end
+            end
 
-                    ::continue::
+            if not cellId then
+                local gridX, gridY = cellLib.getGridCoordinates(pos)
+                for x = gridX - 1, gridX + 1 do
+                    for y = gridY - 1, gridY + 1 do
+                        local cell = world.getExteriorCell(x, y)
+                        if not cell then goto continue end
+
+                        if data.availableCells and not data.availableCells[cell.id] then goto continue end
+
+                        processCell(cell)
+
+                        ::continue::
+                    end
+                end
+            else
+                local cell = world.getCellById(cellId)
+                if cell then
+                    processCell(cell)
                 end
             end
 
             if not next(doors) then
-                world.players[1]:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
+                playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
                 return
             end
 
@@ -111,7 +123,7 @@ return {
             end
 
             if not next(interiorDoors) then
-                world.players[1]:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
+               playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
                 return
             end
 
@@ -121,10 +133,70 @@ return {
 
 
             local targetDoor = interiorDoors[1].ref
+            local isInSameInteriorBlock
+            local depthToPoint = 0
+            local distanceBetween = 0
 
-            world.players[1]:sendEvent("AdvWMap:fastTravelMessage", {
-                message = l10n("fastTravelMessageBoxMessage"):format(stringLib.getBeforeComma(targetDoor.cell.name or "")),
+            local function calcFastTravelInfo(targetCell, destCell)
+                if isInSameInteriorBlock or targetCell.isExterior then return false end
+
+                local exitsData, cells, exitCells, lowestDepth = cellLib.findExitPositions(targetCell)
+                if cells and exitsData then
+                    if cells[destCell.id] then
+                        depthToPoint = cells[destCell.id]
+                        isInSameInteriorBlock = true
+                    else
+                        isInSameInteriorBlock = false
+                        depthToPoint = depthToPoint + lowestDepth
+                    end
+
+                    if next(exitsData) then
+                        table.sort(exitsData, function (a, b)
+                            return a.depth < b.depth
+                        end)
+
+                        return exitsData[1].pos
+                    end
+                end
+            end
+
+            local destCell = types.Door.destCell(targetDoor)
+            local targetWorldPos
+            local playerWorldPos
+
+            if not destCell.isExterior then
+                targetWorldPos = calcFastTravelInfo(destCell, playerRef.cell)
+            else
+                targetWorldPos = types.Door.destPosition(targetDoor)
+            end
+            if not isInSameInteriorBlock then
+                if not playerRef.cell.isExterior then
+                    playerWorldPos = calcFastTravelInfo(playerRef.cell, destCell)
+                else
+                    playerWorldPos = playerRef.position
+                end
+            end
+
+            if targetWorldPos and playerWorldPos then
+                distanceBetween = common.distance2D(targetWorldPos, playerWorldPos)
+            end
+
+            local message
+            if cellId then
+                local cellName = destCell.displayName or destCell.name or ""
+                message = l10n("fastTravelMessageBoxMessage"):format(cellName)
+            else
+                local cellName = targetDoor.cell.displayName or targetDoor.cell.name or ""
+                message = l10n("fastTravelMessageBoxMessage"):format(stringLib.getBeforeComma(cellName))
+            end
+
+            -- use the door object to send the position, because cell is not passed
+            playerRef:sendEvent("AdvWMap:fastTravelMessage", {
+                message = message,
                 targetDoor = targetDoor,
+                depthToPoint = depthToPoint,
+                worldDistance = distanceBetween,
+                isInSameInteriorBlock = isInSameInteriorBlock,
             })
         end,
 
