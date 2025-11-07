@@ -76,7 +76,7 @@ local function buildData()
         local cellDt = cellNameData[name]
         if not cellDt then
             cellDt = {
-                name = name, count = 0,
+                name = stringLib.getBeforeComma(cell.displayName or cell.name), count = 0,
                 minX = math.huge, maxX = -math.huge,
                 minY = math.huge, maxY = -math.huge,
             }
@@ -131,7 +131,7 @@ local function buildData()
             local dest = types.Door.destCell(door)
             local destPos = types.Door.destPosition(door)
 
-            local name = dest.name
+            local name = getCellName(dest)
             if name:find(",") then
                 if cell.isExterior then
                     local cellNameMark = stringLib.getBeforeComma(name)
@@ -152,7 +152,7 @@ local function buildData()
                 destPos = destPos,
                 isDestEx = dest.isExterior,
                 name = name,
-                fullName = dest.name,
+                fullName = getCellName(dest),
                 doorHash = doorHash,
             }
 
