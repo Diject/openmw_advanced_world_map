@@ -427,7 +427,7 @@ local function createMarkers(widget, cellId)
                 },
                 events = {
                     mouseRelease = function (e, layout, pressed)
-                        if not pressed or not this.activeMenuMeta then return end
+                        if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
                         if eventSys.triggerEvent(eventSys.events.onMarkerClick, {marker = imageMarkerHandler}) then
                             return
                         end
