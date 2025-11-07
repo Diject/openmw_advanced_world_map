@@ -708,6 +708,7 @@ local function createMarker(self, params, onlyInitialize)
             size = size,
             params = params,
             userData = params.userData,
+            cellId = self.cellId,
             pressed = {}
         },
         events = {
@@ -859,29 +860,35 @@ end
 
 ---@param region advancedWorldMap.ui.mapWidget.region
 function mapWidgetMeta:createZoomInMarkers(region)
-    local minGridX = math.floor(region.left / 8192)
-    local maxGridX = math.ceil(region.right / 8192)
-    local minGridY = math.floor(region.bottom / 8192)
-    local maxGridY = math.ceil(region.top / 8192)
-    for x = minGridX, maxGridX do
-        for y = minGridY, maxGridY do
-            local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
-            for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
-                if dt.params.text then
-                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
-                else
+    if self.cellId then
+        for _, dt in pairs(self.zoomInMarkers[self.cellId] or {}) do
+            table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
+        end
+    else
+        local minGridX = math.floor(region.left / 8192)
+        local maxGridX = math.ceil(region.right / 8192)
+        local minGridY = math.floor(region.bottom / 8192)
+        local maxGridY = math.ceil(region.top / 8192)
+
+        for x = minGridX, maxGridX do
+            for y = minGridY, maxGridY do
+                local cellId = commonData.exteriorCellIdFormat:format(x, y)
+
+                for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
                     table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
                 end
-            end
 
+            end
         end
+
+        self.onZoomMarkersCenter = util.vector2(
+            (minGridX + maxGridX) / 2 * 8192,
+            (minGridY + maxGridY) / 2 * 8192
+        )
     end
 
-    self.onZoomMarkersCenter = util.vector2(
-        (minGridX + maxGridX) / 2 * 8192,
-        (minGridY + maxGridY) / 2 * 8192
-    )
+    
 end
 
 
