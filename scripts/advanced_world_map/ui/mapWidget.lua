@@ -691,7 +691,8 @@ local function createMarker(self, params, onlyInitialize)
             params = params,
             userData = params.userData,
             cellId = self.cellId,
-            pressed = {}
+            pressed = {},
+            movedDistance = 0,
         },
         events = {
             focusLoss = async:callback(function(e, layout)
@@ -705,6 +706,10 @@ local function createMarker(self, params, onlyInitialize)
             mouseMove = async:callback(function(e, layout)
                 self.layout.userData.inFocus = true
                 self.layout.userData.additiveMouseOffset = e.offset
+                if layout.userData.pressed[1] and self.layout.userData.lastMousePos then
+                    layout.userData.movedDistance = layout.userData.movedDistance +
+                        (e.position - self.layout.userData.lastMousePos):length()
+                end
 
                 if events.mouseMove then events.mouseMove(e, layout) end
                 self.layout.events.mouseMove({offset = e.offset, position = e.position}, layout, layout.userData.markerElement)
@@ -715,12 +720,18 @@ local function createMarker(self, params, onlyInitialize)
 
             mousePress = async:callback(function(e, layout)
                 marker.userData.pressed[e.button] = true
+                if e.button == 1 then
+                    layout.userData.movedDistance = 0
+                end
+
                 if events.mousePress then events.mousePress(e, layout) end
                 self.layout.events.mousePress(e, layout, layout.userData.markerElement)
             end),
 
             mouseRelease = async:callback(function(e, layout)
-                if events.mouseRelease then events.mouseRelease(e, layout, marker.userData.pressed[e.button] or false) end
+                if events.mouseRelease then
+                    events.mouseRelease(e, layout, marker.userData.pressed[e.button] and layout.userData.movedDistance < 30 and true or false)
+                end
                 marker.userData.pressed[e.button] = false
                 self.layout.events.mouseRelease(e, layout, layout.userData.markerElement)
             end),
