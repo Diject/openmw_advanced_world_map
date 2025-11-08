@@ -167,6 +167,7 @@ function menuMeta:updateMapWidgetCell(cellId)
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
 
+    self.mapWidget:closeRightMouseMenu()
     self.mapWidget:setUpdateFunction(self.update)
     self:updateMapWidgetWidth()
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
