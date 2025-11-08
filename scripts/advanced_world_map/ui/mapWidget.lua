@@ -630,24 +630,6 @@ local function createMarker(self, params, onlyInitialize)
 
             if cachedLayout.userData.forceChanged then
                 cachedLayout.userData.markerElement:restoreLayout()
-                -- cachedLayout.props = {
-                --     text = params.text,
-                --     textSize = params.text and (params.scaleFunc or this.scaleFunction.marker)(params.fontSize or 18, self.zoom),
-                --     anchor = params.anchor or util.vector2(0.5, 0.5),
-                --     relativePosition = relPos,
-                --     textColor = params.text and (params.color or config.data.ui.defaultColor),
-                --     visible = params.visible,
-                --     alpha = params.alpha or 1,
-                --     resource = params.texture,
-                --     size = params.size and (params.scaleFunc or this.scaleFunction.marker)(params.size, self.zoom),
-                --     color = params.texture and (params.color or config.data.ui.defaultColor),
-                --     propagateEvents = false,
-                -- }
-                -- cachedLayout.userData.scaleFunc = params.scaleFunc
-                -- cachedLayout.userData.autoScale = true
-                -- cachedLayout.userData.fontSize = params.text and (params.fontSize or 18) or nil
-                -- cachedLayout.userData.size = params.size
-                -- cachedLayout.userData.forceChanged = false
             else
                 cachedLayout.props.relativePosition = relPos
             end
