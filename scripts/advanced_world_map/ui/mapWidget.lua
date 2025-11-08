@@ -466,6 +466,7 @@ local function setZoom(self, zoom, relativePos)
     if oldZoom ~= zoom then
         eventSys.triggerEvent(eventSys.events.onZoomed, {mapWidget = self, zoom = zoom})
     end
+    tooltip.destroyLast()
 end
 
 ---@param zoom number
