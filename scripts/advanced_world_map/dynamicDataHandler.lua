@@ -18,6 +18,8 @@ this.regionNameData = nil
 this.entrances = nil
 ---@type table<string, string> by cell id
 this.cellNameById = nil
+---@type {max : {x : integer, y : integer}, min : {x : integer, y : integer}}
+this.grid = nil
 
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
@@ -64,11 +66,22 @@ local function buildData()
 
     this.cellNameById = {}
 
+    local minGridX = math.huge
+    local minGridY = math.huge
+    local maxGridX = -math.huge
+    local maxGridY = -math.huge
+
     local cellNameData = {}
     local regionNameData = {}
     local entrances = {}
     for _, cell in pairs(world.cells) do
         if not cell.isExterior then goto continue end
+
+        minGridX = math.min(minGridX, cell.gridX)
+        maxGridX = math.min(maxGridX, cell.gridX)
+        minGridY = math.min(minGridY, cell.gridY)
+        maxGridY = math.min(maxGridY, cell.gridY)
+
         if not cell.name or cell.name == "" then goto continue end
 
         local name = stringLib.getBeforeComma(cell.name)
@@ -109,6 +122,8 @@ local function buildData()
 
         ::continue::
     end
+
+    this.grid = {min = {x = minGridX, y = minGridY}, max = {x = maxGridX, y = maxGridY}}
 
     local function getCellName(cell)
         local name = cell.displayName or cell.name
@@ -295,12 +310,14 @@ shouldRebuild = true
         stor:set("entrances", this.entrances)
         stor:set("cellDirections", this.cellDirections)
         stor:set("cellNameById", this.cellNameById)
+        stor:set("grid", this.grid)
     else
         this.cellNameData = stor:get("cellNameData") or {}
         this.regionNameData = stor:get("regionNameData") or {}
         this.entrances = stor:get("entrances") or {}
         this.cellDirections = stor:get("cellDirections") or {}
         this.cellNameById = stor:get("cellNameById") or {}
+        this.grid = stor:get("grid") or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     end
 
     require("openmw.world").players[1]:sendEvent("AdvWMap:updateMapData", {
@@ -308,7 +325,8 @@ shouldRebuild = true
         regionNameData = this.regionNameData,
         entrances = this.entrances,
         cellDirections = this.cellDirections,
-        cellNameById = this.cellNameById
+        cellNameById = this.cellNameById,
+        grid = this.grid,
     })
 end
 
@@ -320,6 +338,7 @@ function this.load(data)
     this.entrances = data.entrances or {}
     this.cellDirections = data.cellDirections or {}
     this.cellNameById = data.cellNameById or {}
+    this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
 end
 
 
