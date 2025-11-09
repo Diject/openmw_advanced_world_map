@@ -1015,7 +1015,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
 
     local playerMarkerLayout = lay.content[1]
     local playerCell = playerRef.cell
-    if self.cellId ~= (not playerCell.isExterior and playerRef.cell.id or nil) then
+    if self.cellId and self.cellId ~= (not playerCell.isExterior and playerRef.cell.id) then
         local visible = playerMarkerLayout.props.visible
         playerMarkerLayout.props.visible = false
         return visible ~= false
