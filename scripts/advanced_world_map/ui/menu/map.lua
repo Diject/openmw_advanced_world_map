@@ -104,22 +104,34 @@ function menuMeta:addWidget(params)
 
     params.layout.events.focusLoss = async:callback(function(e, layout)
         pressed = false
+
+        self.headerLayout.events.focusLoss(e, self.headerLayout)
+
         if origEvents.focusLoss then origEvents.focusLoss(e, layout) end
     end)
 
     params.layout.events.mousePress = async:callback(function(e, layout)
+        if e.button == 1 then
             pressed = true
-            if origEvents.mousePress then origEvents.mousePress(e, layout) end
+        end
+
+        self.headerLayout.events.mousePress(e, self.headerLayout)
+
+        if origEvents.mousePress then origEvents.mousePress(e, layout) end
     end)
 
     params.layout.events.mouseRelease = async:callback(function(e, layout)
-        if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
-
-        if pressed then
+        if pressed and self.headerMovedDistance <= 15 then
             self:openWidget(params.id)
             self:update()
         end
-        pressed = false
+        if e.button == 1 then
+            pressed = false
+        end
+
+        self.headerLayout.events.mouseRelease(e, self.headerLayout)
+
+        if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
     end)
 
 
@@ -291,29 +303,42 @@ function this.create(params)
 
         },
         events = {
-            mousePress = async:callback(function(coord, layout)
-                layout.userData.lastMousePos = util.vector2(coord.position.x / screenSize.x, coord.position.y / screenSize.y)
+            mousePress = async:callback(function(e, layout)
+                if e.button ~= 1 then return end
+
+                layout.userData.lastMousePos = e.position
             end),
 
-            mouseRelease = async:callback(function(_, layout)
+            mouseRelease = async:callback(function(e, layout)
                 local relativePos = meta.menu.layout.props.relativePosition
                 config.setValue("main.relativePosition.x", relativePos.x * 100)
                 config.setValue("main.relativePosition.y", relativePos.y * 100)
                 layout.userData.lastMousePos = nil
+                meta.headerMovedDistance = 0
 
                 meta:update()
             end),
 
-            mouseMove = async:callback(function(coord, layout)
+            mouseMove = async:callback(function(e, layout)
                 if not layout.userData.lastMousePos then return end
 
                 local props = meta.menu.layout.props
-                local relativePos = util.vector2(coord.position.x / screenSize.x, coord.position.y / screenSize.y)
+                local relativePos = util.vector2(e.position.x / screenSize.x, e.position.y / screenSize.y)
 
-                props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - relativePos)
-                meta:update()
+                meta.headerMovedDistance = meta.headerMovedDistance +
+                    (e.position - layout.userData.lastMousePos):length()
 
-                layout.userData.lastMousePos = relativePos
+                if meta.headerMovedDistance > 15 then
+                    props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - e.position):ediv(screenSize)
+                    meta:update()
+                end
+
+                layout.userData.lastMousePos = e.position
+            end),
+
+            focusLoss = async:callback(function(_, layout)
+                layout.userData.lastMousePos = nil
+                meta.headerMovedDistance = 0
             end),
         },
         content = ui.content {
@@ -350,6 +375,9 @@ function this.create(params)
             }
         }
     }
+
+    meta.headerLayout = headerLayout
+    meta.headerMovedDistance = 0
 
     meta.getWidgetWindowWidth = function (self)
         local widgetWindowWidth = 0
