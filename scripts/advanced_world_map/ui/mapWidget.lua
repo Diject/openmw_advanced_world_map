@@ -1189,18 +1189,29 @@ function this.new(params)
         }
 
     else
+        local mapInfo
+        if not dataHandler.mapInfo then
+            mapInfo = {
+                gridX = {min = -1, max = 1},
+                gridY =  {min = -1, max = 1},
+                height = 2,
+                pixelsPerCell = 32,
+                time = 0,
+                version = 0,
+                width = 2,
+            }
+        else
+            mapInfo = dataHandler.mapInfo
+        end
+
         if not worldMapTexture then
-            if not dataHandler.mapInfo or not dataHandler.mapImagePath then return end
-
-            local mapImagePath = dataHandler.mapImagePath
-
-            if not vfs.fileExists(mapImagePath) then return end
-
-            worldMapTexture = ui.texture{ path = mapImagePath }
+            if dataHandler.mapImagePath and vfs.fileExists(dataHandler.mapImagePath) then
+                worldMapTexture = ui.texture{ path = dataHandler.mapImagePath }
+            end
         end
 
         meta.mapTexture = worldMapTexture
-        meta.mapInfo = dataHandler.mapInfo
+        meta.mapInfo = mapInfo
 
         local padding = 1
 
@@ -1209,7 +1220,7 @@ function this.new(params)
         padding = math.max(padding, math.max(0, dynamicDataHandler.grid.max.y - meta.mapInfo.gridY.max) +
             math.max(0, meta.mapInfo.gridY.min - dynamicDataHandler.grid.min.y))
 
-        padding = padding * dataHandler.mapInfo.pixelsPerCell
+        padding = padding * meta.mapInfo.pixelsPerCell
 
         meta.borderPadding = util.vector2(padding, padding)
         meta.displayMapSize = util.vector2(meta.mapInfo.width + padding * 2, meta.mapInfo.height + padding * 2)
@@ -1221,17 +1232,19 @@ function this.new(params)
                 relativeSize = util.vector2(1, 1),
             },
             userData = {},
-            content = ui.content {
-                {
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = worldMapTexture,
-                        relativePosition = util.vector2(meta.borderPadding.x / meta.displayMapSize.x, meta.borderPadding.y / meta.displayMapSize.y),
-                        relativeSize = util.vector2(meta.mapInfo.width / meta.displayMapSize.x, meta.mapInfo.height / meta.displayMapSize.y),
-                    }
-                },
-            },
+            content = ui.content {},
         }
+
+        if worldMapTexture then
+            mapLayout.content:add{
+                type = ui.TYPE.Image,
+                props = {
+                    resource = worldMapTexture,
+                    relativePosition = util.vector2(meta.borderPadding.x / meta.displayMapSize.x, meta.borderPadding.y / meta.displayMapSize.y),
+                    relativeSize = util.vector2(meta.mapInfo.width / meta.displayMapSize.x, meta.mapInfo.height / meta.displayMapSize.y),
+                }
+            }
+        end
     end
 
 
