@@ -1202,7 +1202,15 @@ function this.new(params)
         meta.mapTexture = worldMapTexture
         meta.mapInfo = dataHandler.mapInfo
 
-        local padding = dataHandler.mapInfo.pixelsPerCell * 0.5
+        local padding = 1
+
+        padding = math.max(padding, math.max(0, dynamicDataHandler.grid.max.x - meta.mapInfo.gridX.max) +
+            math.max(0, meta.mapInfo.gridX.min - dynamicDataHandler.grid.min.x))
+        padding = math.max(padding, math.max(0, dynamicDataHandler.grid.max.y - meta.mapInfo.gridY.max) +
+            math.max(0, meta.mapInfo.gridY.min - dynamicDataHandler.grid.min.y))
+
+        padding = padding * dataHandler.mapInfo.pixelsPerCell
+
         meta.borderPadding = util.vector2(padding, padding)
         meta.displayMapSize = util.vector2(meta.mapInfo.width + padding * 2, meta.mapInfo.height + padding * 2)
 
