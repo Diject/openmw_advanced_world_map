@@ -19,6 +19,7 @@ this.default = {
             y = 15,
         },
         centerOnPlayer = true,
+        discoveryRadius = 1500,
     },
     legend = {
         markerSize = 6,

@@ -11,6 +11,7 @@ local types = require("openmw.types")
 local debug = require('openmw.debug')
 local ambient = require('openmw.ambient')
 local animation = require("openmw.animation")
+local nearby = require("openmw.nearby")
 
 local log = require("scripts.advanced_world_map.utils.log")
 
@@ -142,6 +143,39 @@ end
 checkPos()
 
 
+local nearbyDoors = {}
+local function addNearbyDoors()
+    nearbyDoors = {}
+    for _, ref in pairs(nearby.doors) do
+        if types.Door.isTeleport(ref) then
+            table.insert(nearbyDoors, ref)
+        end
+    end
+end
+
+
+local function discoverNearby()
+    for _, ref in pairs(nearbyDoors) do
+        if not types.Door.isTeleport(ref)
+                or (ref.position - self.position):length() > configLib.data.main.discoveryRadius then
+            goto continue
+        end
+
+        local cell = types.Door.destCell(ref)
+        if not cell.isExterior and not discoveredLocs.isDiscovered(cell.id) then
+            local newDiscovered = discoveredLocs.addDiscoveredCell(cell)
+            if newDiscovered then
+                markers.updateDiscovered(newDiscovered)
+            end
+        end
+
+        ::continue::
+    end
+end
+
+time.runRepeatedly(discoverNearby, 0.42)
+
+
 local lastPlayerCellId
 
 return {
@@ -149,6 +183,9 @@ return {
         onSave = onSave,
         onLoad = onLoad,
         onInit = onInit,
+        onTeleported = function ()
+            discoverNearby()
+        end,
         onKeyRelease = onKeyRelease,
         onFrame = function(dt)
             realTimer.updateTimers()
@@ -162,8 +199,16 @@ return {
             if e.oldMode == "Loading" or e.oldMode == nil and e.newMode == nil and lastPlayerCellId ~= self.cell.id then
                 lastPlayerCellId = self.cell.id
 
-                discoveredLocs.addCell(self.cell)
-                markers.updateDiscoveredForCell(self.cell)
+                addNearbyDoors()
+
+                local newVisited = discoveredLocs.addVisitedCell(self.cell)
+                if newVisited then
+                    markers.updateDiscovered(newVisited)
+                end
+                local newDiscovered = discoveredLocs.addDiscoveredCell(self.cell)
+                if newDiscovered then
+                    markers.updateDiscovered(newDiscovered)
+                end
 
                 local cellId = self.cell.isExterior and commonData.exteriorMapId or self.cell.id
                 if mapMenu.cachedMapWidgetMetatable[cellId] then

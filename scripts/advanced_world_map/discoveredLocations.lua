@@ -1,4 +1,5 @@
 local stringLib = require("scripts.advanced_world_map.utils.string")
+local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local commonData = require("scripts.advanced_world_map.common")
 
@@ -8,40 +9,90 @@ local this = {}
 
 
 ---@type table<string, boolean> by cell id or cell name
-this.visited = nil
+this.visited = {}
+---@type table<string, boolean> by cell id or cell name
+this.discovered = {}
 
 this.blockDiscovery = false
 
 
-function this.addCell(cell)
+function this.addVisitedCell(cell)
+    if not this.visited[cell.id] then
+        local res = {cell.id}
+
+        this.visited[cell.id] = true
+        local cellName = cell.displayName or cell.name or ""
+        if cellName ~= "" then
+            if cell.isExterior then
+                this.visited[cellName] = true
+                table.insert(res, cellName)
+            elseif cellName:find(",") then
+                local name = stringLib.getBeforeComma(cellName)
+                this.visited[name] = true
+                table.insert(res, name)
+            end
+        end
+
+        return res
+    end
+end
+
+
+function this.addDiscoveredCell(cell)
     if this.blockDiscovery then return end
+
+    local newDiscovered = {}
 
     if cell.isExterior then
         for i = -1, 1 do
             for j = -1, 1 do
-                this.visited[commonData.exteriorCellIdFormat:format(cell.gridX + i, cell.gridY + j)] = true
+                local cId = commonData.exteriorCellIdFormat:format(cell.gridX + i, cell.gridY + j)
+                if not this.discovered[cId] then
+                    this.discovered[cId] = true
+                    newDiscovered[cId] = true
+                end
             end
         end
     end
-    this.visited[cell.id] = true
-    this.visited[stringLib.getBeforeComma(cell.name)] = true
-    this.visited[stringLib.getAfterComma(cell.name)] = true
+
+    if not this.discovered[cell.id] then
+        this.discovered[cell.id] = true
+        newDiscovered[cell.id] = true
+
+        local cellName = cell.displayName or cell.name
+        if cellName:find(",") then
+            local name = stringLib.getBeforeComma(cellName)
+            this.discovered[name] = true
+            newDiscovered[name] = true
+        end
+    end
+
+    if next(newDiscovered) then
+        return tableLib.keys(newDiscovered)
+    end
 end
 
 
 function this.init()
     if not localStorage.isPlayerStorageReady() then return end
 
-    if not localStorage.data[commonData.discoveredLocsFieldId] then
-        localStorage.data[commonData.discoveredLocsFieldId] = {}
+    if not localStorage.data[commonData.visitedLocsFieldId] then
+        localStorage.data[commonData.visitedLocsFieldId] = {}
     end
-    this.visited = localStorage.data[commonData.discoveredLocsFieldId]
+    this.visited = localStorage.data[commonData.visitedLocsFieldId]
 end
 
 
 ---@return boolean
 function this.isDiscovered(name)
-    return this.visited and this.visited[name] and true or false
+    return this.discovered[name] and true or false
+end
+
+
+---@param id string
+---@return boolean
+function this.isVisited(id)
+    return this.visited[id] and true or false
 end
 
 
