@@ -203,6 +203,8 @@ return {
 
             cost = cost + data.worldDistance / 8192 * configLib.data.fastTravel.additionalCost
             cost = cost + 2 * math.min(6, data.depthToPoint) * configLib.data.fastTravel.additionalCost
+            cost = cost + math.max(0, (types.Actor.getEncumbrance(self) - types.Actor.getCapacity(self)) / 5) *
+                configLib.data.fastTravel.additionalCost
             cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
             if data.isInSameInteriorBlock then
                 cost = cost * 0.6
