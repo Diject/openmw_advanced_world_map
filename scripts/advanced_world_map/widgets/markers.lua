@@ -32,10 +32,10 @@ local this = {}
 this.activeMenuMeta = nil
 
 ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
-this.markersByName = nil
+this.markersByName = {}
 
 ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
-this.entranceMarkersByCellId = nil
+this.entranceMarkersByDestCellId = {}
 
 ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
 this.markersByDoorHash = {}
@@ -44,28 +44,10 @@ this.markersByDoorHash = {}
 this.markerById = {}
 
 
-function this.updateDiscoveredForCell(cell)
-    local names = {}
-
-    if cell.isExterior then
-        for i = -1, 1 do
-            for j = -1, 1 do
-                names[commonData.exteriorCellIdFormat:format(cell.gridX + i, cell.gridY + j)] = true
-            end
-        end
-    end
-    names[cell.id] = true
-    names[cell.name] = true
-    names[stringLib.getBeforeComma(cell.name)] = true
-    names[stringLib.getAfterComma(cell.name)] = true
-
-    this.updateDiscovered(tableLib.keys(names))
-end
-
 
 ---@param newDiscovered string[]
 function this.updateDiscovered(newDiscovered)
-    if not this.markersByName or not this.entranceMarkersByCellId then return end
+    if not this.markersByName or not this.entranceMarkersByDestCellId then return end
 
     local function updateVisibility(handler)
         local userData = handler:getUserData()
@@ -79,12 +61,24 @@ function this.updateDiscovered(newDiscovered)
     end
 
     for _, name in pairs(newDiscovered or {}) do
-        for _, handler in pairs(this.entranceMarkersByCellId[name] or {}) do
+        for _, handler in pairs(this.entranceMarkersByDestCellId[name] or {}) do
             updateVisibility(handler)
+            local userData = handler:getUserData()
+            if userData and userData.cellId then
+                if discoveredLocs.isVisited(userData.cellId) then
+                    handler:setColor(config.data.ui.defaultLightColor)
+                elseif discoveredLocs.isDiscovered(userData.cellId) then
+                    handler:setColor(config.data.ui.defaultColor)
+                end
+            end
         end
+
         for _, handler in pairs(this.markersByName[name] or {}) do
-            updateVisibility(handler)
-            handler:setColor(config.data.ui.defaultLightColor)
+            local userData = handler:getUserData()
+            if userData and userData.type == commonData.cityRegionMarkerType then
+                updateVisibility(handler)
+                handler:setColor(config.data.ui.defaultLightColor)
+            end
         end
     end
 end
@@ -186,8 +180,6 @@ local function createMarkers(widget, cellId)
         end)
     end
 
-    local markersByCellId = {}
-    local markersByName = {}
 
     ---@type {[1] : number, [2] : number}[][]
     local textLines = {}
@@ -349,34 +341,46 @@ local function createMarkers(widget, cellId)
             local imId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "marker")
             local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
 
-            local cId = cellId or cellLib.getCellIdByPos(dt.pos)
-            markersByCellId[cId] = markersByCellId[cId] or {}
-            markersByName[dt.name] = markersByName[dt.name] or {}
+            local cId = dt.destCellId
+            this.entranceMarkersByDestCellId[cId] = this.entranceMarkersByDestCellId[cId] or {}
+            this.markersByName[dt.name] = this.markersByName[dt.name] or {}
             this.markersByDoorHash[dt.doorHash] = this.markersByDoorHash[dt.doorHash] or {}
 
             local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
+
+            local color
+            if discoveredLocs.isDiscovered(dt.destCellId) then
+                if discoveredLocs.isVisited(dt.destCellId) then
+                    color = config.data.ui.defaultLightColor
+                else
+                    color = config.data.ui.defaultColor
+                end
+            else
+                color = config.data.ui.defaultDarkColor
+            end
 
             local textMarkerHandler = widget:createTextMarker{
                 id = textId,
                 useCache = true,
                 layerId = mapWidget.layerId.nonInteractive,
                 text = text,
-                alpha = 0.5,
+                alpha = 0.75,
                 anchor = textAnchor,
                 fontSize = cellTypeMul * config.data.legend.markerSize,
                 pos = dt.pos,
-                color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor,
+                color = color,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,
                 userData = {
                     type = commonData.doorDescrMarkerType,
+                    cellId = dt.destCellId,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                 },
             }
             if textMarkerHandler then
-                table.insert(markersByCellId[cId], textMarkerHandler)
-                table.insert(markersByName[dt.name], textMarkerHandler)
+                table.insert(this.entranceMarkersByDestCellId[cId], textMarkerHandler)
+                table.insert(this.markersByName[dt.name], textMarkerHandler)
                 table.insert(this.markersByDoorHash[dt.doorHash], textMarkerHandler)
                 if disabledDoors.contains(dt.doorHash) then
                     updateDoorMarkerVisibility(textMarkerHandler, false)
@@ -411,9 +415,10 @@ local function createMarkers(widget, cellId)
             imageMarkerHandler = widget:createImageMarker{
                 id = imId,
                 texture = mapMarkerTexture,
+                color = color,
                 useCache = true,
                 layerId = mapWidget.layerId.marker,
-                alpha = 0.5,
+                alpha = 0.75,
                 anchor = util.vector2(0.5, 0.5),
                 size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize) * cellTypeMul,
                 pos = dt.pos,
@@ -458,8 +463,8 @@ local function createMarkers(widget, cellId)
                 },
             }
             if imageMarkerHandler then
-                table.insert(markersByCellId[cId], imageMarkerHandler)
-                table.insert(markersByName[dt.name], imageMarkerHandler)
+                table.insert(this.entranceMarkersByDestCellId[cId], imageMarkerHandler)
+                table.insert(this.markersByName[dt.name], imageMarkerHandler)
                 table.insert(this.markersByDoorHash[dt.doorHash], imageMarkerHandler)
                 if disabledDoors.contains(dt.doorHash) then
                     updateDoorMarkerVisibility(imageMarkerHandler, false)
@@ -470,15 +475,13 @@ local function createMarkers(widget, cellId)
         end
     end
 
-    ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
-    this.entranceMarkersByCellId = markersByCellId
 
     for _, dt in pairs(dynamicDataHandler.cellNameData or {}) do
         local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
 
         local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name)
 
-        markersByName[dt.name] = markersByName[dt.name] or {}
+        this.markersByName[dt.name] = this.markersByName[dt.name] or {}
 
         local textMarkerHandler = widget:createTextMarker{
             id = id,
@@ -486,7 +489,7 @@ local function createMarkers(widget, cellId)
             text = dt.name,
             anchor = util.vector2(0.5, 0.5),
             pos = util.vector2(dt.posX, dt.posY),
-            color = discoveredLocs.isDiscovered(dt.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
             fontSize = 10 + math.min(8, dt.count) * 2,
             scaleFunc = mapWidget.scaleFunction.linear,
             alpha = 0.4,
@@ -494,18 +497,17 @@ local function createMarkers(widget, cellId)
             showWhenZoomedOut = true,
             visible = isCellDiscovered,
             userData = {
+                type = commonData.cityRegionMarkerType,
                 searchText = stringLib.utf8_lower(dt.name),
                 allowSearchFilter = true,
             },
         }
         if textMarkerHandler then
-            table.insert(markersByName[dt.name], textMarkerHandler)
+            table.insert(this.markersByName[dt.name], textMarkerHandler)
             this.markerById[id] = textMarkerHandler
         end
     end
 
-    ---@type table<string, advancedWorldMap.ui.mapElementMeta[]>
-    this.markersByName = markersByName
 
     for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
         local fontSize = 14 + math.min(8, info.count) * 3
@@ -514,14 +516,17 @@ local function createMarkers(widget, cellId)
             text = info.name,
             anchor = util.vector2(0.5, 0.5),
             pos = util.vector2(info.posX, info.posY),
-            color = discoveredLocs.isDiscovered(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
             fontSize = fontSize,
             scaleFunc = mapWidget.scaleFunction.linear,
             alpha = 0.12,
             showWhenZoomedOut = true,
             useCache = true,
             searchText = stringLib.utf8_lower(info.name),
-            searchLabel = l10n("Region")..": "..info.name
+            searchLabel = l10n("Region")..": "..info.name,
+            userData = {
+                type = commonData.cityRegionMarkerType,
+            }
         }
     end
 

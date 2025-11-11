@@ -49,6 +49,7 @@ this.default = {
         fontSize = 18,
         defaultColor = commonData.defaultColor,
         defaultLightColor = commonData.defaultLightColor,
+        defaultDarkColor = commonData.defaultDarkColor,
         backgroundColor = commonData.backgroundColor,
         disabledColor = commonData.disabledColor,
         selectionColor = commonData.selectedColor,
