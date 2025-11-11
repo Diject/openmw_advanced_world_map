@@ -184,6 +184,7 @@ return {
         onLoad = onLoad,
         onInit = onInit,
         onTeleported = function ()
+            addNearbyDoors()
             discoverNearby()
         end,
         onKeyRelease = onKeyRelease,

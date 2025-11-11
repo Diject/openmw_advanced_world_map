@@ -80,6 +80,11 @@ function this.init()
         localStorage.data[commonData.visitedLocsFieldId] = {}
     end
     this.visited = localStorage.data[commonData.visitedLocsFieldId]
+
+    if not localStorage.data[commonData.discoveredLocsFieldId] then
+        localStorage.data[commonData.discoveredLocsFieldId] = {}
+    end
+    this.discovered = localStorage.data[commonData.discoveredLocsFieldId]
 end
 
 
