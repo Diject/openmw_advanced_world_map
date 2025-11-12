@@ -149,7 +149,7 @@ local function buildData()
             local name = getCellName(dest)
             if name:find(",") then
                 if cell.isExterior then
-                    local cellNameMark = stringLib.getBeforeComma(name)
+                    local cellNameMark = stringLib.getBeforeComma(cell.name)
                     if cellNameData[cellNameMark] then
                         name = stringLib.getAfterComma(name)
                     end
