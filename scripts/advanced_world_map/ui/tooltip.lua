@@ -43,7 +43,7 @@ function this.createOrMove(coord, parent, layoutContent)
         local tooltipLayout = {
             template = customTemplates.boxSolid,
             layer = "Notification",
-            name = "QGL:tooltip",
+            name = "AdvWMap:tooltip",
             props = {
                 position = position,
                 anchor = anchor,
