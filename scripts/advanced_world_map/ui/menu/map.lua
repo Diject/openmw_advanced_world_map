@@ -165,6 +165,13 @@ function menuMeta:getMapWidgetForCell(cellId)
 end
 
 
+---@return advancedWorldMap.ui.mapWidgetMeta?
+function menuMeta:getCachedMapWidget(cellId)
+    local cellKeyId = cellId or commonData.exteriorMapId
+    return this.cachedMapWidgetMetatable[cellKeyId]
+end
+
+
 ---@param cellId string?
 ---@return boolean changed
 function menuMeta:updateMapWidgetCell(cellId)
