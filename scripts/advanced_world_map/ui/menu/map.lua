@@ -183,6 +183,10 @@ function menuMeta:updateMapWidgetCell(cellId)
 
     tooltip.destroyLast()
 
+    if self.mapWidget then
+        eventSys.triggerEvent(eventSys.events.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
+    end
+
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
 
@@ -216,6 +220,9 @@ end
 function menuMeta:close()
     if not self.menu then return end
     self:closeActiveWidget()
+    if self.mapWidget then
+        eventSys.triggerEvent(eventSys.events.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
+    end
     this.activeMenuMeta = nil
     self.menu:destroy()
 end
