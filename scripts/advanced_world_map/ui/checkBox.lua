@@ -7,6 +7,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local configData = require("scripts.advanced_world_map.config.config")
 
 local interval = require("scripts.advanced_world_map.ui.interval")
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
 
 ---@class advancedWorldMap.ui.checkBox.params
@@ -17,6 +18,7 @@ local interval = require("scripts.advanced_world_map.ui.interval")
 ---@field position any? util.vector2
 ---@field relativePosition any? util.vector2
 ---@field anchor any? util.vector2
+---@field tooltipContent any?
 ---@field event fun(checked : boolean, layout : any)?
 ---@field updateFunc fun()
 
@@ -65,6 +67,15 @@ return function(params)
                 end
 
                 params.updateFunc()
+            end),
+
+            focusLoss = async:callback(function(e, layout)
+                tooltip.destroy(layout)
+            end),
+
+            mouseMove = async:callback(function(e, layout)
+                if not params.tooltipContent then return end
+                tooltip.createOrMove(e, layout, params.tooltipContent)
             end),
         },
         content = ui.content {
