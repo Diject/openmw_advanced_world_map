@@ -121,7 +121,7 @@ function menuMeta:addWidget(params)
     end)
 
     params.layout.events.mouseRelease = async:callback(function(e, layout)
-        if pressed and self.headerMovedDistance <= 15 then
+        if pressed and self.headerMovedDistance <= 15 and (params.onOpen or params.onClose) then
             self:openWidget(params.id)
             self:update()
         end
