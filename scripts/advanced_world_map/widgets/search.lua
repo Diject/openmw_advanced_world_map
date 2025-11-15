@@ -35,7 +35,7 @@ local worldMarkerTexture = ui.texture{ path = commonData.searchWorldMarkerPath }
 
 
 ---@type table<string, advancedWorldMap.ui.mapElementMeta>
-local hiddenMarkers = {}
+local visibleMarkers = {}
 ---@type table<string, advancedWorldMap.ui.mapElementMeta>
 local modifiedMarkers = {}
 ---@type table<any, advancedWorldMap.ui.mapElementMeta>
@@ -101,29 +101,21 @@ end
 
 ---@param handler advancedWorldMap.ui.mapElementMeta
 local function setMarkerVisibility(handler, val)
-    if val then
+    if val == nil then
         handler:updateLayout{ ---@diagnostic disable-line: missing-fields
             visible = (handler._params.visible == true or handler._params.visible == nil) and true or false,
         }
-        hiddenMarkers[getMarkerId(handler)] = nil
-        local userData = handler:getUserData()
-        if userData and (userData.type == commonData.doorMarkerType or userData.type == commonData.doorDescrMarkerType) then
-            userData.filtered = nil
-        end
-    else
-        handler:updateLayout{visible = false} ---@diagnostic disable-line: missing-fields
-        hiddenMarkers[getMarkerId(handler)] = handler
-        local userData = handler:getUserData()
-        if userData and (userData.type == commonData.doorMarkerType or userData.type == commonData.doorDescrMarkerType) then
-            userData.filtered = true
-        end
+        visibleMarkers[getMarkerId(handler)] = nil
+    elseif val then
+        handler:updateLayout{visible = val} ---@diagnostic disable-line: missing-fields
+        visibleMarkers[getMarkerId(handler)] = handler
     end
 end
 
 local function resetMarkersVisibility()
-    for i, handler in pairs(hiddenMarkers) do
-        setMarkerVisibility(handler, true)
-        hiddenMarkers[i] = nil
+    for i, handler in pairs(visibleMarkers) do
+        setMarkerVisibility(handler)
+        visibleMarkers[i] = nil
     end
 end
 
@@ -190,10 +182,10 @@ local function getAvailableInteriorNamesFromInterior(cellId, checked, res)
     res = res or {}
 
     if checked[cellId] then return res end
+    checked[cellId] = true
 
     for _, destDt in pairs(dynamicDataHandler.entrances[cellId] or {}) do
         if not checked[destDt.destCellId] then
-            checked[destDt.destCellId] = true
             if not destDt.isDestEx then
                 res[destDt.destCellId] = destDt.name
                 getAvailableInteriorNamesFromInterior(destDt.destCellId, checked, res)
@@ -211,10 +203,10 @@ local function getAvailableExteriorNamesFromInterior(cellId, checked, res)
     res = res or {}
 
     if checked[cellId] then return res end
+    checked[cellId] = true
 
     for _, destDt in pairs(dynamicDataHandler.entrances[cellId] or {}) do
         if not checked[destDt.destCellId] then
-            checked[destDt.destCellId] = true
             if destDt.isDestEx then
                 res[destDt.destCellId] = destDt.name
             else
@@ -244,8 +236,8 @@ end
 
 
 ---@param menu advancedWorldMap.ui.menu.map
----@return {cellId : string?, pos : {x : number, y : number}, text : string, color : any, dist : number?, priority : number?, worldMarker : {pos : {x : number, y : number}, color : any}?}[]
-local function getResults(menu, str, hideUnrevealed, searchAllLocations)
+---@return {cellId : string?, pos : {x : number, y : number}, text : string, color : any, dist : number?, priority : number?}[]
+local function getResults(menu, str, showUnrevealed, searchAllLocations)
     local res = {}
 
     local mapWidget = menu.mapWidget
@@ -262,7 +254,7 @@ local function getResults(menu, str, hideUnrevealed, searchAllLocations)
         local name = dynamicDataHandler.cellNameById[cellId] or string.format("%s: \"%s\"", l10n("CellId"), cellId)
         local nameLower = stringLib.utf8_lower(name)
 
-        if not isExterior and nameLower:find(str) and (not hideUnrevealed or discoveredLocations.isDiscovered(cellId)) then
+        if not isExterior and nameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(cellId)) then
             local doors = dynamicDataHandler.entrances[cellId]
             local pos = {x = 0, y = 0}
             if doors then
@@ -291,7 +283,7 @@ local function getResults(menu, str, hideUnrevealed, searchAllLocations)
                     checked[dt.destCellId] = true
 
                     local destNameLower = stringLib.utf8_lower(dt.name)
-                    if destNameLower:find(str) and (not hideUnrevealed or discoveredLocations.isDiscovered(dt.destCellId)) then
+                    if destNameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(dt.destCellId)) then
                         table.insert(res, {
                             text = dt.fullName,
                             cellId = not dt.isExterior and dt.cellId or nil,
@@ -299,6 +291,7 @@ local function getResults(menu, str, hideUnrevealed, searchAllLocations)
                             priority = 0,
                             color = config.data.ui.selectionColor
                         })
+                        targetCells[dt.destCellId] = true
                     end
 
                     ::continue::
@@ -328,7 +321,7 @@ local function getResults(menu, str, hideUnrevealed, searchAllLocations)
 
             local names = dynamicDataHandler.cellNameData
             for name, dt in pairs(names) do
-                if stringLib.utf8_lower(name):find(str) and (not hideUnrevealed or discoveredLocations.isDiscovered(name)) then
+                if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                     table.insert(res, {
                         text = string.format("%s\n(%d, %d)", dt.name, dt.posX, dt.posY),
                         cellId = nil,
@@ -358,7 +351,7 @@ local function getResults(menu, str, hideUnrevealed, searchAllLocations)
 
         local names = dynamicDataHandler.cellNameData
         for name, dt in pairs(names) do
-            if stringLib.utf8_lower(name):find(str) and (not hideUnrevealed or discoveredLocations.isDiscovered(name)) then
+            if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                 table.insert(res, {
                     text = string.format("%s\n(%d, %d)", dt.name, dt.posX, dt.posY),
                     cellId = nil,
@@ -379,10 +372,37 @@ local function create(menu)
 
     local textFilter = ""
 
+    local showUnrevealed
+    if localStorage.data[commonData.showUnrevealedFieldId] ~= nil then
+        showUnrevealed = localStorage.data[commonData.showUnrevealedFieldId]
+    else
+        showUnrevealed = not config.data.legend.onlyDiscovered
+    end
+
+    local searchAllLocations = false
+    if localStorage.data[commonData.searchAllLocationsFieldId] ~= nil then
+        searchAllLocations = localStorage.data[commonData.searchAllLocationsFieldId]
+    else
+        searchAllLocations = true
+    end
+
+
     local onMapElementCreatedCallback = function (e)
         if textFilter == "" then return end
 
         updateLayoutForMarker(e.marker, textFilter)
+
+        if not showUnrevealed then return end
+        local handler = e.marker
+        local userData = handler:getUserData()
+        if not (userData and (userData.type == commonData.doorMarkerType or userData.type == commonData.doorDescrMarkerType)) then
+            return
+        end
+
+        local cellId = e.mapWidget.cellId
+        if cellId == nil and not targetCells[userData.cellId or " "] then return end
+
+        setMarkerVisibility(handler, true)
     end
 
     local worldMarkersData
@@ -393,6 +413,11 @@ local function create(menu)
             createTemporaryMarker(dt.posHash, e.mapWidget, dt.pos, dt.color, dt.text)
         end
         e.menu:update()
+    end
+
+
+    local onMapClosedCallback = function (e)
+        resetMarkersVisibility()
     end
 
 
@@ -410,6 +435,7 @@ local function create(menu)
         local mapWidgetSize = menu.mapWidget:getSize()
 
         eventSys.registerHandler(eventSys.events.onMapElementCreated, onMapElementCreatedCallback)
+        eventSys.registerHandler(eventSys.events.onMapClosed, onMapClosedCallback)
 
         local size = util.vector2(
             math.max(mapWidgetSize.x / 3, 250),
@@ -433,8 +459,7 @@ local function create(menu)
         ---@type advancedWorldMap.ui.scrollBox
         local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
 
-        local function fill(hideUnrevealed, searchAllLocations)
-            resetMarkersVisibility()
+        local function fill(showUnrevealed, searchAllLocations)
             resetMarkersColor()
             removeTemporaryWorldMarkers()
             searchData = {}
@@ -446,10 +471,10 @@ local function create(menu)
 
             updateVisibilityForActiveMarkers(menu.mapWidget, textFilter)
 
-            local results = getResults(menu, textFilter, hideUnrevealed, searchAllLocations)
+            local results = getResults(menu, textFilter, showUnrevealed, searchAllLocations)
 
             eventSys.triggerEvent(eventSys.events.onSearch, {results = results, filter = textFilter,
-                params = {hideUnrevealed = hideUnrevealed, searchAllLocations = searchAllLocations}})
+                params = {showUnrevealed = showUnrevealed, searchAllLocations = searchAllLocations}})
 
             for _, res in pairs(results) do
                 local dist
@@ -482,14 +507,9 @@ local function create(menu)
                 end
 
                 local posHash = getPosHash(dt.cellId, dt.pos)
-                local worldMarkerPosHash = dt.worldMarker and dt.worldMarker.pos and getPosHash(nil, dt.worldMarker.pos) or nil
 
                 searchData[posHash] = searchData[posHash] or {}
                 table.insert(searchData[posHash], dt)
-                if worldMarkerPosHash then
-                    searchData[worldMarkerPosHash] = searchData[worldMarkerPosHash] or {}
-                    table.insert(searchData[worldMarkerPosHash], dt.worldMarker)
-                end
 
                 local function addWorldMarkerData(pHash, pos, color, tx)
                     if not worldMarkersData[pHash] then
@@ -510,16 +530,9 @@ local function create(menu)
                     local entrances = getWorldEntrancesForCell(dt.cellId)
                     for pHash, entranceDt in pairs(entrances) do
                         addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.selectionLightColor, text)
+                        targetCells[entranceDt.destCellId] = true
                     end
                 end
-                -- elseif dt.worldMarker and dt.worldMarker.pos then
-                --     table.insert(worldMarkersData, {
-                --         posHash = worldMarkerPosHash,
-                --         pos = dt.worldMarker.pos,
-                --         color = config.data.ui.selectionLightColor,
-                --         text = text,
-                --     })
-                -- end
 
                 local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
 
@@ -604,36 +617,24 @@ local function create(menu)
         end
 
 
-        local hideUnrevealed
-        if localStorage.data[commonData.hideUnrevealedFieldId] ~= nil then
-            hideUnrevealed = localStorage.data[commonData.hideUnrevealedFieldId]
-        else
-            hideUnrevealed = config.data.legend.onlyDiscovered
-        end
-
-        local searchAllLocations = false
-        if localStorage.data[commonData.searchAllLocationsFieldId] ~= nil then
-            searchAllLocations = localStorage.data[commonData.searchAllLocationsFieldId]
-        else
-            searchAllLocations = true
-        end
-
-        local hideUnrevealedCBLayout = checkBox{
+        local showUnrevealedCBLayout = checkBox{
             updateFunc = menu.update,
-            text = l10n("searchHideUnrevealed"),
+            text = l10n("searchShowUnrevealed"),
             textSize = config.data.ui.fontSize * 0.9,
             position = util.vector2(2, config.data.ui.fontSize + 9),
-            checked = hideUnrevealed,
+            checked = showUnrevealed,
             event = function (checked, layout)
-                hideUnrevealed = checked
-                localStorage.data[commonData.hideUnrevealedFieldId] = checked
-                fill(hideUnrevealed, searchAllLocations)
+                showUnrevealed = checked
+                localStorage.data[commonData.showUnrevealedFieldId] = checked
+                fill(showUnrevealed, searchAllLocations)
+                menu.mapWidget:updateMarkers()
+                menu:update()
             end,
             tooltipContent = ui.content {
                 {
                     type = ui.TYPE.TextEdit,
                     props = {
-                        text = l10n("SearchHideUnrevealedTooltip"),
+                        text = l10n("SearchShowUnrevealedTooltip"),
                         textSize = config.data.ui.fontSize,
                         textColor = config.data.ui.defaultColor,
                         autoSize = true,
@@ -655,7 +656,9 @@ local function create(menu)
             event = function (checked, layout)
                 searchAllLocations = checked
                 localStorage.data[commonData.searchAllLocationsFieldId] = checked
-                fill(hideUnrevealed, searchAllLocations)
+                fill(showUnrevealed, searchAllLocations)
+                menu.mapWidget:updateMarkers()
+                menu:update()
             end,
             tooltipContent = ui.content {
                 {
@@ -699,7 +702,7 @@ local function create(menu)
                         keyRelease = async:callback(function(e, layout)
                             if e.code == input.KEY.Enter then
                                 searchBarLayout.content[1].props.text = textFilter
-                                fill(hideUnrevealed, searchAllLocations)
+                                fill(showUnrevealed, searchAllLocations)
                                 menu.mapWidget:updateMarkers()
                                 menu:update()
                             end
@@ -717,7 +720,7 @@ local function create(menu)
                     anchor = util.vector2(1, 0.5),
                     position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
                     event = function (layout)
-                        fill(hideUnrevealed, searchAllLocations)
+                        fill(showUnrevealed, searchAllLocations)
                         menu.mapWidget:updateMarkers()
                         menu:update()
                     end
@@ -746,7 +749,7 @@ local function create(menu)
                         resource = uiUtils.whiteTexture,
                     },
                 },
-                hideUnrevealedCBLayout,
+                showUnrevealedCBLayout,
                 searchAllLocationsCBLayout,
                 searchBarLayout,
                 scrollBoxLayout,
@@ -769,6 +772,8 @@ local function create(menu)
         worldMarkersData = {}
         targetCells = {}
         eventSys.unregisterHandler(eventSys.events.onMapElementCreated, onMapElementCreatedCallback)
+        eventSys.unregisterHandler(eventSys.events.onMapClosed, onMapClosedCallback)
+        eventSys.unregisterHandler(eventSys.events.onMapInitialized, mapInitCallbackFunc)
     end
 
     menu:addWidget{
