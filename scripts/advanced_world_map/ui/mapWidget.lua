@@ -403,7 +403,7 @@ function mapWidgetMeta:updateOnZoomMarkers()
         visibleRect.top = visibleRect.top + zoomInOffsetInWorldCoord
         visibleRect.left = visibleRect.left - zoomInOffsetInWorldCoord
         visibleRect.right = visibleRect.right + zoomInOffsetInWorldCoord
-        self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
+        self:removeOnZoomMarkers()
         self:createZoomInMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)
     else
