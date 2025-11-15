@@ -30,6 +30,8 @@ this.grid = nil
 
 ---@class advancedWorldMap.dynamicDataHandler.entranceData
 ---@field pos any
+---@field cellId string
+---@field isExterior boolean
 ---@field destCellId string
 ---@field destPos any
 ---@field isDestEx boolean
@@ -163,6 +165,8 @@ local function buildData()
             entrances[cell.id] = entrances[cell.id] or {}
             entrances[cell.id][doorHash] = {
                 pos = door.position,
+                cellId = cell.id,
+                isExterior = cell.isExterior,
                 destCellId = dest.id,
                 destPos = destPos,
                 isDestEx = dest.isExterior,
