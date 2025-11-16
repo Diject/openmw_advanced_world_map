@@ -1236,6 +1236,7 @@ function this.new(params)
         }
 
         if worldMapTexture then
+
             mapLayout.content:add{
                 type = ui.TYPE.Image,
                 props = {
@@ -1244,6 +1245,42 @@ function this.new(params)
                     relativeSize = util.vector2(meta.mapInfo.width / meta.displayMapSize.x, meta.mapInfo.height / meta.displayMapSize.y),
                 }
             }
+
+        else
+            local pixelsPerCell = meta.mapInfo.pixelsPerCell
+
+            local layout = {
+                type = ui.TYPE.Widget,
+                props = {
+                    relativePosition = util.vector2(0, 0),
+                    relativeSize = util.vector2(1, 1),
+                },
+                userData = {},
+                content = ui.content {},
+            }
+
+            for i, dt in pairs(dynamicDataHandler.worldMapTileRectangles or {}) do
+                local widthHeight = util.vector2(dt[3] - dt[1] + 1, dt[4] - dt[2] + 1)
+                local pos = util.vector2(dt[1], dt[2]) * 8192
+                local relSize = util.vector2(
+                    ((widthHeight.x + 0.5) * pixelsPerCell + 1) / meta.displayMapSize.x,
+                    ((widthHeight.y + 0.5) * pixelsPerCell + 1) / meta.displayMapSize.y
+                )
+
+                local lay = {
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = uiUtils.whiteTexture,
+                        color = util.color.rgb(0.15, 0.15, 0.10),
+                        anchor = util.vector2(0, 1),
+                        relativePosition = meta:getRelativePositionByWorldPosition(pos),
+                        relativeSize = relSize,
+                    }
+                }
+                layout.content:add(lay)
+            end
+
+            mapLayout.content:add(layout)
         end
     end
 
@@ -1511,7 +1548,7 @@ function this.new(params)
                 type = ui.TYPE.Widget,
                 props = {
                     position = util.vector2(0, 0),
-                    size = util.vector2(meta.displayMapSize.x, meta.displayMapSize.y),
+                    size = meta.displayMapSize,
                 },
                 userData = {},
                 content = ui.content {

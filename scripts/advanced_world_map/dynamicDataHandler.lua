@@ -20,6 +20,8 @@ this.entrances = nil
 this.cellNameById = nil
 ---@type {max : {x : integer, y : integer}, min : {x : integer, y : integer}}
 this.grid = nil
+---@type {[1] : number, [2] : number, [3] : number, [4] : number}[]
+this.worldMapTileRectangles = {}
 
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
@@ -52,6 +54,62 @@ local function isContentFile(name)
 end
 
 
+local function findMaxRectangle(occupied)
+    local rect = nil
+    for x, col in pairs(occupied) do
+        for y in pairs(col) do
+
+            local maxX, maxY = x, y
+            while occupied[maxX + 1] and occupied[maxX + 1][y] do
+                maxX = maxX + 1
+            end
+
+            local done = false
+            while not done do
+                for xi = x, maxX do
+                    if not (occupied[xi] and occupied[xi][maxY + 1]) then
+                        done = true
+                        break
+                    end
+                end
+
+                if not done then
+                    maxY = maxY + 1
+                end
+            end
+
+            local area = (maxX - x + 1) * (maxY - y + 1)
+            if not rect or area > rect.area then
+                rect = {x1 = x, y1 = y, x2 = maxX, y2 = maxY, area = area}
+            end
+
+        end
+    end
+
+    return rect
+end
+
+local function worldCoverWithRectangles(occupied)
+    local res = {}
+
+    while true do
+        local rect = findMaxRectangle(occupied)
+        if not rect then break end
+
+        table.insert(res, {rect.x1, rect.y1, rect.x2, rect.y2})
+        for x = rect.x1, rect.x2 do
+            for y = rect.y1, rect.y2 do
+                if occupied[x] then
+                    occupied[x][y] = nil
+                end
+            end
+        end
+    end
+
+    return res
+end
+
+
 
 local function buildData()
     local world = require("openmw.world")
@@ -76,6 +134,7 @@ local function buildData()
     local cellNameData = {}
     local regionNameData = {}
     local entrances = {}
+    local occupied = {}
     for _, cell in pairs(world.cells) do
         if not cell.isExterior then goto continue end
 
@@ -83,6 +142,9 @@ local function buildData()
         maxGridX = math.min(maxGridX, cell.gridX)
         minGridY = math.min(minGridY, cell.gridY)
         maxGridY = math.min(maxGridY, cell.gridY)
+
+        occupied[cell.gridX] = occupied[cell.gridX] or {}
+        occupied[cell.gridX][cell.gridY] = true
 
         if not cell.name or cell.name == "" then goto continue end
 
@@ -125,6 +187,8 @@ local function buildData()
         ::continue::
     end
 
+
+    this.worldMapTileRectangles = worldCoverWithRectangles(occupied)
     this.grid = {min = {x = minGridX, y = minGridY}, max = {x = maxGridX, y = maxGridY}}
 
     local function getCellName(cell)
@@ -315,6 +379,7 @@ shouldRebuild = true
         stor:set("cellDirections", this.cellDirections)
         stor:set("cellNameById", this.cellNameById)
         stor:set("grid", this.grid)
+        stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
     else
         this.cellNameData = stor:get("cellNameData") or {}
         this.regionNameData = stor:get("regionNameData") or {}
@@ -322,6 +387,7 @@ shouldRebuild = true
         this.cellDirections = stor:get("cellDirections") or {}
         this.cellNameById = stor:get("cellNameById") or {}
         this.grid = stor:get("grid") or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
+        this.worldMapTileRectangles = stor:get("worldMapTileRectangles") or {}
     end
 
     require("openmw.world").players[1]:sendEvent("AdvWMap:updateMapData", {
@@ -331,6 +397,7 @@ shouldRebuild = true
         cellDirections = this.cellDirections,
         cellNameById = this.cellNameById,
         grid = this.grid,
+        worldMapTileRectangles = this.worldMapTileRectangles,
     })
 end
 
@@ -343,6 +410,7 @@ function this.load(data)
     this.cellDirections = data.cellDirections or {}
     this.cellNameById = data.cellNameById or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
+    this.worldMapTileRectangles = data.worldMapTileRectangles or {}
 end
 
 
