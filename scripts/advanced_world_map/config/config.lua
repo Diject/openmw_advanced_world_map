@@ -37,6 +37,7 @@ this.default = {
         zoomToShow = 6,
     },
     fastTravel = {
+        enabled = true,
         onlyDiscovered = false,
         allowToInterior = true,
         baseMagickaCost = 60,

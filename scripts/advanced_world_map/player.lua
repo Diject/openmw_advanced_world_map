@@ -256,6 +256,8 @@ return {
                 cost = cost * 0.6
             end
 
+            menuHandler.destroyMenu(commonData.mapMenuId)
+
             menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
                 message = data.message.."\n"..l10n("fastTraveMagickaCost"):format(cost),
                 relativeSize = util.vector2(0.25, 0.2),
@@ -279,7 +281,12 @@ return {
                             useType = I.SkillProgression.SKILL_USE_TYPES.Spellcast_Success,
                         })
                     end
+
+                    I.UI.removeMode("Journal")
                 end,
+                noCallback = function ()
+                    I.UI.removeMode("Journal")
+                end
             })
         end,
 

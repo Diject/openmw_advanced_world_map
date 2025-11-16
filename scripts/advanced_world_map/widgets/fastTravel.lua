@@ -41,23 +41,23 @@ end
 ---@param menu advancedWorldMap.ui.menu.map
 local function create(menu)
 
-    local iconLayout = {
-        type = ui.TYPE.Text,
-            props = {
-            text = "Ft",
-            textSize = config.data.ui.fontSize,
-            textColor = config.data.ui.defaultColor,
-            anchor = util.vector2(0.5, 0.5),
-            size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
-        },
-    }
+    -- local iconLayout = {
+    --     type = ui.TYPE.Text,
+    --         props = {
+    --         text = "Ft",
+    --         textSize = config.data.ui.fontSize,
+    --         textColor = config.data.ui.defaultColor,
+    --         anchor = util.vector2(0.5, 0.5),
+    --         size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
+    --     },
+    -- }
 
     local lastClick = core.getRealTime()
     local clickCount = 0
     local lastPos = menu.mapWidget:getRelativePositionOfCursor()
 
     if fastTravelFunc then
-        eventSys.unregisterHandler(eventSys.events["onMouseRelease"], fastTravelFunc)
+        eventSys.unregisterHandler(eventSys.events.onMouseRelease, fastTravelFunc)
     end
 
     fastTravelFunc = function (e)
@@ -83,11 +83,11 @@ local function create(menu)
         lastPos = relPos
         clickCount = clickCount + 1
     end
-    eventSys.registerHandler(eventSys.events["onMouseRelease"], fastTravelFunc)
+    eventSys.registerHandler(eventSys.events.onMouseRelease, fastTravelFunc)
 
 
     if rightBtnMenuFunc then
-        eventSys.unregisterHandler(eventSys.events["onRightMouseMenu"], rightBtnMenuFunc)
+        eventSys.unregisterHandler(eventSys.events.onRightMouseMenu, rightBtnMenuFunc)
     end
     rightBtnMenuFunc = function (e)
         local content = e.content
@@ -103,26 +103,27 @@ local function create(menu)
             }
         )
     end
-    eventSys.registerHandler(eventSys.events["onRightMouseMenu"], rightBtnMenuFunc)
+    eventSys.registerHandler(eventSys.events.onRightMouseMenu, rightBtnMenuFunc)
 
-    local function onOpen(content)
-        -- content:add(windowLayout)
-    end
+    -- local function onOpen(content)
 
-    local function onClose()
-        iconLayout.props.color = config.data.ui.defaultColor
-    end
+    -- end
 
-    menu:addWidget{
-        id = "AdvancedWorldMap:FastTravel",
-        layout = iconLayout,
-        onOpen = onOpen,
-        onClose = onClose,
-    }
+    -- local function onClose()
+
+    -- end
+
+    -- menu:addWidget{
+    --     id = "AdvancedWorldMap:FastTravel",
+    --     layout = iconLayout,
+    --     onOpen = onOpen,
+    --     onClose = onClose,
+    -- }
 
 end
 
 
-eventSys.registerHandler(eventSys.events["onMenuOpened"], function (e)
+eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
+    if not config.data.fastTravel.enabled then return end
     create(e.menu)
 end, 1000)

@@ -68,16 +68,21 @@ return {
 
             local function processCell(cell)
                 for _, ref in pairs(cell:getAll(types.Door)) do
+
                     if types.Door.isTeleport(ref) then
-                        table.insert(doors, {
-                            dist = common.distance2D(pos, ref.position),
-                            ref = ref,
-                            pos = ref.position,
-                            rot = ref.rotation,
-                            cell = ref.cell,
-                            dest = types.Door.destCell(ref)
-                        })
+                        local dest = types.Door.destCell(ref)
+                        if dest and (not data.availableCells or data.availableCells[dest.id]) then
+                            table.insert(doors, {
+                                dist = common.distance2D(pos, ref.position),
+                                ref = ref,
+                                pos = ref.position,
+                                rot = ref.rotation,
+                                cell = ref.cell,
+                                dest = types.Door.destCell(ref)
+                            })
+                        end
                     end
+
                 end
             end
 
@@ -118,7 +123,10 @@ return {
             local interiorDoors = {}
             for _, ref in pairs(ftDoorDestCell:getAll(types.Door)) do
                 if types.Door.isTeleport(ref) then
-                    table.insert(interiorDoors, {ref = ref, dist = (ftDoorDestPos - ref.position):length()})
+                    local destCell = types.Door.destCell(ref)
+                    if (destCell.isExterior and not data.cellId) or destCell.id == data.cellId then
+                        table.insert(interiorDoors, {ref = ref, dist = (ftDoorDestPos - ref.position):length()})
+                    end
                 end
             end
 
