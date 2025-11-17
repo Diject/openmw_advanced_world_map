@@ -1,6 +1,7 @@
 local core = require("openmw.core")
 local storage = require("openmw.storage")
 local types = require("openmw.types")
+local util = require("openmw.util")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -143,8 +144,25 @@ local function buildData()
         minGridY = math.min(minGridY, cell.gridY)
         maxGridY = math.min(maxGridY, cell.gridY)
 
-        occupied[cell.gridX] = occupied[cell.gridX] or {}
-        occupied[cell.gridX][cell.gridY] = true
+        if core.land then
+            local posX = cell.gridX * 8192
+            local posY = cell.gridY * 8192
+            local aboveWater = 0
+            for i = 1024, 8192, 2048 do
+                for j = 1024, 8192, 2048 do
+                    if core.land.getHeightAt(util.vector3(posX + i, posY + j, 0), cell) > 0 then
+                        aboveWater = aboveWater + 1
+                    end
+                end
+            end
+            if aboveWater > 8 then
+                occupied[cell.gridX] = occupied[cell.gridX] or {}
+                occupied[cell.gridX][cell.gridY] = true
+            end
+        else
+            occupied[cell.gridX] = occupied[cell.gridX] or {}
+            occupied[cell.gridX][cell.gridY] = true
+        end
 
         if not cell.name or cell.name == "" then goto continue end
 
