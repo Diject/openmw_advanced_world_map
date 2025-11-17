@@ -1192,13 +1192,13 @@ function this.new(params)
         local mapInfo
         if not dataHandler.mapInfo then
             mapInfo = {
-                gridX = {min = -1, max = 1},
-                gridY =  {min = -1, max = 1},
-                height = 2,
+                gridX = {min = 0, max = 0},
+                gridY =  {min = 0, max = 0},
+                height = 32,
                 pixelsPerCell = 32,
                 time = 0,
                 version = 0,
-                width = 2,
+                width = 32,
             }
         else
             mapInfo = dataHandler.mapInfo
@@ -1263,8 +1263,8 @@ function this.new(params)
                 local widthHeight = util.vector2(dt[3] - dt[1] + 1, dt[4] - dt[2] + 1)
                 local pos = util.vector2(dt[1], dt[2]) * 8192
                 local relSize = util.vector2(
-                    ((widthHeight.x + 0.5) * pixelsPerCell + 1) / meta.displayMapSize.x,
-                    ((widthHeight.y + 0.5) * pixelsPerCell + 1) / meta.displayMapSize.y
+                    ((widthHeight.x + 0.25) * pixelsPerCell) / meta.displayMapSize.x,
+                    ((widthHeight.y + 0.25) * pixelsPerCell) / meta.displayMapSize.y
                 )
 
                 local lay = {
