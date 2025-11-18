@@ -1,6 +1,7 @@
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
+local playerRef = require("openmw.self")
 
 local config = require("scripts.advanced_world_map.config.configLib")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
@@ -8,13 +9,21 @@ local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandle
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
 
+local this = {}
+
+
 local nameLayout
 
-local function updateLabel(mapWidget)
-    if not nameLayout then return end
+function this.updateLabel(mapWidget)
+    if not nameLayout or not mapWidget then return end
     local text
     if mapWidget.cellId then
         local cellName = dynamicDataHandler.cellNameById[mapWidget.cellId]
+        if cellName then
+            text = string.format(" %s ", cellName)
+        end
+    elseif playerRef.cell.isExterior then
+        local cellName = dynamicDataHandler.cellNameById[playerRef.cell.id]
         if cellName then
             text = string.format(" %s ", cellName)
         end
@@ -35,7 +44,7 @@ local function create(menu)
             textColor = config.data.ui.defaultColor,
         },
     }
-    updateLabel(menu.mapWidget)
+    this.updateLabel(menu.mapWidget)
 
 
     menu:addWidget{
@@ -48,9 +57,12 @@ end
 
 
 eventSys.registerHandler(eventSys.events.onMapShown, function (e)
-    updateLabel(e.mapWidget)
+    this.updateLabel(e.mapWidget)
 end)
 
 eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
     create(e.menu)
 end, -1000)
+
+
+return this

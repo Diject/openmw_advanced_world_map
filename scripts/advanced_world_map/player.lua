@@ -44,7 +44,7 @@ require("scripts.advanced_world_map.widgets.markers")
 require("scripts.advanced_world_map.widgets.legend")
 require("scripts.advanced_world_map.widgets.search")
 require("scripts.advanced_world_map.widgets.fastTravel")
-require("scripts.advanced_world_map.widgets.cellName")
+local cellNameWidget = require("scripts.advanced_world_map.widgets.cellName")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -224,7 +224,9 @@ return {
                 end
 
                 local menu = menuHandler.getMenu(commonData.mapMenuId)
-                if menu and menu:updateMapWidgetCell(cellId) then
+                if menu then
+                    menu:updateMapWidgetCell(cellId)
+                    cellNameWidget.updateLabel(menu.mapWidget)
                     menu:update()
                 end
 
