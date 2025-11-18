@@ -794,36 +794,6 @@ function mapWidgetMeta:removeMarker(id, layer)
 end
 
 
----@return advancedWorldMap.ui.mapElementMeta?
-function mapWidgetMeta:forceChangeMarker(id, layerId, propsParams)
-    local success, markerLayout = pcall(function ()
-        local layout = self:getLayerLayout(layerId)
-        return layout.content[id]
-    end)
-
-    if success and markerLayout then
-        tableLib.copy(propsParams, markerLayout.props)
-        markerLayout.userData.forceChanged = true
-        return
-    end
-
-    local cellId = self.zoomMarkersCellIdById[id]
-    if not cellId then return end
-
-    for _, tb in pairs({self.zoomOutMarkers, self.zoomInMarkers}) do
-        if tb[cellId] and tb[cellId][id] then
-            local mId, lId, markerELement, lay = createMarker(self, tb[cellId][id].params)
-            if lay then
-                tableLib.copy(propsParams, lay.props)
-                lay.userData.forceChanged = true
-            end
-        end
-    end
-end
-
-
-
-
 ---@param region advancedWorldMap.ui.mapWidget.region
 function mapWidgetMeta:createZoomOutMarkers(region)
     local minGridX = math.floor(region.left / 8192)
