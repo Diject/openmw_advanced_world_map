@@ -24,6 +24,8 @@ local playerPos = require("scripts.advanced_world_map.playerPosition")
 
 local realTimer = require("scripts.advanced_world_map.realTimer")
 
+local menuMode = require("scripts.advanced_world_map.ui.menuMode")
+
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
@@ -100,20 +102,13 @@ end
 
 local function toggleMenu()
     if menuHandler.getMenu(commonData.mapMenuId) then
-        local isModeActive = false
-        for _, mode in pairs(I.UI.modes) do
-            if mode == "Journal" then
-                isModeActive = true
-                break
-            end
-        end
-        if isModeActive then
-            I.UI.removeMode("Journal")
+        if menuMode.isActive() then
+            menuMode.deactivate()
         else
             menuHandler.destroyMenu(commonData.mapMenuId)
         end
     else
-        I.UI.addMode("Journal", {windows = {}})
+        menuMode.activate()
         menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{})
     end
 end
@@ -282,10 +277,10 @@ return {
                         })
                     end
 
-                    I.UI.removeMode("Journal")
+                    menuMode.deactivate()
                 end,
                 noCallback = function ()
-                    I.UI.removeMode("Journal")
+                    menuMode.deactivate()
                 end
             })
         end,
