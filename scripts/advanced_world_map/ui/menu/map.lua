@@ -14,6 +14,7 @@ local tableLib = require("scripts.advanced_world_map.utils.table")
 local log = require("scripts.advanced_world_map.utils.log")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
+local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -88,6 +89,7 @@ end
 ---@field layout table
 ---@field onOpen fun(content)?
 ---@field onClose fun()?
+---@field showWhenMenuInactive boolean?
 
 ---@param params advancedWorldMap.ui.menu.addHeaderElement.params
 function menuMeta:addWidget(params)
@@ -137,9 +139,14 @@ function menuMeta:addWidget(params)
 
     self.widgets[params.id] = {layout = params.layout, params = params}
 
-    uiUtils.removeFromContent(self.widgetHeaderLayout.content, params.id)
-    self.widgetHeaderLayout.content:add(interval(self.params.fontSize, 1))
-    self.widgetHeaderLayout.content:add(params.layout)
+    uiUtils.removeFromContent(self.widgetActiveHeaderLayout.content, params.id)
+    self.widgetActiveHeaderLayout.content:add(interval(self.params.fontSize, 1))
+    self.widgetActiveHeaderLayout.content:add(params.layout)
+    if params.showWhenMenuInactive then
+        uiUtils.removeFromContent(self.widgetInactiveHeaderLayout.content, params.id)
+        self.widgetInactiveHeaderLayout.content:add(interval(self.params.fontSize, 1))
+        self.widgetInactiveHeaderLayout.content:add(params.layout)
+    end
 end
 
 
@@ -212,6 +219,37 @@ function menuMeta:updateMapWidgetCell(cellId)
 end
 
 
+---@return boolean
+function menuMeta:updateInteractiveElements()
+    local isMenuMode = menuMode.isMenuInteractive()
+    if self.lastMenuMode == isMenuMode then
+        return false
+    else
+        self.lastMenuMode = isMenuMode
+    end
+
+    local header = self.headerLayout
+
+    if isMenuMode then
+        header.props.visible = true
+        header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
+        header.content[2] = self.widgetActiveHeaderLayout
+    else
+        header.content[1].props.alpha = 0
+        header.content[2] = self.widgetInactiveHeaderLayout
+        if #self.widgetInactiveHeaderLayout.content == 0 then
+            header.props.visible = false
+        end
+        if self.mapWidget then
+            self.mapWidget:closeRightMouseMenu()
+        end
+    end
+    header.content[3].props.visible = isMenuMode
+
+    return true
+end
+
+
 function menuMeta:getHeaderHeight()
     return self.headerHeight
 end
@@ -270,7 +308,24 @@ function this.create(params)
     ---@type string?
     menuMeta.activeWidgetId = nil
 
-    meta.widgetHeaderLayout = {
+    meta.widgetActiveHeaderLayout = {
+        type = ui.TYPE.Flex,
+        name = commonData.mapWidgetHeaderLayoutId,
+        props = {
+            horizontal = true,
+            anchor = util.vector2(0, 0.5),
+            relativePosition = util.vector2(0, 0.5),
+            arrange = ui.ALIGNMENT.Center,
+        },
+        userData = {
+
+        },
+        content = ui.content {
+
+        }
+    }
+
+    meta.widgetInactiveHeaderLayout = {
         type = ui.TYPE.Flex,
         name = commonData.mapWidgetHeaderLayoutId,
         props = {
@@ -365,7 +420,7 @@ function this.create(params)
                     alpha = config.data.ui.headerBackgroundAlpha / 100,
                 }
             },
-            meta.widgetHeaderLayout,
+            menuMode.isMenuInteractive() and meta.widgetActiveHeaderLayout or meta.widgetInactiveHeaderLayout,
             {
                 type = ui.TYPE.Text,
                 props = {
@@ -378,6 +433,7 @@ function this.create(params)
                     textShadow = true,
                     textShadowColor = config.data.ui.shadowColor,
                     propagateEvents = false,
+                    visible = menuMode.isMenuInteractive(),
                 },
                 userData = {},
                 events = {

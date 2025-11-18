@@ -172,6 +172,7 @@ time.runRepeatedly(discoverNearby, 0.42)
 
 
 local lastPlayerCellId
+local menuStateUpdateTimer
 
 return {
     engineHandlers = {
@@ -192,6 +193,17 @@ return {
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
         UiModeChanged = function(e)
+            if menuStateUpdateTimer then
+                menuStateUpdateTimer()
+            end
+            menuStateUpdateTimer = realTimer.newTimer(0.1, function ()
+                local menu = menuHandler.getMenu(commonData.mapMenuId)
+                if menu and menu:updateInteractiveElements() then
+                    menu:update()
+                end
+                menuStateUpdateTimer = nil
+            end)
+
             if e.oldMode == "Loading" or e.oldMode == nil and e.newMode == nil and lastPlayerCellId ~= self.cell.id then
                 lastPlayerCellId = self.cell.id
 

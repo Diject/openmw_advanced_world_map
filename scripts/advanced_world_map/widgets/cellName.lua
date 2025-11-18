@@ -41,6 +41,7 @@ local function create(menu)
     menu:addWidget{
         id = "AdvancedWorldMap:CellName",
         layout = nameLayout,
+        showWhenMenuInactive = true,
     }
 
 end
