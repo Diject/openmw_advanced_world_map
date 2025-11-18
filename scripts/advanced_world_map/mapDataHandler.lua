@@ -119,13 +119,22 @@ end
 
 
 function this.getLocalMapTexture(gridX, gridY)
-    local path = string.format("%s(%d,%d).png", commonData.localMapTexturesDir, gridX, gridY)
+    local path = string.format("%s(%d,%d)", commonData.localMapTexturesDir, gridX, gridY)
+    local pathPng = path..".png"
+    local pathTga = path..".tga"
 
     if this.localMapTextureCache[path] then return this.localMapTextureCache[path] end
 
-    if not vfs.fileExists(path) then return end
+    local foundPath
+    if vfs.fileExists(pathPng) then
+        foundPath = pathPng
+    elseif vfs.fileExists(pathTga) then
+        foundPath = pathTga
+    else
+        return
+    end
 
-    local texture = ui.texture{ path = path }
+    local texture = ui.texture{ path = foundPath }
     this.localMapTextureCache[path] = texture
 
     return texture
@@ -160,11 +169,23 @@ function this.getLocalCellMapTextures(cellId)
     for y = 1, cellInfo.height do
         local arr = {}
         for x = 1, cellInfo.width do
-            local path = string.format("%s%s [%d,%d].png", commonData.localMapTexturesDir, cellId:gsub(":", ""), x - 1, y - 1)
-            if not vfs.fileExists(path) then return end
+            local path = string.format("%s%s [%d,%d]", commonData.localMapTexturesDir, cellId:gsub(":", ""), x - 1, y - 1)
+            local pathPng = path..".png"
+            local pathTga = path..".tga"
 
-            local texture = ui.texture{ path = path, offset = util.vector2(1, 1), size = util.vector2(254, 254) }
+            local foundPath
+            if vfs.fileExists(pathPng) then
+                foundPath = pathPng
+            elseif vfs.fileExists(pathTga) then
+                foundPath = pathTga
+            else
+                goto continue
+            end
+
+            local texture = ui.texture{ path = foundPath, offset = util.vector2(1, 1), size = util.vector2(254, 254) }
             arr[x] = texture
+
+            ::continue::
         end
         res[y] = arr
     end
