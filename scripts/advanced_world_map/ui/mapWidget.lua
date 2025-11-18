@@ -18,6 +18,7 @@ local playerPos = require("scripts.advanced_world_map.playerPosition")
 local playerMarker = require("scripts.advanced_world_map.ui.playerMarker")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local eventSys = require("scripts.advanced_world_map.eventSys")
+local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -1421,7 +1422,7 @@ function this.new(params)
                 end
 
                 if e.button == 3 then
-                    if eventSys.isContainsHandler(eventSys.events["onRightMouseMenu"]) then
+                    if menuMode.isMenuInteractive() and eventSys.isContainsHandler(eventSys.events["onRightMouseMenu"]) then
                         local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
                         uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
 
