@@ -14,15 +14,17 @@ local this = {}
 
 local nameLayout
 
-function this.updateLabel(mapWidget)
-    if not nameLayout or not mapWidget then return end
+---@param menu advancedWorldMap.ui.menu.map
+function this.updateLabel(menu)
+    if not nameLayout or not menu or not menu.mapWidget then return end
+    local mapWidget = menu.mapWidget
     local text
     if mapWidget.cellId then
         local cellName = dynamicDataHandler.cellNameById[mapWidget.cellId]
         if cellName then
             text = string.format(" %s ", cellName)
         end
-    elseif playerRef.cell.isExterior then
+    elseif playerRef.cell.isExterior and menu.centerOnPlayer then
         local cellName = dynamicDataHandler.cellNameById[playerRef.cell.id]
         if cellName then
             text = string.format(" %s ", cellName)
@@ -44,7 +46,7 @@ local function create(menu)
             textColor = config.data.ui.defaultColor,
         },
     }
-    this.updateLabel(menu.mapWidget)
+    this.updateLabel(menu)
 
 
     menu:addWidget{
@@ -57,7 +59,7 @@ end
 
 
 eventSys.registerHandler(eventSys.events.onMapShown, function (e)
-    this.updateLabel(e.mapWidget)
+    this.updateLabel(e.menu)
 end)
 
 eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
