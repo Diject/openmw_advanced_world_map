@@ -65,6 +65,9 @@ this.textShadowColor = util.color.rgb(this.textShadowColorData[1], this.textShad
 this.backgroundColorData = {0, 0, 0}
 this.backgroundColor = util.color.rgb(this.backgroundColorData[1], this.backgroundColorData[2], this.backgroundColorData[3])
 
+this.missedTextureColorData = {0.15, 0.15, 0.10}
+this.missedTextureColor = util.color.rgb(this.missedTextureColorData[1], this.missedTextureColorData[2], this.missedTextureColorData[3])
+
 this.mapWaterColor = util.color.rgb(36 / 255, 53 / 255, 48 / 255)
 this.mapInteriorBackgroundColor = util.color.rgb(0, 0, 0)
 

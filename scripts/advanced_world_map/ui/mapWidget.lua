@@ -896,7 +896,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                 createMarker(self, {
                     layerId = self.layerIds.map,
                     texture = uiUtils.whiteTexture,
-                    color = util.color.rgb(0.15, 0.15, 0.10),
+                    color = config.data.ui.missedTextureColor,
                     pos = util.vector2(dt[1], dt[2]),
                     size = util.vector2(dt[3] / 8192 * self.mapInfo.pixelsPerCell + 1, dt[4] / 8192 * self.mapInfo.pixelsPerCell + 1),
                     scaleFunc = self.scaleFunctions.linear,
@@ -1248,7 +1248,7 @@ function this.new(params)
                     type = ui.TYPE.Image,
                     props = {
                         resource = uiUtils.whiteTexture,
-                        color = util.color.rgb(0.15, 0.15, 0.10),
+                        color = config.data.ui.missedTextureColor,
                         anchor = util.vector2(0, 1),
                         relativePosition = meta:getRelativePositionByWorldPosition(pos),
                         relativeSize = relSize,

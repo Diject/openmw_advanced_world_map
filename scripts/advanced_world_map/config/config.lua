@@ -58,6 +58,7 @@ this.default = {
         selectionLightColor = commonData.selectedLightColor,
         shadowColor = commonData.textShadowColor,
         linkColor = commonData.linkColor,
+        missedTextureColor = commonData.missedTextureColor,
         mouseScrollAmount = 36,
         headerBackgroundAlpha = 100,
         scrollArrowSize = 16,
