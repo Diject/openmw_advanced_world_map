@@ -14,8 +14,8 @@ end
 
 
 ---@param angleOffset number?
-function this.getTexture(angleOffset)
-    local yaw  = playerRef.rotation:getYaw()
+function this.getTexture(angleOffset, yaw)
+    yaw  = yaw or playerRef.rotation:getYaw()
 
     local offset = angleOffset or 0
     local angle = util.normalizeAngle(yaw - offset - math.pi * 1 / 144)

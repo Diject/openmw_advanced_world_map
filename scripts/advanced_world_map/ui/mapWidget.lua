@@ -980,12 +980,13 @@ end
 
 ---@param focusOnPlayer boolean?
 ---@return boolean
-function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
+function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local lay = self:getPlayerLayout()
     if lay.props.visible == false then return false end
 
     local playerMarkerLayout = lay.content[1]
     local playerCell = playerRef.cell
+
     if self.cellId and self.cellId ~= (not playerCell.isExterior and playerRef.cell.id) then
         local visible = playerMarkerLayout.props.visible
         playerMarkerLayout.props.visible = false
@@ -993,17 +994,22 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer)
     else
         playerMarkerLayout.props.visible = true
     end
+
     local exPos = self.cellId and playerRef.position or playerPos.gexExteriorPos()
     local dist = (playerMarkerLayout.userData.lastPos - exPos):length()
 
     local yaw = playerRef.rotation:getYaw()
     local lastYaw = playerMarkerLayout.userData.lastYaw
 
-    if dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom)) and (math.abs(yaw - lastYaw) < 0.1) then return false end
+    if not forceUpdate
+            and dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom))
+            and (math.abs(yaw - lastYaw) < 0.1) then
+        return false
+    end
 
     local playerRelPos = self:getRelativePositionByWorldPosition(exPos)
     playerMarkerLayout.props.relativePosition = playerRelPos
-    playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
+    playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle, yaw) or playerMarkerTexture
     playerMarkerLayout.userData.lastPos = exPos
     playerMarkerLayout.userData.lastYaw = yaw
 
@@ -1531,7 +1537,7 @@ function this.new(params)
 
     meta.layout = main
 
-    meta:setZoom(meta.zoom, meta:getRelativePositionByWorldPosition(meta.cellId and util.vector2(0, 0) or playerPos.gexExteriorPos()))
+    meta:updateMarkers()
 
     return main, meta
 end
