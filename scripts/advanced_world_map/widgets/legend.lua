@@ -2,6 +2,7 @@ local async = require("openmw.async")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
+local playerRef = require("openmw.self")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -59,6 +60,16 @@ local function create(menu)
             event = function (checked, layout)
                 config.setValue("main.centerOnPlayer", checked)
                 menu.centerOnPlayer = checked
+                if checked then
+                    local playerCell = not playerRef.cell.isExterior and playerRef.cell.id or nil
+                    if menu.mapWidget.cellId ~= playerCell then
+                        menu:updateMapWidgetCell(playerCell)
+                    end
+                    if not playerCell then
+                        menu.mapWidget:updatePlayerMarker(true, true)
+                    end
+                    menu:update()
+                end
             end
         }
 
