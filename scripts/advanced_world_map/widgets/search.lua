@@ -63,7 +63,7 @@ local function createTemporaryMarker(id, mapWidget, pos, color, text)
     if temporaryMarkers[id] then return end
 
     local h = mapWidget:createImageMarker{
-        layerId = mapWidget.layerIds.marker,
+        layerId = mapWidget.LAYER.marker,
         pos = pos,
         color = color or config.data.ui.selectionColor,
         texture = worldMarkerTexture,

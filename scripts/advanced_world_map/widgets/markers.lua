@@ -362,7 +362,7 @@ local function createMarkers(widget, cellId)
             local textMarkerHandler = widget:createTextMarker{
                 id = textId,
                 useCache = true,
-                layerId = mapWidget.layerId.nonInteractive,
+                layerId = widget.LAYER.nonInteractive,
                 text = text,
                 alpha = 0.75,
                 anchor = textAnchor,
@@ -417,7 +417,7 @@ local function createMarkers(widget, cellId)
                 texture = mapMarkerTexture,
                 color = color,
                 useCache = true,
-                layerId = mapWidget.layerId.marker,
+                layerId = widget.LAYER.marker,
                 alpha = 0.75,
                 anchor = util.vector2(0.5, 0.5),
                 size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize) * cellTypeMul,
@@ -485,7 +485,7 @@ local function createMarkers(widget, cellId)
 
         local textMarkerHandler = widget:createTextMarker{
             id = id,
-            layerId = mapWidget.layerId.name,
+            layerId = widget.LAYER.name,
             text = dt.name,
             anchor = util.vector2(0.5, 0.5),
             pos = util.vector2(dt.posX, dt.posY),
@@ -512,7 +512,7 @@ local function createMarkers(widget, cellId)
     for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
         local fontSize = 14 + math.min(8, info.count) * 3
         widget:createTextMarker{
-            layerId = mapWidget.layerId.region,
+            layerId = widget.LAYER.region,
             text = info.name,
             anchor = util.vector2(0.5, 0.5),
             pos = util.vector2(info.posX, info.posY),

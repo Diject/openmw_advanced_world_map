@@ -34,11 +34,11 @@ local function create(menu)
     }
 
     menu.centerOnPlayer = config.data.main.centerOnPlayer
-    menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.region, config.data.legend.visibility.regions)
-    menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.name, config.data.legend.visibility.cities)
-    menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.player, config.data.legend.visibility.playerMarker)
-    menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.nonInteractive, config.data.legend.visibility.labels)
-    menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.marker, config.data.legend.visibility.markers)
+    menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.region, config.data.legend.visibility.regions)
+    menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.name, config.data.legend.visibility.cities)
+    menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.player, config.data.legend.visibility.playerMarker)
+    menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, config.data.legend.visibility.labels)
+    menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, config.data.legend.visibility.markers)
 
     local function onOpen(content)
         iconLayout.props.color = config.data.ui.defaultLightColor
@@ -92,7 +92,7 @@ local function create(menu)
             checked = config.data.legend.visibility.regions,
             event = function (checked, layout)
                 config.setValue("legend.visibility.regions", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.region, checked)
+                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.region, checked)
                 menu:update()
             end
         }
@@ -104,7 +104,7 @@ local function create(menu)
             checked = config.data.legend.visibility.cities,
             event = function (checked, layout)
                 config.setValue("legend.visibility.cities", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.name, checked)
+                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.name, checked)
                 menu:update()
             end
         }
@@ -116,7 +116,7 @@ local function create(menu)
             checked = config.data.legend.visibility.playerMarker,
             event = function (checked, layout)
                 config.setValue("legend.visibility.playerMarker", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.player, checked)
+                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.player, checked)
                 menu:update()
             end
         }
@@ -128,7 +128,7 @@ local function create(menu)
             checked = config.data.legend.visibility.labels,
             event = function (checked, layout)
                 config.setValue("legend.visibility.labels", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.nonInteractive, checked)
+                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, checked)
                 menu:update()
             end
         }
@@ -140,7 +140,7 @@ local function create(menu)
             checked = config.data.legend.visibility.markers,
             event = function (checked, layout)
                 config.setValue("legend.visibility.markers", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.layerIds.marker, checked)
+                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, checked)
                 menu:update()
             end
         }

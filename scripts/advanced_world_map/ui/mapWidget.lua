@@ -104,8 +104,8 @@ end
 local mapWidgetMeta = {}
 mapWidgetMeta.__index = mapWidgetMeta
 
-mapWidgetMeta.layerIds = this.layerId
-mapWidgetMeta.scaleFunctions = this.scaleFunction
+mapWidgetMeta.LAYER = this.layerId
+mapWidgetMeta.SCALE_FUNCTION = this.scaleFunction
 
 mapWidgetMeta.getUniqueId = function (self)
     return this.getUniqueId()
@@ -894,12 +894,12 @@ function mapWidgetMeta:placeGroundTextures(region)
         if self.cellStatics then
             for _, dt in pairs(self.cellStatics) do
                 createMarker(self, {
-                    layerId = self.layerIds.map,
+                    layerId = this.layerId.map,
                     texture = uiUtils.whiteTexture,
                     color = config.data.ui.missedTextureColor,
                     pos = util.vector2(dt[1], dt[2]),
                     size = util.vector2(dt[3] / 8192 * self.mapInfo.pixelsPerCell + 1, dt[4] / 8192 * self.mapInfo.pixelsPerCell + 1),
-                    scaleFunc = self.scaleFunctions.linear,
+                    scaleFunc = this.scaleFunction.linear,
                     anchor = util.vector2(0.5, 0.5)
                 })
             end

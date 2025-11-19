@@ -40,11 +40,11 @@ function mapElementMeta:setSize(val)
     if self._params.text then
         self._params.fontSize = val
         self._elemLayout.userData.fontSize = val
-        self._elemLayout.props.textSize = (self._params.scaleFunc or self._parent.scaleFunctions.marker)(val, self._parent.zoom)
+        self._elemLayout.props.textSize = (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(val, self._parent.zoom)
     elseif self._params.texture then
         self._params.size = util.vector2(val, val)
         self._elemLayout.userData.size = self._params.size
-        self._elemLayout.props.size = (self._params.scaleFunc or self._parent.scaleFunctions.marker)(self._params.size, self._parent.zoom)
+        self._elemLayout.props.size = (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.size, self._parent.zoom)
     end
 end
 
@@ -83,8 +83,8 @@ function mapElementMeta:updateLayout(data)
     if not data then data = {} end ---@diagnostic disable-line: missing-fields
     local props = self._elemLayout.props
     props.text = data.text or props.text
-    props.size = data.size and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(data.size, self._parent.zoom) or props.size
-    props.textSize = data.fontSize and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(data.fontSize, self._parent.zoom)
+    props.size = data.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.size, self._parent.zoom) or props.size
+    props.textSize = data.fontSize and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.fontSize, self._parent.zoom)
         or props.textSize
     props.autoSize = props.size == nil
     props.anchor = data.anchor or props.anchor
@@ -125,14 +125,14 @@ end
 function mapElementMeta:restoreLayout()
     self._elemLayout.props = {
         text = self._params.text,
-        textSize = self._params.text and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
+        textSize = self._params.text and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
         anchor = self._params.anchor or util.vector2(0.5, 0.5),
         relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos),
         textColor = self._params.text and (self._params.color or config.data.ui.defaultColor) or nil,
         visible = self._params.visible,
         alpha = self._params.alpha or 1,
         resource = self._params.texture,
-        size = self._params.size and (self._params.scaleFunc or self._parent.scaleFunctions.marker)(self._params.size, self._parent.zoom),
+        size = self._params.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.size, self._parent.zoom),
         color = self._params.texture and (self._params.color or config.data.ui.defaultColor),
         propagateEvents = false,
     }
