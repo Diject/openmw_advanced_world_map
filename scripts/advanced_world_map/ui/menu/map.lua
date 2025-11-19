@@ -617,10 +617,10 @@ function this.create(params)
             if meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer) then
                 meta:update()
             end
-            async:newUnsavableSimulationTimer(0.15, func)
+            async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
         end
     end
-    async:newUnsavableSimulationTimer(0.15, func)
+    async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
 
     eventSys.triggerEvent(eventSys.events["onMenuOpened"], {menu = meta})
 

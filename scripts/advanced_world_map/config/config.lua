@@ -20,6 +20,7 @@ this.default = {
         },
         centerOnPlayer = true,
         discoveryRadius = 1500,
+        updateFrequency = 10,
     },
     legend = {
         markerSize = 6,
