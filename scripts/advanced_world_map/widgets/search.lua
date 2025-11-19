@@ -81,7 +81,14 @@ local function createTemporaryMarker(id, mapWidget, pos, color, text)
                     multiline = true,
                     wordWrap = true,
                     readOnly = true,
-                    size = util.vector2(math.max(300, uiUtils.getScaledScreenSize().x / 4), 0),
+                    size = util.vector2(
+                        util.clamp(
+                            stringLib.length(text) * config.data.ui.fontSize * config.data.ui.textHeightMul,
+                            300,
+                            uiUtils.getScaledScreenSize().x / 5
+                        ),
+                        0
+                    ),
                     textAlignH = ui.ALIGNMENT.Center,
                 }
             }
