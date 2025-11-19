@@ -192,15 +192,14 @@ function menuMeta:updateMapWidgetCell(cellId)
 
     if self.mapWidget then
         eventSys.triggerEvent(eventSys.events.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
+        self.mapWidget:closeRightMouseMenu()
     end
 
     self.mainLayout.content[1].content[2] = lay
     self.mapWidget = meta
 
-    self.mapWidget:closeRightMouseMenu()
     self.mapWidget:setUpdateFunction(self.update)
     self:updateMapWidgetWidth()
-    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
 
     if cellId then
         meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
@@ -208,12 +207,15 @@ function menuMeta:updateMapWidgetCell(cellId)
         meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
     end
 
+    self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
 
     if isNew then
         eventSys.triggerEvent(eventSys.events.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
     end
 
     eventSys.triggerEvent(eventSys.events.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
+
+    localStorage.data[commonData.lastCellIdFieldId] = cellId
 
     return true
 end
@@ -301,7 +303,7 @@ function this.create(params)
     local mainSize = util.vector2(meta.size.x, meta.size.y - headerHeight)
     meta.mainSize = mainSize
 
-    meta.centerOnPlayer = false
+    meta.centerOnPlayer = config.data.main.centerOnPlayer
 
     ---@type table<string, {layout : table, params : advancedWorldMap.ui.menu.addHeaderElement.params}>
     menuMeta.widgets = {}
@@ -558,7 +560,11 @@ function this.create(params)
 
     meta.mainLayout = mainLayout
 
-    meta:updateMapWidgetCell(not playerRef.cell.isExterior and playerRef.cell.id or nil)
+    if meta.centerOnPlayer then
+        meta:updateMapWidgetCell(not playerRef.cell.isExterior and playerRef.cell.id or nil)
+    else
+        meta:updateMapWidgetCell(localStorage.data[commonData.lastCellIdFieldId])
+    end
 
     local layout = {
         type = ui.TYPE.Widget,

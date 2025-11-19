@@ -224,7 +224,7 @@ return {
                 end
 
                 local menu = menuHandler.getMenu(commonData.mapMenuId)
-                if menu then
+                if menu and menu.centerOnPlayer then
                     menu:updateMapWidgetCell(cellId)
                     cellNameWidget.updateLabel(menu.mapWidget)
                     menu:update()

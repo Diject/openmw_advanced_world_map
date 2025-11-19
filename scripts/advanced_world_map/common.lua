@@ -27,6 +27,7 @@ this.searchAllLocationsFieldId = "searchSearchInInteriors"
 this.disabledDoorsFieldId = "disabledDoors"
 this.localMapZoomFieldId = "localMapScale"
 this.worldMapZoomFieldId = "worldMapScale"
+this.lastCellIdFieldId = "lastCellId"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
