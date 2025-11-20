@@ -77,8 +77,8 @@ end
 
 
 function this.scaleFunction.playerMarker(size, zoom)
-    if zoom > 1 then
-        return size * zoom ^ 0.2
+    if zoom < 1 then
+        return size * zoom ^ 0.5
     end
     return size
 end
@@ -1329,14 +1329,14 @@ function this.new(params)
                     props = {
                         relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
                         resource = playerMarker.getTexture(meta.northDirectionAngle) or playerMarkerTexture,
-                        size = util.vector2(32, 32),
+                        size = util.vector2(48, 48),
                         anchor = util.vector2(0.5, 0.5),
                         color = config.data.ui.defaultColor,
                         visible = true,
-                        alpha = 0.6,
+                        alpha = 0.8,
                     },
                     userData = {
-                        size = util.vector2(32, 32),
+                        size = util.vector2(48, 48),
                         lastPos = playerPos.gexExteriorPos(),
                         lastYaw = playerRef.rotation:getYaw(),
                         lastNorthAngle = meta.northDirectionAngle or 0,
