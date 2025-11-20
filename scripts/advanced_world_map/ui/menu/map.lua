@@ -66,6 +66,7 @@ function menuMeta:openWidget(id)
     end
 
     self:updateMapWidgetWidth()
+    self.mapWidget:updateMarkers()
     return true
 end
 

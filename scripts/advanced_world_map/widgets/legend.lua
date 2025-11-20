@@ -67,6 +67,7 @@ local function create(menu)
                     end
                     if not playerCell then
                         menu.mapWidget:updatePlayerMarker(true, true)
+                        menu.mapWidget:updateMarkers()
                     end
                     menu:update()
                 end
