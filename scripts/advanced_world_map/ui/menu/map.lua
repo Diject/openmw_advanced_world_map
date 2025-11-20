@@ -192,7 +192,7 @@ function menuMeta:updateMapWidgetCell(cellId)
     tooltip.destroyLast()
 
     if self.mapWidget then
-        eventSys.triggerEvent(eventSys.events.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
+        eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
         self.mapWidget:closeRightMouseMenu()
     end
 
@@ -211,10 +211,10 @@ function menuMeta:updateMapWidgetCell(cellId)
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
 
     if isNew then
-        eventSys.triggerEvent(eventSys.events.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
+        eventSys.triggerEvent(eventSys.EVENT.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
     end
 
-    eventSys.triggerEvent(eventSys.events.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
+    eventSys.triggerEvent(eventSys.EVENT.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
 
     localStorage.data[commonData.lastCellIdFieldId] = cellId
 
@@ -262,7 +262,7 @@ function menuMeta:close()
     if not self.menu then return end
     self:closeActiveWidget()
     if self.mapWidget then
-        eventSys.triggerEvent(eventSys.events.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
+        eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
     this.activeMenuMeta = nil
     self.menu:destroy()
@@ -543,7 +543,7 @@ function this.create(params)
                         config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
                         config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
 
-                        eventSys.triggerEvent(eventSys.events["onResized"], {
+                        eventSys.triggerEvent(eventSys.EVENT["onResized"], {
                             menu = meta,
                             size = size,
                             mapWidgetSize = newSize
@@ -623,7 +623,7 @@ function this.create(params)
     end
     async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
 
-    eventSys.triggerEvent(eventSys.events["onMenuOpened"], {menu = meta})
+    eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 
     return meta
 end

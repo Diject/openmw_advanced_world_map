@@ -433,7 +433,7 @@ local function createMarkers(widget, cellId)
                 events = {
                     mouseRelease = function (e, layout, pressed)
                         if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
-                        if eventSys.triggerEvent(eventSys.events.onMarkerClick, {marker = imageMarkerHandler}) then
+                        if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
                             return
                         end
 
@@ -442,17 +442,17 @@ local function createMarkers(widget, cellId)
                             this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.destPos)
                         end
 
-                        eventSys.triggerEvent(eventSys.events.onMarkerClicked, {marker = imageMarkerHandler})
+                        eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
                         this.activeMenuMeta:update()
                     end,
 
                     mouseMove = function(e, layout)
                         if #tooltipContent > 0 and not tooltip.isExists(layout) then
-                            if eventSys.triggerEvent(eventSys.events.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
+                            if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
                                 return
                             end
                             if tooltip.createOrMove(e, layout, tooltipContent) then
-                                eventSys.triggerEvent(eventSys.events.onMarkerTooltipShowed, {
+                                eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
                                     marker = imageMarkerHandler,
                                     content = tooltipContent,
                                     tooltip = tooltip.get(layout)
@@ -534,11 +534,11 @@ local function createMarkers(widget, cellId)
 end
 
 
-eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     this.activeMenuMeta = e.menu
 end)
 
-eventSys.registerHandler(eventSys.events.onMapInitialized, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMapInitialized, function (e)
     createMarkers(e.mapWidget, e.cellId)
 end)
 

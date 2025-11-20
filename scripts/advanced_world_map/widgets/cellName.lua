@@ -58,11 +58,11 @@ local function create(menu)
 end
 
 
-eventSys.registerHandler(eventSys.events.onMapShown, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMapShown, function (e)
     this.updateLabel(e.menu)
 end)
 
-eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     create(e.menu)
 end, -1000)
 

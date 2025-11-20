@@ -465,7 +465,7 @@ local function setZoom(self, zoom, relativePos)
     end
 
     if oldZoom ~= zoom then
-        eventSys.triggerEvent(eventSys.events.onZoomed, {mapWidget = self, zoom = zoom})
+        eventSys.triggerEvent(eventSys.EVENT.onZoomed, {mapWidget = self, zoom = zoom})
     end
     tooltip.destroyLast()
 end
@@ -644,7 +644,7 @@ local function createMarker(self, params, onlyInitialize)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
-                eventSys.triggerEvent(eventSys.events.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
+                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
                 return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
             else
                 return
@@ -752,7 +752,7 @@ local function createMarker(self, params, onlyInitialize)
     end
 
     if uiUtils.safeAddToContent(content, marker) then
-        eventSys.triggerEvent(eventSys.events.onMapElementCreated, {mapWidget = self, marker = markerELement})
+        eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = markerELement})
     else
         return
     end
@@ -865,14 +865,14 @@ function mapWidgetMeta:removeOnZoomMarkers(allowRect)
             if not this.isPointInRegion(allowRect, markerPos.x, markerPos.y) then
                 removeMarker(self, dt[1], dt[2])
                 self.activeZoomMarkers[i] = nil
-                eventSys.triggerEvent(eventSys.events.onMapElementRemoved, {mapWidget = self, marker = dt[3]})
+                eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self, marker = dt[3]})
             end
         end
     else
         for i, dt in pairs(self.activeZoomMarkers) do
             removeMarker(self, dt[1], dt[2])
             self.activeZoomMarkers[i] = nil
-            eventSys.triggerEvent(eventSys.events.onMapElementRemoved, {mapWidget = self, marker = dt[3]})
+            eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self, marker = dt[3]})
         end
     end
 end
@@ -1407,7 +1407,7 @@ function this.new(params)
                     e.offset = main.userData.mainMouseOffset + e.offset
                 end
 
-                if eventSys.triggerEvent(eventSys.events["onMousePress"], e) then
+                if eventSys.triggerEvent(eventSys.EVENT["onMousePress"], e) then
                     main.userData.lastMousePos = nil
                     return
                 end
@@ -1422,13 +1422,13 @@ function this.new(params)
                 if markerElement then
                     e.offset = main.userData.mainMouseOffset + e.offset
                 end
-                if eventSys.triggerEvent(eventSys.events["onMouseRelease"], e) then
+                if eventSys.triggerEvent(eventSys.EVENT["onMouseRelease"], e) then
                     main.userData.lastMousePos = nil
                     return
                 end
 
                 if e.button == 3 then
-                    if menuMode.isMenuInteractive() and eventSys.isContainsHandler(eventSys.events["onRightMouseMenu"]) then
+                    if menuMode.isMenuInteractive() and eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
                         local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
                         uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
 
@@ -1446,7 +1446,7 @@ function this.new(params)
                             },
                         }
                         local layContent = lay.content
-                        eventSys.triggerEvent(eventSys.events["onRightMouseMenu"], {
+                        eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
                             relPos = relPos,
                             content = layContent,
                         })
@@ -1465,7 +1465,7 @@ function this.new(params)
             focusLoss = async:callback(function(_, layout, markerElement)
                 main.userData.lastMousePos = nil
                 main.userData.inFocus = false
-                if eventSys.triggerEvent(eventSys.events["onFocusLoss"], {marker = markerElement}) then
+                if eventSys.triggerEvent(eventSys.EVENT["onFocusLoss"], {marker = markerElement}) then
                     main.userData.lastMousePos = nil
                     return
                 end
@@ -1478,7 +1478,7 @@ function this.new(params)
                 end
                 main.userData.inFocus = true
 
-                if eventSys.triggerEvent(eventSys.events["onMouseMove"], {
+                if eventSys.triggerEvent(eventSys.EVENT["onMouseMove"], {
                         position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset,
                         marker = markerElement}) then
                     main.userData.lastMousePos = nil

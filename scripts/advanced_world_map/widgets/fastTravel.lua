@@ -57,7 +57,7 @@ local function create(menu)
     local lastPos = menu.mapWidget:getRelativePositionOfCursor()
 
     if fastTravelFunc then
-        eventSys.unregisterHandler(eventSys.events.onMouseRelease, fastTravelFunc)
+        eventSys.unregisterHandler(eventSys.EVENT.onMouseRelease, fastTravelFunc)
     end
 
     fastTravelFunc = function (e)
@@ -83,11 +83,11 @@ local function create(menu)
         lastPos = relPos
         clickCount = clickCount + 1
     end
-    eventSys.registerHandler(eventSys.events.onMouseRelease, fastTravelFunc)
+    eventSys.registerHandler(eventSys.EVENT.onMouseRelease, fastTravelFunc)
 
 
     if rightBtnMenuFunc then
-        eventSys.unregisterHandler(eventSys.events.onRightMouseMenu, rightBtnMenuFunc)
+        eventSys.unregisterHandler(eventSys.EVENT.onRightMouseMenu, rightBtnMenuFunc)
     end
     rightBtnMenuFunc = function (e)
         local content = e.content
@@ -103,7 +103,7 @@ local function create(menu)
             }
         )
     end
-    eventSys.registerHandler(eventSys.events.onRightMouseMenu, rightBtnMenuFunc)
+    eventSys.registerHandler(eventSys.EVENT.onRightMouseMenu, rightBtnMenuFunc)
 
     -- local function onOpen(content)
 
@@ -123,7 +123,7 @@ local function create(menu)
 end
 
 
-eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     if not config.data.fastTravel.enabled then return end
     create(e.menu)
 end, 1000)

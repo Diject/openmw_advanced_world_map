@@ -82,14 +82,14 @@ local function create(menu)
 end
 
 
-eventSys.registerHandler(eventSys.events.onZoomed, function (e)
+eventSys.registerHandler(eventSys.EVENT.onZoomed, function (e)
     updateLabel(e.mapWidget)
 end)
 
-eventSys.registerHandler(eventSys.events.onMapShown, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMapShown, function (e)
     updateLabel(e.mapWidget)
 end)
 
-eventSys.registerHandler(eventSys.events.onMenuOpened, function (e)
+eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     create(e.menu)
 end, 100000)

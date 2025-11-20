@@ -441,8 +441,8 @@ local function create(menu)
     local function onOpen(content)
         local mapWidgetSize = menu.mapWidget:getSize()
 
-        eventSys.registerHandler(eventSys.events.onMapElementCreated, onMapElementCreatedCallback)
-        eventSys.registerHandler(eventSys.events.onMapClosed, onMapClosedCallback)
+        eventSys.registerHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
+        eventSys.registerHandler(eventSys.EVENT.onMapClosed, onMapClosedCallback)
 
         local size = util.vector2(
             math.max(mapWidgetSize.x / 3, 250),
@@ -480,7 +480,7 @@ local function create(menu)
 
             local results = getResults(menu, textFilter, showUnrevealed, searchAllLocations)
 
-            eventSys.triggerEvent(eventSys.events.onSearch, {results = results, filter = textFilter,
+            eventSys.triggerEvent(eventSys.EVENT.onSearch, {results = results, filter = textFilter,
                 params = {showUnrevealed = showUnrevealed, searchAllLocations = searchAllLocations}})
 
             for _, res in pairs(results) do
@@ -616,7 +616,7 @@ local function create(menu)
                     createTemporaryMarker(posHash, worldMapWidget, dt.pos, dt.color, dt.text)
                 end
             else
-                eventSys.registerHandler(eventSys.events.onMapInitialized, mapInitCallbackFunc)
+                eventSys.registerHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
             end
 
             scrollBoxMeta:setScrollPosition(0)
@@ -778,9 +778,9 @@ local function create(menu)
         searchData = {}
         worldMarkersData = {}
         targetCells = {}
-        eventSys.unregisterHandler(eventSys.events.onMapElementCreated, onMapElementCreatedCallback)
-        eventSys.unregisterHandler(eventSys.events.onMapClosed, onMapClosedCallback)
-        eventSys.unregisterHandler(eventSys.events.onMapInitialized, mapInitCallbackFunc)
+        eventSys.unregisterHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
+        eventSys.unregisterHandler(eventSys.EVENT.onMapClosed, onMapClosedCallback)
+        eventSys.unregisterHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
     end
 
     menu:addWidget{
@@ -792,6 +792,6 @@ local function create(menu)
 end
 
 
-eventSys.registerHandler(eventSys.events["onMenuOpened"], function (e)
+eventSys.registerHandler(eventSys.EVENT["onMenuOpened"], function (e)
     create(e.menu)
 end, 99998)

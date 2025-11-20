@@ -4,7 +4,7 @@ local tableLib = require("scripts.advanced_world_map.utils.table")
 local this = {}
 
 
-this.events = {
+this.EVENT = {
     onMenuOpened = "onMenuOpened",
     onMapInitialized = "onMapInitialized",
     onMapShown = "onMapShown",
