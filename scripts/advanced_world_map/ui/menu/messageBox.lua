@@ -159,7 +159,7 @@ function this.newSimple(params)
 
     local layout = {
         type = ui.TYPE.Widget,
-        layer = "Windows",
+        layer = "Notification",
         props = {
             size = params.size,
             relativePosition = params.relativePosition,
