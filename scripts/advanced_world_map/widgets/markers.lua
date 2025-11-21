@@ -23,6 +23,7 @@ local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local l10n = core.l10n(commonData.l10nKey)
 
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
+local mapMarker45Texture = ui.texture{ path = commonData.mapMarkerForExPath }
 
 
 local this = {}
@@ -139,9 +140,8 @@ local function createMarkers(widget, cellId)
 
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
-    local cellTypeMul = cellId and 2 or 1
-    local lineHeight = cellTypeMul * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
-    local charWidth = cellTypeMul * 2 * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local lineHeight = 4 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local charWidth = 2 * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
     local maxLine
     local minLine
 
@@ -366,7 +366,7 @@ local function createMarkers(widget, cellId)
                 text = text,
                 alpha = 0.75,
                 anchor = textAnchor,
-                fontSize = cellTypeMul * config.data.legend.markerSize,
+                fontSize = config.data.legend.markerSize,
                 pos = dt.pos,
                 color = color,
                 showWhenZoomedIn = true,
@@ -414,13 +414,13 @@ local function createMarkers(widget, cellId)
             local imageMarkerHandler
             imageMarkerHandler = widget:createImageMarker{
                 id = imId,
-                texture = mapMarkerTexture,
+                texture = dt.isDestEx and mapMarker45Texture or mapMarkerTexture,
                 color = color,
                 useCache = true,
                 layerId = widget.LAYER.marker,
                 alpha = 0.75,
                 anchor = util.vector2(0.5, 0.5),
-                size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize) * cellTypeMul,
+                size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize),
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 visible = isCellDiscovered,

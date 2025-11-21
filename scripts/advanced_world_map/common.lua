@@ -78,6 +78,7 @@ pcall(function ()
 end)
 
 this.mapMarkerPath = "textures/icons/advanced_world_map/squareMarker.dds"
+this.mapMarkerForExPath = "textures/icons/advanced_world_map/squareMarker45.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"
 this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
 
