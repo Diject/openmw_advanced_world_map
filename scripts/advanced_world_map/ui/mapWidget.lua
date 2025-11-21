@@ -1125,13 +1125,13 @@ function this.new(params)
         local mapTextures = dataHandler.getLocalCellMapTextures(params.cellId)
         if not mapTextures then mapTextures = {} end
 
-        local width = localCellInfo.width * 256
-        local height = localCellInfo.height * 256
+        local width = localCellInfo.width * 32
+        local height = localCellInfo.height * 32
 
         local mapInfo = {
             width = width,
             height = height,
-            pixelsPerCell = 256,
+            pixelsPerCell = 32,
             gridX = {
                 min = -localCellInfo.mX / 512,
                 max = -localCellInfo.mX / 512 + localCellInfo.width - 1,
@@ -1275,7 +1275,7 @@ function this.new(params)
     meta.activeZoomMarkers = {}
 
     if meta.cellId then
-        meta.zoom = localStorage.data[commonData.localMapZoomFieldId] or 2
+        meta.zoom = localStorage.data[commonData.localMapZoomFieldId] or 1
     else
         meta.zoom = localStorage.data[commonData.worldMapZoomFieldId] or 1
     end
