@@ -1450,6 +1450,7 @@ function this.new(params)
                             mapWidget = meta,
                             relPos = relPos,
                             content = layContent,
+                            marker = markerElement,
                         })
 
                         if #layContent > 0 then
