@@ -112,7 +112,6 @@ end)
 
 ---@param params questGuider.ui.button.params
 return function (params)
-    if not params then return end
 
     ---@class questGuider.ui.buttonMeta
     local meta = setmetatable({}, buttonMeta)
