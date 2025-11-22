@@ -95,7 +95,7 @@ local function create(menu)
         content:add(
             button{
                 updateFunc = menu.update,
-                text = "Fast travel",
+                text = l10n("FastTravel"),
                 event = function (layout)
                     fastTravel(menu, menu.mapWidget.cellId, e.relPos)
                     menu.mapWidget:closeRightMouseMenu()
