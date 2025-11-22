@@ -1447,6 +1447,7 @@ function this.new(params)
                         }
                         local layContent = lay.content
                         eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
+                            mapWidget = meta,
                             relPos = relPos,
                             content = layContent,
                         })
