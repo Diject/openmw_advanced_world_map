@@ -18,6 +18,8 @@ this.messageBoxMenuId = "__MESSAGEBOX__"
 
 this.globalDataStorageName = "AdvancedWorldMap:globalDataStorage"
 
+this.messageLayer = "AdvWMap:Message"
+
 -- local storage
 this.visitedLocsFieldId = "visitedLocationsHashSet"
 this.discoveredLocsFieldId = "discoveredLocationsHashSet"

@@ -48,6 +48,12 @@ local cellNameWidget = require("scripts.advanced_world_map.widgets.cellName")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+
+if not ui.layers.indexOf(commonData.messageLayer) then
+    ui.layers.insertAfter("Windows", commonData.messageLayer, { interactive = true })
+end
+
+
 local fightingActors = {}
 
 

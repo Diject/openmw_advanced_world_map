@@ -6,6 +6,7 @@ local core = require("openmw.core")
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
+local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 
 local borders = require("scripts.advanced_world_map.ui.borders")
@@ -159,7 +160,7 @@ function this.newSimple(params)
 
     local layout = {
         type = ui.TYPE.Widget,
-        layer = "Notification",
+        layer = commonData.messageLayer,
         props = {
             size = params.size,
             relativePosition = params.relativePosition,
