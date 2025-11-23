@@ -81,7 +81,7 @@ function this.triggerEvent(eventId, e)
     for _, hData in ipairs(handlerData) do
         local ss, cl, bl = pcall(hData[1], e or {})
         if not ss then
-            log("\nerror in callback:", cl)
+            log("\nerror in \""..eventId.."\" callback:", cl)
             goto continue
         end
         block = bl or block
