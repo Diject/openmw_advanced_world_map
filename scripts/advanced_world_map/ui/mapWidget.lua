@@ -765,6 +765,11 @@ end
 ---@return advancedWorldMap.ui.mapElementMeta?
 function mapWidgetMeta:createImageMarker(params)
     if not params.texture then return end
+    if not params.showWhenZoomedIn and not params.showWhenZoomedOut then
+        params.showWhenZoomedIn = true
+        params.showWhenZoomedOut = true
+    end
+
     local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
     return element
 end
@@ -773,6 +778,11 @@ end
 ---@return advancedWorldMap.ui.mapElementMeta?
 function mapWidgetMeta:createTextMarker(params)
     if not params.text then return end
+    if not params.showWhenZoomedIn and not params.showWhenZoomedOut then
+        params.showWhenZoomedIn = true
+        params.showWhenZoomedOut = true
+    end
+
     local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
     return element
 end
