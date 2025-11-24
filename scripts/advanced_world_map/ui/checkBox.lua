@@ -35,6 +35,9 @@ return function(params)
         visible = true
     end
 
+    ---@class questGuider.ui.checkBox
+    local meta = setmetatable({}, {})
+
     local contentData = {
         type = ui.TYPE.Flex,
         props = {
@@ -48,7 +51,8 @@ return function(params)
             arrange = ui.ALIGNMENT.Center,
         },
         userData = {
-            checked = params.checked or false
+            checked = params.checked or false,
+            meta = meta,
         },
         events = {
             mouseRelease = async:callback(function(e, layout)
@@ -82,13 +86,15 @@ return function(params)
             {
                 template = templates.boxThick,
                 type = ui.TYPE.Container,
+                props = {
+                    anchor = util.vector2(0, 0),
+                },
                 content = ui.content {
                     {
                         type = ui.TYPE.Image,
                         props = {
                             resource = texture,
                             size = boxSize,
-                            anchor = util.vector2(0, 0.5),
                             inheritAlpha = false,
                             alpha = params.checked and 1 or 0,
                             color = configData.data.ui.defaultColor,
@@ -96,22 +102,41 @@ return function(params)
                     }
                 },
             },
-            interval(4, 4),
-            {
-                template = templates.textNormal,
-                type = ui.TYPE.Text,
-                props = {
-                    text = params.text or "Enable",
-                    textColor = configData.data.ui.defaultColor,
-                    textSize = params.textSize or 18,
-                    anchor = util.vector2(0, 0.5),
-                    multiline = false,
-                    wordWrap = false,
-                    textAlignH = ui.ALIGNMENT.Start,
-                },
-            }
         }
     }
+
+    if params.text then
+        contentData.content:add(interval(4, 4))
+        contentData.content:add({
+            template = templates.textNormal,
+            type = ui.TYPE.Text,
+            props = {
+                text = params.text or "",
+                textColor = configData.data.ui.defaultColor,
+                textSize = params.textSize or 18,
+                anchor = util.vector2(0, 0.5),
+                multiline = false,
+                wordWrap = false,
+                textAlignH = ui.ALIGNMENT.Start,
+            },
+        })
+    end
+
+    meta.getChecked = function(self)
+        return contentData.userData.checked
+    end
+
+    meta.setChecked = function(self, checked)
+        contentData.userData.checked = checked
+
+        if contentData.userData.checked then
+            contentData.content[1].content[1].props.alpha = 1
+        else
+            contentData.content[1].content[1].props.alpha = 0
+        end
+
+        params.updateFunc()
+    end
 
     return contentData
 end
