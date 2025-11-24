@@ -40,7 +40,7 @@ local function create(menu)
     menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, config.data.legend.visibility.labels)
     menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, config.data.legend.visibility.markers)
 
-    local function onOpen(content)
+    local function onOpen(menu, content)
         iconLayout.props.color = config.data.ui.defaultLightColor
 
         local mapWidgetSize = menu.mapWidget:getSize()

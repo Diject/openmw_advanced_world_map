@@ -48,20 +48,20 @@ function menuMeta:openWidget(id)
     if not widget then return false end
 
     if self.activeWidgetId == id then
-        if widget.params.onClose then widget.params.onClose() end
+        if widget.params.onClose then widget.params.onClose(self) end
         self.widgetWindowLayout.content = ui.content{}
         self.activeWidgetId = nil
     else
         if self.activeWidgetId then
             local widgetData = self.widgets[self.activeWidgetId]
             if widgetData and widgetData.params.onClose then
-                widgetData.params.onClose()
+                widgetData.params.onClose(self)
             end
             self.widgetWindowLayout.content = ui.content{}
             self.activeWidgetId = nil
         end
 
-        if widget.params.onOpen then widget.params.onOpen(self.widgetWindowLayout.content) end
+        if widget.params.onOpen then widget.params.onOpen(self, self.widgetWindowLayout.content) end
         self.activeWidgetId = id
     end
 
@@ -76,7 +76,7 @@ function menuMeta:closeActiveWidget()
 
     local widgetData = self.widgets[self.activeWidgetId]
     if widgetData and widgetData.params.onClose then
-        widgetData.params.onClose()
+        widgetData.params.onClose(self)
     end
     self.widgetWindowLayout.content = ui.content{}
     self.activeWidgetId = nil
@@ -88,8 +88,8 @@ end
 ---@class advancedWorldMap.ui.menu.addHeaderElement.params
 ---@field id string
 ---@field layout table
----@field onOpen fun(content)?
----@field onClose fun()?
+---@field onOpen fun(menu, content)?
+---@field onClose fun(menu)?
 ---@field showWhenMenuInactive boolean?
 
 ---@param params advancedWorldMap.ui.menu.addHeaderElement.params
@@ -148,6 +148,11 @@ function menuMeta:addWidget(params)
         self.widgetInactiveHeaderLayout.content:add(interval(self.params.fontSize, 1))
         self.widgetInactiveHeaderLayout.content:add(params.layout)
     end
+end
+
+
+function menuMeta:isWidgetActive(id)
+    return self.activeWidgetId == id
 end
 
 
@@ -363,6 +368,7 @@ function this.create(params)
     }
 
     meta.update = function ()
+        if not meta.menu then return end
         meta.menu:update()
     end
 

@@ -438,7 +438,7 @@ local function create(menu)
         }
     }
 
-    local function onOpen(content)
+    local function onOpen(menu, content)
         local mapWidgetSize = menu.mapWidget:getSize()
 
         eventSys.registerHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
