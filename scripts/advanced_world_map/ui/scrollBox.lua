@@ -174,7 +174,7 @@ scrollBoxMeta.mouseMove = function (self, e)
 end
 
 
----@class questGuider.ui.scrollBox.params
+---@class advancedWorldMap.ui.scrollBox.params
 ---@field name string?
 ---@field size any -- util.vector2
 ---@field position any -- util.vector2
@@ -189,7 +189,7 @@ end
 ---@field userData table?
 
 
----@param params questGuider.ui.scrollBox.params
+---@param params advancedWorldMap.ui.scrollBox.params
 return function(params)
     if not params then return end
 
