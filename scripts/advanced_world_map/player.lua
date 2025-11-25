@@ -181,6 +181,28 @@ local lastPlayerCellId
 local menuStateUpdateTimer
 
 return {
+    interfaceName = "AdvancedWorldMap",
+    ---@type AdvancedWorldMap.Interface
+    interface = {
+        version = 1,
+        events = require("scripts.advanced_world_map.eventSys"),
+        getConfig = function ()
+            return configLib.data
+        end,
+        isDiscovered = function (cellId)
+            return discoveredLocs.isDiscovered(cellId)
+        end,
+        isVisited = function (cellId)
+            return discoveredLocs.isVisited(cellId)
+        end,
+        uiElements = {
+            scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
+            borders = require("scripts.advanced_world_map.ui.borders"),
+            button = require("scripts.advanced_world_map.ui.button"),
+            interval = require("scripts.advanced_world_map.ui.interval"),
+            checkbox = require("scripts.advanced_world_map.ui.checkBox"),
+        }
+    },
     engineHandlers = {
         onSave = onSave,
         onLoad = onLoad,
