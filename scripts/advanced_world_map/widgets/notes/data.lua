@@ -2,7 +2,7 @@ local util = require("openmw.util")
 
 local commonData = require("scripts.advanced_world_map.common")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
-local dataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 
 local config = require("scripts.advanced_world_map.config.config")
 
@@ -178,7 +178,7 @@ function this.getDataText(dt)
     end
     do
         local cellId = not dt.cellId and commonData.exteriorCellIdFormat:format(dt.pos.x / 8192, dt.pos.y / 8192) or dt.cellId
-        local str = string.format("%s (%d, %d)", dataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
+        local str = string.format("%s (%d, %d)", mapDataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
         text = text..str
     end
     if dt.descr and dt.descr ~= "" then

@@ -11,7 +11,7 @@ local tableLib = require("scripts.advanced_world_map.utils.table")
 local cellLib = require("scripts.advanced_world_map.utils.cell")
 
 local commonData = require("scripts.advanced_world_map.common")
-local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
@@ -134,7 +134,7 @@ end
 
 ---@param widget advancedWorldMap.ui.mapWidgetMeta
 local function createMarkers(widget, cellId)
-    local entrances = dynamicDataHandler.entrances or {}
+    local entrances = mapDataHandler.entrances or {}
 
     local screenSize = uiUtils.getScaledScreenSize()
 
@@ -476,7 +476,7 @@ local function createMarkers(widget, cellId)
     end
 
 
-    for _, dt in pairs(dynamicDataHandler.cellNameData or {}) do
+    for _, dt in pairs(mapDataHandler.cellNameData or {}) do
         local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
 
         local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name)
@@ -509,7 +509,7 @@ local function createMarkers(widget, cellId)
     end
 
 
-    for _, info in pairs(dynamicDataHandler.regionNameData or {}) do
+    for _, info in pairs(mapDataHandler.regionNameData or {}) do
         local fontSize = 14 + math.min(8, info.count) * 3
         widget:createTextMarker{
             layerId = widget.LAYER.region,

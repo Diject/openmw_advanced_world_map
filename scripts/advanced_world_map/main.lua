@@ -16,7 +16,7 @@ local log = require("scripts.advanced_world_map.utils.log")
 local common = require("scripts.advanced_world_map.common")
 
 local saveStorage = require("scripts.advanced_world_map.storage.localStorage")
-local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
@@ -25,7 +25,7 @@ local l10n = core.l10n(common.l10nKey)
 
 saveStorage.initPlayerStorage()
 
-dynamicDataHandler.init()
+mapDataHandler.init()
 
 
 local function checkDoor(ref)

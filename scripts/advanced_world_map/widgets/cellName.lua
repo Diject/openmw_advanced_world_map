@@ -4,7 +4,7 @@ local core = require("openmw.core")
 local playerRef = require("openmw.self")
 
 local config = require("scripts.advanced_world_map.config.configLib")
-local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
@@ -20,12 +20,12 @@ function this.updateLabel(menu)
     local mapWidget = menu.mapWidget
     local text
     if mapWidget.cellId then
-        local cellName = dynamicDataHandler.cellNameById[mapWidget.cellId]
+        local cellName = mapDataHandler.cellNameById[mapWidget.cellId]
         if cellName then
             text = string.format(" %s ", cellName)
         end
     elseif playerRef.cell.isExterior and menu.centerOnPlayer then
-        local cellName = dynamicDataHandler.cellNameById[playerRef.cell.id]
+        local cellName = mapDataHandler.cellNameById[playerRef.cell.id]
         if cellName then
             text = string.format(" %s ", cellName)
         end

@@ -13,7 +13,7 @@ local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
-local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
 local discoveredLocations = require("scripts.advanced_world_map.discoveredLocations")
 
@@ -191,7 +191,7 @@ local function getAvailableInteriorNamesFromInterior(cellId, checked, res)
     if checked[cellId] then return res end
     checked[cellId] = true
 
-    for _, destDt in pairs(dynamicDataHandler.entrances[cellId] or {}) do
+    for _, destDt in pairs(mapDataHandler.entrances[cellId] or {}) do
         if not checked[destDt.destCellId] then
             if not destDt.isDestEx then
                 res[destDt.destCellId] = destDt.name
@@ -212,7 +212,7 @@ local function getAvailableExteriorNamesFromInterior(cellId, checked, res)
     if checked[cellId] then return res end
     checked[cellId] = true
 
-    for _, destDt in pairs(dynamicDataHandler.entrances[cellId] or {}) do
+    for _, destDt in pairs(mapDataHandler.entrances[cellId] or {}) do
         if not checked[destDt.destCellId] then
             if destDt.isDestEx then
                 res[destDt.destCellId] = destDt.name
@@ -233,7 +233,7 @@ local function getWorldEntrancesForCell(cellId)
 
     local exteriorCells = getAvailableExteriorNamesFromInterior(cellId)
     for exCellId, _ in pairs(exteriorCells) do
-        for _, dt in pairs(dynamicDataHandler.entrances[exCellId] or {}) do
+        for _, dt in pairs(mapDataHandler.entrances[exCellId] or {}) do
             res[getPosHash(nil, dt.pos)] = dt
         end
     end
@@ -249,7 +249,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
     local mapWidget = menu.mapWidget
 
-    local entrances = dynamicDataHandler.entrances or {}
+    local entrances = mapDataHandler.entrances or {}
 
     local checked = {}
     local function processCell(cellId, isExterior, inInteriors)
@@ -258,11 +258,11 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
         if isExterior == nil then isExterior = cellId:find(commonData.exteriorCellLabel) and true or false end
 
-        local name = dynamicDataHandler.cellNameById[cellId] or string.format("%s: \"%s\"", l10n("CellId"), cellId)
+        local name = mapDataHandler.cellNameById[cellId] or string.format("%s: \"%s\"", l10n("CellId"), cellId)
         local nameLower = stringLib.utf8_lower(name)
 
         if not isExterior and nameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(cellId)) then
-            local doors = dynamicDataHandler.entrances[cellId]
+            local doors = mapDataHandler.entrances[cellId]
             local pos = {x = 0, y = 0}
             if doors then
                 local cnt = #doors
@@ -285,7 +285,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
         if inInteriors then
             if isExterior then
-                for _, dt in pairs(dynamicDataHandler.entrances[cellId] or {}) do
+                for _, dt in pairs(mapDataHandler.entrances[cellId] or {}) do
                     if checked[dt.destCellId] then goto continue end
                     checked[dt.destCellId] = true
 
@@ -326,7 +326,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
                 ::continue::
             end
 
-            local names = dynamicDataHandler.cellNameData
+            local names = mapDataHandler.cellNameData
             for name, dt in pairs(names) do
                 if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                     table.insert(res, {
@@ -356,7 +356,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
             processCell(cellId, false, true)
         end
 
-        local names = dynamicDataHandler.cellNameData
+        local names = mapDataHandler.cellNameData
         for name, dt in pairs(names) do
             if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                 table.insert(res, {

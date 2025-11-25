@@ -11,8 +11,8 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local commonData = require("scripts.advanced_world_map.common")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
-local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
-local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
 local playerMarker = require("scripts.advanced_world_map.ui.playerMarker")
@@ -968,7 +968,7 @@ function mapWidgetMeta:placeGroundTextures(region)
         local mapLayout = self:getMapLayout()
         for x = 0, maxGridX - minGridX - 1 do
             for y = 0, maxGridY - minGridY - 1 do
-                local texture = dataHandler.getLocalMapTexture(minGridX + x, minGridY + y)
+                local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y)
 
                 local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y)
                 local isDiscovered = not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
@@ -1126,7 +1126,7 @@ function this.new(params)
     local mapLayout
 
     if params.cellId then
-        local localCellInfo = dataHandler.getLocalCellInfo(params.cellId)
+        local localCellInfo = mapTextureHandler.getLocalCellInfo(params.cellId)
         if not localCellInfo.mX then
             localCellInfo = {
                 height = 5,
@@ -1138,7 +1138,7 @@ function this.new(params)
             core.sendGlobalEvent("AdvWMap:getMapStatics", {cellId = params.cellId})
         end
 
-        local mapTextures = dataHandler.getLocalCellMapTextures(params.cellId)
+        local mapTextures = mapTextureHandler.getLocalCellMapTextures(params.cellId)
         if not mapTextures then mapTextures = {} end
 
         local width = localCellInfo.width * 32
@@ -1183,7 +1183,7 @@ function this.new(params)
 
     else
         local mapInfo
-        if not dataHandler.mapInfo then
+        if not mapTextureHandler.mapInfo then
             mapInfo = {
                 gridX = {min = 0, max = 0},
                 gridY =  {min = 0, max = 0},
@@ -1194,12 +1194,12 @@ function this.new(params)
                 width = 32,
             }
         else
-            mapInfo = dataHandler.mapInfo
+            mapInfo = mapTextureHandler.mapInfo
         end
 
         if not worldMapTexture then
-            if dataHandler.mapImagePath and vfs.fileExists(dataHandler.mapImagePath) then
-                worldMapTexture = ui.texture{ path = dataHandler.mapImagePath }
+            if mapTextureHandler.mapImagePath and vfs.fileExists(mapTextureHandler.mapImagePath) then
+                worldMapTexture = ui.texture{ path = mapTextureHandler.mapImagePath }
             end
         end
 
@@ -1208,10 +1208,10 @@ function this.new(params)
 
         local padding = 1
 
-        padding = math.max(padding, math.max(0, dynamicDataHandler.grid.max.x - meta.mapInfo.gridX.max) +
-            math.max(0, meta.mapInfo.gridX.min - dynamicDataHandler.grid.min.x))
-        padding = math.max(padding, math.max(0, dynamicDataHandler.grid.max.y - meta.mapInfo.gridY.max) +
-            math.max(0, meta.mapInfo.gridY.min - dynamicDataHandler.grid.min.y))
+        padding = math.max(padding, math.max(0, mapDataHandler.grid.max.x - meta.mapInfo.gridX.max) +
+            math.max(0, meta.mapInfo.gridX.min - mapDataHandler.grid.min.x))
+        padding = math.max(padding, math.max(0, mapDataHandler.grid.max.y - meta.mapInfo.gridY.max) +
+            math.max(0, meta.mapInfo.gridY.min - mapDataHandler.grid.min.y))
 
         padding = padding * meta.mapInfo.pixelsPerCell
 
@@ -1252,7 +1252,7 @@ function this.new(params)
                 content = ui.content {},
             }
 
-            for i, dt in pairs(dynamicDataHandler.worldMapTileRectangles or {}) do
+            for i, dt in pairs(mapDataHandler.worldMapTileRectangles or {}) do
                 local widthHeight = util.vector2(dt[3] - dt[1] + 1, dt[4] - dt[2] + 1)
                 local pos = util.vector2(dt[1], dt[2]) * 8192
                 local relSize = util.vector2(

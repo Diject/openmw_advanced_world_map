@@ -26,9 +26,9 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
-local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
-local dynamicDataHandler = require("scripts.advanced_world_map.dynamicDataHandler")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
@@ -63,7 +63,7 @@ local function onInit()
         localStorage.initPlayerStorage()
     end
     playerPos.init()
-    mapDataHandler.init()
+    mapTextureHandler.init()
     discoveredLocs.init()
 end
 
@@ -71,7 +71,7 @@ end
 local function onLoad(data)
     localStorage.initPlayerStorage(data)
     playerPos.init()
-    mapDataHandler.init()
+    mapTextureHandler.init()
     discoveredLocs.init()
     disabledDoors.init()
 end
@@ -266,7 +266,7 @@ return {
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
 
         ["AdvWMap:updateMapData"] = function (data)
-            dynamicDataHandler.load(data)
+            mapDataHandler.load(data)
         end,
 
         ["AdvWMap:showMessage"] = function (str)
