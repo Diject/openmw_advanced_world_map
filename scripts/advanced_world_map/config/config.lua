@@ -26,6 +26,11 @@ this.default = {
     legend = {
         markerSize = 6,
         onlyDiscovered = false,
+        alpha = {
+            region = 0.12,
+            entrance = 0.8,
+            city = 0.4,
+        },
         visibility = {
             regions = true,
             cities = true,
