@@ -1,4 +1,5 @@
 local util = require("openmw.util")
+local ui = require("openmw.ui")
 
 local config = require("scripts.advanced_world_map.config.config")
 
@@ -100,6 +101,14 @@ function mapElementMeta:updateLayout(data)
     end
     props.alpha = data.alpha or props.alpha
     props.resource = data.texture or props.resource
+    props.textAlignH = data.textAlignH or props.textAlignH
+    props.textAlignV = data.textAlignV or props.textAlignV
+
+    props.type = data.text and (data.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image
+    props.autoSize = data.autoHeight and true or props.autoSize
+    props.multiline = data.autoHeight and true or props.multiline
+    props.wordWrap = data.autoHeight and true or props.wordWrap
+    props.readOnly = data.autoHeight and true or props.readOnly
 
     self._elemLayout.userData.forceChanged = true
 end
@@ -119,11 +128,17 @@ function mapElementMeta:updateParams(data)
     self._params.alpha = data.alpha or self._params.alpha
     self._params.texture = data.texture or self._params.texture
     self._params.scaleFunc = data.scaleFunc or self._params.scaleFunc
+    if data.autoHeight ~= nil then
+        self._params.autoHeight = data.autoHeight
+    end
+    self._params.textAlignH = data.textAlignH or self._params.textAlignH
+    self._params.textAlignV = data.textAlignV or self._params.textAlignV
 end
 
 
 function mapElementMeta:restoreLayout()
     self._elemLayout.props = {
+        type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         text = self._params.text,
         textSize = self._params.text and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
         anchor = self._params.anchor or util.vector2(0.5, 0.5),
@@ -135,6 +150,12 @@ function mapElementMeta:restoreLayout()
         size = self._params.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.size, self._parent.zoom),
         color = self._params.texture and (self._params.color or config.data.ui.defaultColor),
         propagateEvents = false,
+        textAlignH = self._params.textAlignH,
+        textAlignV = self._params.textAlignV,
+        multiline = self._params.autoHeight and true or nil,
+        wordWrap = self._params.autoHeight and true or nil,
+        readOnly = self._params.autoHeight and true or nil,
+        autoSize = self._params.autoHeight and true or self._params.size == nil,
     }
     self._elemLayout.userData.scaleFunc = self._params.scaleFunc
     self._elemLayout.userData.autoScale = true

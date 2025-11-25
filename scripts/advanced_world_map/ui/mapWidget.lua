@@ -506,16 +506,11 @@ function mapWidgetMeta:updateMarkersScale()
         for i, elem in pairs(layout.content) do
             if elem.userData and elem.userData.autoScale then
                 if elem.userData.text then
-                    elem.props = {
-                        text = elem.props.text,
-                        autoSize = elem.props.autoSize,
-                        anchor = elem.props.anchor,
-                        relativePosition = elem.props.relativePosition,
-                        textColor = elem.props.textColor,
-                        textSize = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.fontSize, self.zoom),
-                        visible = elem.props.visible,
-                        alpha = elem.props.alpha,
-                    }
+                    elem.props = tableLib.copy(elem.props)
+                    elem.props.textSize = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.fontSize, self.zoom)
+                    if elem.props.size then
+                        elem.props.size = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.size, self.zoom)
+                    end
                 elseif elem.userData.texture then
                     elem.props.size = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.size, self.zoom)
                 end
@@ -561,9 +556,11 @@ local createMarkerFuncCache = {}
 ---@field tooltipContent any
 ---@field fontSize number?
 ---@field size any util.vector2
+---@field autoHeight boolean?
 ---@field color any util.color.rgb
 ---@field anchor any util.vector2
 ---@field textAlignH any ui.ALIGNMENT
+---@field textAlignV any ui.ALIGNMENT
 ---@field alpha number?
 ---@field visible boolean?
 ---@field showWhenZoomedIn boolean?
@@ -669,12 +666,12 @@ local function createMarker(self, params, onlyInitialize)
 
     local marker
     marker = {
-        type = params.text and ui.TYPE.Text or ui.TYPE.Image,
+        type = params.text and (params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         name = markerName,
         props = {
             text = params.text,
             textSize = params.text and fontSize and (params.scaleFunc or this.scaleFunction.marker)(fontSize, self.zoom),
-            autoSize = size == nil,
+            autoSize = params.autoHeight and true or size == nil,
             anchor = anchor,
             relativePosition = relPos,
             textColor = params.text and color,
@@ -684,6 +681,11 @@ local function createMarker(self, params, onlyInitialize)
             size = size and (params.scaleFunc or this.scaleFunction.marker)(size, self.zoom),
             color = params.texture and color,
             propagateEvents = false,
+            textAlignH = params.textAlignH,
+            textAlignV = params.textAlignV,
+            multiline = params.autoHeight and true or nil,
+            wordWrap = params.autoHeight and true or nil,
+            readOnly = params.autoHeight and true or nil,
         },
         userData = {
             scaleFunc = params.scaleFunc,
@@ -781,6 +783,10 @@ function mapWidgetMeta:createTextMarker(params)
     if not params.showWhenZoomedIn and not params.showWhenZoomedOut then
         params.showWhenZoomedIn = true
         params.showWhenZoomedOut = true
+    end
+    if params.autoHeight == true and params.layerId == this.layerId.marker then
+        log("Not allowed to create autoHeight text marker in 'marker' layer")
+        return
     end
 
     local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
