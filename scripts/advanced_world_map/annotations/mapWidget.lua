@@ -62,8 +62,6 @@
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2)? Custom scaling function
 ---@field useCache boolean? Use cached marker layout
----@field searchText string? Lowercase search text for filtering
----@field searchLabel string? Display label for search results
 ---@field userData table? Custom user data
 
 ---Parameters for creating a text marker
@@ -87,8 +85,6 @@
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2)? Custom scaling function
 ---@field useCache boolean? Use cached marker layout
----@field searchText string? Lowercase search text for filtering
----@field searchLabel string? Display label for search results
 ---@field userData table? Custom user data
 
 ---Parameters for creating a map widget
@@ -105,14 +101,12 @@
 ---@class AdvancedWorldMap.MapWidget
 ---@field LAYER AdvancedWorldMap.MapWidget.LayerId Layer identifiers
 ---@field SCALE_FUNCTION AdvancedWorldMap.MapWidget.ScaleFunctions Scale functions
----@field params AdvancedWorldMap.MapWidget.Params Creation parameters
 ---@field cellId string? Current cell ID (nil for world map)
 ---@field mapInfo AdvancedWorldMap.MapWidget.MapInfo Map metadata (width, height, grid bounds, etc.)
 ---@field zoom number Current zoom level
 ---@field minZoom number Minimum allowed zoom level
 ---@field maxZoom number Maximum allowed zoom level
 ---@field layout Layout Root UI layout structure
----@field layers Layout[] Array of layer layouts
 local AdvancedWorldMapMapWidget = {}
 
 ---Generates a unique ID for map elements

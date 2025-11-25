@@ -27,14 +27,6 @@
 ---@field mainSize openmw.util.Vector2 Main content area size as vector2
 ---@field headerHeight number Height of the header bar
 ---@field mapWidget AdvancedWorldMap.MapWidget Current active map widget instance
----@field widgets table<string, {layout: Layout, params: AdvancedWorldMap.Menu.AddHeaderElementParams}> Registered header widgets
----@field activeWidgetId string? Currently active widget ID
----@field headerLayout Layout Header bar layout structure
----@field mainLayout Layout Main content area layout
----@field widgetWindowLayout Layout Side panel layout for widgets
----@field widgetActiveHeaderLayout Layout Header layout for active menu mode
----@field widgetInactiveHeaderLayout Layout Header layout for inactive menu mode
----@field headerMovedDistance number Distance header has been dragged
 ---@field centerOnPlayer boolean Whether to center map on player position
 local AdvancedWorldMapMenuMap = {}
 
