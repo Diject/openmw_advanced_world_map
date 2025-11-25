@@ -30,6 +30,7 @@ this.disabledDoorsFieldId = "disabledDoors"
 this.localMapZoomFieldId = "localMapScale"
 this.worldMapZoomFieldId = "worldMapScale"
 this.lastCellIdFieldId = "lastCellId"
+this.notesFieldId = "notes"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
@@ -39,6 +40,8 @@ this.mapWidgetWindowLayoutId = "__MAP:WIDGETWINDOWLAYOUT__"
 this.doorMarkerType = "AdvWMap:DoorMarker"
 this.doorDescrMarkerType = "AdvWMap:DoorDescrMarker"
 this.cityRegionMarkerType = "AdvWMap:CityRegionMarker"
+this.noteMarkerType = "AdvWMap:NoteMarker"
+this.noteNameMarkerType = "AdvWMap:NoteNameMarker"
 
 this.widgetPriorityField = "AdvWMap:widgetPriority"
 
@@ -88,6 +91,7 @@ this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
 
 this.searchWidgetIcon = "textures/icons/advanced_world_map/widget/searchIco.dds"
 this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"
+this.noteMarkerPath = "textures/icons/advanced_world_map/featherIco.png"
 
 
 this.customMapDir = "textures/advanced_world_map/map/"
