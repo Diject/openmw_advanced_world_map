@@ -90,13 +90,18 @@ end
 ---@field layout table
 ---@field onOpen fun(menu, content)?
 ---@field onClose fun(menu)?
+---@field priority number?
 ---@field showWhenMenuInactive boolean?
 
 ---@param params advancedWorldMap.ui.menu.addHeaderElement.params
 function menuMeta:addWidget(params)
     if not params or not params.id or not params.layout then return end
+    params.priority = params.priority or 0
 
     local origEvents = tableLib.copy(params.layout.events or {})
+
+    params.layout.userData = params.layout.userData or {}
+    params.layout.userData[commonData.widgetPriorityField] = params.priority
 
     params.layout.props = params.layout.props or {}
     params.layout.props.anchor = util.vector2(0.5, 0.5)
@@ -140,13 +145,31 @@ function menuMeta:addWidget(params)
 
     self.widgets[params.id] = {layout = params.layout, params = params}
 
-    uiUtils.removeFromContent(self.widgetActiveHeaderLayout.content, params.id)
-    self.widgetActiveHeaderLayout.content:add(interval(self.params.fontSize, 1))
-    self.widgetActiveHeaderLayout.content:add(params.layout)
+    local function addWidget(content)
+        local removedIndex = uiUtils.removeFromContent(content, params.id)
+        if removedIndex then
+            uiUtils.removeFromContent(content, removedIndex)
+        end
+
+        local index = #content + 1
+        for i, el in ipairs(content) do
+            local elPriority = el.userData and el.userData[commonData.widgetPriorityField]
+            if elPriority then
+                if params.priority > elPriority then
+                    index = i
+                    break
+                end
+            end
+        end
+
+        content:insert(index, interval(self.params.fontSize, 0))
+        content:insert(index, params.layout)
+    end
+
+    addWidget(self.widgetActiveHeaderLayout.content)
+
     if params.showWhenMenuInactive then
-        uiUtils.removeFromContent(self.widgetInactiveHeaderLayout.content, params.id)
-        self.widgetInactiveHeaderLayout.content:add(interval(self.params.fontSize, 1))
-        self.widgetInactiveHeaderLayout.content:add(params.layout)
+        addWidget(self.widgetInactiveHeaderLayout.content)
     end
 end
 
