@@ -119,6 +119,7 @@ local function onRightMouseMenu(e)
                         if dt.pos then
                             widgetData.addMarkerData(dt)
                             widgetMarker.create(dt, e.mapWidget, true)
+                            widgetMenu.update()
                         end
                     end,
                 }
