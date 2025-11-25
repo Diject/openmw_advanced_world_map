@@ -51,6 +51,7 @@ function menuMeta:openWidget(id)
         if widget.params.onClose then widget.params.onClose(self) end
         self.widgetWindowLayout.content = ui.content{}
         self.activeWidgetId = nil
+        self:updateMapWidgetWidth()
     else
         if self.activeWidgetId then
             local widgetData = self.widgets[self.activeWidgetId]
@@ -59,6 +60,7 @@ function menuMeta:openWidget(id)
             end
             self.widgetWindowLayout.content = ui.content{}
             self.activeWidgetId = nil
+            self:updateMapWidgetWidth()
         end
 
         if widget.params.onOpen then widget.params.onOpen(self, self.widgetWindowLayout.content) end
