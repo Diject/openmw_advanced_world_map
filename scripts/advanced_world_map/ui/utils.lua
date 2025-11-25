@@ -34,7 +34,7 @@ function this.removeFromContent(content, index)
     end
     rawset(content, #content, nil)
 
-    return true
+    return index
 end
 
 
