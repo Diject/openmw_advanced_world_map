@@ -61,7 +61,7 @@ local function menuOpened(menu)
         -- but those elements must have a fixed size (not autoSize)
         onOpen = function (menu, content)
             widgetMenu.create(menu, content)
-            iconLayout.props.color = config.data.ui.defaultLightColor
+            iconLayout.props.color = config.data.ui.whiteColor
         end,
         -- Widget close event
         onClose = function (menu)

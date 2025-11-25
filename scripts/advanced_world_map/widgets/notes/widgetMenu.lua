@@ -70,11 +70,10 @@ local function fill(menu, sb, filter)
                 textShadow = true,
                 textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
-                textShadowColor = config.data.ui.shadowColor,
                 propagateEvents = false,
             },
             userData = {
-                shadowColor = config.data.ui.shadowColor,
+
             },
             events = {
                 mousePress = async:callback(function(e, layout)
@@ -84,9 +83,8 @@ local function fill(menu, sb, filter)
                 focusLoss = async:callback(function(e, layout)
                     sb:focusLoss(e)
 
-                    if layout.userData.shadowColor ~= config.data.ui.shadowColor then
-                        textLay.props.textShadowColor = config.data.ui.shadowColor
-                        layout.userData.shadowColor = config.data.ui.shadowColor
+                    if layout.props.textShadowColor then
+                        layout.props.textShadowColor = nil
                         menu:update()
                     end
                 end),
@@ -94,9 +92,8 @@ local function fill(menu, sb, filter)
                 mouseMove = async:callback(function(e, layout)
                     sb:mouseMove(e)
 
-                    if layout.userData.shadowColor ~= config.data.ui.selectionColor then
-                        textLay.props.textShadowColor = config.data.ui.selectionColor
-                        layout.userData.shadowColor = config.data.ui.selectionColor
+                    if layout.props.textShadowColor ~= config.data.ui.textShadowColor then
+                        layout.props.textShadowColor = config.data.ui.textShadowColor
                         menu:update()
                     end
                 end),

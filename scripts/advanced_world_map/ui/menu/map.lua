@@ -465,7 +465,7 @@ function this.create(params)
                     relativePosition = util.vector2(1, 0.5),
                     textColor = config.data.ui.defaultColor,
                     textShadow = true,
-                    textShadowColor = config.data.ui.shadowColor,
+                    textShadowColor = config.data.ui.textShadowColor,
                     propagateEvents = false,
                     visible = menuMode.isMenuInteractive(),
                 },

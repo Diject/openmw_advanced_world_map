@@ -65,7 +65,7 @@ local function createTemporaryMarker(id, mapWidget, pos, color, text)
     local h = mapWidget:createImageMarker{
         layerId = mapWidget.LAYER.marker,
         pos = pos,
-        color = color or config.data.ui.selectionColor,
+        color = color or config.data.ui.foundMarkerColor,
         texture = worldMarkerTexture,
         anchor = util.vector2(0.5, 1),
         size = util.vector2(config.data.legend.markerSize * 2.5, config.data.legend.markerSize * 5),
@@ -168,7 +168,7 @@ local function updateLayoutForMarker(handler, textFilter, color)
             local params = data[1]
             setMarkerColor(handler, params.color)
         elseif userData.searchText and userData.searchText:find(textFilter) then
-            setMarkerColor(handler, color or config.data.ui.selectionColor)
+            setMarkerColor(handler, color or config.data.ui.foundMarkerColor)
         end
     end
 end
@@ -279,7 +279,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
                 cellId = cellId,
                 pos = pos,
                 priority = 0,
-                color = config.data.ui.selectionColor
+                color = config.data.ui.foundMarkerColor
             })
         end
 
@@ -296,7 +296,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
                             cellId = not dt.isExterior and dt.cellId or nil,
                             pos = dt.pos,
                             priority = 0,
-                            color = config.data.ui.selectionColor
+                            color = config.data.ui.foundMarkerColor
                         })
                         targetCells[dt.destCellId] = true
                     end
@@ -334,7 +334,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
                         cellId = nil,
                         pos = util.vector2(dt.posX, dt.posY),
                         priority = 100,
-                        color = config.data.ui.selectionColor
+                        color = config.data.ui.foundMarkerColor
                     })
                 end
             end
@@ -364,7 +364,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
                     cellId = nil,
                     pos = util.vector2(dt.posX, dt.posY),
                     priority = 1,
-                    color = config.data.ui.selectionColor
+                    color = config.data.ui.foundMarkerColor
                 })
             end
         end
@@ -527,16 +527,16 @@ local function create(menu)
                             text = tx,
                         }
                     elseif worldMarkersData[pHash].color ~= color then
-                        worldMarkersData[pHash].color = config.data.ui.selectionColor
+                        worldMarkersData[pHash].color = config.data.ui.foundMarkerColor
                     end
                 end
 
                 if dt.cellId == nil then
-                    addWorldMarkerData(posHash, dt.pos, config.data.ui.selectionColor, text)
+                    addWorldMarkerData(posHash, dt.pos, config.data.ui.foundMarkerColor, text)
                 else
                     local entrances = getWorldEntrancesForCell(dt.cellId)
                     for pHash, entranceDt in pairs(entrances) do
-                        addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.selectionLightColor, text)
+                        addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.foundMarkerLightColor, text)
                         targetCells[entranceDt.destCellId] = true
                     end
                 end
@@ -555,11 +555,10 @@ local function create(menu)
                         multiline = true,
                         wordWrap = true,
                         textShadow = true,
-                        textShadowColor = config.data.ui.shadowColor,
                         propagateEvents = false,
                     },
                     userData = {
-                        shadowColor = config.data.ui.shadowColor,
+
                     },
                     events = {
                         mousePress = async:callback(function(e, layout)
@@ -569,9 +568,8 @@ local function create(menu)
                         focusLoss = async:callback(function(e, layout)
                             scrollBoxMeta:focusLoss(e)
 
-                            if layout.userData.shadowColor ~= config.data.ui.shadowColor then
-                                textLay.props.textShadowColor = config.data.ui.shadowColor
-                                layout.userData.shadowColor = config.data.ui.shadowColor
+                            if layout.props.textShadowColor then
+                                layout.props.textShadowColor = nil
                                 menu:update()
                             end
                         end),
@@ -579,9 +577,8 @@ local function create(menu)
                         mouseMove = async:callback(function(e, layout)
                             scrollBoxMeta:mouseMove(e)
 
-                            if layout.userData.shadowColor ~= config.data.ui.selectionColor then
-                                textLay.props.textShadowColor = config.data.ui.selectionColor
-                                layout.userData.shadowColor = config.data.ui.selectionColor
+                            if layout.props.textShadowColor ~= config.data.ui.textShadowColor then
+                                layout.props.textShadowColor = config.data.ui.textShadowColor
                                 menu:update()
                             end
                         end),
@@ -765,7 +762,7 @@ local function create(menu)
         }
 
 
-        iconLayout.props.color = config.data.ui.defaultLightColor
+        iconLayout.props.color = config.data.ui.whiteColor
 
         content:add(windowLayout)
     end

@@ -8,6 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
+    version = 1,
     main = {
         menuKey = "M",
         relativeSize = {
@@ -52,13 +53,13 @@ this.default = {
         defaultColor = commonData.defaultColor,
         defaultLightColor = commonData.defaultLightColor,
         defaultDarkColor = commonData.defaultDarkColor,
+        whiteColor = commonData.whiteColor,
         backgroundColor = commonData.backgroundColor,
-        disabledColor = commonData.disabledColor,
-        selectionColor = commonData.selectedColor,
-        selectionLightColor = commonData.selectedLightColor,
-        shadowColor = commonData.textShadowColor,
-        linkColor = commonData.linkColor,
-        missedTextureColor = commonData.missedTextureColor,
+        -- disabledColor = commonData.disabledColor,
+        foundMarkerColor = commonData.foundMarkerColor,
+        foundMarkerLightColor = commonData.foundMarkerLightColor,
+        textShadowColor = commonData.textShadowColor,
+        defaultTextureColor = commonData.defaultTextureColor,
         mouseScrollAmount = 36,
         headerBackgroundAlpha = 100,
         scrollArrowSize = 16,

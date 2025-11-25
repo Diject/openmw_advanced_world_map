@@ -54,11 +54,14 @@ this.defaultDarkColor = util.color.rgb(this.defaultDarkColorData[1], this.defaul
 this.defaultLightColorData = {255/255, 255/255, 255/255}
 this.defaultLightColor = util.color.rgb(this.defaultLightColorData[1], this.defaultLightColorData[2], this.defaultLightColorData[3])
 
+this.whiteColorData = {255/255, 255/255, 255/255}
+this.whiteColor = util.color.rgb(this.whiteColorData[1], this.whiteColorData[2], this.whiteColorData[3])
+
 this.selectedColorData = {0.3, 1, 0.3}
-this.selectedColor = util.color.rgb(this.selectedColorData[1], this.selectedColorData[2], this.selectedColorData[3])
+this.foundMarkerColor = util.color.rgb(this.selectedColorData[1], this.selectedColorData[2], this.selectedColorData[3])
 
 this.selectedLightColorData = {0.6, 0.8, 0.6}
-this.selectedLightColor = util.color.rgb(this.selectedLightColorData[1], this.selectedLightColorData[2], this.selectedLightColorData[3])
+this.foundMarkerLightColor = util.color.rgb(this.selectedLightColorData[1], this.selectedLightColorData[2], this.selectedLightColorData[3])
 
 this.linkColorData = {112 / 255, 126 / 255, 207 / 255}
 this.linkColor = util.color.rgb(this.linkColorData[1], this.linkColorData[2], this.linkColorData[3])
@@ -66,14 +69,14 @@ this.linkColor = util.color.rgb(this.linkColorData[1], this.linkColorData[2], th
 this.disabledColorData = {0.5, 0.5, 0.5}
 this.disabledColor = util.color.rgb(this.disabledColorData[1], this.disabledColorData[2], this.disabledColorData[3])
 
-this.textShadowColorData = {0.1, 0.1, 0.1}
+this.textShadowColorData = {1, 1, 1}
 this.textShadowColor = util.color.rgb(this.textShadowColorData[1], this.textShadowColorData[2], this.textShadowColorData[3])
 
 this.backgroundColorData = {0, 0, 0}
 this.backgroundColor = util.color.rgb(this.backgroundColorData[1], this.backgroundColorData[2], this.backgroundColorData[3])
 
 this.missedTextureColorData = {0.15, 0.15, 0.10}
-this.missedTextureColor = util.color.rgb(this.missedTextureColorData[1], this.missedTextureColorData[2], this.missedTextureColorData[3])
+this.defaultTextureColor = util.color.rgb(this.missedTextureColorData[1], this.missedTextureColorData[2], this.missedTextureColorData[3])
 
 this.mapWaterColor = util.color.rgb(36 / 255, 53 / 255, 48 / 255)
 this.mapInteriorBackgroundColor = util.color.rgb(0, 0, 0)
