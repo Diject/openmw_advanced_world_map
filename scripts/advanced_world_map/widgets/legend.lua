@@ -187,6 +187,7 @@ local function create(menu)
     menu:addWidget{
         id = "AdvancedWorldMap:Legend",
         layout = iconLayout,
+        priority = 9900,
         onOpen = onOpen,
         onClose = onClose,
     }
@@ -196,4 +197,4 @@ end
 
 eventSys.registerHandler(eventSys.EVENT["onMenuOpened"], function (e)
     create(e.menu)
-end, 99999)
+end, 9900)

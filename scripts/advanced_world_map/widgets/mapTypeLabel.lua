@@ -77,6 +77,7 @@ local function create(menu)
     menu:addWidget{
         id = "AdvancedWorldMap:MapTypeLabel",
         layout = btnLayout,
+        priority = 10000,
     }
 
 end
@@ -92,4 +93,4 @@ end)
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     create(e.menu)
-end, 100000)
+end, 10000)

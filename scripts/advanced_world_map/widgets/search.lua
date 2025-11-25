@@ -786,6 +786,7 @@ local function create(menu)
     menu:addWidget{
         id = "AdvancedWorldMap:Search",
         layout = iconLayout,
+        priority = 9800,
         onOpen = onOpen,
         onClose = onClose,
     }
@@ -794,4 +795,4 @@ end
 
 eventSys.registerHandler(eventSys.EVENT["onMenuOpened"], function (e)
     create(e.menu)
-end, 99998)
+end, 9800)
