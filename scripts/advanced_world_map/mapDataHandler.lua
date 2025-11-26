@@ -35,9 +35,11 @@ this.worldMapTileRectangles = {}
 ---@field pos any
 ---@field cellId string
 ---@field isExterior boolean
+---@field isLikeEx boolean
 ---@field destCellId string
 ---@field destPos any
 ---@field isDestEx boolean
+---@field isDestLikeEx boolean
 ---@field name string
 ---@field fullName string
 ---@field doorHash string
@@ -245,6 +247,7 @@ local function buildData()
             local doorHash = commonData.doorHash(door, dest.id)
 
             entrances[cell.id] = entrances[cell.id] or {}
+            ---@type advancedWorldMap.dynamicDataHandler.entranceData
             entrances[cell.id][doorHash] = {
                 pos = door.position,
                 cellId = cell.id,
@@ -255,6 +258,8 @@ local function buildData()
                 name = name,
                 fullName = getCellName(dest),
                 doorHash = doorHash,
+                isDestLikeEx = dest.isExterior or dest:hasTag("QuasiExterior"),
+                isLikeEx = cell.isExterior or cell:hasTag("QuasiExterior"),
             }
 
             ::continue::

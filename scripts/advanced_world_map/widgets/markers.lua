@@ -414,7 +414,7 @@ local function createMarkers(widget, cellId)
             local imageMarkerHandler
             imageMarkerHandler = widget:createImageMarker{
                 id = imId,
-                texture = dt.isDestEx and mapMarker45Texture or mapMarkerTexture,
+                texture = dt.isDestLikeEx and mapMarker45Texture or mapMarkerTexture,
                 color = color,
                 useCache = true,
                 layerId = widget.LAYER.marker,
