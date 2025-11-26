@@ -1254,7 +1254,7 @@ function this.new(params)
 
             for i, dt in pairs(mapDataHandler.worldMapTileRectangles or {}) do
                 local widthHeight = util.vector2(dt[3] - dt[1] + 1, dt[4] - dt[2] + 1)
-                local pos = util.vector2(dt[1], dt[2]) * 8192
+                local pos = util.vector2(dt[1] - 0.125, dt[2] - 0.125) * 8192
                 local relSize = util.vector2(
                     ((widthHeight.x + 0.25) * pixelsPerCell) / meta.displayMapSize.x,
                     ((widthHeight.y + 0.25) * pixelsPerCell) / meta.displayMapSize.y
