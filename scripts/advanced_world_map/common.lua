@@ -7,6 +7,8 @@ this.l10nKey = "advanced_world_map"
 
 this.settingPage = "AdvancedWorldMap:Settings"
 
+this.inputBindingsSection = "AdvWMap:InputBindings"
+
 this.configMainSectionName = "Settings:AdvWMap:Main"
 
 this.menuKeyId = "AdvWMap:menuKey"

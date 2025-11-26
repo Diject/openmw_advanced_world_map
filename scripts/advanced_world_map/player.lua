@@ -26,6 +26,8 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
+local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
+local actionBinding = require("scripts.advanced_world_map.input.keyAction")
 local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
@@ -89,11 +91,6 @@ local function onMouseWheel(vertical)
 end
 
 
-local function onMouseButtonRelease(buttonId)
-    menuHandler.onMouseReleaseCallback(buttonId)
-end
-
-
 local function onCombatTargetsChanged(eventData)
     pcall(function ()
         if eventData.actor == nil then return end
@@ -121,18 +118,11 @@ local function toggleMenu()
 end
 
 
-input.registerTriggerHandler(commonData.menuKeyId, async:callback(function()
+actionBinding.registerAction(commonData.menuKeyId, function ()
     if types.Player.isCharGenFinished(self) then
         toggleMenu()
     end
-end))
-
-
-local function onKeyRelease(key)
-    if key.code == input.KEY.Escape then
-        menuHandler.destroyAllMenus()
-    end
-end
+end)
 
 
 local function checkPos()
@@ -212,12 +202,24 @@ return {
             addNearbyDoors()
             discoverNearby()
         end,
-        onKeyRelease = onKeyRelease,
         onFrame = function(dt)
             realTimer.updateTimers()
         end,
         onMouseWheel = onMouseWheel,
-        onMouseButtonRelease = onMouseButtonRelease,
+        onKeyPress = keyBinding.onKeyPress,
+        onMouseButtonPress = keyBinding.onMouseButtonPress,
+        onControllerButtonPress = keyBinding.onControllerButtonPress,
+        onKeyRelease = function (key)
+            keyBinding.onKeyRelease(key)
+            if key.code == input.KEY.Escape then
+                menuHandler.destroyAllMenus()
+            end
+        end,
+        onMouseButtonRelease = function (buttonId)
+            keyBinding.onMouseButtonRelease(buttonId)
+            menuHandler.onMouseReleaseCallback(buttonId)
+        end,
+        onControllerButtonRelease = keyBinding.onControllerButtonRelease,
     },
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event

@@ -103,16 +103,16 @@ local function text(args)
     return data
 end
 
+
 local function inputKey(args)
     local data = {
-        renderer = "inputBinding",
+        renderer = "AdvWMap:inputBinding",
         key = args.key,
         name = args.name,
         description = args.description,
         default = args.default,
         argument = {
-            key = args.argKey,
-            type = args.argType
+            action = args.action
         }
     }
     return data
@@ -133,27 +133,6 @@ local function color(args)
 end
 
 
-input.registerTrigger {
-    key = commonData.menuKeyId,
-    l10n = commonData.l10nKey,
-}
-
--- f this
-local res, err = pcall(function()
-    local bindingSection = storage.playerSection('OMWInputBindings')
-    if bindingSection:get(config.default.main.menuKey) == nil then
-        bindingSection:set(config.default.main.menuKey, {
-            device = "keyboard",
-            button = input.KEY[config.default.main.menuKey],
-            type = "trigger",
-            key = commonData.menuKeyId,
-        })
-    end
-end)
-if not res then
-    print(err)
-end
-
 
 I.Settings.registerGroup{
     key = commonData.configMainSectionName,
@@ -163,6 +142,6 @@ I.Settings.registerGroup{
     permanentStorage = true,
     order = 0,
     settings = {
-        inputKey{key = "main.menuKey", name = "customJournalKeyName", description = "customJournalKeyDescription", argType = "trigger", argKey = commonData.menuKeyId, default = config.default.main.menuKey},
+        inputKey{key = "main.menuKey", name = "customJournalKeyName", description = "customJournalKeyDescription", action = commonData.menuKeyId, default = config.default.main.menuKey},
     },
 }
