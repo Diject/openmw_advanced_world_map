@@ -341,16 +341,16 @@ local function createMarkers(widget, cellId)
             local imId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "marker")
             local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
 
-            local cId = dt.destCellId
+            local cId = dt.dCId
             this.entranceMarkersByDestCellId[cId] = this.entranceMarkersByDestCellId[cId] or {}
             this.markersByName[dt.name] = this.markersByName[dt.name] or {}
-            this.markersByDoorHash[dt.doorHash] = this.markersByDoorHash[dt.doorHash] or {}
+            this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
 
             local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
 
             local color
-            if discoveredLocs.isDiscovered(dt.destCellId) then
-                if discoveredLocs.isVisited(dt.destCellId) then
+            if discoveredLocs.isDiscovered(dt.dCId) then
+                if discoveredLocs.isVisited(dt.dCId) then
                     color = config.data.ui.defaultLightColor
                 else
                     color = config.data.ui.defaultColor
@@ -373,7 +373,7 @@ local function createMarkers(widget, cellId)
                 visible = isCellDiscovered,
                 userData = {
                     type = commonData.doorDescrMarkerType,
-                    cellId = dt.destCellId,
+                    cellId = dt.dCId,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                 },
@@ -381,8 +381,8 @@ local function createMarkers(widget, cellId)
             if textMarkerHandler then
                 table.insert(this.entranceMarkersByDestCellId[cId], textMarkerHandler)
                 table.insert(this.markersByName[dt.name], textMarkerHandler)
-                table.insert(this.markersByDoorHash[dt.doorHash], textMarkerHandler)
-                if disabledDoors.contains(dt.doorHash) then
+                table.insert(this.markersByDoorHash[dt.dHash], textMarkerHandler)
+                if disabledDoors.contains(dt.dHash) then
                     updateDoorMarkerVisibility(textMarkerHandler, false)
                 end
                 this.markerById[textId] = textMarkerHandler
@@ -390,13 +390,13 @@ local function createMarkers(widget, cellId)
 
             local tooltipContent = ui.content{}
 
-            if dt.fullName ~= "" then
+            if dt.fName ~= "" then
                 local tooltipWidth = math.max(200,
-                    math.min(screenSize.x / 6, stringLib.length(dt.fullName) * config.data.ui.fontSize * config.data.ui.textHeightMul))
+                    math.min(screenSize.x / 6, stringLib.length(dt.fName) * config.data.ui.fontSize * config.data.ui.textHeightMul))
                 tooltipContent:add{
                     type = ui.TYPE.TextEdit,
                     props = {
-                        text = dt.fullName,
+                        text = dt.fName,
                         textColor = config.data.ui.defaultColor,
                         textSize = config.data.ui.fontSize,
                         anchor = util.vector2(0.5, 0),
@@ -414,7 +414,7 @@ local function createMarkers(widget, cellId)
             local imageMarkerHandler
             imageMarkerHandler = widget:createImageMarker{
                 id = imId,
-                texture = dt.isDestLikeEx and mapMarker45Texture or mapMarkerTexture,
+                texture = dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
                 color = color,
                 useCache = true,
                 layerId = widget.LAYER.marker,
@@ -426,7 +426,7 @@ local function createMarkers(widget, cellId)
                 visible = isCellDiscovered,
                 userData = {
                     type = commonData.doorMarkerType,
-                    cellId = dt.destCellId,
+                    cellId = dt.dCId,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                 },
@@ -437,9 +437,9 @@ local function createMarkers(widget, cellId)
                             return
                         end
 
-                        this.activeMenuMeta:updateMapWidgetCell(dt.destCellId)
-                        if this.activeMenuMeta.mapWidget and dt.destPos then
-                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.destPos)
+                        this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
+                        if this.activeMenuMeta.mapWidget and dt.dPos then
+                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
                         end
 
                         eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
@@ -465,8 +465,8 @@ local function createMarkers(widget, cellId)
             if imageMarkerHandler then
                 table.insert(this.entranceMarkersByDestCellId[cId], imageMarkerHandler)
                 table.insert(this.markersByName[dt.name], imageMarkerHandler)
-                table.insert(this.markersByDoorHash[dt.doorHash], imageMarkerHandler)
-                if disabledDoors.contains(dt.doorHash) then
+                table.insert(this.markersByDoorHash[dt.dHash], imageMarkerHandler)
+                if disabledDoors.contains(dt.dHash) then
                     updateDoorMarkerVisibility(imageMarkerHandler, false)
                 end
                 this.markerById[imId] = imageMarkerHandler

@@ -32,17 +32,17 @@ this.worldMapTileRectangles = {}
 ---@field count integer
 
 ---@class advancedWorldMap.dynamicDataHandler.entranceData
----@field pos any
----@field cellId string
----@field isExterior boolean
----@field isLikeEx boolean
----@field destCellId string
----@field destPos any
----@field isDestEx boolean
----@field isDestLikeEx boolean
----@field name string
----@field fullName string
----@field doorHash string
+---@field pos any position
+---@field cId string cell id
+---@field isEx boolean is in exterior cell
+---@field isLEx boolean is destination in like exterior cell
+---@field dCId string destination cell id
+---@field dPos any destination position
+---@field isDEx boolean is destination cell exterior
+---@field isDLEx boolean is destination cell like exterior
+---@field name string destination cell name
+---@field fName string destination cell full name
+---@field dHash string door hash
 
 local function isContentFile(name)
     name = name:lower()
@@ -250,16 +250,16 @@ local function buildData()
             ---@type advancedWorldMap.dynamicDataHandler.entranceData
             entrances[cell.id][doorHash] = {
                 pos = door.position,
-                cellId = cell.id,
-                isExterior = cell.isExterior,
-                destCellId = dest.id,
-                destPos = destPos,
-                isDestEx = dest.isExterior,
+                cId = cell.id,
+                isEx = cell.isExterior,
+                dCId = dest.id,
+                dPos = destPos,
+                isDEx = dest.isExterior,
                 name = name,
-                fullName = getCellName(dest),
-                doorHash = doorHash,
-                isDestLikeEx = dest.isExterior or dest:hasTag("QuasiExterior"),
-                isLikeEx = cell.isExterior or cell:hasTag("QuasiExterior"),
+                fName = getCellName(dest),
+                dHash = doorHash,
+                isDLEx = dest.isExterior or dest:hasTag("QuasiExterior"),
+                isLEx = cell.isExterior or cell:hasTag("QuasiExterior"),
             }
 
             ::continue::

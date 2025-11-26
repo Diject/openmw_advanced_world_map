@@ -193,10 +193,10 @@ local function getAvailableInteriorNamesFromInterior(cellId, checked, res)
     checked[cellId] = true
 
     for _, destDt in pairs(mapDataHandler.entrances[cellId] or {}) do
-        if not checked[destDt.destCellId] then
-            if not destDt.isDestEx then
-                res[destDt.destCellId] = destDt.name
-                getAvailableInteriorNamesFromInterior(destDt.destCellId, checked, res)
+        if not checked[destDt.dCId] then
+            if not destDt.isDEx then
+                res[destDt.dCId] = destDt.name
+                getAvailableInteriorNamesFromInterior(destDt.dCId, checked, res)
             end
         end
     end
@@ -214,12 +214,12 @@ local function getAvailableExteriorNamesFromInterior(cellId, checked, res)
     checked[cellId] = true
 
     for _, destDt in pairs(mapDataHandler.entrances[cellId] or {}) do
-        if not checked[destDt.destCellId] then
-            if destDt.isDestEx then
-                res[destDt.destCellId] = res[destDt.destCellId] or {}
-                res[destDt.destCellId][cellId] = destDt.name
+        if not checked[destDt.dCId] then
+            if destDt.isDEx then
+                res[destDt.dCId] = res[destDt.dCId] or {}
+                res[destDt.dCId][cellId] = destDt.name
             else
-                getAvailableExteriorNamesFromInterior(destDt.destCellId, checked, res)
+                getAvailableExteriorNamesFromInterior(destDt.dCId, checked, res)
             end
         end
     end
@@ -236,7 +236,7 @@ local function getWorldEntrancesForCell(cellId)
     local exteriorCells = getAvailableExteriorNamesFromInterior(cellId)
     for exCellId, from in pairs(exteriorCells) do
         for _, dt in pairs(mapDataHandler.entrances[exCellId] or {}) do
-            if from[dt.destCellId] then
+            if from[dt.dCId] then
                 res[getPosHash(nil, dt.pos)] = dt
             end
         end
@@ -290,19 +290,19 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
         if inInteriors then
             if isExterior then
                 for _, dt in pairs(mapDataHandler.entrances[cellId] or {}) do
-                    if checked[dt.destCellId] then goto continue end
-                    checked[dt.destCellId] = true
+                    if checked[dt.dCId] then goto continue end
+                    checked[dt.dCId] = true
 
                     local destNameLower = stringLib.utf8_lower(dt.name)
-                    if destNameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(dt.destCellId)) then
+                    if destNameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
                         table.insert(res, {
-                            text = dt.fullName,
-                            cellId = not dt.isExterior and dt.cellId or nil,
+                            text = dt.fName,
+                            cellId = not dt.isEx and dt.cId or nil,
                             pos = dt.pos,
                             priority = 0,
                             color = config.data.ui.foundMarkerColor
                         })
-                        targetCells[dt.destCellId] = true
+                        targetCells[dt.dCId] = true
                     end
 
                     ::continue::
@@ -542,7 +542,7 @@ local function create(menu)
                     local entrances = getWorldEntrancesForCell(dt.cellId)
                     for pHash, entranceDt in pairs(entrances) do
                         addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.foundMarkerLightColor, text, true)
-                        targetCells[entranceDt.destCellId] = true
+                        targetCells[entranceDt.dCId] = true
                     end
                 end
 
