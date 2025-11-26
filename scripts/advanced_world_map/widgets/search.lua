@@ -59,7 +59,7 @@ end
 
 
 ---@param mapWidget advancedWorldMap.ui.mapWidgetMeta
-local function createTemporaryMarker(id, mapWidget, pos, color, text)
+local function createTemporaryMarker(id, mapWidget, pos, color, text, showZoomIn)
     if temporaryMarkers[id] then return end
 
     local h = mapWidget:createImageMarker{
@@ -70,6 +70,7 @@ local function createTemporaryMarker(id, mapWidget, pos, color, text)
         anchor = util.vector2(0.5, 1),
         size = util.vector2(config.data.legend.markerSize * 2.5, config.data.legend.markerSize * 5),
         showWhenZoomedOut = true,
+        showWhenZoomedIn = showZoomIn,
         tooltipContent = text and ui.content{
             {
                 type = ui.TYPE.TextEdit,
@@ -204,7 +205,7 @@ local function getAvailableInteriorNamesFromInterior(cellId, checked, res)
 end
 
 
----@return table<string, string> res by cell id - cell name
+---@return table<string, table<string, string>> res by destination cell id - by cell id - cell name
 local function getAvailableExteriorNamesFromInterior(cellId, checked, res)
     checked = checked or {}
     res = res or {}
@@ -215,7 +216,8 @@ local function getAvailableExteriorNamesFromInterior(cellId, checked, res)
     for _, destDt in pairs(mapDataHandler.entrances[cellId] or {}) do
         if not checked[destDt.destCellId] then
             if destDt.isDestEx then
-                res[destDt.destCellId] = destDt.name
+                res[destDt.destCellId] = res[destDt.destCellId] or {}
+                res[destDt.destCellId][cellId] = destDt.name
             else
                 getAvailableExteriorNamesFromInterior(destDt.destCellId, checked, res)
             end
@@ -232,9 +234,11 @@ local function getWorldEntrancesForCell(cellId)
     local res = {}
 
     local exteriorCells = getAvailableExteriorNamesFromInterior(cellId)
-    for exCellId, _ in pairs(exteriorCells) do
+    for exCellId, from in pairs(exteriorCells) do
         for _, dt in pairs(mapDataHandler.entrances[exCellId] or {}) do
-            res[getPosHash(nil, dt.pos)] = dt
+            if from[dt.destCellId] then
+                res[getPosHash(nil, dt.pos)] = dt
+            end
         end
     end
 
@@ -518,13 +522,14 @@ local function create(menu)
                 searchData[posHash] = searchData[posHash] or {}
                 table.insert(searchData[posHash], dt)
 
-                local function addWorldMarkerData(pHash, pos, color, tx)
+                local function addWorldMarkerData(pHash, pos, color, tx, showZoomIn)
                     if not worldMarkersData[pHash] then
                         worldMarkersData[pHash] = {
                             posHash = pHash,
                             pos = pos,
                             color = color,
                             text = tx,
+                            showZoomIn = showZoomIn,
                         }
                     elseif worldMarkersData[pHash].color ~= color then
                         worldMarkersData[pHash].color = config.data.ui.foundMarkerColor
@@ -536,7 +541,7 @@ local function create(menu)
                 else
                     local entrances = getWorldEntrancesForCell(dt.cellId)
                     for pHash, entranceDt in pairs(entrances) do
-                        addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.foundMarkerLightColor, text)
+                        addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.foundMarkerLightColor, text, true)
                         targetCells[entranceDt.destCellId] = true
                     end
                 end
@@ -610,7 +615,7 @@ local function create(menu)
             local worldMapWidget = menu:getCachedMapWidget()
             if worldMapWidget then
                 for posHash, dt in pairs(worldMarkersData) do
-                    createTemporaryMarker(posHash, worldMapWidget, dt.pos, dt.color, dt.text)
+                    createTemporaryMarker(posHash, worldMapWidget, dt.pos, dt.color, dt.text, dt.showZoomIn)
                 end
             else
                 eventSys.registerHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
