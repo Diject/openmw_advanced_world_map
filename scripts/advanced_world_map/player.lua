@@ -113,7 +113,11 @@ local function toggleMenu()
         end
     else
         menuMode.activate()
-        menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{})
+        menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
+            onClose = function ()
+                menuMode.deactivate()
+            end
+        })
     end
 end
 

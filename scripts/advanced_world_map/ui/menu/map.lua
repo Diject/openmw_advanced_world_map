@@ -473,7 +473,7 @@ function this.create(params)
                 events = {
                     mouseRelease = async:callback(function(_, layout)
                         if params.onClose then params.onClose() end
-                        meta.menu:destroy()
+                        meta:close()
                     end),
                 }
             }
