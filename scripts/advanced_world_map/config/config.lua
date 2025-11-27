@@ -27,9 +27,9 @@ this.default = {
         markerSize = 6,
         onlyDiscovered = false,
         alpha = {
-            region = 0.12,
-            entrance = 0.8,
-            city = 0.4,
+            region = 12,
+            entrance = 80,
+            city = 40,
         },
         visibility = {
             regions = true,
