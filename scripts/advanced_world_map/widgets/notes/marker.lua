@@ -37,7 +37,8 @@ function this.create(data, mapWidget, update)
         if not this.lastMenu then return end
 
         -- Get the map widget from the menu cache by the cell id.
-        -- Currently, all map widgets that have been opened are stored in the menu cache
+        -- Currently, all map widgets that have been opened are stored in the menu cache.
+        -- But the cache may be cleared when the mod settings are changed.
         mapWidget = this.lastMenu:getCachedMapWidget(data.cellId)
         if not mapWidget then return end
     end

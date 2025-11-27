@@ -4,6 +4,7 @@ local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
 local types = require("openmw.types")
+local storage = require("openmw.storage")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -30,6 +31,25 @@ local this = {}
 
 this.cachedMapWidgetLayout = {}
 this.cachedMapWidgetMetatable = {}
+
+local function clearMapWidgetCache()
+    this.cachedMapWidgetLayout = {}
+    this.cachedMapWidgetMetatable = {}
+end
+
+
+storage.playerSection(commonData.configTilesetSectionName):subscribe(async:callback(function(_, id)
+    clearMapWidgetCache()
+end))
+
+storage.playerSection(commonData.configLegendSectionName):subscribe(async:callback(function(_, id)
+    clearMapWidgetCache()
+end))
+
+storage.playerSection(commonData.configDataSectionName):subscribe(async:callback(function(_, id)
+    clearMapWidgetCache()
+end))
+
 
 ---@type advancedWorldMap.ui.menu.map
 this.activeMenuMeta = nil
@@ -239,6 +259,7 @@ function menuMeta:updateMapWidgetCell(cellId)
     end
 
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
+    self.mapWidget:updateMarkers()
 
     if isNew then
         eventSys.triggerEvent(eventSys.EVENT.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
