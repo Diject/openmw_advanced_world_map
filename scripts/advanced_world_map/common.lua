@@ -10,6 +10,12 @@ this.settingPage = "AdvancedWorldMap:Settings"
 this.inputBindingsSection = "AdvWMap:InputBindings"
 
 this.configMainSectionName = "Settings:AdvWMap:Main"
+this.configLegendSectionName = "Settings:AdvWMap:Legend"
+this.configTilesetSectionName = "Settings:AdvWMap:Tileset"
+this.configFastTravelSectionName = "Settings:AdvWMap:FastTravel"
+this.configDataSectionName = "Settings:AdvWMap:Data"
+this.configUISectionName = "Settings:AdvWMap:UI"
+this.configMiscSectionName = "Settings:AdvWMap:Misc"
 
 this.menuKeyId = "AdvWMap:menuKey"
 

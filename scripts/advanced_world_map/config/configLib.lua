@@ -10,8 +10,16 @@ local this = {}
 
 this.data = require("scripts.advanced_world_map.config.config").data
 
+local defaultStorage = storage.playerSection(commonData.configMiscSectionName)
+
 this.storageSections = {
     storage.playerSection(commonData.configMainSectionName),
+    storage.playerSection(commonData.configLegendSectionName),
+    storage.playerSection(commonData.configTilesetSectionName),
+    storage.playerSection(commonData.configFastTravelSectionName),
+    storage.playerSection(commonData.configDataSectionName),
+    storage.playerSection(commonData.configUISectionName),
+    defaultStorage,
 }
 
 
@@ -38,10 +46,15 @@ end
 
 
 function this.setValue(str, val)
+    local wasSet = false
     for _, section in pairs(this.storageSections) do
         if section:get(str) ~= nil then
             section:set(str, val)
+            wasSet = true
         end
+    end
+    if not wasSet then
+        defaultStorage:set(str, val)
     end
     return tableLib.setValueByPath(this.data, str, val)
 end
