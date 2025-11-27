@@ -41,6 +41,15 @@ I.Settings.registerPage{
 ---@field text string|nil
 ---@field disabled boolean|nil
 
+---@class questGuider.settings.selectSetting
+---@field key string
+---@field name string l10n
+---@field description string|nil l10n
+---@field default string|nil
+---@field l10n string|nil
+---@field items string[]
+---@field disabled boolean|nil
+
 
 ---@param args questGuider.settings.boolSetting
 local function boolSetting(args)
@@ -76,34 +85,6 @@ local function numberSetting(args)
     return data
 end
 
-local lableId = 0
----@param args questGuider.settings.label
-local function textLabel(args)
-    local data = {
-        renderer = "QGL:Renderer:label",
-        key = "__dummy__"..tostring(lableId),
-        name = "empty",
-        description = args.description,
-        disabled = args.disabled,
-    }
-    lableId = lableId + 1
-    return data
-end
-
-local function text(args)
-    local data = {
-        renderer = "QGL:Renderer:text",
-        key = "__dummy__"..tostring(lableId),
-        name = "empty",
-        description = args.description,
-        disabled = args.disabled,
-        text = args.text,
-    }
-    lableId = lableId + 1
-    return data
-end
-
-
 local function inputKey(args)
     local data = {
         renderer = "AdvWMap:inputBinding",
@@ -132,16 +113,123 @@ local function color(args)
     return data
 end
 
+---@param args questGuider.settings.selectSetting
+local function selectSetting(args)
+    return {
+        key = args.key,
+        renderer = "select",
+        name = args.name,
+        description = args.description,
+        default = args.default or "",
+        argument = {
+            l10n = args.l10n,
+            items = args.items,
+            disabled = args.disabled,
+        }
+    }
+end
+
+
 
 
 I.Settings.registerGroup{
     key = commonData.configMainSectionName,
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
-    name = "Main",
+    name = "MainSettings",
     permanentStorage = true,
     order = 0,
     settings = {
-        inputKey{key = "main.menuKey", name = "customJournalKeyName", description = "customJournalKeyDescription", action = commonData.menuKeyId, default = config.default.main.menuKey},
+        inputKey{key = "main.menuKey", name = "SettingMainMenuKey", description = "SettingMainMenuKeyDescription", action = commonData.menuKeyId, default = config.default.main.menuKey},
+        numberSetting{key = "main.updateFrequency", name = "SettingUpdateFrequency", description = "SettingUpdateFrequencyDescription", default = config.default.main.updateFrequency, min = 1},
+        numberSetting{key = "main.discoveryRadius", name = "SettingDiscoveryRadius", description = "SettingDiscoveryRadiusDescription", default = config.default.main.discoveryRadius, min = 500, max = 10000, integer = true},
+    },
+}
+
+
+I.Settings.registerGroup{
+    key = commonData.configDataSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "DataSettings",
+    permanentStorage = true,
+    order = 1,
+    settings = {
+        selectSetting{key = "data.initializer", name = "SettingDataInitializer", description = "SettingDataInitializerDescription", default = config.default.data.initializer, l10n = commonData.l10nKey, items = commonData.dataInitializerTypes},
+    },
+}
+
+
+I.Settings.registerGroup{
+    key = commonData.configTilesetSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "TilesetSettings",
+    description = "TilesetSettingsDescription",
+    permanentStorage = true,
+    order = 2,
+    settings = {
+        boolSetting{key = "tileset.onlyDiscovered", name = "SettingTilesetOnlyDiscovered", description = "SettingTilesetOnlyDiscoveredDescription", default = config.default.tileset.onlyDiscovered},
+        numberSetting{key = "tileset.zoomToShow", name = "SettingTilesetZoomToShow", description = "SettingTilesetZoomToShowDescription", default = config.default.tileset.zoomToShow, min = 1, max = 12, integer = true},
+    },
+}
+
+
+I.Settings.registerGroup{
+    key = commonData.configLegendSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "LegendSettings",
+    description = "LegendSettingsDescription",
+    permanentStorage = true,
+    order = 3,
+    settings = {
+        boolSetting{key = "legend.onlyDiscovered", name = "SettingLegendOnlyDiscovered", description = "SettingLegendOnlyDiscoveredDescription", default = config.default.legend.onlyDiscovered},
+        numberSetting{key = "legend.markerSize", name = "SettingLegendMarkerSize", description = "SettingLegendMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},
+        numberSetting{key = "legend.alpha.region", name = "SettingLegendRegionAlpha", description = "SettingLegendRegionAlphaDescription", default = config.default.legend.alpha.region, min = 0, max = 100},
+        numberSetting{key = "legend.alpha.city", name = "SettingLegendCityAlpha", description = "SettingLegendCityAlphaDescription", default = config.default.legend.alpha.city, min = 0, max = 100},
+        numberSetting{key = "legend.alpha.entrance", name = "SettingLegendEntranceAlpha", description = "SettingLegendEntranceAlphaDescription", default = config.default.legend.alpha.entrance, min = 0, max = 100},
+    },
+}
+
+
+I.Settings.registerGroup{
+    key = commonData.configFastTravelSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "FastTravelSettings",
+    permanentStorage = true,
+    order = 4,
+    settings = {
+        boolSetting{key = "fastTravel.enabled", name = "SettingFastTravelEnabled", description = "SettingFastTravelEnabledDescription", default = config.default.fastTravel.enabled},
+        boolSetting{key = "fastTravel.onlyDiscovered", name = "SettingFastTravelOnlyDiscovered", description = "SettingFastTravelOnlyDiscoveredDescription", default = config.default.fastTravel.onlyDiscovered},
+        boolSetting{key = "fastTravel.allowToInterior", name = "SettingFastTravelAllowToInterior", description = "SettingFastTravelAllowToInteriorDescription", default = config.default.fastTravel.allowToInterior},
+        numberSetting{key = "fastTravel.baseMagickaCost", name = "SettingFastTravelBaseMagickaCost", description = "SettingFastTravelBaseMagickaCostDescription", default = config.default.fastTravel.baseMagickaCost, min = 0},
+        numberSetting{key = "fastTravel.additionalCost", name = "SettingFastTravelAdditionalCost", description = "SettingFastTravelAdditionalCostDescription", default = config.default.fastTravel.additionalCost, min = 0},
+    },
+}
+
+
+I.Settings.registerGroup{
+    key = commonData.configUISectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "UISettings",
+    permanentStorage = true,
+    order = 5,
+    settings = {
+        numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
+        numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},
+        numberSetting{key = "ui.scrollArrowSize", name = "SettingUIScrollBarSize", description = "SettingUIScrollBarSizeDescription", default = config.default.ui.scrollArrowSize, min = 1, max = 100, integer = true},
+        numberSetting{key = "ui.mouseScrollAmount", name = "SettingUIMouseScrollAmount", description = "SettingUIMouseScrollAmountDescription", default = config.default.ui.mouseScrollAmount, min = 1, max = 500, integer = true},
+        color{key = "ui.defaultColor", name = "SettingUIDefaultColor", description = "SettingUIDefaultColorDescription", default = config.default.ui.defaultColor},
+        color{key = "ui.whiteColor", name = "SettingUIWhiteColor", description = "SettingUIWhiteColorDescription", default = config.default.ui.whiteColor},
+        color{key = "ui.backgroundColor", name = "SettingUIBackgroundColor", description = "SettingUIBackgroundColorDescription", default = config.default.ui.backgroundColor},
+        color{key = "ui.defaultDarkColor", name = "SettingUIDefaultDarkColor", description = "SettingUIDefaultDarkColorDescription", default = config.default.ui.defaultDarkColor},
+        color{key = "ui.defaultLightColor", name = "SettingUIDefaultLightColor", description = "SettingUIDefaultLightColorDescription", default = config.default.ui.defaultLightColor},
+        color{key = "ui.foundMarkerColor", name = "SettingUIFoundMarkerColor", description = "SettingUIFoundMarkerColorDescription", default = config.default.ui.foundMarkerColor},
+        color{key = "ui.foundMarkerLightColor", name = "SettingUIFoundMarkerLightColor", description = "SettingUIFoundMarkerLightColorDescription", default = config.default.ui.foundMarkerLightColor},
+        color{key = "ui.textShadowColor", name = "SettingUITextShadowColor", description = "SettingUITextShadowColorDescription", default = config.default.ui.textShadowColor},
+        color{key = "ui.defaultTextureColor", name = "SettingUIDefaultTextureColor", description = "SettingUIDefaultTextureColorDescription", default = config.default.ui.defaultTextureColor},
     },
 }
