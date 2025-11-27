@@ -37,7 +37,7 @@ I.Settings.registerRenderer("AdvWMap:inputBinding", function(value, set, argumen
             autoSize = false,
             multiline = true,
             wordWrap = true,
-            textAlignH = ui.ALIGNMENT.Center,
+            textAlignH = ui.ALIGNMENT.End,
             textAlignV = ui.ALIGNMENT.Center,
         },
         events = {
