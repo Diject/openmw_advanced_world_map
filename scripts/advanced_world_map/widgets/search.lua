@@ -754,7 +754,6 @@ local function create(menu)
                     props = {
                         relativeSize = util.vector2(1, 1),
                         color = config.data.ui.backgroundColor,
-                        alpha = math.max(config.data.ui.headerBackgroundAlpha / 100, 0.25),
                         resource = uiUtils.whiteTexture,
                     },
                 },
