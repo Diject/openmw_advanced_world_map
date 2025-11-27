@@ -149,6 +149,8 @@ local function addNearbyDoors()
     end
 end
 
+addNearbyDoors()
+
 
 local function discoverNearby()
     for _, ref in pairs(nearbyDoors) do
@@ -158,7 +160,7 @@ local function discoverNearby()
         end
 
         local cell = types.Door.destCell(ref)
-        if not cell.isExterior and not discoveredLocs.isDiscovered(cell.id) then
+        if not discoveredLocs.isDiscovered(cell.id) then
             local newDiscovered = discoveredLocs.addDiscoveredCell(cell)
             if newDiscovered then
                 markers.updateDiscovered(newDiscovered)
@@ -243,12 +245,13 @@ return {
                 lastPlayerCellId = self.cell.id
 
                 addNearbyDoors()
+                discoverNearby()
 
                 local newVisited = discoveredLocs.addVisitedCell(self.cell)
                 if newVisited then
                     markers.updateDiscovered(newVisited)
                 end
-                local newDiscovered = discoveredLocs.addDiscoveredCell(self.cell)
+                local newDiscovered = discoveredLocs.addDiscoveredCell(self.cell, true)
                 if newDiscovered then
                     markers.updateDiscovered(newDiscovered)
                 end

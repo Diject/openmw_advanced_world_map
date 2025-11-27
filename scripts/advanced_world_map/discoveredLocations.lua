@@ -38,12 +38,12 @@ function this.addVisitedCell(cell)
 end
 
 
-function this.addDiscoveredCell(cell)
+function this.addDiscoveredCell(cell, addNearbyExteriors)
     if this.blockDiscovery then return end
 
     local newDiscovered = {}
 
-    if cell.isExterior then
+    if cell.isExterior and addNearbyExteriors then
         for i = -1, 1 do
             for j = -1, 1 do
                 local cId = commonData.exteriorCellIdFormat:format(cell.gridX + i, cell.gridY + j)
