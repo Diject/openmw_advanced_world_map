@@ -30,76 +30,90 @@ function this.calcTooltipPosAnchor(cursorPos)
     return tooltipPos, anchor
 end
 
----@return boolean? new
-function this.createOrMove(coord, parent, layoutContent)
-    if not parent.userData then parent.userData = {} end
 
+function this.create(coord, parent, layoutContent)
     local position, anchor = this.calcTooltipPosAnchor(coord.position)
 
-    if not parent.userData.tooltip then
-        this.destroyLast()
-        if not layoutContent or #layoutContent == 0 then return end
+    this.destroyLast()
+    if not layoutContent or #layoutContent == 0 then return end
 
-        local tooltipLayout = {
-            template = customTemplates.boxSolid,
-            layer = "Notification",
-            name = "AdvWMap:tooltip",
-            props = {
-                position = position,
-                anchor = anchor,
-            },
-            content = ui.content {
-                {
-                    type = ui.TYPE.Flex,
-                    props = {
-                        horizontal = false,
-                        align = ui.ALIGNMENT.Center,
-                    },
-                    content = layoutContent,
-                }
+    local tooltipLayout = {
+        template = customTemplates.boxSolid,
+        layer = "Notification",
+        name = "AdvWMap:tooltip",
+        props = {
+            position = position,
+            anchor = anchor,
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = false,
+                    align = ui.ALIGNMENT.Center,
+                },
+                content = layoutContent,
             }
         }
+    }
 
-        local tooltip = ui.create(tooltipLayout)
-        parent.userData["tooltip"] = tooltip
-        this.lastTooltip = tooltip
+    local tooltip = ui.create(tooltipLayout)
+    parent.userData["tooltip"] = tooltip
+    this.lastTooltip = tooltip
 
-        if core.isWorldPaused() then
-            local timer = async:newUnsavableSimulationTimer(0.1, function ()
+    if core.isWorldPaused() then
+        local timer = async:newUnsavableSimulationTimer(0.1, function ()
+            if not parent.userData.tooltip then return end
+            local tooltipHandler = parent.userData.tooltip
+            parent.userData.tooltip = nil
+            this.lastTooltip = nil
+            tooltipHandler:destroy()
+        end)
+    else
+        local timer
+        timer = time.runRepeatedly(function ()
+            if UI.getMode() == nil then
+                timer()
                 if not parent.userData.tooltip then return end
                 local tooltipHandler = parent.userData.tooltip
                 parent.userData.tooltip = nil
                 this.lastTooltip = nil
                 tooltipHandler:destroy()
-            end)
-        else
-            local timer
-            timer = time.runRepeatedly(function ()
-                if UI.getMode() == nil then
-                    timer()
-                    if not parent.userData.tooltip then return end
-                    local tooltipHandler = parent.userData.tooltip
-                    parent.userData.tooltip = nil
-                    this.lastTooltip = nil
-                    tooltipHandler:destroy()
-                end
-            end, 0.2)
-        end
-
-        return true
+            end
+        end, 0.2)
     end
 
+    return true
+end
+
+
+function this.move(coord, parent)
+    if not parent.userData then parent.userData = {} end
 
     if not parent.userData.tooltip or not parent.userData.tooltip.layout then
         parent.userData.tooltip = nil
         return
     end
 
+    local position, anchor = this.calcTooltipPosAnchor(coord.position)
+
     local props = parent.userData.tooltip.layout.props
 
     props.position, props.anchor = position, anchor
 
     parent.userData.tooltip:update()
+end
+
+
+---@return boolean? new
+function this.createOrMove(coord, parent, layoutContent)
+    if not parent.userData then parent.userData = {} end
+
+    if not parent.userData.tooltip and this.create(coord, parent, layoutContent) then
+        return
+    end
+
+    this.move(coord, parent)
 end
 
 
