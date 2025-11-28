@@ -27,6 +27,7 @@ local cellLib = require("scripts.advanced_world_map.utils.cell")
 local log = require("scripts.advanced_world_map.utils.log")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
+local interval = require("scripts.advanced_world_map.ui.interval")
 
 local mapElement = require("scripts.advanced_world_map.ui.mapElement")
 
@@ -1039,12 +1040,15 @@ end
 
 function mapWidgetMeta:setUpdateFunction(func)
     self.update = func
+    self.layout.userData.lastMousePos = nil
 end
 
 
 function mapWidgetMeta:closeRightMouseMenu()
-    local interactiveLayout = self:getLayerLayout(this.layerId.marker)
-    uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
+    if not self.layout.userData.hasActiveMenu then return end
+    local layout = self.layout.content[2]
+    uiUtils.removeFromContent(layout.content, commonData.rightClickMenuId)
+    self.layout.userData.hasActiveMenu = nil
 end
 
 
@@ -1411,12 +1415,7 @@ function this.new(params)
         },
         events = {
             mousePress = async:callback(function(e, layout, markerElement)
-                if meta.layout.userData.hasActiveMenu then
-                    local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
-                    uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
-                    meta:update()
-                    meta.layout.userData.hasActiveMenu = nil
-                end
+                meta:closeRightMouseMenu()
 
                 e.marker = markerElement
                 if markerElement then
@@ -1445,8 +1444,8 @@ function this.new(params)
 
                 if e.button == 3 then
                     if menuMode.isMenuInteractive() and eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
-                        local interactiveLayout = meta:getLayerLayout(this.layerId.marker)
-                        uiUtils.removeFromContent(interactiveLayout.content, commonData.rightClickMenuId)
+                        local layersLayout = main.content[2]
+                        uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
 
                         local relPos = meta:getRelativePositionOfCursor()
                         local lay = {
@@ -1470,7 +1469,15 @@ function this.new(params)
                         })
 
                         if #layContent > 0 then
-                            interactiveLayout.content:add(lay)
+                            pcall(function ()
+                                local i = 2
+                                while (rawget(lay.content, i)) do
+                                    lay.content:insert(i, interval(0, config.data.ui.fontSize / 3))
+                                    i = i + 2
+                                end
+                            end)
+
+                            layersLayout.content:add(lay)
                             meta:update()
                             meta.layout.userData.hasActiveMenu = true
                         end
