@@ -98,7 +98,7 @@ local function updateDoorMarkerVisibility(marker, visible)
         end
         userData.disabled = not visible
     elseif userData.type == commonData.doorMarkerType then
-        marker:setAlpha(visible and 1 or 0.25)
+        marker:setAlpha(visible and config.data.legend.alpha.entrance or config.data.legend.alpha.entrance / 4)
     end
 end
 

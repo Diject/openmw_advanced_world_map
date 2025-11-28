@@ -455,14 +455,14 @@ local function create(menu)
 
         local scrollBoxContent = ui.content{}
 
-        local scrollBoxSize = util.vector2(size.x, size.y - (config.data.ui.fontSize * 4 + 4))
+        local scrollBoxSize = util.vector2(size.x, size.y - (config.data.ui.fontSize * 5))
 
         local scrollBoxLayout = scrollBox{
             updateFunc = menu.update,
             contentHeight = 0,
             leftOffset = 2,
             size = scrollBoxSize,
-            position = util.vector2(0, config.data.ui.fontSize * 4 + 4),
+            position = util.vector2(0, config.data.ui.fontSize * 5),
             scrollAmount = config.data.ui.fontSize * 2,
             content = scrollBoxContent,
         }
@@ -630,7 +630,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("searchShowUnrevealed"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize + 9),
+            position = util.vector2(2, config.data.ui.fontSize * 1.8),
             checked = showUnrevealed,
             event = function (checked, layout)
                 showUnrevealed = checked
@@ -660,7 +660,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("searchAllLocationsCheckbox"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize * 2 + 12),
+            position = util.vector2(2, config.data.ui.fontSize * 3.3),
             checked = searchAllLocations,
             event = function (checked, layout)
                 searchAllLocations = checked
@@ -690,7 +690,7 @@ local function create(menu)
         searchBarLayout = {
             type = ui.TYPE.Widget,
             props = {
-                size = util.vector2(size.x, config.data.ui.fontSize + 4),
+                size = util.vector2(size.x, config.data.ui.fontSize * 1.3 + 4),
             },
             content = ui.content {
                 {
@@ -698,10 +698,10 @@ local function create(menu)
                     props = {
                         text = "",
                         anchor = util.vector2(0, 0.5),
-                        size = util.vector2(size.x - 114, config.data.ui.fontSize),
+                        size = util.vector2(size.x - 114, config.data.ui.fontSize * 1.3),
                         textAlignV = ui.ALIGNMENT.Center,
                         textSize = config.data.ui.fontSize,
-                        position = util.vector2(2, config.data.ui.fontSize / 2 + 2),
+                        position = util.vector2(2, config.data.ui.fontSize * 1.3 / 2 + 2),
                         textColor = config.data.ui.defaultColor,
                     },
                     events = {
@@ -727,7 +727,7 @@ local function create(menu)
                     size = util.vector2(100, config.data.ui.fontSize * 0.9),
                     textSize = config.data.ui.fontSize * 0.9,
                     anchor = util.vector2(1, 0.5),
-                    position = util.vector2(size.x - 2, config.data.ui.fontSize / 2 + 2),
+                    position = util.vector2(size.x - 2, config.data.ui.fontSize * 1.3 / 2 + 2),
                     event = function (layout)
                         fill(showUnrevealed, searchAllLocations)
                         menu.mapWidget:updateMarkers()
@@ -757,9 +757,9 @@ local function create(menu)
                         resource = uiUtils.whiteTexture,
                     },
                 },
+                searchBarLayout,
                 showUnrevealedCBLayout,
                 searchAllLocationsCBLayout,
-                searchBarLayout,
                 scrollBoxLayout,
                 borders()
             }
