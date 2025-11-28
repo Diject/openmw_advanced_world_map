@@ -9,6 +9,7 @@ local I = require("openmw.interfaces")
 local commonData = require("scripts.advanced_world_map.common")
 
 local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
+local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
 
 local bindingSection = storage.playerSection(commonData.inputBindingsSection)
@@ -99,33 +100,40 @@ return{
                 return
             end
 
-            local comb, keys = keyBinding.getKeyCombinationString()
+            local isFirstKey = recording.combLen == 0
+
+            local keyCode = keyCodes.getKeyboardKeyId(key.code)
+            local comb, keys = keyBinding.getKeyCombinationString(keyCode)
+
             if comb and #keys >= recording.combLen then
                 recording.combLen = #keys
                 recording.comb = comb
             end
 
-            keyBinding.onKeyRelease(key)
-
-            if not keyBinding.hasPressedKeys() then
+            if not isFirstKey and not keyBinding.hasPressedKeys() then
                 registerBinding()
             end
+
+            keyBinding.onKeyRelease(key)
         end,
 
         onMouseButtonRelease = function (buttonId)
             if not recording then return end
 
-            local comb, keys = keyBinding.getKeyCombinationString()
+            local isFirstKey = recording.combLen == 0
+
+            local keyCode = keyCodes.getMouseButtonId(buttonId)
+            local comb, keys = keyBinding.getKeyCombinationString(keyCode)
             if comb and #keys >= recording.combLen then
                 recording.combLen = #keys
                 recording.comb = comb
             end
 
-            keyBinding.onMouseButtonRelease(buttonId)
-
-            if not keyBinding.hasPressedKeys() and recording.combLen ~= 0 then
+            if not isFirstKey and not keyBinding.hasPressedKeys() then
                 registerBinding()
             end
+
+            keyBinding.onMouseButtonRelease(buttonId)
         end,
 
         onControllerButtonRelease = function (key)
@@ -136,17 +144,20 @@ return{
                 return
             end
 
-            local comb, keys = keyBinding.getKeyCombinationString()
+            local isFirstKey = recording.combLen == 0
+
+            local keyCode = keyCodes.getControllerButtonId(key)
+            local comb, keys = keyBinding.getKeyCombinationString(keyCode)
             if comb and #keys >= recording.combLen then
                 recording.combLen = #keys
                 recording.comb = comb
             end
 
-            keyBinding.onControllerButtonRelease(key)
-
-            if not keyBinding.hasPressedKeys() then
+            if not isFirstKey and not keyBinding.hasPressedKeys() then
                 registerBinding()
             end
+
+            keyBinding.onControllerButtonRelease(key)
         end
     },
 }

@@ -84,9 +84,7 @@ end
 function this.onKeyRelease(e)
     local keyId = keyCodes.getKeyboardKeyId(e.code)
 
-    if this.trigger(this.getKeyCombinationString()) then
-        this.resetPressed()
-    end
+    this.trigger(this.getKeyCombinationString(keyId))
 
     this.pressed[keyId] = nil
 end
@@ -94,9 +92,7 @@ end
 function this.onMouseButtonRelease(button)
     local buttonId = keyCodes.getMouseButtonId(button)
 
-    if this.trigger(this.getKeyCombinationString()) then
-        this.resetPressed()
-    end
+    this.trigger(this.getKeyCombinationString(buttonId))
 
     this.pressed[buttonId] = nil
 end
@@ -104,9 +100,7 @@ end
 function this.onControllerButtonRelease(id)
     local buttonId = keyCodes.getControllerButtonId(id)
 
-    if this.trigger(this.getKeyCombinationString()) then
-        this.resetPressed()
-    end
+    this.trigger(this.getKeyCombinationString(buttonId))
 
     this.pressed[buttonId] = nil
 end
@@ -114,13 +108,21 @@ end
 
 ---@return string?
 ---@return integer[]?
-function this.getKeyCombinationString()
+function this.getKeyCombinationString(lastCode)
     local combination = {}
-    for keyId, _ in pairs(this.pressed) do
-        table.insert(combination, keyId)
+    if lastCode then
+        table.insert(combination, lastCode)
     end
-    local str = keyCodes.getCombinationString(combination)
 
+    for keyId, _ in pairs(this.pressed) do
+        if keyCodes.isPressed(keyId) then
+            table.insert(combination, keyId)
+        else
+            this.pressed[keyId] = nil
+        end
+    end
+
+    local str = keyCodes.getCombinationString(combination)
     return str, combination
 end
 
@@ -133,7 +135,12 @@ end
 
 
 function this.hasPressedKeys()
-    return next(this.pressed) ~= nil
+    for keyId, _ in pairs(this.pressed) do
+        if keyCodes.isPressed(keyId) then
+            return true
+        end
+    end
+    return false
 end
 
 
