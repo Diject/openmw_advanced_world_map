@@ -18,6 +18,7 @@ local log = require("scripts.advanced_world_map.utils.log")
 local commonData = require("scripts.advanced_world_map.common")
 
 local configLib = require("scripts.advanced_world_map.config.configLib")
+local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
@@ -45,7 +46,7 @@ require("scripts.advanced_world_map.widgets.mapTypeLabel")
 require("scripts.advanced_world_map.widgets.markers")
 require("scripts.advanced_world_map.widgets.legend")
 require("scripts.advanced_world_map.widgets.search")
-require("scripts.advanced_world_map.widgets.fastTravel")
+local fastTravel = require("scripts.advanced_world_map.widgets.fastTravel")
 require("scripts.advanced_world_map.widgets.notes.note")
 local cellNameWidget = require("scripts.advanced_world_map.widgets.cellName")
 
@@ -67,6 +68,7 @@ local function onInit()
     playerPos.init()
     mapTextureHandler.init()
     discoveredLocs.init()
+    disabledDoors.init()
 end
 
 
@@ -172,6 +174,66 @@ local function discoverNearby()
 end
 
 time.runRepeatedly(discoverNearby, 0.42)
+
+
+local function fastTravelMessageCallback(data)
+    local followers = tableLib.copy(fastTravel.followers)
+    fastTravel.followers = {}
+
+    if next(fightingActors) ~= nil and debug.isAIEnabled() then
+        ui.showMessage(l10n("fastTravelWhileInCombat"))
+        return
+    end
+
+    local cost = configLib.data.fastTravel.baseMagickaCost * (1 + 0.5 * #followers)
+
+    cost = cost + data.worldDistance / 8192 * configLib.data.fastTravel.additionalCost
+    cost = cost + 2 * math.min(6, data.depthToPoint) * configLib.data.fastTravel.additionalCost
+    cost = cost + math.max(0, (types.Actor.getEncumbrance(self) - types.Actor.getCapacity(self)) / 5) *
+        configLib.data.fastTravel.additionalCost
+    cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
+    if data.isInSameInteriorBlock then
+        cost = cost * 0.6
+    end
+
+    menuHandler.destroyMenu(commonData.mapMenuId)
+
+    menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
+        message = data.message.."\n"..l10n("fastTraveMagickaCost"):format(cost),
+        relativeSize = util.vector2(0.25, 0.2),
+        yesCallback = function ()
+            local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
+            if currentMagicka < cost then
+                ui.showMessage(l10n("NotEnoughMagicka"))
+                return
+            end
+
+            types.Actor.stats.dynamic.magicka(self).current = currentMagicka - cost
+
+            discoveredLocs.blockDiscovery = true
+            if configLib.data.fastTravel.withFollowers then
+                data.followers = followers
+            end
+            core.sendGlobalEvent("AdvWMap:fastTravelTeleport", data)
+            async:newUnsavableSimulationTimer(0.5, function ()
+                discoveredLocs.blockDiscovery = false
+            end)
+
+            if I.SkillProgression then
+                I.SkillProgression.skillUsed("mysticism", {
+                    useType = I.SkillProgression.SKILL_USE_TYPES.Spellcast_Success,
+                })
+            end
+
+            menuMode.deactivate()
+        end,
+        noCallback = function ()
+            menuMode.deactivate()
+        end
+    })
+end
+
+
 
 
 local lastPlayerCellId
@@ -287,54 +349,15 @@ return {
         end,
 
         ["AdvWMap:fastTravelMessage"] = function (data)
-            if next(fightingActors) ~= nil and debug.isAIEnabled() then
-                ui.showMessage(l10n("fastTravelWhileInCombat"))
-                return
-            end
+            realTimer.newTimer(0.2, function ()
+                fastTravelMessageCallback(data)
+            end)
+        end,
 
-            local cost = configLib.data.fastTravel.baseMagickaCost
+        ["AdvWMap:fastTravelFollowerData"] = function (data)
+            if not data.actor then return end
 
-            cost = cost + data.worldDistance / 8192 * configLib.data.fastTravel.additionalCost
-            cost = cost + 2 * math.min(6, data.depthToPoint) * configLib.data.fastTravel.additionalCost
-            cost = cost + math.max(0, (types.Actor.getEncumbrance(self) - types.Actor.getCapacity(self)) / 5) *
-                configLib.data.fastTravel.additionalCost
-            cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
-            if data.isInSameInteriorBlock then
-                cost = cost * 0.6
-            end
-
-            menuHandler.destroyMenu(commonData.mapMenuId)
-
-            menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
-                message = data.message.."\n"..l10n("fastTraveMagickaCost"):format(cost),
-                relativeSize = util.vector2(0.25, 0.2),
-                yesCallback = function ()
-                    local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
-                    if currentMagicka < cost then
-                        ui.showMessage(l10n("NotEnoughMagicka"))
-                        return
-                    end
-
-                    types.Actor.stats.dynamic.magicka(self).current = currentMagicka - cost
-
-                    discoveredLocs.blockDiscovery = true
-                    core.sendGlobalEvent("AdvWMap:fastTravelTeleport", data)
-                    async:newUnsavableSimulationTimer(0.5, function ()
-                        discoveredLocs.blockDiscovery = false
-                    end)
-
-                    if I.SkillProgression then
-                        I.SkillProgression.skillUsed("mysticism", {
-                            useType = I.SkillProgression.SKILL_USE_TYPES.Spellcast_Success,
-                        })
-                    end
-
-                    menuMode.deactivate()
-                end,
-                noCallback = function ()
-                    menuMode.deactivate()
-                end
-            })
+            table.insert(fastTravel.followers, data.actor)
         end,
 
         ["AdvWMap:cancelAnimation"] = function (data)

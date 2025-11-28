@@ -28,6 +28,22 @@ saveStorage.initPlayerStorage()
 mapDataHandler.init()
 
 
+local function onObjectActive(ref)
+    if types.Actor.objectIsInstance(ref) then
+        if not ref:hasScript("scripts/advanced_world_map/actor.lua") then
+            ref:addScript("scripts/advanced_world_map/actor.lua")
+        end
+    end
+end
+
+
+local function objectInactive(ref)
+    if ref:isValid() and ref:hasScript("scripts/advanced_world_map/actor.lua") then
+        ref:removeScript("scripts/advanced_world_map/actor.lua")
+    end
+end
+
+
 local function checkDoor(ref)
     if Door.objectIsInstance(ref) and Door.isTeleport(ref) then
         local wasDisabled = disabledDoors.contains(ref.id)
@@ -49,12 +65,15 @@ end
 
 return {
     engineHandlers = {
+        onObjectActive = onObjectActive,
         onLoad = function (data)
             saveStorage.initPlayerStorage(data)
             disabledDoors.init()
         end
     },
     eventHandlers = {
+        ["AdvWMap:objectInactive"] = objectInactive,
+
         ["AdvWMap:updateConfigData"] = function (data)
             tableLib.applyChanges(config.data, data)
         end,
@@ -219,6 +238,13 @@ return {
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellcast"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnleft"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnright"})
+
+            for _, actor in pairs(data.followers or {}) do
+                if actor:isValid() then
+                    actor:teleport(types.Door.destCell(data.targetDoor), types.Door.destPosition(data.targetDoor),
+                        {rotation = types.Door.destRotation(data.targetDoor), onGround = true})
+                end
+            end
         end,
 
         ["AdvWMap:cellChanged"] = function ()

@@ -47,6 +47,7 @@ this.default = {
         enabled = true,
         onlyDiscovered = false,
         allowToInterior = true,
+        withFollowers = false,
         baseMagickaCost = 60,
         additionalCost = 2,
     },

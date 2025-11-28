@@ -54,7 +54,7 @@ local function menuOpened(menu)
         id = "AdvancedWorldMap:Notes",
         layout = iconLayout,
         -- Priority for sorting widgets in the menu header. Higher values place the widget more to the left
-        priority = 10,
+        priority = 1000,
         -- Event when the widget icon is pressed
         -- Note: 'content' is the content of the main widget's horizontal Flex
         -- into which you should add your UI elements,

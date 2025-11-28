@@ -3,6 +3,8 @@ local util = require("openmw.util")
 local core = require("openmw.core")
 local types = require("openmw.types")
 local playerRef = require("openmw.self")
+local nearby = require("openmw.nearby")
+local async = require('openmw.async')
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -14,8 +16,15 @@ local eventSys = require("scripts.advanced_world_map.eventSys")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local button = require("scripts.advanced_world_map.ui.button")
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
 local l10n = core.l10n(commonData.l10nKey)
+
+
+local this = {}
+
+this.followers = {}
+
 
 local fastTravelFunc
 local rightBtnMenuFunc
@@ -30,6 +39,13 @@ local function fastTravel(menu, cellId, relPos)
         return
     end
 
+    this.followers = {}
+    for _, actor in pairs(nearby.actors) do
+        if actor.recordId ~= "player" then
+            actor:sendEvent("AdvWMap:fastTravelFollower", {player = playerRef})
+        end
+    end
+
     core.sendGlobalEvent("AdvWMap:fastTravel", {
         pos = menu.mapWidget:getWorldPositionByRelativePosition(relPos),
         cellId = cellId,
@@ -41,16 +57,52 @@ end
 ---@param menu advancedWorldMap.ui.menu.map
 local function create(menu)
 
-    -- local iconLayout = {
-    --     type = ui.TYPE.Text,
-    --         props = {
-    --         text = "Ft",
-    --         textSize = config.data.ui.fontSize,
-    --         textColor = config.data.ui.defaultColor,
-    --         anchor = util.vector2(0.5, 0.5),
-    --         size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
-    --     },
-    -- }
+    local screenSize = uiUtils.getScaledScreenSize()
+    local tooltipWidth = math.max(200, screenSize.x / 6)
+    local tooltipText = l10n("fastTravelTooltip")
+
+    local tooltipContent = ui.content{
+        {
+            type = ui.TYPE.TextEdit,
+            props = {
+                text = tooltipText,
+                textColor = config.data.ui.defaultColor,
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0.5, 0),
+                size = util.vector2(tooltipWidth, 0),
+                multiline = true,
+                wordWrap = true,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+                readOnly = true,
+                autoSize = true,
+            },
+        }
+    }
+
+    local iconLayout = {
+        type = ui.TYPE.Text,
+        props = {
+            text = "Ft",
+            textSize = config.data.ui.fontSize,
+            textColor = config.data.ui.defaultColor,
+            anchor = util.vector2(0.5, 0.5),
+            size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
+        },
+        events = {
+            mousePress = async:callback(function(e, layout)
+                tooltip.create(e, layout, tooltipContent)
+            end),
+
+            focusLoss = async:callback(function(e, layout)
+                tooltip.destroy(layout)
+            end),
+
+            mouseMove = async:callback(function(e, layout)
+                tooltip.move(e, layout)
+            end),
+        }
+    }
 
     local lastClick = core.getRealTime()
     local clickCount = 0
@@ -105,20 +157,12 @@ local function create(menu)
     end
     eventSys.registerHandler(eventSys.EVENT.onRightMouseMenu, rightBtnMenuFunc)
 
-    -- local function onOpen(content)
 
-    -- end
-
-    -- local function onClose()
-
-    -- end
-
-    -- menu:addWidget{
-    --     id = "AdvancedWorldMap:FastTravel",
-    --     layout = iconLayout,
-    --     onOpen = onOpen,
-    --     onClose = onClose,
-    -- }
+    menu:addWidget{
+        id = "AdvancedWorldMap:FastTravel",
+        layout = iconLayout,
+        priority = 100,
+    }
 
 end
 
@@ -126,4 +170,16 @@ end
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     if not config.data.fastTravel.enabled then return end
     create(e.menu)
-end, 1000)
+end, 100)
+
+eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
+    if rightBtnMenuFunc then
+        eventSys.unregisterHandler(eventSys.EVENT.onRightMouseMenu, rightBtnMenuFunc)
+    end
+    if fastTravelFunc then
+        eventSys.unregisterHandler(eventSys.EVENT.onMouseRelease, fastTravelFunc)
+    end
+end)
+
+
+return this
