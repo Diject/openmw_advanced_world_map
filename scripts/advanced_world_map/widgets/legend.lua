@@ -195,6 +195,16 @@ local function create(menu)
 end
 
 
+eventSys.registerHandler(eventSys.EVENT.onMapShown, function (e)
+    e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.region, config.data.legend.visibility.regions)
+    e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.name, config.data.legend.visibility.cities)
+    e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.player, config.data.legend.visibility.playerMarker)
+    e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.nonInteractive, config.data.legend.visibility.labels)
+    e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.marker, config.data.legend.visibility.markers)
+end, 9900)
+
+
+
 eventSys.registerHandler(eventSys.EVENT["onMenuOpened"], function (e)
     create(e.menu)
 end, 9900)
