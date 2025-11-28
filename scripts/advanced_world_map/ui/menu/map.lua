@@ -315,6 +315,7 @@ function menuMeta:close()
     if self.mapWidget then
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
+    eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
     this.activeMenuMeta = nil
     self.menu:destroy()
 end

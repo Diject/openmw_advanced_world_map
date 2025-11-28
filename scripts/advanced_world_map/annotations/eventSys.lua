@@ -9,6 +9,10 @@
 ---@class AdvancedWorldMap.Event.OnMenuOpenedEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
 
+---Event data for menu closed event
+---@class AdvancedWorldMap.Event.OnMenuClosedEvent
+---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+
 ---Event data for map initialized event
 ---@class AdvancedWorldMap.Event.OnMapInitializedEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
@@ -126,6 +130,7 @@ local AdvancedWorldMapEvent = {}
 ---@class AdvancedWorldMap.Event.EVENT
 AdvancedWorldMapEvent.EVENT = {
     onMenuOpened = "onMenuOpened", -- Event triggered when the map menu is opened
+    onMenuClosed = "onMenuClosed", -- Event triggered when the map menu is closed
     onMapInitialized = "onMapInitialized", -- Event triggered when the map is initialized
     onMapShown = "onMapShown", -- Event triggered when the map is shown
     onMapClosed = "onMapClosed", -- Event triggered when the map is closed
@@ -152,6 +157,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@param eventId string Event identifier
 ---@param priority number? Handler priority (default is 0, higher value = higher priority)
 ---@overload fun(eventId: "onMenuOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuOpenedEvent): boolean?, priority: number?)
+---@overload fun(eventId: "onMenuClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuClosedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapClosedEvent): boolean?, priority: number?)

@@ -6,6 +6,7 @@ local this = {}
 
 this.EVENT = {
     onMenuOpened = "onMenuOpened",
+    onMenuClosed = "onMenuClosed",
     onMapInitialized = "onMapInitialized",
     onMapShown = "onMapShown",
     onMapClosed = "onMapClosed",
@@ -31,6 +32,7 @@ this.handlers = {}
 ---@param eventId string
 ---@param handlerFunc fun(e : table)
 ---@overload fun(eventId : "onMenuOpened", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onMenuClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapInitialized", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapShown", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
