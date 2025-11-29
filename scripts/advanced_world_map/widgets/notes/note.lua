@@ -96,6 +96,11 @@ local function onRightMouseMenu(e)
                                 widgetMenu.update()
                             end
                         end,
+                        removeCallback = function (dt)
+                            widgetData.removeMarkerDataAlt(dt)
+                            widgetMarker.remove(dt, true)
+                            widgetMenu.update()
+                        end
                     }
                     -- Close the context menu after pressing the button
                     -- This is necessary because it does not close automatically
