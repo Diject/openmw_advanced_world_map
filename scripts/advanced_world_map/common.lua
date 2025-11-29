@@ -24,7 +24,7 @@ this.localDataName = "AdvancedWorldMap:playerData"
 this.mapMenuId = "__MAP__"
 this.messageBoxMenuId = "__MESSAGEBOX__"
 
-this.globalDataStorageName = "AdvancedWorldMap:globalDataStorage"
+this.mapDataStorageName = "AdvancedWorldMap:mapDataStorage"
 
 this.messageLayer = "AdvWMap:Message"
 
@@ -105,9 +105,9 @@ this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"
 this.noteMarkerPath = "textures/icons/advanced_world_map/featherIco.png"
 
 
-this.customMapDir = "textures/advanced_world_map/map/"
-this.defaultTRMapDir = "textures/advanced_world_map/TRmap/"
-this.defaultBaseMapDir = "textures/advanced_world_map/basemap/"
+this.customMapDir = "textures/advanced_world_map/world_map/"
+this.defaultTRMapDir = "textures/advanced_world_map/default/TRmap/"
+this.defaultBaseMapDir = "textures/advanced_world_map/default/basemap/"
 this.questDataMapDir = "questData/"
 
 this.exteriorMapId = "__Esm3ExteriorMap__"
@@ -119,8 +119,9 @@ this.dataInitializerTypes = {
     "Auto",
     "Your custom",
     "Quest Guider's Quest Data",
-    "Tamriel Rebuilt++",
+    "Tamriel Rebuilt+",
     "Base game",
+    "None",
 }
 
 

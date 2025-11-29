@@ -66,7 +66,6 @@ local function onInit()
         localStorage.initPlayerStorage()
     end
     playerPos.init()
-    mapTextureHandler.init()
     discoveredLocs.init()
     disabledDoors.init()
 end
@@ -75,7 +74,6 @@ end
 local function onLoad(data)
     localStorage.initPlayerStorage(data)
     playerPos.init()
-    mapTextureHandler.init()
     discoveredLocs.init()
     disabledDoors.init()
 end
@@ -336,8 +334,15 @@ return {
 
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
 
+        ["AdvWMap:initMapData"] = function (data)
+            if mapDataHandler.playerInit(data and data.cellCount) then
+                mapTextureHandler.init()
+            end
+        end,
+
         ["AdvWMap:updateMapData"] = function (data)
-            mapDataHandler.load(data)
+            mapDataHandler.updateData(data)
+            mapTextureHandler.init()
         end,
 
         ["AdvWMap:showMessage"] = function (str)

@@ -1,0 +1,12 @@
+﻿"version": 1
+"time": 1760253993
+"file": "map.png"
+"width": 6112
+"height": 3040
+"pixelsPerCell": 32
+"gridX":
+  "max": 50
+  "min": -140
+"gridY":
+  "max": 34
+  "min": -60

@@ -10,6 +10,8 @@ local commonData = require("scripts.advanced_world_map.common")
 
 local config = require("scripts.advanced_world_map.config.config")
 
+local mapData = require("scripts.advanced_world_map.mapDataHandler")
+
 
 ---@class advancedWorldMap.mapImageInfo
 ---@field version integer
@@ -29,6 +31,14 @@ local config = require("scripts.advanced_world_map.config.config")
 ---@field height integer
 
 local this = {}
+
+
+local directories = {
+    [commonData.dataInitializerTypes[2]] = commonData.customMapDir,
+    [commonData.dataInitializerTypes[3]] = commonData.questDataMapDir,
+    [commonData.dataInitializerTypes[4]] = commonData.defaultTRMapDir,
+    [commonData.dataInitializerTypes[5]] = commonData.defaultBaseMapDir,
+}
 
 
 ---@type string
@@ -81,20 +91,61 @@ local function initMapImage(initializerType)
     elseif initializerType == commonData.dataInitializerTypes[5] then
         imagePath, mapInfo = getMapImage(commonData.defaultBaseMapDir)
     elseif initializerType == commonData.dataInitializerTypes[1] then
-        for i, initializer in ipairs(commonData.dataInitializerTypes) do
-            if i == 1 then goto continue end
-            local res = initMapImage(initializer)
-            if res then
-                return true
+        local mapGridArea = 1
+        if mapData.grid then
+            mapGridArea = (mapData.grid.max.x - mapData.grid.min.x) * (mapData.grid.max.y - mapData.grid.min.y)
+        end
+
+        do
+            local path, info = getMapImage(commonData.customMapDir)
+            if path and info then
+                local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
+                local v = area / mapGridArea
+                if v > 0.9 and v < 1.1 then
+                    imagePath = path
+                    mapInfo = info
+                    goto next
+                end
             end
-            ::continue::
+        end
+
+        local data = {}
+        for id, dir in pairs(directories) do
+            local path, info = getMapImage(dir)
+            if path and info then
+                local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
+                table.insert(data, {path, info, area / mapGridArea})
+            end
+        end
+
+        table.sort(data, function (a, b)
+            return (a[3] < b[3]) or (a[3] == b[3] and (a[2].time or 0) > (b[2].time or 0))
+        end)
+
+        for _, dt in ipairs(data) do
+            local v = dt[3] or 0
+            if v > 0.9 then
+                imagePath = dt[1]
+                mapInfo = dt[2]
+                break
+            end
+        end
+
+        if not imagePath or not mapInfo then
+            if next(data) then
+                local dt = data[#data]
+                imagePath = dt[1]
+                mapInfo = dt[2]
+            end
         end
     end
+
+    ::next::
 
     if imagePath and mapInfo then
         this.mapImagePath = imagePath
         this.mapInfo = mapInfo
-        log("Map image initialized from: "..imagePath)
+        log("World map image initialized from: "..imagePath)
         return true
     end
     return false
@@ -106,11 +157,13 @@ function this.init()
         return true
     end
 
-    if initMapImage(commonData.dataInitializerTypes[1]) then
+    if config.data.data.initializer ~= commonData.dataInitializerTypes[1] and
+            config.data.data.initializer ~= commonData.dataInitializerTypes[6] and
+            initMapImage(commonData.dataInitializerTypes[1]) then
         return true
     end
 
-    log("No valid map image found")
+    log("Map image wasn't set up")
     this.mapImagePath = nil
     this.mapInfo = nil
     return false

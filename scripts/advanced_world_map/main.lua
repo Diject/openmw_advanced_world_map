@@ -25,7 +25,7 @@ local l10n = core.l10n(common.l10nKey)
 
 saveStorage.initPlayerStorage()
 
-mapDataHandler.init()
+mapDataHandler.globalInit()
 
 
 local function onObjectActive(ref)
@@ -76,6 +76,10 @@ return {
 
         ["AdvWMap:updateConfigData"] = function (data)
             tableLib.applyChanges(config.data, data)
+        end,
+
+        ["AdvWMap:rebuildMapData"] = function ()
+            mapDataHandler.globalBuildData()
         end,
 
         ["AdvWMap:fastTravel"] = function (data)

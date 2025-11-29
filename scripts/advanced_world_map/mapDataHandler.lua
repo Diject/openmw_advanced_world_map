@@ -24,6 +24,8 @@ this.grid = nil
 ---@type {[1] : number, [2] : number, [3] : number, [4] : number}[]
 this.worldMapTileRectangles = {}
 
+this.cellCount = 0
+
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
 ---@field posX number
@@ -138,13 +140,14 @@ local function buildData()
     local regionNameData = {}
     local entrances = {}
     local occupied = {}
+    this.cellCount = #world.cells
     for _, cell in pairs(world.cells) do
         if not cell.isExterior then goto continue end
 
         minGridX = math.min(minGridX, cell.gridX)
-        maxGridX = math.min(maxGridX, cell.gridX)
+        maxGridX = math.max(maxGridX, cell.gridX)
         minGridY = math.min(minGridY, cell.gridY)
-        maxGridY = math.min(maxGridY, cell.gridY)
+        maxGridY = math.max(maxGridY, cell.gridY)
 
         if core.land then
             local posX = cell.gridX * 8192
@@ -364,16 +367,35 @@ local function buildData()
 end
 
 
+function this.globalBuildData()
+    buildData()
+    require("openmw.world").players[1]:sendEvent("AdvWMap:updateMapData", {
+        cellNameData = this.cellNameData,
+        regionNameData = this.regionNameData,
+        entrances = this.entrances,
+        cellDirections = this.cellDirections,
+        cellNameById = this.cellNameById,
+        grid = this.grid,
+        worldMapTileRectangles = this.worldMapTileRectangles,
+        cellCount = this.cellCount,
+    })
+end
 
-function this.init()
-    local stor = storage.globalSection(commonData.globalDataStorageName)
 
-    local shouldRebuild = (stor:get("version") ~= this.version) or (stor:get("gameFiles") == nil)
-shouldRebuild = true
-    local gameFiles
+function this.globalInit()
+    local cells = require("openmw.world").cells
+    require("openmw.world").players[1]:sendEvent("AdvWMap:initMapData", {cellCount = #cells})
+end
+
+
+function this.playerInit(cellCount)
+    local stor = storage.playerSection(commonData.mapDataStorageName)
+
+    local shouldRebuild = stor:get("version") ~= this.version or stor:get("gameFiles") == nil or
+        stor:get("cellCount") ~= cellCount
 
     if not shouldRebuild then
-        gameFiles = {}
+        local gameFiles = {}
 
         for _, name in ipairs(core.contentFiles.list) do
             if isContentFile(name) then
@@ -395,14 +417,8 @@ shouldRebuild = true
     end
 
     if shouldRebuild then
-        buildData()
-        stor:set("cellNameData", this.cellNameData)
-        stor:set("regionNameData", this.regionNameData)
-        stor:set("entrances", this.entrances)
-        stor:set("cellDirections", this.cellDirections)
-        stor:set("cellNameById", this.cellNameById)
-        stor:set("grid", this.grid)
-        stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
+        core.sendGlobalEvent("AdvWMap:rebuildMapData")
+        return false
     else
         this.cellNameData = stor:get("cellNameData") or {}
         this.regionNameData = stor:get("regionNameData") or {}
@@ -411,22 +427,15 @@ shouldRebuild = true
         this.cellNameById = stor:get("cellNameById") or {}
         this.grid = stor:get("grid") or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
         this.worldMapTileRectangles = stor:get("worldMapTileRectangles") or {}
-    end
+        this.cellCount = stor:get("cellCount") or 0
 
-    require("openmw.world").players[1]:sendEvent("AdvWMap:updateMapData", {
-        cellNameData = this.cellNameData,
-        regionNameData = this.regionNameData,
-        entrances = this.entrances,
-        cellDirections = this.cellDirections,
-        cellNameById = this.cellNameById,
-        grid = this.grid,
-        worldMapTileRectangles = this.worldMapTileRectangles,
-    })
+        return true
+    end
 end
 
 
 
-function this.load(data)
+function this.updateData(data)
     this.cellNameData = data.cellNameData or {}
     this.regionNameData = data.regionNameData or {}
     this.entrances = data.entrances or {}
@@ -434,6 +443,28 @@ function this.load(data)
     this.cellNameById = data.cellNameById or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
+    this.cellCount = data.cellCount or 0
+
+    local stor = storage.playerSection(commonData.mapDataStorageName)
+    stor:set("cellNameData", this.cellNameData)
+    stor:set("regionNameData", this.regionNameData)
+    stor:set("entrances", this.entrances)
+    stor:set("cellDirections", this.cellDirections)
+    stor:set("cellNameById", this.cellNameById)
+    stor:set("grid", this.grid)
+    stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
+    stor:set("cellCount", this.cellCount)
+    stor:set("version", this.version)
+
+
+    local gameFiles = {}
+
+    for _, name in ipairs(core.contentFiles.list) do
+        if isContentFile(name) then
+            table.insert(gameFiles, name)
+        end
+    end
+    stor:set("gameFiles", gameFiles)
 end
 
 
