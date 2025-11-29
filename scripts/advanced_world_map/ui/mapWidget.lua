@@ -1040,7 +1040,7 @@ end
 
 function mapWidgetMeta:setUpdateFunction(func)
     self.update = func
-    self.layout.userData.lastMousePos = nil
+    self.layout.userData.lastDraggedMousePos = nil
 end
 
 
@@ -1410,35 +1410,39 @@ function this.new(params)
             end,
 
             inFocus = false,
+            mousePos = util.vector2(0, 0),
             mainMouseOffset = util.vector2(0, 0),
             additiveMouseOffset = util.vector2(0, 0),
+            lastMarkerElement = nil
         },
         events = {
             mousePress = async:callback(function(e, layout, markerElement)
                 meta:closeRightMouseMenu()
 
+                main.userData.lastMarkerElement = markerElement
                 e.marker = markerElement
                 if markerElement then
                     e.offset = main.userData.mainMouseOffset + e.offset
                 end
 
                 if eventSys.triggerEvent(eventSys.EVENT["onMousePress"], e) then
-                    main.userData.lastMousePos = nil
+                    main.userData.lastDraggedMousePos = nil
                     return
                 end
 
                 if e.button == 1 then
-                    main.userData.lastMousePos = e.position
+                    main.userData.lastDraggedMousePos = e.position
                 end
             end),
 
             mouseRelease = async:callback(function(e, layout, markerElement)
+                main.userData.lastMarkerElement = markerElement
                 e.marker = markerElement
                 if markerElement then
                     e.offset = main.userData.mainMouseOffset + e.offset
                 end
                 if eventSys.triggerEvent(eventSys.EVENT["onMouseRelease"], e) then
-                    main.userData.lastMousePos = nil
+                    main.userData.lastDraggedMousePos = nil
                     return
                 end
 
@@ -1483,20 +1487,23 @@ function this.new(params)
                         end
                     end
                 elseif e.button == 1 then
-                    main.userData.lastMousePos = nil
+                    main.userData.lastDraggedMousePos = nil
                 end
             end),
 
             focusLoss = async:callback(function(_, layout, markerElement)
-                main.userData.lastMousePos = nil
+                main.userData.lastMarkerElement = markerElement
+                main.userData.lastDraggedMousePos = nil
                 main.userData.inFocus = false
                 if eventSys.triggerEvent(eventSys.EVENT["onFocusLoss"], {marker = markerElement}) then
-                    main.userData.lastMousePos = nil
+                    main.userData.lastDraggedMousePos = nil
                     return
                 end
             end),
 
             mouseMove = async:callback(function(e, layout, markerElement)
+                main.userData.lastMarkerElement = markerElement
+                main.userData.mousePos = e.position
                 if not markerElement then
                     main.userData.mainMouseOffset = e.offset
                     main.userData.additiveMouseOffset = util.vector2(0, 0)
@@ -1506,18 +1513,18 @@ function this.new(params)
                 if eventSys.triggerEvent(eventSys.EVENT["onMouseMove"], {
                         position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset,
                         marker = markerElement}) then
-                    main.userData.lastMousePos = nil
+                    main.userData.lastDraggedMousePos = nil
                     return
                 end
 
-                if not main.userData.lastMousePos then return end
+                if not main.userData.lastDraggedMousePos then return end
 
                 local props = meta:getMapLayersLayout().props
                 local mainSize = main.props.size
                 local mapSize = props.size
 
-                local newX = props.position.x - (main.userData.lastMousePos.x - e.position.x)
-                local newY = props.position.y - (main.userData.lastMousePos.y - e.position.y)
+                local newX = props.position.x - (main.userData.lastDraggedMousePos.x - e.position.x)
+                local newY = props.position.y - (main.userData.lastDraggedMousePos.y - e.position.y)
                 local newPos = util.vector2(newX, newY)
 
                 newPos = clampAndCenterPosition(newPos, mapSize, mainSize)
@@ -1534,7 +1541,7 @@ function this.new(params)
 
                 meta:update()
 
-                main.userData.lastMousePos = e.position
+                main.userData.lastDraggedMousePos = e.position
             end),
         },
         content = ui.content {

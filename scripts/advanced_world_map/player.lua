@@ -129,14 +129,22 @@ actionBinding.registerAction(commonData.menuKeyId, function ()
 end)
 
 
-local function checkPos()
+local function updateTimer()
     playerPos.checkPos()
-    realTimer.newTimer(0.1, function ()
-        checkPos()
+
+    local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
+    if rAxisY > 0.5 then
+        onMouseWheel(-1)
+    elseif rAxisY < -0.5 then
+        onMouseWheel(1)
+    end
+
+    realTimer.newTimer(0.2, function ()
+        updateTimer()
     end)
 end
 
-checkPos()
+updateTimer()
 
 
 local nearbyDoors = {}

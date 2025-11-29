@@ -16,6 +16,7 @@ local log = require("scripts.advanced_world_map.utils.log")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
+local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -230,6 +231,27 @@ function menuMeta:getCachedMapWidget(cellId)
 end
 
 
+local function controllerYCallback()
+    local self = this.activeMenuMeta
+    if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
+    if not menuMode.isActive() then return end
+
+    local layout = self.mapWidget.layout
+    local userData = layout.userData
+    ---@type advancedWorldMap.ui.mapElementMeta
+    local lastMarker = userData.lastMarkerElement
+    layout.events.mouseRelease(
+        {
+            position = userData.mousePos,
+            offset = lastMarker and userData.additiveMouseOffset + userData.mainMouseOffset or userData.mainMouseOffset,
+            button = 3,
+        },
+        lastMarker and lastMarker._elemLayout or layout,
+        lastMarker
+    )
+end
+
+
 ---@param cellId string?
 ---@return boolean changed
 function menuMeta:updateMapWidgetCell(cellId)
@@ -317,6 +339,9 @@ function menuMeta:close()
     end
     eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
     this.activeMenuMeta = nil
+
+    keyBinding.unregister("C_Y", controllerYCallback)
+
     self.menu:destroy()
 end
 
@@ -657,6 +682,7 @@ function this.create(params)
 
     meta.onMouseWheel = function (self, vertical)
         local layout = meta.menu.layout
+        if not layout or not menuMode.isActive() then return end
         onMouseWheelCallback(layout.content, vertical)
     end
 
@@ -675,6 +701,8 @@ function this.create(params)
         end
     end
     async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
+
+    keyBinding.register("C_Y", controllerYCallback, 100)
 
     eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 
