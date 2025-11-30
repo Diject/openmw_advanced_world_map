@@ -1010,8 +1010,8 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
         playerMarkerLayout.props.visible = true
     end
 
-    local exPos = self.cellId and playerRef.position or playerPos.gexExteriorPos()
-    local dist = (playerMarkerLayout.userData.lastPos - exPos):length()
+    local pos = self.cellId and playerRef.position or playerPos.gexExteriorPos()
+    local dist = (playerMarkerLayout.userData.lastPos - pos):length()
 
     local yaw = playerRef.rotation:getYaw()
     local lastYaw = playerMarkerLayout.userData.lastYaw
@@ -1022,14 +1022,19 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
         return false
     end
 
-    local playerRelPos = self:getRelativePositionByWorldPosition(exPos)
+    local playerRelPos = self:getRelativePositionByWorldPosition(pos)
     playerMarkerLayout.props.relativePosition = playerRelPos
     playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle, yaw) or playerMarkerTexture
-    playerMarkerLayout.userData.lastPos = exPos
+    playerMarkerLayout.userData.lastPos = pos
     playerMarkerLayout.userData.lastYaw = yaw
 
     if focusOnPlayer then
-        self:focusOnWorldPosition(exPos)
+        if self._updatePlayerTiles then
+            self:setZoom(self.zoom, self:getRelativePositionByWorldPosition(pos))
+            self._updatePlayerTiles = false
+        else
+            self:focusOnWorldPosition(pos)
+        end
     end
 
     return true
@@ -1540,6 +1545,7 @@ function this.new(params)
 
                     if dist > math.min(paddingX, paddingY) then
                         meta:updateOnZoomMarkers()
+                        meta._updatePlayerTiles = true
                     end
                 end
 
