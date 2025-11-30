@@ -39,9 +39,6 @@ local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 
 local worldMapTexture
 
-local zoomInOffsetInWorldCoord = 16384
-local zoomOutOffsetInWorldCoord = 24576
-
 
 
 local this = {}
@@ -400,19 +397,22 @@ end
 
 function mapWidgetMeta:updateOnZoomMarkers()
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
+
+    local size = self:getSize()
+    local mul = 4096 / (self.mapInfo.pixelsPerCell * self.zoom)
+    local paddingX = math.max(8192, size.x * mul)
+    local paddingY = math.max(8192, size.y * mul)
+
+    visibleRect.bottom = visibleRect.bottom - paddingY
+    visibleRect.top = visibleRect.top + paddingY
+    visibleRect.left = visibleRect.left - paddingX
+    visibleRect.right = visibleRect.right + paddingX
+
     if self.cellId or self.zoom >= config.data.tileset.zoomToShow then
-        visibleRect.bottom = visibleRect.bottom - zoomInOffsetInWorldCoord
-        visibleRect.top = visibleRect.top + zoomInOffsetInWorldCoord
-        visibleRect.left = visibleRect.left - zoomInOffsetInWorldCoord
-        visibleRect.right = visibleRect.right + zoomInOffsetInWorldCoord
         self:removeOnZoomMarkers()
         self:createZoomInMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)
     else
-        visibleRect.bottom = visibleRect.bottom - zoomOutOffsetInWorldCoord
-        visibleRect.top = visibleRect.top + zoomOutOffsetInWorldCoord
-        visibleRect.left = visibleRect.left - zoomOutOffsetInWorldCoord
-        visibleRect.right = visibleRect.right + zoomOutOffsetInWorldCoord
         self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
         self:createZoomOutMarkers(visibleRect)
         self:removeGroundTextures()
@@ -818,8 +818,8 @@ function mapWidgetMeta:createZoomOutMarkers(region)
     local maxGridX = math.ceil(region.right / 8192)
     local minGridY = math.floor(region.bottom / 8192)
     local maxGridY = math.ceil(region.top / 8192)
-    for x = minGridX, maxGridX do
-        for y = minGridY, maxGridY do
+    for x = minGridX - 1, maxGridX - 1 do
+        for y = minGridY + 1, maxGridY + 1 do
             local cellId = cellLib.getCellIdByGrid(x, y)
 
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
@@ -853,8 +853,8 @@ function mapWidgetMeta:createZoomInMarkers(region)
         local minGridY = math.floor(region.bottom / 8192)
         local maxGridY = math.ceil(region.top / 8192)
 
-        for x = minGridX, maxGridX do
-            for y = minGridY, maxGridY do
+        for x = minGridX - 1, maxGridX - 1 do
+            for y = minGridY + 1, maxGridY + 1 do
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
@@ -869,8 +869,6 @@ function mapWidgetMeta:createZoomInMarkers(region)
             (minGridY + maxGridY) / 2 * 8192
         )
     end
-
-    
 end
 
 
@@ -967,8 +965,8 @@ function mapWidgetMeta:placeGroundTextures(region)
         local tileSize = util.vector2(tileHeight, tileHeight)
 
         local mapLayout = self:getMapLayout()
-        for x = 0, maxGridX - minGridX - 1 do
-            for y = 0, maxGridY - minGridY - 1 do
+        for x = -1, maxGridX - minGridX - 1 do
+            for y = 1, maxGridY - minGridY + 1 do
                 local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y)
 
                 local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y)
@@ -983,7 +981,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                     props = {
                         resource = texture,
                         size = tileSize,
-                        position = pos
+                        position = pos,
                     }
                 }
 
@@ -1534,7 +1532,13 @@ function this.new(params)
                     local centerWorldPos = meta:getWorldPositionOfVisibleCenter()
 
                     local dist = (meta.onZoomMarkersCenter - centerWorldPos):length()
-                    if dist > zoomInOffsetInWorldCoord * 0.5 then
+
+                    local size = meta:getSize()
+                    local mul = 4096 / (meta.mapInfo.pixelsPerCell * meta.zoom)
+                    local paddingX = size.x * mul
+                    local paddingY = size.y * mul
+
+                    if dist > math.min(paddingX, paddingY) then
                         meta:updateOnZoomMarkers()
                     end
                 end
