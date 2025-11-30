@@ -391,30 +391,8 @@ end
 function this.playerInit(cellCount)
     local stor = storage.playerSection(commonData.mapDataStorageName)
 
-    local shouldRebuild = stor:get("version") ~= this.version or stor:get("gameFiles") == nil or
-        stor:get("cellCount") ~= cellCount
-
-    if not shouldRebuild then
-        local gameFiles = {}
-
-        for _, name in ipairs(core.contentFiles.list) do
-            if isContentFile(name) then
-                table.insert(gameFiles, name)
-            end
-        end
-
-        local storageGameFiles = stor:get("gameFiles") or {}
-        if #storageGameFiles ~= #gameFiles then
-            shouldRebuild = true
-        else
-            for i, name in ipairs(storageGameFiles) do
-                if gameFiles[i] ~= name then
-                    shouldRebuild = true
-                    break
-                end
-            end
-        end
-    end
+    local shouldRebuild = stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
+        stor:get("apiVersion") ~= core.API_REVISION
 
     if shouldRebuild then
         core.sendGlobalEvent("AdvWMap:rebuildMapData")
@@ -455,16 +433,7 @@ function this.updateData(data)
     stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
     stor:set("cellCount", this.cellCount)
     stor:set("version", this.version)
-
-
-    local gameFiles = {}
-
-    for _, name in ipairs(core.contentFiles.list) do
-        if isContentFile(name) then
-            table.insert(gameFiles, name)
-        end
-    end
-    stor:set("gameFiles", gameFiles)
+    stor:set("apiVersion", core.API_REVISION)
 end
 
 
