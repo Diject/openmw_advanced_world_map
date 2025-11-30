@@ -61,6 +61,20 @@ end
 local fightingActors = {}
 
 
+storage.playerSection(commonData.configTilesetSectionName):subscribe(async:callback(function(_, id)
+    mapMenu.clearMapWidgetCache()
+end))
+
+storage.playerSection(commonData.configLegendSectionName):subscribe(async:callback(function(_, id)
+    mapMenu.clearMapWidgetCache()
+end))
+
+storage.playerSection(commonData.configDataSectionName):subscribe(async:callback(function(_, id)
+    mapTextureHandler.init()
+    mapMenu.clearMapWidgetCache()
+end))
+
+
 local function onInit()
     if not localStorage.isPlayerStorageReady() then
         localStorage.initPlayerStorage()

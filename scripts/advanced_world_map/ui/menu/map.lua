@@ -33,23 +33,10 @@ local this = {}
 this.cachedMapWidgetLayout = {}
 this.cachedMapWidgetMetatable = {}
 
-local function clearMapWidgetCache()
+function this.clearMapWidgetCache()
     this.cachedMapWidgetLayout = {}
     this.cachedMapWidgetMetatable = {}
 end
-
-
-storage.playerSection(commonData.configTilesetSectionName):subscribe(async:callback(function(_, id)
-    clearMapWidgetCache()
-end))
-
-storage.playerSection(commonData.configLegendSectionName):subscribe(async:callback(function(_, id)
-    clearMapWidgetCache()
-end))
-
-storage.playerSection(commonData.configDataSectionName):subscribe(async:callback(function(_, id)
-    clearMapWidgetCache()
-end))
 
 
 ---@type advancedWorldMap.ui.menu.map
