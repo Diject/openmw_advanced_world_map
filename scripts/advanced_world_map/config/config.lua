@@ -21,7 +21,7 @@ this.default = {
         },
         centerOnPlayer = true,
         discoveryRadius = 1500,
-        updateFrequency = 10,
+        updateFrequency = 60,
     },
     legend = {
         markerSize = 6,
@@ -41,7 +41,7 @@ this.default = {
     },
     tileset = {
         onlyDiscovered = false,
-        zoomToShow = 6,
+        zoomToShow = 4,
     },
     fastTravel = {
         enabled = true,
