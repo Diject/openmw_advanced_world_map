@@ -234,7 +234,7 @@ end
 local function controllerYCallback()
     local self = this.activeMenuMeta
     if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
-    if not menuMode.isActive() then return end
+    if not menuMode.isMenuInteractive() then return end
 
     local layout = self.mapWidget.layout
     local userData = layout.userData
@@ -682,7 +682,7 @@ function this.create(params)
 
     meta.onMouseWheel = function (self, vertical)
         local layout = meta.menu.layout
-        if not layout or not menuMode.isActive() then return end
+        if not layout or not menuMode.isMenuInteractive() then return end
         onMouseWheelCallback(layout.content, vertical)
     end
 
