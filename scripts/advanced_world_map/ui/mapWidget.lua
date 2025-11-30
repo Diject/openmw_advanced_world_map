@@ -37,8 +37,6 @@ local l10n = core.l10n(commonData.l10nKey)
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 
-local worldMapTexture
-
 
 
 local this = {}
@@ -1204,13 +1202,9 @@ function this.new(params)
             mapInfo = mapTextureHandler.mapInfo
         end
 
-        if not worldMapTexture then
-            if mapTextureHandler.mapImagePath and vfs.fileExists(mapTextureHandler.mapImagePath) then
-                worldMapTexture = ui.texture{ path = mapTextureHandler.mapImagePath }
-            end
-        end
+        local texture = mapTextureHandler.getWorldMapTexture()
 
-        meta.mapTexture = worldMapTexture
+        meta.mapTexture = texture
         meta.mapInfo = mapInfo
 
         local padding = 1
@@ -1235,12 +1229,12 @@ function this.new(params)
             content = ui.content {},
         }
 
-        if worldMapTexture then
+        if texture then
 
             mapLayout.content:add{
                 type = ui.TYPE.Image,
                 props = {
-                    resource = worldMapTexture,
+                    resource = texture,
                     relativePosition = util.vector2(meta.borderPadding.x / meta.displayMapSize.x, meta.borderPadding.y / meta.displayMapSize.y),
                     relativeSize = util.vector2(meta.mapInfo.width / meta.displayMapSize.x, meta.mapInfo.height / meta.displayMapSize.y),
                 }

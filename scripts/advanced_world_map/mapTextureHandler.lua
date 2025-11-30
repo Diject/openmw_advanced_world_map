@@ -248,4 +248,17 @@ function this.getLocalCellMapTextures(cellId)
 end
 
 
+function this.getWorldMapTexture()
+    if not this.mapImagePath or not vfs.fileExists(this.mapImagePath) then return end
+
+    if this.worldTextureCache[this.mapImagePath] then
+        return this.worldTextureCache[this.mapImagePath]
+    end
+
+    local texture = ui.texture{ path = this.mapImagePath }
+    this.worldTextureCache[this.mapImagePath] = texture
+    return texture
+end
+
+
 return this
