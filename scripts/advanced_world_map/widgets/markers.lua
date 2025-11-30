@@ -440,6 +440,7 @@ local function createMarkers(widget, cellId)
                         this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
                         if this.activeMenuMeta.mapWidget and dt.dPos then
                             this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
+                            this.activeMenuMeta.mapWidget:updateMarkers()
                         end
 
                         eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
