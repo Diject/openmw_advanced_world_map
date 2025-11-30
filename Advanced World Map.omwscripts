@@ -1,4 +1,4 @@
-GLOBAL: scripts/advanced_world_map/main.lua
+GLOBAL: scripts/advanced_world_map/global.lua
 PLAYER: scripts/advanced_world_map/player.lua
 CUSTOM: scripts/advanced_world_map/actor.lua
 MENU: scripts/advanced_world_map/input/bingingRenderer.lua
