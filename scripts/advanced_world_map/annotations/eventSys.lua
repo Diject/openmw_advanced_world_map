@@ -121,6 +121,29 @@
 ---@field filter string Search filter string
 ---@field params AdvancedWorldMap.Event.OnSearchEvent.Params Search parameters
 
+---Event data for fast travel event
+---@class AdvancedWorldMap.Event.OnFastTravelEvent
+---@field position openmw.util.Vector3 Target world position
+---@field cellId string? Target cell identifier (nil for exterior/world map)
+
+---Event data for fast travel resolve event
+---@class AdvancedWorldMap.Event.OnFastTravelResolveEvent
+---@field cost number Fast travel cost
+---@field message string Fast travel message
+---@field position openmw.util.Vector3 Target world position
+---@field cell any Target cell
+---@field rotation openmw.util.Vector3 Target rotation
+---@field followers GameObject[] List of follower actors
+
+---Event data for fast travel resolved event
+---@class AdvancedWorldMap.Event.OnFastTravelResolvedEvent
+---@field cost number Fast travel cost
+---@field message string Fast travel message
+---@field position openmw.util.Vector3 Target world position
+---@field cell any Target cell
+---@field rotation openmw.util.Vector3 Target rotation
+---@field followers GameObject[]? List of follower actors
+
 ---Advanced World Map event system
 ---@class AdvancedWorldMap.Event
 ---@field EVENT AdvancedWorldMap.Event.EVENT Table containing event identifiers
@@ -148,6 +171,9 @@ AdvancedWorldMapEvent.EVENT = {
     onResized = "onResized", -- Event triggered when the map window is resized
     onZoomed = "onZoomed", -- Event triggered when the map zoom level changes
     onSearch = "onSearch", -- Event triggered when a search is performed
+    onFastTravel = "onFastTravel", -- Event triggered when a fast travel is initiated
+    onFastTravelResolve = "onFastTravelResolve", -- Event triggered when a fast travel is being resolved
+    onFastTravelResolved = "onFastTravelResolved", -- Event triggered after a fast travel has been resolved
 }
 
 ---Registers an event handler in the event system.
@@ -175,6 +201,9 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onResized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnResizedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onZoomed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnZoomedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onSearch", handlerFunc: fun(e: AdvancedWorldMap.Event.OnSearchEvent): boolean?, priority: number?)
+---@overload fun(eventId: "onFastTravel", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelEvent): boolean?, boolean?, priority: number?)
+---@overload fun(eventId: "onFastTravelResolve", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolveEvent): boolean?, boolean?, priority: number?)
+---@overload fun(eventId: "onFastTravelResolved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolvedEvent): boolean?, priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system

@@ -22,7 +22,7 @@ function this.getCellIdByGrid(gridX, gridY)
 end
 
 
----@return {pos : any, depth : number, cellId : string?}[]?
+---@return {pos : any, depth : number, cell : any?}[]?
 ---@return table<string, integer>? depths depts by cell id
 ---@return table<string, any>? exitCells
 ---@return number? lowestDepth
@@ -50,8 +50,8 @@ function this.findExitPositions(cell, checked, res, exitCells, depth)
 
         if not destCell or not destPos then goto continue end
 
-        if destCell.isExterior then
-            table.insert(res, {pos = commonData.copyVector3(destPos), depth = depth + 1})
+        if destCell.isExterior or destCell:hasTag("QuasiExterior") then
+            table.insert(res, {pos = commonData.copyVector3(destPos), cell = destCell, depth = depth + 1})
             exitCells[destCell.id] = math.min(exitCells[destCell.id] or math.huge, depth + 1)
             checked[destCell.id] = math.min(checked[destCell.id] or math.huge, depth + 1)
         else

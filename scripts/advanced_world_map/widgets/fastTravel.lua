@@ -9,6 +9,7 @@ local async = require('openmw.async')
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
@@ -31,12 +32,22 @@ local rightBtnMenuFunc
 
 
 local function fastTravel(menu, cellId, relPos)
+    local pos = menu.mapWidget:getWorldPositionByRelativePosition(relPos)
+
+    if eventSys.triggerEvent(eventSys.EVENT.onFastTravel, {position = pos, cellId = cellId}) then
+        return
+    end
+
     if not types.Player.isTeleportingEnabled(playerRef) then
         playerRef:sendEvent("AdvWMap:showMessage", core.getGMST("sTeleportDisabled") or "")
         return
     elseif cellId and not config.data.fastTravel.allowToInterior then
-        playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelNotAllowedToInterior"))
-        return
+        local dt = mapDataHandler.entrances[cellId]
+        local dr = dt and dt[1]
+        if dr and not dr.isLEx then
+            playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelNotAllowedToInterior"))
+            return
+        end
     end
 
     this.followers = {}
@@ -47,7 +58,7 @@ local function fastTravel(menu, cellId, relPos)
     end
 
     core.sendGlobalEvent("AdvWMap:fastTravel", {
-        pos = menu.mapWidget:getWorldPositionByRelativePosition(relPos),
+        pos = pos,
         cellId = cellId,
         availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.visited or nil
     })
@@ -120,7 +131,7 @@ local function create(menu)
 
         if time - lastClick >= 0.6 then
             clickCount = 0
-        elseif (lastPos - relPos):length() > 0.003 then
+        elseif (lastPos - relPos):length() > 0.002 then
             clickCount = -1
         elseif time - lastClick < 0.6 then
             if clickCount == 2 then

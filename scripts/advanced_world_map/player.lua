@@ -27,6 +27,7 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
+local eventSys = require("scripts.advanced_world_map.eventSys")
 local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
 local actionBinding = require("scripts.advanced_world_map.input.keyAction")
 local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
@@ -216,32 +217,66 @@ local function fastTravelMessageCallback(data)
         cost = cost * 0.6
     end
 
+    local eventData = {
+        cost = cost,
+        cell = types.Door.destCell(data.targetDoor),
+        position = types.Door.destPosition(data.targetDoor),
+        rotation = types.Door.destRotation(data.targetDoor),
+        message = data.message,
+        followers = followers,
+    }
+
+    if eventSys.triggerEvent(eventSys.EVENT.onFastTravelResolve, eventData) then
+        return
+    end
+
     menuHandler.destroyMenu(commonData.mapMenuId)
 
     menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
-        message = data.message.."\n"..l10n("fastTraveMagickaCost"):format(cost),
+        message = (eventData.message or "").."\n"..l10n("fastTraveMagickaCost"):format(eventData.cost),
         relativeSize = util.vector2(0.25, 0.2),
         yesCallback = function ()
             local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
-            if currentMagicka < cost then
+            if currentMagicka < eventData.cost then
                 ui.showMessage(l10n("NotEnoughMagicka"))
                 return
             end
 
-            types.Actor.stats.dynamic.magicka(self).current = currentMagicka - cost
+            local pPos = self.position
+            local pCellId = self.cell.id
 
-            discoveredLocs.blockDiscovery = true
+            types.Actor.stats.dynamic.magicka(self).current = currentMagicka - eventData.cost
+
             if configLib.data.fastTravel.withFollowers then
                 data.followers = followers
             end
+
+            eventData.followers = data.followers
+            eventSys.triggerEvent(eventSys.EVENT.onFastTravelResolved, eventData)
+
+            discoveredLocs.blockDiscovery = true
             core.sendGlobalEvent("AdvWMap:fastTravelTeleport", data)
             async:newUnsavableSimulationTimer(0.5, function ()
                 discoveredLocs.blockDiscovery = false
+
+                if not types.Player.isTeleportingEnabled(self) then
+
+                    --- this doesn't work as expected
+                    -- types.Player.setTeleportingEnabled(self, true)
+                    -- core.sendGlobalEvent("AdvWMap:fastTravelTeleport", {
+                    --     position = pPos,
+                    --     cellId = pCellId,
+                    --     followers = data.followers
+                    -- })
+
+                    ui.showMessage(core.getGMST("sTeleportDisabled") or "")
+                end
             end)
 
             if I.SkillProgression then
                 I.SkillProgression.skillUsed("mysticism", {
                     useType = I.SkillProgression.SKILL_USE_TYPES.Spellcast_Success,
+                    scale = util.clamp(eventData.cost / 50, 1, 3)
                 })
             end
 

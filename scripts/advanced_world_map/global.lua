@@ -87,7 +87,13 @@ return {
             local cellId = data.cellId
             local playerRef = world.players[1]
 
-            local doors = {}
+            local destinations = {}
+
+            local cell = cellId and world.getCellById(cellId) or world.getExteriorCell(cellLib.getGridCoordinates(pos))
+            if not cell then
+                playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
+                return
+            end
 
             local function processCell(cell)
                 for _, ref in pairs(cell:getAll(types.Door)) do
@@ -95,17 +101,24 @@ return {
                     if types.Door.isTeleport(ref) then
                         local dest = types.Door.destCell(ref)
                         if dest and (not data.availableCells or data.availableCells[dest.id]) then
-                            table.insert(doors, {
-                                dist = common.distance2D(pos, ref.position),
-                                ref = ref,
-                                pos = ref.position,
-                                rot = ref.rotation,
-                                cell = ref.cell,
-                                dest = types.Door.destCell(ref)
-                            })
+
+                            for _, r in pairs(dest:getAll(types.Door)) do
+                                if types.Door.isTeleport(r) then
+                                    local destPos = types.Door.destPosition(r)
+                                    local destCell = types.Door.destCell(r)
+                                    if (destCell.isExterior and cell.isExterior) or destCell.id == cell.id then
+                                        table.insert(destinations, {
+                                            ref = r,
+                                            destPos = destPos,
+                                            destCell = destCell,
+                                            dist = common.distance2D(pos, destPos),
+                                        })
+                                    end
+                                end
+                            end
+
                         end
                     end
-
                 end
             end
 
@@ -113,57 +126,36 @@ return {
                 local gridX, gridY = cellLib.getGridCoordinates(pos)
                 for x = gridX - 1, gridX + 1 do
                     for y = gridY - 1, gridY + 1 do
-                        local cell = world.getExteriorCell(x, y)
-                        if not cell then goto continue end
+                        local c = world.getExteriorCell(x, y)
+                        if not c then goto continue end
 
-                        if data.availableCells and not data.availableCells[cell.id] then goto continue end
+                        if data.availableCells and not data.availableCells[c.id] then goto continue end
 
-                        processCell(cell)
+                        processCell(c)
 
                         ::continue::
                     end
                 end
-            else
-                local cell = world.getCellById(cellId)
-                if cell then
-                    processCell(cell)
-                end
+            elseif cell then
+                processCell(cell)
             end
 
-            if not next(doors) then
+            if not next(destinations) then
                 playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
                 return
             end
 
-            table.sort(doors, function (a, b)
-                return a.dist < b.dist
-            end)
-
-            local ftDoorData = doors[1]
-            local ftDoorDestCell = types.Door.destCell(ftDoorData.ref)
-            local ftDoorDestPos = types.Door.destPosition(ftDoorData.ref)
-
-            local interiorDoors = {}
-            for _, ref in pairs(ftDoorDestCell:getAll(types.Door)) do
-                if types.Door.isTeleport(ref) then
-                    local destCell = types.Door.destCell(ref)
-                    if (destCell.isExterior and not data.cellId) or destCell.id == data.cellId then
-                        table.insert(interiorDoors, {ref = ref, dist = (ftDoorDestPos - ref.position):length()})
-                    end
-                end
-            end
-
-            if not next(interiorDoors) then
-               playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
-                return
-            end
-
-            table.sort(interiorDoors, function (a, b)
+            table.sort(destinations, function (a, b)
                 return a.dist < b.dist
             end)
 
 
-            local targetDoor = interiorDoors[1].ref
+            local ftDestData = destinations[1]
+            local targetDoor = ftDestData.ref
+            local destCell = ftDestData.destCell
+            local destPos = ftDestData.destPos
+            local isDestLikeEx = destCell.isExterior or destCell:hasTag("QuasiExterior")
+
             local isInSameInteriorBlock
             local depthToPoint = 0
             local distanceBetween = 0
@@ -191,7 +183,6 @@ return {
                 end
             end
 
-            local destCell = types.Door.destCell(targetDoor)
             local targetWorldPos
             local playerWorldPos
 
@@ -200,6 +191,7 @@ return {
             else
                 targetWorldPos = types.Door.destPosition(targetDoor)
             end
+
             if not isInSameInteriorBlock then
                 if not playerRef.cell.isExterior then
                     playerWorldPos = calcFastTravelInfo(playerRef.cell, destCell)
@@ -210,6 +202,9 @@ return {
 
             if targetWorldPos and playerWorldPos then
                 distanceBetween = common.distance2D(targetWorldPos, playerWorldPos)
+                if distanceBetween < 4096 then
+                    isInSameInteriorBlock = true
+                end
             end
 
             local message
@@ -220,6 +215,8 @@ return {
                 local cellName = targetDoor.cell.displayName or targetDoor.cell.name or ""
                 message = l10n("fastTravelMessageBoxMessage"):format(stringLib.getBeforeComma(cellName))
             end
+
+            print(depthToPoint, distanceBetween, isInSameInteriorBlock, targetWorldPos, playerWorldPos)
 
             -- use the door object to send the position, because cell is not passed
             playerRef:sendEvent("AdvWMap:fastTravelMessage", {
@@ -232,12 +229,16 @@ return {
         end,
 
         ["AdvWMap:fastTravelTeleport"] = function (data)
-            if not data.targetDoor then return end
+            if not data.targetDoor and not (data.position and data.cellId) then return end
 
             local playerRef = world.players[1]
 
-            playerRef:teleport(types.Door.destCell(data.targetDoor), types.Door.destPosition(data.targetDoor),
-                {rotation = types.Door.destRotation(data.targetDoor), onGround = true})
+            if data.targetDoor then
+                playerRef:teleport(types.Door.destCell(data.targetDoor), types.Door.destPosition(data.targetDoor),
+                    {rotation = types.Door.destRotation(data.targetDoor), onGround = true})
+            else
+                playerRef:teleport(world.getCellById(data.cellId), data.position, {onGround = true})
+            end
             playerRef:sendEvent("AdvWMap:playSound", {soundId = "mysticism hit"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellcast"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnleft"})
