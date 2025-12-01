@@ -50,6 +50,8 @@ this.localMapTextureCache = {}
 
 this.localCellTextureCache = {}
 
+this.worldTextureCache = {}
+
 ---@type table<string, advancedWorldMap.localCellInfo>
 this.localCellInfo = {}
 
