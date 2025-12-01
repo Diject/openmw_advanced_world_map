@@ -37,16 +37,26 @@ EditNote: "Edit Note"
 Undefined: "Undefined"
 
 MainSettings: "Main"
-SettingMainMenuKey: "Main Menu Key"
-SettingMainMenuKeyDescription: "Key to open the Advanced World Map main menu."
+SettingMainMenuKey: "Hotkey"
+SettingMainMenuKeyDescription: |
+  "Key to open the map menu. Can consist of multiple keys."
+  "To set, click the field showing the key name."
+  "To reset, click or right-click the field, or press the gamepad 'B' button while assigning."
 SettingDiscoveryRadius: "Discovery Radius"
 SettingDiscoveryRadiusDescription: "The radius (in game units) around the player within which locations will be automatically discovered on the map."
 SettingUpdateFrequency: "Update Frequency"
 SettingUpdateFrequencyDescription: "How often (in times per second) the map updates when in non menu mode."
 
 DataSettings: "Data"
-SettingDataInitializer: "Map texture initializer"
-SettingDataInitializerDescription: "PH"
+SettingDataInitializer: "World map texture initializer"
+SettingDataInitializerDescription: |
+  Source of the world map texture. If a texture for the chosen source is not found, "Auto" will be used.
+  "Auto" - selected automatically.
+  "Your custom" - a user-generated custom texture.
+  "Quest Guider's Quest Data" - from the quest data of the Quest Guider Lite mod.
+  "Tamriel Rebuilt+" - built-in texture for TR + Project Cyrodiil + Skyrim: Home of the Nords.
+  "Base game" - built-in texture for the original Morrowind + Bloodmoon.
+  "None" - no texture (map cells will be filled with a solid color).
 
 TilesetSettings: "Tileset"
 TilesetSettingsDescription: "Configure local tilesets of world map."
