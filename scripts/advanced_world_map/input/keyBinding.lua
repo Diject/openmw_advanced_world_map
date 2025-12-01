@@ -1,9 +1,16 @@
-local input = require("openmw.input")
+local core = require("openmw.core")
 
 local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
+
+local differenceThreshold = 1.25 -- seconds
+
+
 local this = {}
 
+---@type table<string, number>
+this.lastPressed = {}
+---@type table<integer, boolean>
 this.pressed = {}
 ---@type table<string, table<function, {[1] : function, [2] : number, [3] : string}>>
 this.binds = {}
@@ -66,18 +73,21 @@ function this.onKeyPress(e)
     local keyId = keyCodes.getKeyboardKeyId(e.code)
 
     this.pressed[keyId] = true
+    this.lastPressed[keyId] = core.getRealTime()
 end
 
 function this.onMouseButtonPress(button)
     local buttonId = keyCodes.getMouseButtonId(button)
 
     this.pressed[buttonId] = true
+    this.lastPressed[buttonId] = core.getRealTime()
 end
 
 function this.onControllerButtonPress(id)
     local buttonId = keyCodes.getControllerButtonId(id)
 
     this.pressed[buttonId] = true
+    this.lastPressed[buttonId] = core.getRealTime()
 end
 
 
@@ -110,12 +120,18 @@ end
 ---@return integer[]?
 function this.getKeyCombinationString(lastCode)
     local combination = {}
-    if lastCode then
+    local timestamp = core.getRealTime()
+
+    local function wasPressed(code)
+        return this.lastPressed[code] and timestamp - this.lastPressed[code] < differenceThreshold
+    end
+
+    if lastCode and not this.pressed[lastCode] and wasPressed(lastCode) then
         table.insert(combination, lastCode)
     end
 
     for keyId, _ in pairs(this.pressed) do
-        if keyCodes.isPressed(keyId) then
+        if wasPressed(keyId) or keyCodes.isPressed(keyId) then
             table.insert(combination, keyId)
         else
             this.pressed[keyId] = nil
@@ -135,12 +151,7 @@ end
 
 
 function this.hasPressedKeys()
-    for keyId, _ in pairs(this.pressed) do
-        if keyCodes.isPressed(keyId) then
-            return true
-        end
-    end
-    return false
+    return next(this.pressed) and true or false
 end
 
 

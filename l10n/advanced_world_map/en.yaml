@@ -39,9 +39,9 @@ Undefined: "Undefined"
 MainSettings: "Main"
 SettingMainMenuKey: "Hotkey"
 SettingMainMenuKeyDescription: |
-  "Key to open the map menu. Can consist of multiple keys."
-  "To set, click the field showing the key name."
-  "To reset, click or right-click the field, or press the gamepad 'B' button while assigning."
+  Key to open the map menu. Can consist of multiple keys.
+  To set, click the field showing the key name.
+  To reset, right-click the field, or press the gamepad 'B' button while assigning.
 SettingDiscoveryRadius: "Discovery Radius"
 SettingDiscoveryRadiusDescription: "The radius (in game units) around the player within which locations will be automatically discovered on the map."
 SettingUpdateFrequency: "Update Frequency"

@@ -12,11 +12,14 @@ local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
 local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
 
+local defaultColor = util.color.rgb(202/255, 165/255, 96/255)
+
+
 local bindingSection = storage.playerSection(commonData.inputBindingsSection)
 bindingSection:setLifeTime(storage.LIFE_TIME.Persistent)
 
 
----@type {func : function, id : string, comb : string?, combLen : integer}?
+---@type {func : function, id : string, comb : string?, combLen : integer, isSecondInput : boolean?}?
 local recording = nil
 
 
@@ -29,7 +32,8 @@ I.Settings.registerRenderer("AdvWMap:inputBinding", function(value, set, argumen
 
     local binding = bindingSection:get(actionId)
 
-    local recorder = {
+    local recorder
+    recorder = {
         template = I.MWUI.templates.textNormal,
         props = {
             text = bindingSection:get(actionId) or l10n("Undefined"),
@@ -40,6 +44,7 @@ I.Settings.registerRenderer("AdvWMap:inputBinding", function(value, set, argumen
             wordWrap = true,
             textAlignH = ui.ALIGNMENT.End,
             textAlignV = ui.ALIGNMENT.Center,
+            textColor = recording and util.color.rgb(0.5, 1, 0.5) or nil
         },
         events = {
             mouseRelease = async:callback(function(e)
@@ -70,8 +75,11 @@ local function registerBinding()
     if not recording then return end
 
     bindingSection:set(recording.id, recording.comb)
-    recording.func(recording.comb)
+    local func = recording.func
+    local comb = recording.comb
     recording = nil
+    func(comb)
+
     keyBinding.resetPressed()
 end
 
@@ -100,8 +108,6 @@ return{
                 return
             end
 
-            local isFirstKey = recording.combLen == 0
-
             local keyCode = keyCodes.getKeyboardKeyId(key.code)
             local comb, keys = keyBinding.getKeyCombinationString(keyCode)
 
@@ -110,30 +116,30 @@ return{
                 recording.comb = comb
             end
 
-            if not isFirstKey and not keyBinding.hasPressedKeys() then
+            keyBinding.onKeyRelease(key)
+
+            if not keyBinding.hasPressedKeys() then
                 registerBinding()
             end
-
-            keyBinding.onKeyRelease(key)
         end,
 
         onMouseButtonRelease = function (buttonId)
             if not recording then return end
 
-            local isFirstKey = recording.combLen == 0
+            local isFirstKey = not recording.isSecondInput
+            recording.isSecondInput = true
 
-            local keyCode = keyCodes.getMouseButtonId(buttonId)
-            local comb, keys = keyBinding.getKeyCombinationString(keyCode)
+            local comb, keys = keyBinding.getKeyCombinationString()
             if comb and #keys >= recording.combLen then
                 recording.combLen = #keys
                 recording.comb = comb
             end
 
+            keyBinding.onMouseButtonRelease(buttonId)
+
             if not isFirstKey and not keyBinding.hasPressedKeys() then
                 registerBinding()
             end
-
-            keyBinding.onMouseButtonRelease(buttonId)
         end,
 
         onControllerButtonRelease = function (key)
@@ -144,7 +150,10 @@ return{
                 return
             end
 
-            local isFirstKey = recording.combLen == 0
+            local isFirstKey = not recording.isSecondInput
+            recording.isSecondInput = true
+
+            keyBinding.onControllerButtonRelease(key)
 
             local keyCode = keyCodes.getControllerButtonId(key)
             local comb, keys = keyBinding.getKeyCombinationString(keyCode)
@@ -156,8 +165,6 @@ return{
             if not isFirstKey and not keyBinding.hasPressedKeys() then
                 registerBinding()
             end
-
-            keyBinding.onControllerButtonRelease(key)
         end
     },
 }
