@@ -106,7 +106,7 @@ this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"
 this.noteMarkerPath = "textures/icons/advanced_world_map/featherIco.png"
 
 
-this.customMapDir = "textures/advanced_world_map/world_map/"
+this.customMapDir = "textures/advanced_world_map/custom/"
 this.defaultTRMapDir = "textures/advanced_world_map/default/TRmap/"
 this.defaultBaseMapDir = "textures/advanced_world_map/default/basemap/"
 this.questDataMapDir = "questData/"
@@ -114,7 +114,7 @@ this.questDataMapDir = "questData/"
 this.exteriorMapId = "__Esm3ExteriorMap__"
 this.exteriorCellLabel = "Esm3ExteriorCell:"
 this.exteriorCellIdFormat = "Esm3ExteriorCell:%d:%d"
-this.localMapTexturesDir = "textures/advanced_world_map/localMap/"
+this.localMapTexturesDir = "textures/advanced_world_map/local/"
 
 this.dataInitializerTypes = {
     "Auto",
