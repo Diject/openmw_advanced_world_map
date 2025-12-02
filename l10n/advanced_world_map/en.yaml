@@ -37,6 +37,7 @@ AddNote: "Add Note"
 EditNote: "Edit Note"
 Undefined: "Undefined"
 firstInitMenuMessage: "This is the first time you are running Advanced World Map. Please configure the essential settings below if needed. Much more in the settings."
+firstInitMenuDataSourceNote: "If the world map texture will not display correctly, try to change the data source for it in the settings. More info on the mod page on Nexus Mods."
 
 MainSettings: "Main"
 SettingMainMenuKey: "Hotkey"
@@ -65,7 +66,7 @@ SettingDataInitializerDescription: |
 TilesetSettings: "Local map tiles"
 TilesetSettingsDescription: "Configure local tilesets of world map."
 SettingTilesetOnlyDiscovered: "Show only discovered tiles"
-SettingTilesetOnlyDiscoveredDescription: "When enabled, only tiles that have been discovered by the player will be shown on the local part of the world map."
+SettingTilesetOnlyDiscoveredDescription: "When enabled, only tiles for cells that have been discovered by the player will be shown on the local part of the world map."
 SettingTilesetZoomToShow: "Zoom to show tiles"
 SettingTilesetZoomToShowDescription: "The zoom level at which local tiles will start to be shown on the world map."
 

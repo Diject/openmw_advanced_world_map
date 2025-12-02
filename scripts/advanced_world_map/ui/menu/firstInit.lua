@@ -36,7 +36,7 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * 16)
+    params.size = params.size or util.vector2(800, params.fontSize * 20)
     params.relativePosition = util.vector2((screenSize.x - params.size.x) / 2 / screenSize.x, (screenSize.y - params.size.y) / 2 / screenSize.y)
 
 
@@ -128,6 +128,21 @@ function this.new(params)
                         event = function (checked, layout)
                             config.setValue("fastTravel.enabled", checked)
                         end
+                    },
+                    interval(0, params.fontSize),
+                    {
+                        type = ui.TYPE.Text,
+                        props = {
+                            text = l10n("firstInitMenuDataSourceNote"),
+                            textSize = params.fontSize,
+                            autoSize = false,
+                            size = util.vector2(mainSize.x - 3, params.fontSize * 3),
+                            textColor = config.data.ui.defaultColor,
+                            multiline = true,
+                            wordWrap = true,
+                            textAlignH = ui.ALIGNMENT.Center,
+                            textAlignV = ui.ALIGNMENT.Center,
+                        },
                     },
                     interval(0, params.fontSize * 2),
                     {
