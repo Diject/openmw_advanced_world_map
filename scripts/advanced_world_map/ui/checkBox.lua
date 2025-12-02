@@ -14,6 +14,7 @@ local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 ---@field text string?
 ---@field checked boolean?
 ---@field textSize integer?
+---@field textElementSize any?
 ---@field visible boolean?
 ---@field position any? util.vector2
 ---@field relativePosition any? util.vector2
@@ -107,16 +108,18 @@ return function(params)
 
     if params.text then
         contentData.content:add(interval(4, 4))
+
         contentData.content:add({
-            template = templates.textNormal,
             type = ui.TYPE.Text,
             props = {
                 text = params.text or "",
                 textColor = configData.data.ui.defaultColor,
                 textSize = params.textSize or 18,
+                autoSize = not params.textElementSize and true or false,
+                size = params.textElementSize or nil,
                 anchor = util.vector2(0, 0.5),
-                multiline = false,
-                wordWrap = false,
+                multiline = params.textElementSize and true or false,
+                wordWrap = params.textElementSize and true or false,
                 textAlignH = ui.ALIGNMENT.Start,
             },
         })

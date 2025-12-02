@@ -37,6 +37,7 @@ local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
+local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
 
 local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
 
@@ -127,12 +128,29 @@ local function toggleMenu()
             menuHandler.destroyMenu(commonData.mapMenuId)
         end
     else
-        menuMode.activate()
-        menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
-            onClose = function ()
-                menuMode.deactivate()
-            end
-        })
+        if not menuMode.isMenuInteractive() then
+            menuMode.activate()
+        end
+
+        local function registerMenu()
+            menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
+                onClose = function ()
+                    menuMode.deactivate()
+                end
+            })
+        end
+
+        if configLib.data.main.firstInitMenu then
+            menuHandler.registerMenu(commonData.firstInitMenuId, firstInitMenu.new{
+                yesCallback = function ()
+                    configLib.setValue("main.firstInitMenu", false)
+                    registerMenu()
+                end
+            })
+
+        else
+            registerMenu()
+        end
     end
 end
 

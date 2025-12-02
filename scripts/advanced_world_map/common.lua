@@ -22,6 +22,7 @@ this.menuKeyId = "AdvWMap:menuKey"
 this.localDataName = "AdvancedWorldMap:playerData"
 
 this.mapMenuId = "__MAP__"
+this.firstInitMenuId = "__FIRSTINIT__"
 this.messageBoxMenuId = "__MESSAGEBOX__"
 
 this.mapDataStorageName = "AdvancedWorldMap:mapDataStorage"
