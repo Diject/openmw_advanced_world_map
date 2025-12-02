@@ -69,7 +69,7 @@ function this.updateDiscovered(newDiscovered)
                 if discoveredLocs.isVisited(userData.cellId) then
                     handler:setColor(config.data.ui.defaultLightColor)
                 elseif discoveredLocs.isDiscovered(userData.cellId) then
-                    handler:setColor(config.data.ui.defaultColor)
+                    handler:setColor(config.data.ui.markerDefaultColor)
                 end
             end
         end
@@ -353,7 +353,7 @@ local function createMarkers(widget, cellId)
                 if discoveredLocs.isVisited(dt.dCId) then
                     color = config.data.ui.defaultLightColor
                 else
-                    color = config.data.ui.defaultColor
+                    color = config.data.ui.markerDefaultColor
                 end
             else
                 color = config.data.ui.defaultDarkColor
@@ -397,7 +397,7 @@ local function createMarkers(widget, cellId)
                     type = ui.TYPE.TextEdit,
                     props = {
                         text = dt.fName,
-                        textColor = config.data.ui.defaultColor,
+                        textColor = config.data.ui.markerDefaultColor,
                         textSize = config.data.ui.fontSize,
                         anchor = util.vector2(0.5, 0),
                         size = util.vector2(tooltipWidth, 0),
@@ -490,7 +490,7 @@ local function createMarkers(widget, cellId)
             text = dt.name,
             anchor = util.vector2(0.5, 0.5),
             pos = util.vector2(dt.posX, dt.posY),
-            color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
             fontSize = 10 + math.min(8, dt.count) * 2,
             scaleFunc = mapWidget.scaleFunction.linear,
             alpha = config.data.legend.alpha.city * 0.01,
@@ -517,7 +517,7 @@ local function createMarkers(widget, cellId)
             text = info.name,
             anchor = util.vector2(0.5, 0.5),
             pos = util.vector2(info.posX, info.posY),
-            color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.defaultColor,
+            color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
             fontSize = fontSize,
             scaleFunc = mapWidget.scaleFunction.linear,
             alpha = config.data.legend.alpha.region * 0.01,

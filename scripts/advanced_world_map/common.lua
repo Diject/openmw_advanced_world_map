@@ -57,6 +57,9 @@ this.widgetPriorityField = "AdvWMap:widgetPriority"
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])
 
+this.markerDefaultColorData = {202/255, 165/255, 96/255}
+this.markerDefaultColor = util.color.rgb(this.markerDefaultColorData[1], this.markerDefaultColorData[2], this.markerDefaultColorData[3])
+
 this.defaultDarkColorData = {141/255, 115/255, 67/255}
 this.defaultDarkColor = util.color.rgb(this.defaultDarkColorData[1], this.defaultDarkColorData[2], this.defaultDarkColorData[3])
 

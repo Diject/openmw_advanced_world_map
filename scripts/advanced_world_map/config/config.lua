@@ -59,6 +59,7 @@ this.default = {
     ui = {
         fontSize = 18,
         defaultColor = commonData.defaultColor,
+        markerDefaultColor = commonData.markerDefaultColor,
         defaultLightColor = commonData.defaultLightColor,
         defaultDarkColor = commonData.defaultDarkColor,
         whiteColor = commonData.whiteColor,
