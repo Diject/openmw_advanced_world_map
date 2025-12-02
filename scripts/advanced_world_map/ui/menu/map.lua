@@ -100,6 +100,7 @@ end
 ---@field layout table
 ---@field onOpen fun(menu, content)?
 ---@field onClose fun(menu)?
+---@field onClick fun(menu, event)?
 ---@field priority number?
 ---@field showWhenMenuInactive boolean?
 
@@ -139,9 +140,14 @@ function menuMeta:addWidget(params)
     end)
 
     params.layout.events.mouseRelease = async:callback(function(e, layout)
-        if pressed and self.headerMovedDistance <= 15 and (params.onOpen or params.onClose) then
-            self:openWidget(params.id)
-            self:update()
+        if pressed and self.headerMovedDistance <= 15 then
+            if params.onClick then
+                params.onClick(self, e)
+            end
+            if (params.onOpen or params.onClose) then
+                self:openWidget(params.id)
+                self:update()
+            end
         end
         if e.button == 1 then
             pressed = false
@@ -150,6 +156,12 @@ function menuMeta:addWidget(params)
         self.headerLayout.events.mouseRelease(e, self.headerLayout)
 
         if origEvents.mouseRelease then origEvents.mouseRelease(e, layout) end
+    end)
+
+    params.layout.events.mouseMove = async:callback(function(e, layout)
+        self.headerLayout.events.mouseMove(e, self.headerLayout)
+
+        if origEvents.mouseMove then origEvents.mouseMove(e, layout) end
     end)
 
 

@@ -64,12 +64,6 @@ local function create(menu)
             anchor = util.vector2(0.5, 0.5),
             textColor = config.data.ui.defaultColor,
         },
-        events = {
-            mouseClick = async:callback(function()
-                toggleMap()
-                updateLabel(menu.mapWidget)
-            end)
-        }
     }
     updateLabel(menu.mapWidget)
 
@@ -77,6 +71,10 @@ local function create(menu)
     menu:addWidget{
         id = "AdvancedWorldMap:MapTypeLabel",
         layout = btnLayout,
+        onClick = function (m, e)
+            toggleMap()
+            updateLabel(m.mapWidget)
+        end,
         priority = 10000,
     }
 

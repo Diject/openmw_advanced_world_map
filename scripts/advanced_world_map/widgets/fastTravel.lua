@@ -101,10 +101,6 @@ local function create(menu)
             size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
         },
         events = {
-            mousePress = async:callback(function(e, layout)
-                tooltip.create(e, layout, tooltipContent)
-            end),
-
             focusLoss = async:callback(function(e, layout)
                 tooltip.destroy(layout)
             end),
@@ -172,6 +168,9 @@ local function create(menu)
     menu:addWidget{
         id = "AdvancedWorldMap:FastTravel",
         layout = iconLayout,
+        onClick = function (m, e)
+            tooltip.create(e, iconLayout, tooltipContent)
+        end,
         priority = 100,
     }
 
