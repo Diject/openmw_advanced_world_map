@@ -89,7 +89,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Regions"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 4.25),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 4.75),
             checked = config.data.legend.visibility.regions,
             event = function (checked, layout)
                 config.setValue("legend.visibility.regions", checked)
@@ -101,7 +101,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Cities"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 5.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 6.5),
             checked = config.data.legend.visibility.cities,
             event = function (checked, layout)
                 config.setValue("legend.visibility.cities", checked)
@@ -113,7 +113,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("PlayerMarker"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 6.75),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 8.25),
             checked = config.data.legend.visibility.playerMarker,
             event = function (checked, layout)
                 config.setValue("legend.visibility.playerMarker", checked)
@@ -125,7 +125,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Labels"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 8),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 10),
             checked = config.data.legend.visibility.labels,
             event = function (checked, layout)
                 config.setValue("legend.visibility.labels", checked)
@@ -137,7 +137,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Markers"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 9.25),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 11.75),
             checked = config.data.legend.visibility.markers,
             event = function (checked, layout)
                 config.setValue("legend.visibility.markers", checked)
