@@ -1292,9 +1292,9 @@ function this.new(params)
     meta.activeZoomMarkers = {}
 
     if meta.cellId then
-        meta.zoom = localStorage.data[commonData.localMapZoomFieldId] or 1
+        meta.zoom = localStorage.data[commonData.localMapZoomFieldId] or 16
     else
-        meta.zoom = localStorage.data[commonData.worldMapZoomFieldId] or 1
+        meta.zoom = localStorage.data[commonData.worldMapZoomFieldId] or 2
     end
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
     local displaySize = meta:getDisplaySize()
