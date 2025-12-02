@@ -1,6 +1,8 @@
 local types = require("openmw.types")
 
 local commonData = require("scripts.advanced_world_map.common")
+local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
+
 
 local this = {}
 
@@ -26,7 +28,7 @@ end
 ---@return table<string, integer>? depths depts by cell id
 ---@return table<string, any>? exitCells
 ---@return number? lowestDepth
-function this.findExitPositions(cell, checked, res, exitCells, depth)
+function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCells, depth)
     if not checked then checked = {} end
     if not exitCells then exitCells = {} end
     if not res then res = {} end
@@ -43,7 +45,10 @@ function this.findExitPositions(cell, checked, res, exitCells, depth)
     checked[cell.id] = depth
 
     for _, door in pairs(cell:getAll(types.Door)) do
-        if not types.Door.isTeleport(door) or not door.enabled then goto continue end
+        if not types.Door.isTeleport(door) or not door.enabled or
+                (filterNotAvailable and (disabledDoors.contains(door.id) or types.Lockable.isLocked(door))) then
+            goto continue
+        end
 
         local destCell = types.Door.destCell(door)
         local destPos = types.Door.destPosition(door)
@@ -55,7 +60,7 @@ function this.findExitPositions(cell, checked, res, exitCells, depth)
             exitCells[destCell.id] = math.min(exitCells[destCell.id] or math.huge, depth + 1)
             checked[destCell.id] = math.min(checked[destCell.id] or math.huge, depth + 1)
         else
-            this.findExitPositions(destCell, checked, res, exitCells, depth + 1)
+            this.findExitPositions(destCell, filterNotAvailable, checked, res, exitCells, depth + 1)
         end
 
         ::continue::

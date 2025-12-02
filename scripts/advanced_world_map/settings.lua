@@ -204,6 +204,7 @@ I.Settings.registerGroup{
     settings = {
         boolSetting{key = "fastTravel.enabled", name = "SettingFastTravelEnabled", description = "SettingFastTravelEnabledDescription", default = config.default.fastTravel.enabled},
         boolSetting{key = "fastTravel.onlyDiscovered", name = "SettingFastTravelOnlyDiscovered", description = "SettingFastTravelOnlyDiscoveredDescription", default = config.default.fastTravel.onlyDiscovered},
+        boolSetting{key = "fastTravel.onlyReachable", name = "SettingFastTravelOnlyReachable", description = "SettingFastTravelOnlyReachableDescription", default = config.default.fastTravel.onlyReachable},
         boolSetting{key = "fastTravel.withFollowers", name = "SettingFastTravelWithFollowers", description = "SettingFastTravelWithFollowersDescription", default = config.default.fastTravel.withFollowers},
         boolSetting{key = "fastTravel.allowToInterior", name = "SettingFastTravelAllowToInterior", description = "SettingFastTravelAllowToInteriorDescription", default = config.default.fastTravel.allowToInterior},
         numberSetting{key = "fastTravel.baseMagickaCost", name = "SettingFastTravelBaseMagickaCost", description = "SettingFastTravelBaseMagickaCostDescription", default = config.default.fastTravel.baseMagickaCost, min = 0},

@@ -91,19 +91,25 @@ return {
 
             local cell = cellId and world.getCellById(cellId) or world.getExteriorCell(cellLib.getGridCoordinates(pos))
             if not cell then
-                playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
+                playerRef:sendEvent("AdvWMap:showMessage",
+                    data.onlyReachable and l10n("NoLocationsOrBlockedForFastTravel") or l10n("NoLocationsForFastTravel"))
                 return
+            end
+
+            local function checkDoorAvailability(ref)
+                return ref.enabled and Door.isTeleport(ref) and
+                    not (data.onlyReachable and (disabledDoors.contains(ref.id) or types.Lockable.isLocked(ref)))
             end
 
             local function processCell(cell)
                 for _, ref in pairs(cell:getAll(types.Door)) do
 
-                    if types.Door.isTeleport(ref) then
+                    if checkDoorAvailability(ref) then
                         local dest = types.Door.destCell(ref)
                         if dest and (not data.availableCells or data.availableCells[dest.id]) then
 
                             for _, r in pairs(dest:getAll(types.Door)) do
-                                if types.Door.isTeleport(r) then
+                                if checkDoorAvailability(r) then
                                     local destPos = types.Door.destPosition(r)
                                     local destCell = types.Door.destCell(r)
                                     if (destCell.isExterior and cell.isExterior) or destCell.id == cell.id then
@@ -141,7 +147,8 @@ return {
             end
 
             if not next(destinations) then
-                playerRef:sendEvent("AdvWMap:showMessage", l10n("NoLocationsForFastTravel"))
+                playerRef:sendEvent("AdvWMap:showMessage",
+                    data.onlyReachable and l10n("NoLocationsOrBlockedForFastTravel") or l10n("NoLocationsForFastTravel"))
                 return
             end
 
@@ -156,20 +163,21 @@ return {
             local destPos = ftDestData.destPos
             local isDestLikeEx = destCell.isExterior or destCell:hasTag("QuasiExterior")
 
-            local isInSameInteriorBlock
-            local depthToPoint = 0
             local distanceBetween = 0
 
             local function calcFastTravelInfo(targetCell, destCell)
-                if isInSameInteriorBlock or targetCell.isExterior then return false end
+                local depthToPoint
+                local isInSameInteriorWithTarget
 
-                local exitsData, cells, exitCells, lowestDepth = cellLib.findExitPositions(targetCell)
+                local exitsData, cells, exitCells, lowestDepth = cellLib.findExitPositions(targetCell,true)
                 if cells and exitsData then
                     if cells[destCell.id] then
-                        depthToPoint = cells[destCell.id]
-                        isInSameInteriorBlock = true
+                        depthToPoint = depthToPoint or 0
+                        depthToPoint = depthToPoint + cells[destCell.id]
+                        isInSameInteriorWithTarget = true
                     else
-                        isInSameInteriorBlock = false
+                        isInSameInteriorWithTarget = false
+                        depthToPoint = depthToPoint or 0
                         depthToPoint = depthToPoint + lowestDepth
                     end
 
@@ -178,33 +186,50 @@ return {
                             return a.depth < b.depth
                         end)
 
-                        return exitsData[1].pos
+                        for _, exit in ipairs(exitsData) do
+                            if exit.cell.isExterior then
+                                return exit.pos, depthToPoint, isInSameInteriorWithTarget
+                            end
+                        end
                     end
                 end
             end
 
             local targetWorldPos
             local playerWorldPos
+            local targetDepthToPoint
+            local playerDepthToPoint
+            local isInSameInteriorBlock = false
 
             if not destCell.isExterior then
-                targetWorldPos = calcFastTravelInfo(destCell, playerRef.cell)
+                targetWorldPos, targetDepthToPoint = calcFastTravelInfo(destCell, playerRef.cell)
             else
                 targetWorldPos = types.Door.destPosition(targetDoor)
+                targetDepthToPoint = 0
             end
 
-            if not isInSameInteriorBlock then
-                if not playerRef.cell.isExterior then
-                    playerWorldPos = calcFastTravelInfo(playerRef.cell, destCell)
-                else
-                    playerWorldPos = playerRef.position
-                end
+            if not playerRef.cell.isExterior then
+                playerWorldPos, playerDepthToPoint, isInSameInteriorBlock = calcFastTravelInfo(playerRef.cell, destCell)
+            else
+                playerWorldPos = playerRef.position
+                playerDepthToPoint = 0
             end
+
+            local depthToPoint = isInSameInteriorBlock and playerDepthToPoint or nil
+            depthToPoint = depthToPoint or (targetDepthToPoint or 999) + (playerDepthToPoint or 999)
+
 
             if targetWorldPos and playerWorldPos then
                 distanceBetween = common.distance2D(targetWorldPos, playerWorldPos)
                 if distanceBetween < 4096 then
                     isInSameInteriorBlock = true
                 end
+            end
+
+            if data.onlyReachable and not isInSameInteriorBlock and depthToPoint > 99 then
+                playerRef:sendEvent("AdvWMap:showMessage",
+                    data.onlyReachable and l10n("NoLocationsOrBlockedForFastTravel") or l10n("NoLocationsForFastTravel"))
+                return
             end
 
             local message
@@ -215,8 +240,6 @@ return {
                 local cellName = targetDoor.cell.displayName or targetDoor.cell.name or ""
                 message = l10n("fastTravelMessageBoxMessage"):format(stringLib.getBeforeComma(cellName))
             end
-
-            print(depthToPoint, distanceBetween, isInSameInteriorBlock, targetWorldPos, playerWorldPos)
 
             -- use the door object to send the position, because cell is not passed
             playerRef:sendEvent("AdvWMap:fastTravelMessage", {

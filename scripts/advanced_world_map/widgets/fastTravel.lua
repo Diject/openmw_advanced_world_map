@@ -60,7 +60,8 @@ local function fastTravel(menu, cellId, relPos)
     core.sendGlobalEvent("AdvWMap:fastTravel", {
         pos = pos,
         cellId = cellId,
-        availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.visited or nil
+        availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.visited or nil,
+        onlyReachable = config.data.fastTravel.onlyReachable,
     })
 end
 
