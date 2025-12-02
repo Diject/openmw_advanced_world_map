@@ -7,9 +7,9 @@
 ---@class AdvancedWorldMap.Menu.AddHeaderElementParams
 ---@field id string Unique identifier for the widget
 ---@field layout Layout UI layout structure for the widget
----@field onOpen (fun(menu: AdvancedWorldMap.Menu.Map, content: Content))? Callback when widget is opened. 'content' is the content of horizontal Flex. Important: all elements added to this content must have definite size (no autoSize)
----@field onClose (fun(menu: AdvancedWorldMap.Menu.Map))? Callback when widget is closed
----@field onClick (fun(menu: AdvancedWorldMap.Menu.Map, event: AdvancedWorldMap.MapWidget.CreateMarker.Events.MouseEvent)))? Callback when widget is clicked
+---@field onOpen fun(menu: AdvancedWorldMap.Menu.Map, content: Content)? Callback when widget is opened. 'content' is the content of horizontal Flex. Important: all elements added to this content must have definite size (no autoSize)
+---@field onClose fun(menu: AdvancedWorldMap.Menu.Map)? Callback when widget is closed
+---@field onClick fun(menu: AdvancedWorldMap.Menu.Map, event: AdvancedWorldMap.MapWidget.CreateMarker.Events.MouseEvent)? Callback when widget is clicked
 ---@field proiority number? Priority for ordering widgets in the header
 ---@field showWhenMenuInactive boolean? If true, shows widget even in inactive menu mode
 

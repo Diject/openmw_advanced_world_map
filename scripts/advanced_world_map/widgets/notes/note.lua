@@ -74,6 +74,11 @@ end
 ---@param e AdvancedWorldMap.Event.OnRightMouseMenuEvent
 local function onRightMouseMenu(e)
 
+    -- Only add note buttons when in zoom-in mode (interior or exterior with sufficient zoom)
+    if not e.mapWidget:isInZoomInMode() then
+        return
+    end
+
     ---@type Layout
     local btn
 
