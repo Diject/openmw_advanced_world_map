@@ -393,6 +393,11 @@ function mapWidgetMeta:setSize(newSize)
 end
 
 
+function mapWidgetMeta:isInZoomInMode()
+    return self.cellId ~= nil or self.zoom >= config.data.tileset.zoomToShow
+end
+
+
 function mapWidgetMeta:updateOnZoomMarkers()
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
 
@@ -406,7 +411,7 @@ function mapWidgetMeta:updateOnZoomMarkers()
     visibleRect.left = visibleRect.left - paddingX
     visibleRect.right = visibleRect.right + paddingX
 
-    if self.cellId or self.zoom >= config.data.tileset.zoomToShow then
+    if self:isInZoomInMode() then
         self:removeOnZoomMarkers()
         self:createZoomInMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)

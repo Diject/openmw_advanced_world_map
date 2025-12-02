@@ -218,6 +218,10 @@ function AdvancedWorldMapMapWidget:updateOnZoomMarkers() end
 ---@param relativePos openmw.util.Vector2? Position to center on (vector2 [0-1], defaults to visible center)
 function AdvancedWorldMapMapWidget:setZoom(zoom, relativePos) end
 
+---Checks if the map is currently in zoomed-in mode
+---@return boolean isInZoomInMode True if in zoomed-in mode
+function AdvancedWorldMapMapWidget:isInZoomInMode() end
+
 ---Centers the map view on a specific world position
 ---@param worldPos openmw.util.Vector2|openmw.util.Vector3 World coordinates to focus on (vector2 or vector3)
 function AdvancedWorldMapMapWidget:focusOnWorldPosition(worldPos) end
