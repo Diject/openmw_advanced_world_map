@@ -282,8 +282,13 @@ local function fastTravelMessageCallback(data)
 
     menuHandler.destroyMenu(commonData.mapMenuId)
 
+    local message = eventData.message or ""
+    if cost > 0 then
+        message = message.."\n"..l10n("fastTraveMagickaCost"):format(eventData.cost)
+    end
+
     menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{
-        message = (eventData.message or "").."\n"..l10n("fastTraveMagickaCost"):format(eventData.cost),
+        message = message,
         relativeSize = util.vector2(0.25, 0.2),
         yesCallback = function ()
             local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
