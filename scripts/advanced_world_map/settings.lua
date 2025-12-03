@@ -131,6 +131,14 @@ end
 
 
 
+local sections = storage:allPlayerSections()
+if sections and not sections[commonData.configMainSectionName] then
+    local bindingSection = storage.playerSection(commonData.inputBindingsSection)
+    bindingSection:set(commonData.menuKeyId, config.default.main.menuKey)
+end
+
+
+
 
 I.Settings.registerGroup{
     key = commonData.configMainSectionName,
