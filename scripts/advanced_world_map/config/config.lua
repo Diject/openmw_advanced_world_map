@@ -21,14 +21,14 @@ this.default = {
         },
         centerOnPlayer = true,
         discoveryRadius = 1500,
-        updateFrequency = 60,
+        updateFrequency = 30,
         firstInitMenu = true,
     },
     legend = {
         markerSize = 6,
         onlyDiscovered = false,
         alpha = {
-            region = 12,
+            region = 8,
             entrance = 80,
             city = 40,
         },
@@ -50,8 +50,8 @@ this.default = {
         allowToInterior = false,
         withFollowers = false,
         onlyReachable = true,
-        baseMagickaCost = 60,
-        additionalCost = 2,
+        baseMagickaCost = 30,
+        additionalCost = 4,
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],

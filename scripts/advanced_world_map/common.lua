@@ -63,7 +63,7 @@ this.markerDefaultColor = util.color.rgb(this.markerDefaultColorData[1], this.ma
 this.defaultDarkColorData = {141/255, 115/255, 67/255}
 this.defaultDarkColor = util.color.rgb(this.defaultDarkColorData[1], this.defaultDarkColorData[2], this.defaultDarkColorData[3])
 
-this.defaultLightColorData = {255/255, 255/255, 255/255}
+this.defaultLightColorData = {238/255, 238/255, 204/255}
 this.defaultLightColor = util.color.rgb(this.defaultLightColorData[1], this.defaultLightColorData[2], this.defaultLightColorData[3])
 
 this.whiteColorData = {255/255, 255/255, 255/255}
