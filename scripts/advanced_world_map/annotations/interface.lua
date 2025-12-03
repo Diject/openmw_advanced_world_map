@@ -10,6 +10,8 @@
 ---@class AdvancedWorldMap.Interface
 ---@field version integer version of the interface
 ---@field events AdvancedWorldMap.Event event system
+---@field openMapMenu fun(inMenuMode: boolean) opens the world map menu
+---@field toggleMapMenu fun() toggles the world map menu
 ---@field getConfig fun() : table gets the current configuration
 ---@field isDiscovered fun(cellId: string) : boolean checks if the cell with the given ID is discovered
 ---@field isVisited fun(cellId: string) : number? checks if the cell with the given ID is visited. Returns timestamp or nil

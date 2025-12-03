@@ -127,6 +127,30 @@ local function onCombatTargetsChanged(eventData)
 end
 
 
+local function openMenu(inMenuMode)
+    if inMenuMode and not menuMode.isMenuInteractive() then
+        menuMode.activate()
+    end
+
+    if menuHandler.getMenu(commonData.mapMenuId) then
+        return
+    end
+
+    menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
+        onClose = function ()
+            if inMenuMode then
+                menuMode.deactivate()
+            end
+        end
+    })
+
+    local menu = menuHandler.getMenu(commonData.mapMenuId)
+    if menu and menu:updateInteractiveElements() then
+        menu:update()
+    end
+end
+
+
 local function toggleMenu()
     if menuHandler.getMenu(commonData.mapMenuId) then
         if menuMode.isActive() then
@@ -330,6 +354,8 @@ return {
         getConfig = function ()
             return configLib.data
         end,
+        openMapMenu = openMenu,
+        toggleMapMenu = toggleMenu,
         isDiscovered = function (cellId)
             return discoveredLocs.isDiscovered(cellId)
         end,
