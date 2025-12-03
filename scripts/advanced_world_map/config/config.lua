@@ -10,7 +10,7 @@ local this = {}
 this.default = {
     version = 1,
     main = {
-        menuKey = "M",
+        menuKey = "N",
         relativeSize = {
             x = 70,
             y = 70,
@@ -26,7 +26,7 @@ this.default = {
     },
     legend = {
         markerSize = 6,
-        onlyDiscovered = false,
+        onlyDiscovered = true,
         alpha = {
             region = 8,
             entrance = 80,
@@ -41,7 +41,7 @@ this.default = {
         }
     },
     tileset = {
-        onlyDiscovered = false,
+        onlyDiscovered = true,
         zoomToShow = 4,
     },
     fastTravel = {
