@@ -265,6 +265,7 @@ local function fastTravelMessageCallback(data)
             local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
             if currentMagicka < eventData.cost then
                 ui.showMessage(l10n("NotEnoughMagicka"))
+                menuMode.deactivate()
                 return
             end
 
