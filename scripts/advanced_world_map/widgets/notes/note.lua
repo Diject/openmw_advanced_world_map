@@ -24,10 +24,6 @@ local iconTexture = ui.texture{ path = commonData.noteMarkerPath }
 local AdvancedWorldMap = I.AdvancedWorldMap
 
 
-if not ui.layers.indexOf(commonData.messageLayer) then
-    ui.layers.insertAfter("Windows", commonData.messageLayer, { interactive = true })
-end
-
 
 ---@param menu AdvancedWorldMap.Menu.Map
 local function menuOpened(menu)
