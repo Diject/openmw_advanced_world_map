@@ -86,6 +86,7 @@ return {
             local pos = data.pos
             local cellId = data.cellId
             local playerRef = world.players[1]
+            local playerCell = playerRef.cell
 
             local destinations = {}
 
@@ -161,70 +162,75 @@ return {
             local targetDoor = ftDestData.ref
             local destCell = ftDestData.destCell
             local destPos = ftDestData.destPos
-            local isDestLikeEx = destCell.isExterior or destCell:hasTag("QuasiExterior")
 
-            local distanceBetween = 0
+            local distanceBetween
+            local isInSameInteriorBlock = false
+            local depthToPoint
 
-            local function calcFastTravelInfo(targetCell, destCell)
-                local depthToPoint
-                local isInSameInteriorWithTarget
+            local function inToExDistance(inCell, exPos)
+                local distance
+                local depth
+                local exitsData, cells, exitCells, lowestDepth = cellLib.findExitPositions(inCell, data.onlyReachable)
+                if exitsData then
+                    table.sort(exitsData, function (a, b)
+                        return a.depth < b.depth
+                    end)
 
-                local exitsData, cells, exitCells, lowestDepth = cellLib.findExitPositions(targetCell,true)
-                if cells and exitsData then
-                    if cells[destCell.id] then
-                        depthToPoint = depthToPoint or 0
-                        depthToPoint = depthToPoint + cells[destCell.id]
-                        isInSameInteriorWithTarget = true
-                    else
-                        isInSameInteriorWithTarget = false
-                        depthToPoint = depthToPoint or 0
-                        depthToPoint = depthToPoint + lowestDepth
+                    for _, exit in ipairs(exitsData) do
+                        local d = common.distance2D(exit.pos, exPos)
+                        if (distance or 0) <= d then
+                            depth = exit.depth
+                            distance = d
+                        end
                     end
+                end
+                return distance, depth
+            end
 
-                    if next(exitsData) then
-                        table.sort(exitsData, function (a, b)
-                            return a.depth < b.depth
-                        end)
 
-                        for _, exit in ipairs(exitsData) do
-                            if exit.cell.isExterior then
-                                return exit.pos, depthToPoint, isInSameInteriorWithTarget
+            if destCell.isExterior then
+
+                if playerCell.isExterior then
+                    depthToPoint = 0
+                    distanceBetween = common.distance2D(playerRef.position, destPos)
+                else
+                    distanceBetween, depthToPoint = inToExDistance(playerRef.cell, destPos)
+                end
+
+            else
+                if playerCell.isExterior then
+                    distanceBetween, depthToPoint = inToExDistance(destCell, playerRef.position)
+
+                else
+                    local dExits, dCells = cellLib.findExitPositions(destCell, data.onlyReachable)
+                    if dCells[playerCell.id] then
+                        depthToPoint = dCells[playerCell.id]
+                        isInSameInteriorBlock = true
+
+                    elseif next(dExits) then
+                        local pExits, pCells = cellLib.findExitPositions(playerCell, data.onlyReachable)
+                        if next(pExits) then
+
+                            for i = 1, #dExits do
+                                for j = 1, #pExits do
+                                    local ex1 = dExits[i]
+                                    local ex2 = pExits[j]
+                                    local d = common.distance2D(ex1.pos, ex2.pos)
+                                    if (distanceBetween or math.huge) > d then
+                                        distanceBetween = d
+                                        depthToPoint = ex1.depth + ex2.depth
+                                    end
+                                end
                             end
+
                         end
                     end
                 end
             end
 
-            local targetWorldPos
-            local playerWorldPos
-            local targetDepthToPoint
-            local playerDepthToPoint
-            local isInSameInteriorBlock = false
-
-            if not destCell.isExterior then
-                targetWorldPos, targetDepthToPoint = calcFastTravelInfo(destCell, playerRef.cell)
-            else
-                targetWorldPos = types.Door.destPosition(targetDoor)
-                targetDepthToPoint = 0
-            end
-
-            if not playerRef.cell.isExterior then
-                playerWorldPos, playerDepthToPoint, isInSameInteriorBlock = calcFastTravelInfo(playerRef.cell, destCell)
-            else
-                playerWorldPos = playerRef.position
-                playerDepthToPoint = 0
-            end
-
-            local depthToPoint = isInSameInteriorBlock and playerDepthToPoint or nil
-            depthToPoint = depthToPoint or (targetDepthToPoint or 999) + (playerDepthToPoint or 999)
-
-
-            if targetWorldPos and playerWorldPos then
-                distanceBetween = common.distance2D(targetWorldPos, playerWorldPos)
-                if distanceBetween < 4096 then
-                    isInSameInteriorBlock = true
-                end
-            end
+            isInSameInteriorBlock = isInSameInteriorBlock or (distanceBetween and distanceBetween < 4096) or false
+            distanceBetween = distanceBetween or 0
+            depthToPoint = depthToPoint or 999
 
             if data.onlyReachable and not isInSameInteriorBlock and depthToPoint > 99 then
                 playerRef:sendEvent("AdvWMap:showMessage",

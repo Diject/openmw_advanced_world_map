@@ -60,7 +60,7 @@ local function fastTravel(menu, cellId, relPos)
     core.sendGlobalEvent("AdvWMap:fastTravel", {
         pos = pos,
         cellId = cellId,
-        availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.visited or nil,
+        availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.discovered or nil,
         onlyReachable = config.data.fastTravel.onlyReachable,
     })
 end
@@ -129,7 +129,7 @@ local function create(menu)
         if time - lastClick >= 0.6 then
             clickCount = 0
         elseif (lastPos - relPos):length() > 0.002 then
-            clickCount = -1
+            clickCount = 0
         elseif time - lastClick < 0.6 then
             if clickCount == 2 then
                 fastTravel(menu, menu.mapWidget.cellId, relPos)

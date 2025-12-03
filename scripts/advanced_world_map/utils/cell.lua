@@ -24,9 +24,9 @@ function this.getCellIdByGrid(gridX, gridY)
 end
 
 
----@return {pos : any, depth : number, cell : any?}[]?
----@return table<string, integer>? depths depts by cell id
----@return table<string, any>? exitCells
+---@return {pos : any, depth : number, cell : any?}[]
+---@return table<string, integer> depths depts by cell id
+---@return table<string, any> exitCells
 ---@return number? lowestDepth
 function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCells, depth)
     if not checked then checked = {} end
@@ -39,14 +39,14 @@ function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCell
         if exitCells[cell.id] then
             exitCells[cell.id] = math.min(exitCells[cell.id], depth)
         end
-        return
+        return res, checked, exitCells
     end
 
     checked[cell.id] = depth
 
     for _, door in pairs(cell:getAll(types.Door)) do
         if not types.Door.isTeleport(door) or not door.enabled or
-                (filterNotAvailable and (disabledDoors.contains(door.id) or types.Lockable.isLocked(door))) then
+                (filterNotAvailable and (disabledDoors.contains(door) or types.Lockable.isLocked(door))) then
             goto continue
         end
 
@@ -55,7 +55,7 @@ function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCell
 
         if not destCell or not destPos then goto continue end
 
-        if destCell.isExterior or destCell:hasTag("QuasiExterior") then
+        if destCell.isExterior then
             table.insert(res, {pos = commonData.copyVector3(destPos), cell = destCell, depth = depth + 1})
             exitCells[destCell.id] = math.min(exitCells[destCell.id] or math.huge, depth + 1)
             checked[destCell.id] = math.min(checked[destCell.id] or math.huge, depth + 1)

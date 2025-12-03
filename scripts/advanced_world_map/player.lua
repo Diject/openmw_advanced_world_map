@@ -231,13 +231,14 @@ local function fastTravelMessageCallback(data)
         return
     end
 
-    local cost = configLib.data.fastTravel.baseMagickaCost * (1 + 0.5 * #followers)
+    local cost = configLib.data.fastTravel.baseMagickaCost
 
-    cost = cost + data.worldDistance / 8192 * configLib.data.fastTravel.additionalCost
-    cost = cost + 5 * math.min(10, data.depthToPoint) * configLib.data.fastTravel.additionalCost
-    cost = cost + math.max(0, (types.Actor.getEncumbrance(self) - types.Actor.getCapacity(self)) / 5) *
+    cost = cost + data.worldDistance / 16384 * configLib.data.fastTravel.additionalCost
+    cost = cost + 2 * math.min(10, data.depthToPoint) * configLib.data.fastTravel.additionalCost
+    cost = cost + math.max(0, (types.Actor.getEncumbrance(self) - types.Actor.getCapacity(self)) / 10) *
         configLib.data.fastTravel.additionalCost
     cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
+    cost = cost * (1 + 0.5 * #followers)
     if data.isInSameInteriorBlock then
         cost = cost * 0.66
     end
