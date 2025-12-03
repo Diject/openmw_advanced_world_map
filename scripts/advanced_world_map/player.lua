@@ -76,6 +76,13 @@ storage.playerSection(commonData.configDataSectionName):subscribe(async:callback
     mapMenu.clearMapWidgetCache()
 end))
 
+storage.playerSection(commonData.configUISectionName):subscribe(async:callback(function(_, id)
+    if id == "ui.defaultTextureColor" then
+        mapTextureHandler.init()
+    end
+    mapMenu.clearMapWidgetCache()
+end))
+
 
 local function onInit()
     if not localStorage.isPlayerStorageReady() then
