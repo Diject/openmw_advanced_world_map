@@ -46,16 +46,16 @@ end
 
 local function checkDoor(ref)
     if Door.objectIsInstance(ref) and Door.isTeleport(ref) then
-        local wasDisabled = disabledDoors.contains(ref.id)
+        local wasDisabled = disabledDoors.contains(ref)
 
         if not ref.enabled then
-            disabledDoors.register(ref.id)
+            disabledDoors.register(ref)
             if not wasDisabled then
                 world.players[1]:sendEvent("AdvWMap:registerDisabledDoor", ref)
             end
 
         elseif wasDisabled then
-            disabledDoors.unregister(ref.id)
+            disabledDoors.unregister(ref)
             world.players[1]:sendEvent("AdvWMap:unregisterDisabledDoor", ref)
         end
 
@@ -98,7 +98,7 @@ return {
 
             local function checkDoorAvailability(ref)
                 return ref.enabled and Door.isTeleport(ref) and
-                    not (data.onlyReachable and (disabledDoors.contains(ref.id) or types.Lockable.isLocked(ref)))
+                    not (data.onlyReachable and (disabledDoors.contains(ref) or types.Lockable.isLocked(ref)))
             end
 
             local function processCell(cell)

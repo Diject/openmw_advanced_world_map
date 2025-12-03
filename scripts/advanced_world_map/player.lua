@@ -446,12 +446,12 @@ return {
         end,
 
         ["AdvWMap:registerDisabledDoor"] = function(ref)
-            disabledDoors.register(ref.id)
+            disabledDoors.register(ref)
             markers.updateDoorMarkerVisibility(ref)
         end,
 
         ["AdvWMap:unregisterDisabledDoor"] = function(ref)
-            disabledDoors.unregister(ref.id)
+            disabledDoors.unregister(ref)
             markers.updateDoorMarkerVisibility(ref)
         end,
 

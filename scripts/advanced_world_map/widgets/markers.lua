@@ -98,14 +98,14 @@ local function updateDoorMarkerVisibility(marker, visible)
         end
         userData.disabled = not visible
     elseif userData.type == commonData.doorMarkerType then
-        marker:setAlpha(visible and config.data.legend.alpha.entrance or config.data.legend.alpha.entrance / 4)
+        marker:setAlpha(visible and (config.data.legend.alpha.entrance * 0.01) or (config.data.legend.alpha.entrance * 0.01 / 8))
     end
 end
 
 
 function this.updateDoorMarkerVisibility(doorRef)
     local doorHash = commonData.doorHash(doorRef, types.Door.destCell(doorRef).id)
-    local visible = not disabledDoors.contains(doorRef.id)
+    local visible = not disabledDoors.contains(doorRef)
 
     local markers = this.markersByDoorHash[doorHash]
     if not markers then return end
