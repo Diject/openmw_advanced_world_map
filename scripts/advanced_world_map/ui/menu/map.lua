@@ -337,10 +337,15 @@ end
 
 function menuMeta:close()
     if not self.menu then return end
+
+    if self.params.onClose then self.params.onClose() end
+
     self:closeActiveWidget()
+
     if self.mapWidget then
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
+
     eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
     this.activeMenuMeta = nil
 
@@ -523,7 +528,6 @@ function this.create(params)
                 userData = {},
                 events = {
                     mouseRelease = async:callback(function(_, layout)
-                        if params.onClose then params.onClose() end
                         meta:close()
                     end),
                 }
