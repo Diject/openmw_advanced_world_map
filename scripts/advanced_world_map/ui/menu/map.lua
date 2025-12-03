@@ -325,6 +325,11 @@ function menuMeta:updateInteractiveElements()
 end
 
 
+function menuMeta:requestUpdate()
+    menuMeta._requestedUpdate = true
+end
+
+
 function menuMeta:getHeaderHeight()
     return self.headerHeight
 end
@@ -693,8 +698,9 @@ function this.create(params)
     local func
     func = function ()
         if meta.menu.layout then
-            if meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer) then
+            if meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer) or meta._requestedUpdate then
                 meta:update()
+                meta._requestedUpdate = false
             end
             async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
         end

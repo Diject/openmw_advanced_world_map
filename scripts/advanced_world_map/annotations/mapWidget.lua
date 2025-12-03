@@ -206,10 +206,6 @@ function AdvancedWorldMapMapWidget:getRelativePositionOfVisibleCenter() end
 ---@return openmw.util.Vector2 size Widget size as vector2
 function AdvancedWorldMapMapWidget:getSize() end
 
----Sets the widget size and recalculates zoom limits
----@param newSize openmw.util.Vector2 New size as vector2
-function AdvancedWorldMapMapWidget:setSize(newSize) end
-
 ---Updates markers that appear/disappear based on zoom level
 function AdvancedWorldMapMapWidget:updateOnZoomMarkers() end
 
@@ -225,9 +221,6 @@ function AdvancedWorldMapMapWidget:isInZoomInMode() end
 ---Centers the map view on a specific world position
 ---@param worldPos openmw.util.Vector2|openmw.util.Vector3 World coordinates to focus on (vector2 or vector3)
 function AdvancedWorldMapMapWidget:focusOnWorldPosition(worldPos) end
-
----Updates the scale of all markers to match current zoom level
-function AdvancedWorldMapMapWidget:updateMarkersScale() end
 
 ---Forces a complete marker update (recalculates zoom and visibility)
 function AdvancedWorldMapMapWidget:updateMarkers() end
@@ -247,34 +240,15 @@ function AdvancedWorldMapMapWidget:createTextMarker(params) end
 ---@param layer integer Layer identifier where the marker is located
 function AdvancedWorldMapMapWidget:removeMarker(id, layer) end
 
----Creates markers that should be visible when zoomed out
----@param region AdvancedWorldMap.MapWidget.Region Region in world coordinates
-function AdvancedWorldMapMapWidget:createZoomOutMarkers(region) end
-
----Creates markers that should be visible when zoomed in
----@param region AdvancedWorldMap.MapWidget.Region Region in world coordinates
-function AdvancedWorldMapMapWidget:createZoomInMarkers(region) end
-
 ---Removes zoom-dependent markers, optionally keeping those in a specific region
 ---@param allowRect AdvancedWorldMap.MapWidget.Region? Region to preserve markers in (world coordinates)
 function AdvancedWorldMapMapWidget:removeOnZoomMarkers(allowRect) end
-
----Removes all ground texture tiles from the map
-function AdvancedWorldMapMapWidget:removeGroundTextures() end
-
----Places ground texture tiles for a specific region
----@param region AdvancedWorldMap.MapWidget.Region Region in world coordinates to render
-function AdvancedWorldMapMapWidget:placeGroundTextures(region) end
 
 ---Updates the player marker position and rotation
 ---@param focusOnPlayer boolean? If true, centers the map on the player
 ---@param forceUpdate boolean? If true, forces update even if position hasn't changed significantly
 ---@return boolean updated True if the marker was updated
 function AdvancedWorldMapMapWidget:updatePlayerMarker(focusOnPlayer, forceUpdate) end
-
----Sets the update callback function
----@param func function Callback to trigger when UI needs updating
-function AdvancedWorldMapMapWidget:setUpdateFunction(func) end
 
 ---Closes the right-click context menu if open
 function AdvancedWorldMapMapWidget:closeRightMouseMenu() end
@@ -293,12 +267,6 @@ function AdvancedWorldMapMapWidget:getLayerVisibility(layerId) end
 ---Gets all currently active markers (including zoom-dependent ones)
 ---@return AdvancedWorldMap.MapElement[] markers Array of active marker instances
 function AdvancedWorldMapMapWidget:getActiveMarkers() end
-
----Creates a new map widget instance
----@param params AdvancedWorldMap.MapWidget.Params Creation parameters
----@return Layout? layout Root UI layout structure
----@return AdvancedWorldMap.MapWidget? widget Map widget instance
-function AdvancedWorldMapMapWidget.new(params) end
 
 ---Checks if a point is within a rectangular region
 ---@param region AdvancedWorldMap.MapWidget.Region Region to check

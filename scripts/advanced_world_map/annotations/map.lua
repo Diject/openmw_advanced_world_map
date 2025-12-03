@@ -93,19 +93,7 @@ function AdvancedWorldMapMenuMap:updateMapWidgetWidth() end
 ---Triggers a UI update/refresh
 function AdvancedWorldMapMenuMap:update() end
 
----Handles mouse wheel events for zoom control
----@param vertical number Wheel delta value (positive = zoom in, negative = zoom out)
-function AdvancedWorldMapMenuMap:onMouseWheel(vertical) end
-
----Handles mouse click events
----@param buttonId integer Mouse button identifier
-function AdvancedWorldMapMenuMap:onMouseClick(buttonId) end
-
----Creates a new map menu instance.
----Initializes UI, creates map widget, and starts update loop.
----Triggers the onMenuOpened event.
----@param params AdvancedWorldMap.Menu.Map.CreateParams Creation parameters
----@return AdvancedWorldMap.Menu.Map menu New map menu instance
-function AdvancedWorldMapMenuMap.create(params) end
+---Requests a map update on the next update cycle.
+function AdvancedWorldMapMenuMap:requestUpdate() end
 
 return AdvancedWorldMapMenuMap
