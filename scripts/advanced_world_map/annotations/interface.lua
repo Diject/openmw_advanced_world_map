@@ -12,5 +12,5 @@
 ---@field events AdvancedWorldMap.Event event system
 ---@field getConfig fun() : table gets the current configuration
 ---@field isDiscovered fun(cellId: string) : boolean checks if the cell with the given ID is discovered
----@field isVisited fun(cellId: string) : boolean checks if the cell with the given ID is visited
+---@field isVisited fun(cellId: string) : number? checks if the cell with the given ID is visited. Returns timestamp or nil
 ---@field uiElements AdvancedWorldMap.Interface.UIElements
