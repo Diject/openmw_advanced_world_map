@@ -215,6 +215,7 @@ I.Settings.registerGroup{
         boolSetting{key = "fastTravel.onlyReachable", name = "SettingFastTravelOnlyReachable", description = "SettingFastTravelOnlyReachableDescription", default = config.default.fastTravel.onlyReachable},
         boolSetting{key = "fastTravel.withFollowers", name = "SettingFastTravelWithFollowers", description = "SettingFastTravelWithFollowersDescription", default = config.default.fastTravel.withFollowers},
         boolSetting{key = "fastTravel.allowToInterior", name = "SettingFastTravelAllowToInterior", description = "SettingFastTravelAllowToInteriorDescription", default = config.default.fastTravel.allowToInterior},
+        numberSetting{key = "fastTravel.cooldown", name = "SettingFastTravelCooldown", description = "SettingFastTravelCooldownDescription", default = config.default.fastTravel.cooldown, min = 0},
         numberSetting{key = "fastTravel.baseMagickaCost", name = "SettingFastTravelBaseMagickaCost", description = "SettingFastTravelBaseMagickaCostDescription", default = config.default.fastTravel.baseMagickaCost, min = 0},
         numberSetting{key = "fastTravel.additionalCost", name = "SettingFastTravelAdditionalCost", description = "SettingFastTravelAdditionalCostDescription", default = config.default.fastTravel.additionalCost, min = 0},
     },

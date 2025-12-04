@@ -10,6 +10,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
@@ -35,6 +36,14 @@ local function fastTravel(menu, cellId, relPos)
     local pos = menu.mapWidget:getWorldPositionByRelativePosition(relPos)
 
     if eventSys.triggerEvent(eventSys.EVENT.onFastTravel, {position = pos, cellId = cellId}) then
+        return
+    end
+
+    local timestamp = localStorage.data[commonData.fastTravelTimestampFieldId] or 0
+    local currentTime = core.getGameTime()
+    if currentTime < timestamp + config.data.fastTravel.cooldown * 3600 then
+        local remaining = math.ceil(((timestamp + config.data.fastTravel.cooldown * 3600) - currentTime) / 3600)
+        playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelCooldownMessage", {count = remaining}):format(remaining))
         return
     end
 

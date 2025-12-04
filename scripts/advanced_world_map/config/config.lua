@@ -50,6 +50,7 @@ this.default = {
         allowToInterior = false,
         withFollowers = false,
         onlyReachable = true,
+        cooldown = 3,
         baseMagickaCost = 30,
         additionalCost = 4,
     },

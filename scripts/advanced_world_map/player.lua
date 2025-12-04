@@ -280,8 +280,6 @@ local function fastTravelMessageCallback(data)
         return
     end
 
-    menuHandler.destroyMenu(commonData.mapMenuId)
-
     local message = eventData.message or ""
     if cost > 0 then
         message = message.."\n"..l10n("fastTraveMagickaCost"):format(eventData.cost)
@@ -294,14 +292,11 @@ local function fastTravelMessageCallback(data)
             local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
             if currentMagicka < eventData.cost then
                 ui.showMessage(l10n("NotEnoughMagicka"))
-                menuMode.deactivate()
+                menuHandler.destroyMenu(commonData.mapMenuId)
                 return
             end
 
-            local pPos = self.position
-            local pCellId = self.cell.id
-
-            types.Actor.stats.dynamic.magicka(self).current = currentMagicka - eventData.cost
+            types.Actor.stats.dynamic.magicka(self).current = math.max(0, currentMagicka - eventData.cost)
 
             if configLib.data.fastTravel.withFollowers then
                 data.followers = followers
@@ -336,11 +331,10 @@ local function fastTravelMessageCallback(data)
                 })
             end
 
-            menuMode.deactivate()
+            localStorage.data[commonData.fastTravelTimestampFieldId] = core.getGameTime()
+
+            menuHandler.destroyMenu(commonData.mapMenuId)
         end,
-        noCallback = function ()
-            menuMode.deactivate()
-        end
     })
 end
 
