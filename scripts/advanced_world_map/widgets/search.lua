@@ -11,6 +11,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
+local cellLib = require("scripts.advanced_world_map.utils.cell")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
@@ -58,9 +59,16 @@ local function getPosHash(cellId, pos)
 end
 
 
----@param mapWidget advancedWorldMap.ui.mapWidgetMeta
-local function createTemporaryMarker(id, mapWidget, pos, color, text, showZoomIn)
+---@param menu advancedWorldMap.ui.menu.map
+local function createTemporaryMarker(id, menu, dt, pos, color, text, showZoomIn)
+    local mapWidget = menu.mapWidget
     if temporaryMarkers[id] then return end
+
+    local tooltipText = text or ""
+    local cellName = mapDataHandler.cellNameById[mapWidget.cellId or cellLib.getCellIdByPos(pos) or ""]
+    if cellName then
+        tooltipText = tooltipText..string.format("\n\n%s\n(%d, %d)", cellName, math.floor(pos.x), math.floor(pos.y))
+    end
 
     local h = mapWidget:createImageMarker{
         layerId = mapWidget.LAYER.marker,
@@ -75,7 +83,7 @@ local function createTemporaryMarker(id, mapWidget, pos, color, text, showZoomIn
             {
                 type = ui.TYPE.TextEdit,
                 props = {
-                    text = text,
+                    text = tooltipText,
                     textSize = config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
                     autoSize = true,
@@ -94,6 +102,19 @@ local function createTemporaryMarker(id, mapWidget, pos, color, text, showZoomIn
                 }
             }
         } or nil,
+        events = {
+            mouseRelease = function(e, layout, pressed)
+                if e.button ~= 1 or not pressed then return end
+
+                if menu.mapWidget.cellId ~= dt.cellId then
+                    menu:updateMapWidgetCell(dt.cellId)
+                end
+                menu.mapWidget:focusOnWorldPosition(dt.pos)
+                menu.mapWidget:updateMarkers()
+
+                menu:update()
+            end,
+        }
     }
     temporaryMarkers[id] = h
 end
@@ -334,7 +355,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
             for name, dt in pairs(names) do
                 if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                     table.insert(res, {
-                        text = string.format("%s\n(%d, %d)", dt.name, dt.posX, dt.posY),
+                        text = dt.name,
                         cellId = nil,
                         pos = util.vector2(dt.posX, dt.posY),
                         priority = 100,
@@ -364,7 +385,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
         for name, dt in pairs(names) do
             if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                 table.insert(res, {
-                    text = string.format("%s\n(%d, %d)", dt.name, dt.posX, dt.posY),
+                    text = dt.name,
                     cellId = nil,
                     pos = util.vector2(dt.posX, dt.posY),
                     priority = 1,
@@ -421,7 +442,7 @@ local function create(menu)
         if not worldMarkersData or e.cellId ~= nil then return end
 
         for _, dt in pairs(worldMarkersData) do
-            createTemporaryMarker(dt.posHash, e.mapWidget, dt.pos, dt.color, dt.text)
+            createTemporaryMarker(dt.posHash, e.menu, dt.dt, dt.pos, dt.color, dt.text, dt.showZoomIn)
         end
         e.menu:update()
     end
@@ -530,6 +551,7 @@ local function create(menu)
                             color = color,
                             text = tx,
                             showZoomIn = showZoomIn,
+                            dt = dt,
                         }
                     elseif worldMarkersData[pHash].color ~= color then
                         worldMarkersData[pHash].color = config.data.ui.foundMarkerColor
@@ -615,7 +637,7 @@ local function create(menu)
             local worldMapWidget = menu:getCachedMapWidget()
             if worldMapWidget then
                 for posHash, dt in pairs(worldMarkersData) do
-                    createTemporaryMarker(posHash, worldMapWidget, dt.pos, dt.color, dt.text, dt.showZoomIn)
+                    createTemporaryMarker(posHash, menu, dt.dt, dt.pos, dt.color, dt.text, dt.showZoomIn)
                 end
             else
                 eventSys.registerHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
