@@ -15,6 +15,7 @@ this.configTilesetSectionName = "Settings:AdvWMap:Tileset"
 this.configFastTravelSectionName = "Settings:AdvWMap:FastTravel"
 this.configDataSectionName = "Settings:AdvWMap:Data"
 this.configUISectionName = "Settings:AdvWMap:UI"
+this.configNotesSectionName = "Settings:AdvWMap:Notes"
 this.configMiscSectionName = "Settings:AdvWMap:Misc"
 
 this.menuKeyId = "AdvWMap:menuKey"

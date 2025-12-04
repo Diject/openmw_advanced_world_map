@@ -69,7 +69,7 @@ function this.create(data, mapWidget, update)
 
     -- Note: the marker size is related to 1 zoom
     -- and the final size may depend on map zoom and the scaling function used!
-    local imageMarkerSize = 1.
+    local imageMarkerSize = 1. * (config.data.notes.mapFontSize / 18)
 
     -- Create an image marker for the note on the map
     local imageMarkerHandler = mapWidget:createImageMarker{
@@ -174,7 +174,7 @@ function this.create(data, mapWidget, update)
             scaleFunc = mapWidget.SCALE_FUNCTION.linear,
             -- Marker font size. If not specified, default from config is used.
             -- Final font size depends on map zoom and the scaling function.
-            fontSize = 1.,
+            fontSize = 1. * (config.data.notes.mapFontSize / 18),
             -- Horizontal alignment of the marker text
             textAlignH = textAlignH,
             -- Vertical alignment of the marker text

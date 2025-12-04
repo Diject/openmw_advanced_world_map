@@ -203,12 +203,25 @@ I.Settings.registerGroup{
 
 
 I.Settings.registerGroup{
+    key = commonData.configNotesSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "NotesSettings",
+    permanentStorage = true,
+    order = 4,
+    settings = {
+        numberSetting{key = "notes.mapFontSize", name = "SettingNotesMapFontSize", description = "SettingNotesMapFontSizeDescription", default = config.default.notes.mapFontSize, min = 8, max = 48, integer = true},
+    },
+}
+
+
+I.Settings.registerGroup{
     key = commonData.configFastTravelSectionName,
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
     name = "FastTravelSettings",
     permanentStorage = true,
-    order = 4,
+    order = 5,
     settings = {
         boolSetting{key = "fastTravel.enabled", name = "SettingFastTravelEnabled", description = "SettingFastTravelEnabledDescription", default = config.default.fastTravel.enabled},
         boolSetting{key = "fastTravel.onlyDiscovered", name = "SettingFastTravelOnlyDiscovered", description = "SettingFastTravelOnlyDiscoveredDescription", default = config.default.fastTravel.onlyDiscovered},
@@ -228,7 +241,7 @@ I.Settings.registerGroup{
     l10n = commonData.l10nKey,
     name = "UISettings",
     permanentStorage = true,
-    order = 5,
+    order = 6,
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
         numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},

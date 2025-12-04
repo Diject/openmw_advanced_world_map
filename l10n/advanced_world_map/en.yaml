@@ -88,6 +88,10 @@ SettingLegendCityAlphaDescription: "The transparency level of city markers on th
 SettingLegendEntranceAlpha: "Entrance marker alpha"
 SettingLegendEntranceAlphaDescription: "The transparency level of entrance markers on the map. In percentage (0-100)."
 
+NotesSettings: "Notes"
+SettingNotesMapFontSize: "Marker/font size"
+SettingNotesMapFontSizeDescription: "The size of the note markers on the map."
+
 FastTravelSettings: "Fast Travel"
 SettingFastTravelEnabled: "Enable fast travel"
 SettingFastTravelEnabledDescription: "When enabled, allows fast travel to closest entrances on the map."

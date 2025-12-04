@@ -54,6 +54,9 @@ this.default = {
         baseMagickaCost = 30,
         additionalCost = 4,
     },
+    notes = {
+        mapFontSize = 18,
+    },
     data = {
         initializer = commonData.dataInitializerTypes[1],
     },
