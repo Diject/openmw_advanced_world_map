@@ -40,6 +40,7 @@ local function create(menu)
     menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, config.data.legend.visibility.labels)
     menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, config.data.legend.visibility.markers)
 
+    ---@param menu advancedWorldMap.ui.menu.map
     local function onOpen(menu, content)
         iconLayout.props.color = config.data.ui.whiteColor
 
@@ -118,6 +119,9 @@ local function create(menu)
             event = function (checked, layout)
                 config.setValue("legend.visibility.playerMarker", checked)
                 menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.player, checked)
+                if checked then
+                    menu.mapWidget:updatePlayerMarker(true, true)
+                end
                 menu:update()
             end
         }
