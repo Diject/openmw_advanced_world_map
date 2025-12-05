@@ -94,7 +94,7 @@ SettingNotesMapFontSizeDescription: "The size of the note markers on the map."
 
 FastTravelSettings: "Fast Travel"
 SettingFastTravelEnabled: "Enable fast travel"
-SettingFastTravelEnabledDescription: "When enabled, allows fast travel to closest entrances on the map."
+SettingFastTravelEnabledDescription: "When enabled, allows fast travel to the entrance nearest to the selected point on the map."
 SettingFastTravelOnlyDiscovered: "Fast travel to discovered locations only"
 SettingFastTravelOnlyDiscoveredDescription: "When enabled, fast travel will only be possible to locations that have been discovered by the player."
 SettingFastTravelOnlyReachable: "Fast travel to reachable locations only"
