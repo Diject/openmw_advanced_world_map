@@ -1028,7 +1028,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local playerRelPos = self:getRelativePositionByWorldPosition(pos)
     playerMarkerLayout.props.relativePosition = playerRelPos
     playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle, yaw) or playerMarkerTexture
-    if commonData.distance2D(playerMarkerLayout.userData.lastPos, pos) > 8192 then
+    if commonData.distance2D(playerMarkerLayout.userData.lastPos, pos) > 4096 then
         self._updatePlayerTiles = true
     end
     playerMarkerLayout.userData.lastPos = pos
