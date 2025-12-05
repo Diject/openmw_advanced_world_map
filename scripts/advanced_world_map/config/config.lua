@@ -55,7 +55,7 @@ this.default = {
         additionalCost = 4,
     },
     notes = {
-        mapFontSize = 18,
+        mapFontSize = 10,
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],

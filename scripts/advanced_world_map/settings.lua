@@ -210,7 +210,7 @@ I.Settings.registerGroup{
     permanentStorage = true,
     order = 4,
     settings = {
-        numberSetting{key = "notes.mapFontSize", name = "SettingNotesMapFontSize", description = "SettingNotesMapFontSizeDescription", default = config.default.notes.mapFontSize, min = 8, max = 48, integer = true},
+        numberSetting{key = "notes.mapFontSize", name = "SettingNotesMapFontSize", description = "SettingNotesMapFontSizeDescription", default = config.default.notes.mapFontSize, min = 4, max = 48, integer = true},
     },
 }
 
