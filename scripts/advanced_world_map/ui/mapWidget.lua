@@ -265,16 +265,16 @@ end
 local function clampAndCenterPosition(pos, mapSize, mainSize)
     local newX, newY
 
-    if mapSize.x * 4 <= mainSize.x then
+    if mapSize.x * 2 <= mainSize.x then
         newX = (mainSize.x - mapSize.x) / 2
     else
-        newX = util.clamp(pos.x, mainSize.x - mapSize.x * 4, mapSize.x * 3)
+        newX = util.clamp(pos.x, mainSize.x - mapSize.x * 2, mapSize.x)
     end
 
-    if mapSize.y * 4 <= mainSize.y then
+    if mapSize.y * 2 <= mainSize.y then
         newY = (mainSize.y - mapSize.y) / 2
     else
-        newY = util.clamp(pos.y, mainSize.y - mapSize.y * 4, mapSize.y * 3)
+        newY = util.clamp(pos.y, mainSize.y - mapSize.y * 2, mapSize.y)
     end
 
     return util.vector2(newX, newY)
@@ -1028,12 +1028,15 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local playerRelPos = self:getRelativePositionByWorldPosition(pos)
     playerMarkerLayout.props.relativePosition = playerRelPos
     playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle, yaw) or playerMarkerTexture
+    if commonData.distance2D(playerMarkerLayout.userData.lastPos, pos) > 8192 then
+        self._updatePlayerTiles = true
+    end
     playerMarkerLayout.userData.lastPos = pos
     playerMarkerLayout.userData.lastYaw = yaw
 
     if focusOnPlayer then
         if self._updatePlayerTiles then
-            self:setZoom(self.zoom, self:getRelativePositionByWorldPosition(pos))
+            self:setZoom(self.zoom, playerRelPos)
             self._updatePlayerTiles = false
         else
             self:focusOnWorldPosition(pos)
@@ -1173,7 +1176,7 @@ function this.new(params)
         meta.mapInfo = mapInfo
         meta.northDirectionAngle = localCellInfo.nA or 0
 
-        local padding = mapInfo.pixelsPerCell * 0.5
+        local padding = mapInfo.pixelsPerCell
         meta.borderPadding = util.vector2(padding, padding)
         meta.displayMapSize = util.vector2(mapInfo.width + padding * 2, mapInfo.height + padding * 2)
 
