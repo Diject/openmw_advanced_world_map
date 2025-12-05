@@ -123,34 +123,10 @@ function AdvancedWorldMapMapWidget:getDisplaySize(scale) end
 ---@return openmw.util.Vector2 padding Padding as vector2
 function AdvancedWorldMapMapWidget:getPadding(scale) end
 
----Gets the layout containing all map layers
----@return Layout layout Map layers container layout
-function AdvancedWorldMapMapWidget:getMapLayersLayout() end
-
 ---Gets the layout for a specific layer
 ---@param id integer Layer identifier
 ---@return Layout layout Layer layout structure
 function AdvancedWorldMapMapWidget:getLayerLayout(id) end
-
----Gets the base map layer layout (ground textures)
----@return Layout layout Map layer layout
-function AdvancedWorldMapMapWidget:getMapLayout() end
-
----Gets the region labels layer layout
----@return Layout layout Region layer layout
-function AdvancedWorldMapMapWidget:getRegionLayout() end
-
----Gets the location names layer layout
----@return Layout layout Name layer layout
-function AdvancedWorldMapMapWidget:getNameLayout() end
-
----Gets the interactive markers layer layout
----@return Layout layout Marker layer layout
-function AdvancedWorldMapMapWidget:getMarkerLayout() end
-
----Gets the player marker layer layout
----@return Layout layout Player layer layout
-function AdvancedWorldMapMapWidget:getPlayerLayout() end
 
 ---Gets the relative center point of the map (normalized coordinates)
 ---@return openmw.util.Vector2 center Center position as vector2 [0-1]
