@@ -1426,6 +1426,7 @@ function this.new(params)
 
                 main.userData.lastMarkerElement = markerElement
                 e.marker = markerElement
+                e.mapWidget = meta
                 if markerElement then
                     e.offset = main.userData.mainMouseOffset + e.offset
                 end
@@ -1443,6 +1444,7 @@ function this.new(params)
             mouseRelease = async:callback(function(e, layout, markerElement)
                 main.userData.lastMarkerElement = markerElement
                 e.marker = markerElement
+                e.mapWidget = meta
                 if markerElement then
                     e.offset = main.userData.mainMouseOffset + e.offset
                 end
@@ -1500,7 +1502,7 @@ function this.new(params)
                 main.userData.lastMarkerElement = markerElement
                 main.userData.lastDraggedMousePos = nil
                 main.userData.inFocus = false
-                if eventSys.triggerEvent(eventSys.EVENT["onFocusLoss"], {marker = markerElement}) then
+                if eventSys.triggerEvent(eventSys.EVENT["onFocusLoss"], {mapWidget = meta, marker = markerElement}) then
                     main.userData.lastDraggedMousePos = nil
                     return
                 end
@@ -1515,6 +1517,7 @@ function this.new(params)
                 end
                 main.userData.inFocus = true
 
+                e.mapWidget = meta
                 if eventSys.triggerEvent(eventSys.EVENT["onMouseMove"], {
                         position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset,
                         marker = markerElement}) then

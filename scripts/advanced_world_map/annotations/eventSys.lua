@@ -62,6 +62,7 @@
 
 ---Event data for mouse press event
 ---@class AdvancedWorldMap.Event.OnMousePressEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
 ---@field offset openmw.util.Vector2 Cursor offset relative to marker
 ---@field position openmw.util.Vector2 Cursor position
@@ -69,6 +70,7 @@
 
 ---Event data for mouse release event
 ---@class AdvancedWorldMap.Event.OnMouseReleaseEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
 ---@field offset openmw.util.Vector2 Cursor offset relative to marker
 ---@field position openmw.util.Vector2 Cursor position
@@ -76,10 +78,12 @@
 
 ---Event data for focus loss event
 ---@class AdvancedWorldMap.Event.OnFocusLossEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker that lost focus (if any)
 
 ---Event data for mouse move event
 ---@class AdvancedWorldMap.Event.OnMouseMoveEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
 ---@field offset openmw.util.Vector2 Cursor offset relative to marker
 ---@field position openmw.util.Vector2 Cursor position
