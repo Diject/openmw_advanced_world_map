@@ -40,10 +40,22 @@ local function fastTravel(menu, cellId, relPos)
     end
 
     local timestamp = localStorage.data[commonData.fastTravelTimestampFieldId] or 0
-    local currentTime = core.getGameTime()
-    if currentTime < timestamp + config.data.fastTravel.cooldown * 3600 then
-        local remaining = math.ceil(((timestamp + config.data.fastTravel.cooldown * 3600) - currentTime) / 3600)
+    local realTimestamp = localStorage.data[commonData.fastTravelRealTimestampFieldId] or 0
+    local currentGameTime = core.getGameTime()
+    local currentRealTime = core.getRealTime()
+    if currentGameTime < timestamp + config.data.fastTravel.cooldown * 3600 then
+        local remaining = math.ceil(((timestamp + config.data.fastTravel.cooldown * 3600) - currentGameTime) / 3600)
         playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelCooldownMessage", {count = remaining}):format(remaining))
+        return
+    elseif currentRealTime < realTimestamp + config.data.fastTravel.cooldown * 120 then
+        local remainingInSec = math.ceil(((realTimestamp + config.data.fastTravel.cooldown * 120) - currentRealTime))
+        local remainingInMin = math.ceil(remainingInSec / 60)
+
+        if remainingInSec < 60 then
+            playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelRealTimeSecCooldownMessage", {count = remainingInSec}):format(remainingInSec))
+        else
+            playerRef:sendEvent("AdvWMap:showMessage", l10n("fastTravelRealTimeMinCooldownMessage", {count = remainingInMin}):format(remainingInMin))
+        end
         return
     end
 

@@ -42,6 +42,7 @@ this.worldMapZoomFieldId = "worldMapScale"
 this.lastCellIdFieldId = "lastCellId"
 this.notesFieldId = "notes"
 this.fastTravelTimestampFieldId = "fastTravelTimestampFieldId"
+this.fastTravelRealTimestampFieldId = "fastTravelRealTimestampFieldId"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"

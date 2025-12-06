@@ -28,7 +28,17 @@ fastTravelCooldownMessage: |-
   You need to wait %d {count, plural,
     one {hour}
     other {hours}
-  } before using fast travel again.
+  } before you can use fast travel again.
+fastTravelRealTimeMinCooldownMessage: |-
+  You need to wait %d real-time {count, plural,
+    one {minute}
+    other {minutes}
+  } before you can use fast travel again.
+fastTravelRealTimeSecCooldownMessage: |-
+  You need to wait %d real-time {count, plural,
+    one {second}
+    other {seconds}
+  } before you can use fast travel again.
 NotEnoughMagicka: "Not enough magicka."
 Local: "Local"
 World: "World"
@@ -104,7 +114,7 @@ SettingFastTravelWithFollowersDescription: "When enabled, followers will travel 
 SettingFastTravelAllowToInterior: "Allow fast travel to interiors"
 SettingFastTravelAllowToInteriorDescription: "When enabled, allows fast travel to interior locations."
 SettingFastTravelCooldown: "Fast travel cooldown"
-SettingFastTravelCooldownDescription: "The cooldown time (in in-game hours) between consecutive fast travels. Set to 0 to disable."
+SettingFastTravelCooldownDescription: "The cooldown time between consecutive fast travels, measured in in-game hours or as this value multiplied by 2 real-time minutes. Set to 0 to disable."
 SettingFastTravelBaseMagickaCost: "Base magicka cost"
 SettingFastTravelBaseMagickaCostDescription: "The base magicka cost for fast traveling."
 SettingFastTravelAdditionalCost: "Magicka cost per unit distance"
