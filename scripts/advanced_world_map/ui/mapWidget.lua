@@ -341,7 +341,7 @@ function mapWidgetMeta:getWorldPositionOfVisibleCenter()
     local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
     local pixelSize = 8192 / zoomedPixPerCell
     local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
-    local yOffset = self.mapInfo.gridY.max * zoomedPixPerCell
+    local yOffset = (self.mapInfo.gridY.max + 1) * zoomedPixPerCell
     local paddingScaled = self:getPadding(self.zoom)
 
     local centerX = (rect.left + rect.right) / 2
@@ -351,7 +351,7 @@ function mapWidgetMeta:getWorldPositionOfVisibleCenter()
 
     if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
         local pivot = self:getRotationPivot(self.zoom)
-        pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
+        pos = (pos - pivot):rotate(self.northDirectionAngle) + pivot
     end
 
     pos = util.vector2(pos.x - paddingScaled.x, pos.y - paddingScaled.y)
@@ -1540,6 +1540,7 @@ function this.new(params)
 
                 if meta.onZoomMarkersCenter then
                     local centerWorldPos = meta:getWorldPositionOfVisibleCenter()
+                    centerWorldPos = util.vector2(centerWorldPos.x, centerWorldPos.y - 8192)
 
                     local dist = (meta.onZoomMarkersCenter - centerWorldPos):length()
 
