@@ -51,6 +51,7 @@ function this.create(coord, parent, layoutContent)
                 props = {
                     horizontal = false,
                     align = ui.ALIGNMENT.Center,
+                    arrange = ui.ALIGNMENT.Center,
                 },
                 content = layoutContent,
             }
