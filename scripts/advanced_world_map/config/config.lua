@@ -23,6 +23,7 @@ this.default = {
         discoveryRadius = 1500,
         updateFrequency = 30,
         firstInitMenu = true,
+        fastClose = false,
     },
     legend = {
         markerSize = 6,

@@ -157,7 +157,7 @@ end
 
 local function toggleMenu()
     if menuHandler.getMenu(commonData.mapMenuId) then
-        if menuMode.isActive() then
+        if menuMode.isActive() and not configLib.data.main.fastClose then
             menuMode.deactivate()
         else
             menuHandler.destroyMenu(commonData.mapMenuId)
