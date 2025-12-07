@@ -288,8 +288,6 @@ function menuMeta:updateMapWidgetCell(cellId)
 
     eventSys.triggerEvent(eventSys.EVENT.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
 
-    localStorage.data[commonData.lastCellIdFieldId] = cellId
-
     return true
 end
 
@@ -651,6 +649,8 @@ function this.create(params)
         meta:updateMapWidgetCell(not playerRef.cell.isExterior and playerRef.cell.id or nil)
     else
         meta:updateMapWidgetCell(localStorage.data[commonData.lastCellIdFieldId])
+        meta.mapWidget:focusOnWorldPosition(localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0))
+        meta.mapWidget:updateMarkers()
     end
 
     local layout = {
@@ -717,6 +717,12 @@ function this.create(params)
 
     return meta
 end
+
+
+eventSys.registerHandler(eventSys.EVENT.onMapClosed, function (e)
+    localStorage.data[commonData.lastCellIdFieldId] = e.mapWidget.cellId
+    localStorage.data[commonData.lastMapPosFieldId] = e.mapWidget:getWorldPositionOfVisibleCenter()
+end)
 
 
 

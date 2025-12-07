@@ -43,6 +43,7 @@ this.lastCellIdFieldId = "lastCellId"
 this.notesFieldId = "notes"
 this.fastTravelTimestampFieldId = "fastTravelTimestampFieldId"
 this.fastTravelRealTimestampFieldId = "fastTravelRealTimestampFieldId"
+this.lastMapPosFieldId = "lastMapPosFieldId"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
