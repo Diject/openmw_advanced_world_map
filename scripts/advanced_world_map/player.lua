@@ -42,6 +42,7 @@ local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
 local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
 
 local markers = require("scripts.advanced_world_map.widgets.markers")
+local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
 -- widgets
 require("scripts.advanced_world_map.widgets.mapTypeLabel")
@@ -156,6 +157,7 @@ end
 
 
 local function toggleMenu()
+    menuHandler.destroyAllMenus() --cleanup for any lingering elements
     if menuHandler.getMenu(commonData.mapMenuId) then
         if menuMode.isActive() then
             menuMode.deactivate()
@@ -399,7 +401,13 @@ return {
             keyBinding.onMouseButtonRelease(buttonId)
             menuHandler.onMouseReleaseCallback(buttonId)
         end,
-        onControllerButtonRelease = keyBinding.onControllerButtonRelease,
+		onControllerButtonRelease = function (key)
+			keyBinding.onControllerButtonRelease(key)
+			local buttonId = keyCodes.getControllerButtonId(key)
+				if keyCodes.keyByCode[buttonId] == "C_B" then
+				    menuHandler.destroyAllMenus()
+				end
+			end,
     },
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
