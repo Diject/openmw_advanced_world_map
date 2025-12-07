@@ -399,7 +399,12 @@ return {
             keyBinding.onMouseButtonRelease(buttonId)
             menuHandler.onMouseReleaseCallback(buttonId)
         end,
-        onControllerButtonRelease = keyBinding.onControllerButtonRelease,
+        onControllerButtonRelease = function (buttonId)
+            keyBinding.onControllerButtonRelease(buttonId)
+            if buttonId == input.CONTROLLER_BUTTON.B then
+                menuHandler.destroyAllMenus()
+            end
+        end
     },
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
