@@ -1,6 +1,6 @@
 local aux_util = require('openmw_aux.util')
 
-local modLabel = ""
+local modLabel = "[Advanced World Map]: "
 
 return function(...)
     local args = {...}
