@@ -376,6 +376,7 @@ local function createMarkers(widget, cellId)
                     cellId = dt.dCId,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
+                    imageMarker = nil,
                 },
             }
             if textMarkerHandler then
@@ -429,6 +430,7 @@ local function createMarkers(widget, cellId)
                     cellId = dt.dCId,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
+                    textMarker = textMarkerHandler,
                 },
                 events = {
                     mouseRelease = function (e, layout, pressed)
@@ -471,6 +473,13 @@ local function createMarkers(widget, cellId)
                     updateDoorMarkerVisibility(imageMarkerHandler, false)
                 end
                 this.markerById[imId] = imageMarkerHandler
+
+                if textMarkerHandler then
+                    local userData = textMarkerHandler:getUserData()
+                    if userData then
+                        userData.imageMarker = imageMarkerHandler
+                    end
+                end
             end
 
         end
