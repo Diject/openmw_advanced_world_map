@@ -132,6 +132,11 @@ end
 
 
 local function openMenu(inMenuMode)
+    if not mapDataHandler.isInitialized() then
+        ui.showMessage(l10n("mapDataNotInitialized"))
+        return
+    end
+
     if inMenuMode and not menuMode.isMenuInteractive() then
         menuMode.activate()
     end
@@ -156,6 +161,11 @@ end
 
 
 local function toggleMenu()
+    if not mapDataHandler.isInitialized() then
+        ui.showMessage(l10n("mapDataNotInitialized"))
+        return
+    end
+
     if menuHandler.getMenu(commonData.mapMenuId) then
         if menuMode.isActive() and not configLib.data.main.fastClose then
             menuMode.deactivate()

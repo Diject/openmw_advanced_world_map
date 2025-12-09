@@ -53,6 +53,7 @@ EditNote: "Edit Note"
 Undefined: "Undefined"
 firstInitMenuMessage: "This is the first time you are running Advanced World Map. Please configure the essential settings below if needed. Much more in the settings."
 firstInitMenuDataSourceNote: "If the world map texture will not display correctly, try to change the data source for it in the settings. More info on the mod page on Nexus Mods."
+mapDataNotInitialized: "Map data is not available. Report this issue on the mod page on Nexus Mods."
 
 MainSettings: "Main"
 SettingMainMenuKey: "Hotkey"

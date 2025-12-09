@@ -3,13 +3,15 @@ local storage = require("openmw.storage")
 local types = require("openmw.types")
 local util = require("openmw.util")
 
+local log = require("scripts.advanced_world_map.utils.log")
+
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local commonData = require("scripts.advanced_world_map.common")
 
 local this = {}
 
-this.version = 1
+this.version = 2
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -25,6 +27,7 @@ this.grid = nil
 this.worldMapTileRectangles = {}
 
 this.cellCount = 0
+this.contentFileCount = 0
 
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
@@ -60,53 +63,139 @@ end
 
 
 local function findMaxRectangle(occupied)
-    local rect = nil
+    local bestX1, bestY1, bestX2, bestY2, bestArea = nil, nil, nil, nil, 0
+
     for x, col in pairs(occupied) do
         for y in pairs(col) do
+            if not col[y] then goto continue end
 
-            local maxX, maxY = x, y
+            local maxX = x
             while occupied[maxX + 1] and occupied[maxX + 1][y] do
                 maxX = maxX + 1
             end
 
-            local done = false
-            while not done do
+            local maxY = y
+            local canExpand = true
+            while canExpand do
+                local nextY = maxY + 1
                 for xi = x, maxX do
-                    if not (occupied[xi] and occupied[xi][maxY + 1]) then
-                        done = true
+                    if not (occupied[xi] and occupied[xi][nextY]) then
+                        canExpand = false
                         break
                     end
                 end
-
-                if not done then
-                    maxY = maxY + 1
+                if canExpand then
+                    maxY = nextY
                 end
             end
 
             local area = (maxX - x + 1) * (maxY - y + 1)
-            if not rect or area > rect.area then
-                rect = {x1 = x, y1 = y, x2 = maxX, y2 = maxY, area = area}
+            if area > bestArea then
+                bestX1, bestY1, bestX2, bestY2, bestArea = x, y, maxX, maxY, area
             end
 
+            ::continue::
         end
     end
 
-    return rect
+    if bestArea > 0 then
+        return bestX1, bestY1, bestX2, bestY2
+    end
+    return nil
 end
 
 local function worldCoverWithRectangles(occupied)
     local res = {}
 
     while true do
-        local rect = findMaxRectangle(occupied)
-        if not rect then break end
+        local x1, y1, x2, y2 = findMaxRectangle(occupied)
+        if not x1 then break end
 
-        table.insert(res, {rect.x1, rect.y1, rect.x2, rect.y2})
-        for x = rect.x1, rect.x2 do
-            for y = rect.y1, rect.y2 do
-                if occupied[x] then
-                    occupied[x][y] = nil
+        table.insert(res, {x1, y1, x2, y2})
+
+        for x = x1, x2 do
+            local col = occupied[x]
+            if col then
+                for y = y1, y2 do
+                    col[y] = nil
                 end
+
+                if not next(col) then
+                    occupied[x] = nil
+                end
+            end
+        end
+    end
+
+    return res
+end
+
+
+local function worldCoverWithRectanglesFast(occupied)
+    local res = {}
+
+    local xCoords = {}
+    for x in pairs(occupied) do
+        table.insert(xCoords, x)
+    end
+    table.sort(xCoords)
+
+    for _, x in ipairs(xCoords) do
+        local col = occupied[x]
+        if col then
+            local yCoords = {}
+            for y in pairs(col) do
+                table.insert(yCoords, y)
+            end
+            table.sort(yCoords)
+
+            local i = 1
+            while i <= #yCoords do
+                local y1 = yCoords[i]
+                local y2 = y1
+
+                while i < #yCoords and yCoords[i + 1] == y2 + 1 do
+                    i = i + 1
+                    y2 = yCoords[i]
+                end
+
+                local x2 = x
+                local canExpandX = true
+                while canExpandX do
+                    local nextX = x2 + 1
+                    local nextCol = occupied[nextX]
+                    if nextCol then
+
+                        for y = y1, y2 do
+                            if not nextCol[y] then
+                                canExpandX = false
+                                break
+                            end
+                        end
+
+                        if canExpandX then
+                            x2 = nextX
+                        end
+                    else
+                        canExpandX = false
+                    end
+                end
+
+                table.insert(res, {x, y1, x2, y2})
+
+                for xi = x, x2 do
+                    local c = occupied[xi]
+                    if c then
+                        for y = y1, y2 do
+                            c[y] = nil
+                        end
+                        if not next(c) then
+                            occupied[xi] = nil
+                        end
+                    end
+                end
+
+                i = i + 1
             end
         end
     end
@@ -211,7 +300,15 @@ local function buildData()
     end
 
 
-    this.worldMapTileRectangles = worldCoverWithRectangles(occupied)
+    local function buildRectMapFast()
+        this.worldMapTileRectangles = worldCoverWithRectanglesFast(occupied)
+    end
+
+    if not pcall(buildRectMapFast) then
+        log("Error building world map tile rectangles")
+        this.worldMapTileRectangles = {}
+    end
+
     this.grid = {min = {x = minGridX, y = minGridY}, max = {x = maxGridX, y = maxGridY}}
 
     local function getCellName(cell)
@@ -373,7 +470,6 @@ function this.globalBuildData()
         cellNameData = this.cellNameData,
         regionNameData = this.regionNameData,
         entrances = this.entrances,
-        cellDirections = this.cellDirections,
         cellNameById = this.cellNameById,
         grid = this.grid,
         worldMapTileRectangles = this.worldMapTileRectangles,
@@ -392,7 +488,7 @@ function this.playerInit(cellCount)
     local stor = storage.playerSection(commonData.mapDataStorageName)
 
     local shouldRebuild = stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
-        stor:get("apiVersion") ~= core.API_REVISION
+        stor:get("apiVersion") ~= core.API_REVISION or stor:get("contentFileCount") ~= #core.contentFiles.list
 
     if shouldRebuild then
         core.sendGlobalEvent("AdvWMap:rebuildMapData")
@@ -401,11 +497,11 @@ function this.playerInit(cellCount)
         this.cellNameData = stor:get("cellNameData") or {}
         this.regionNameData = stor:get("regionNameData") or {}
         this.entrances = stor:get("entrances") or {}
-        this.cellDirections = stor:get("cellDirections") or {}
         this.cellNameById = stor:get("cellNameById") or {}
         this.grid = stor:get("grid") or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
         this.worldMapTileRectangles = stor:get("worldMapTileRectangles") or {}
         this.cellCount = stor:get("cellCount") or 0
+        this.contentFileCount = stor:get("contentFileCount") or 0
 
         return true
     end
@@ -417,23 +513,31 @@ function this.updateData(data)
     this.cellNameData = data.cellNameData or {}
     this.regionNameData = data.regionNameData or {}
     this.entrances = data.entrances or {}
-    this.cellDirections = data.cellDirections or {}
     this.cellNameById = data.cellNameById or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
     this.cellCount = data.cellCount or 0
+    this.contentFileCount = data.contentFileCount or 0
 
     local stor = storage.playerSection(commonData.mapDataStorageName)
     stor:set("cellNameData", this.cellNameData)
     stor:set("regionNameData", this.regionNameData)
     stor:set("entrances", this.entrances)
-    stor:set("cellDirections", this.cellDirections)
     stor:set("cellNameById", this.cellNameById)
     stor:set("grid", this.grid)
     stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
     stor:set("cellCount", this.cellCount)
+    stor:set("contentFileCount", #core.contentFiles.list)
     stor:set("version", this.version)
     stor:set("apiVersion", core.API_REVISION)
+
+    log("Map data updated and saved to storage")
+end
+
+
+function this.isInitialized()
+    return this.cellNameData ~= nil and this.regionNameData ~= nil and this.entrances ~= nil and
+        this.cellNameById ~= nil and this.grid ~= nil and this.worldMapTileRectangles ~= nil
 end
 
 
