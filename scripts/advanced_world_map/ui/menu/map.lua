@@ -14,6 +14,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local log = require("scripts.advanced_world_map.utils.log")
 
+local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
@@ -348,6 +349,20 @@ function menuMeta:close()
     this.activeMenuMeta = nil
 
     keyBinding.unregister("C_Y", controllerYCallback)
+
+    if config.data.main.clearCacheOnClose then
+        for id, _ in pairs(this.cachedMapWidgetLayout) do
+            if id ~= commonData.exteriorMapId then
+                this.cachedMapWidgetLayout[id] = nil
+            end
+        end
+        for id, _ in pairs(this.cachedMapWidgetMetatable) do
+            if id ~= commonData.exteriorMapId then
+                this.cachedMapWidgetMetatable[id] = nil
+            end
+        end
+    end
+    mapTextureHandler.clearInteriorTextureCache()
 
     self.menu:destroy()
 end

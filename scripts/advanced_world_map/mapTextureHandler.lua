@@ -250,6 +250,16 @@ function this.getLocalCellMapTextures(cellId)
 end
 
 
+function this.clearInteriorTextureCache()
+    for i, _ in pairs(this.localCellTextureCache) do
+        this.localCellTextureCache[i] = nil
+    end
+    for i, _ in pairs(this.localCellInfo) do
+        this.localCellInfo[i] = nil
+    end
+end
+
+
 function this.getWorldMapTexture()
     if not this.mapImagePath or not vfs.fileExists(this.mapImagePath) then return end
 

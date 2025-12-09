@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 2,
+    version = 3,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -24,6 +24,7 @@ this.default = {
         updateFrequency = 30,
         firstInitMenu = true,
         fastClose = false,
+        clearCacheOnClose = true,
     },
     legend = {
         markerSize = 6,
