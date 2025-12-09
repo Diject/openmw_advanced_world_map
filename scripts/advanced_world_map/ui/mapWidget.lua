@@ -752,6 +752,8 @@ local function createMarker(self, params, onlyInitialize)
 
     addZoomInOutData(markerName, marker)
 
+    eventSys.triggerEvent(eventSys.EVENT.onMapElementInitialized, {mapWidget = self, marker = markerELement})
+
     if onlyInitialize then
         return markerName, params.layerId, markerELement, marker
     end
@@ -798,15 +800,17 @@ end
 
 
 local function removeMarker(self, id, layer)
-    if not id or not layer then return end
+    if not id or not layer then return false end
     local content = self:getLayerLayout(layer).content
 
-    uiUtils.removeFromContent(content, id)
+    return uiUtils.removeFromContent(content, id) ~= nil
 end
 
+
+---@return boolean removedFromMap
 function mapWidgetMeta:removeMarker(id, layer)
-    if not id then return end
-    removeMarker(self, id, layer)
+    if not id then return false end
+    local removedFromMap = removeMarker(self, id, layer)
     if self.zoomMarkersCellIdById[id] then
         (self.zoomInMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
         (self.zoomOutMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
@@ -815,6 +819,8 @@ function mapWidgetMeta:removeMarker(id, layer)
     if self._markerLayoutCache[id] then
         self._markerLayoutCache[id] = nil
     end
+
+    return removedFromMap
 end
 
 

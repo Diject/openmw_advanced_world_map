@@ -50,6 +50,11 @@
 ---@field content Content Tooltip content
 ---@field tooltip Element Displayed tooltip instance
 
+---Event data for map element initialized event
+---@class AdvancedWorldMap.Event.OnMapElementInitializedEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
+---@field marker AdvancedWorldMap.MapElement Initialized map element
+
 ---Event data for map element created event
 ---@class AdvancedWorldMap.Event.OnMapElementCreatedEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
@@ -165,8 +170,9 @@ AdvancedWorldMapEvent.EVENT = {
     onMarkerClicked = "onMarkerClicked", -- Event triggered after a built-in marker click is completed
     onMarkerTooltipShow = "onMarkerTooltipShow", -- Event triggered when a built-in marker tooltip is about to be shown
     onMarkerTooltipShowed = "onMarkerTooltipShowed", -- Event triggered after a built-in marker tooltip is shown
-    onMapElementCreated = "onMapElementCreated", -- Event triggered when a map element (marker) is created
-    onMapElementRemoved = "onMapElementRemoved", -- Event triggered when a map element (marker) is removed
+    onMapElementInitialized = "onMapElementInitialized", -- Event triggered when a map element (marker) is initialized
+    onMapElementCreated = "onMapElementCreated", -- Event triggered when a map element (marker) is created on the map
+    onMapElementRemoved = "onMapElementRemoved", -- Event triggered when a map element (marker) is removed from the map
     onMousePress = "onMousePress", -- Event triggered when a mouse button is pressed on the map
     onMouseRelease = "onMouseRelease", -- Event triggered when a mouse button is released on the map
     onFocusLoss = "onFocusLoss", -- Event triggered when focus is lost on the map
@@ -195,6 +201,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onMarkerClicked", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMarkerTooltipShow", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowEvent): boolean?, boolean?, priority: number?)
 ---@overload fun(eventId: "onMarkerTooltipShowed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowedEvent): boolean?, priority: number?)
+---@overload fun(eventId: "onMapElementInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementInitializedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapElementCreated", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementCreatedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapElementRemoved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementRemovedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMousePress", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMousePressEvent): boolean?, boolean?, priority: number?)

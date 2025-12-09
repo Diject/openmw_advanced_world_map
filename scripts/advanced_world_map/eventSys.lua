@@ -14,6 +14,7 @@ this.EVENT = {
     onMarkerClicked = "onMarkerClicked",
     onMarkerTooltipShow = "onMarkerTooltipShow",
     onMarkerTooltipShowed = "onMarkerTooltipShowed",
+    onMapElementInitialized = "onMapElementInitialized",
     onMapElementCreated = "onMapElementCreated",
     onMapElementRemoved = "onMapElementRemoved",
     onMousePress = "onMousePress",
@@ -43,6 +44,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onMarkerClicked", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMarkerTooltipShow", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta, content : any}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onMarkerTooltipShowed", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta, content : any, tooltip : any}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onMapElementInitialized", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, marker : advancedWorldMap.ui.mapElementMeta}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapElementCreated", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, marker : advancedWorldMap.ui.mapElementMeta}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapElementRemoved", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, marker : advancedWorldMap.ui.mapElementMeta}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMousePress", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta?, offset : any, position : any, button : integer}) : (boolean?, boolean?), priority : number?)

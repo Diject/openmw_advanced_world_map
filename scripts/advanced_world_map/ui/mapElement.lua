@@ -2,6 +2,7 @@ local util = require("openmw.util")
 local ui = require("openmw.ui")
 
 local config = require("scripts.advanced_world_map.config.config")
+local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local this = {}
 
@@ -183,7 +184,9 @@ end
 
 
 function mapElementMeta:destroy()
-    self._parent:removeMarker(self._id, self._layerId)
+    if self._parent:removeMarker(self._id, self._layerId) then
+        eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self, marker = self})
+    end
 end
 
 
