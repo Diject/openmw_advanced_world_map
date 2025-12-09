@@ -28,7 +28,7 @@ local AdvancedWorldMap = I.AdvancedWorldMap
 ---@param menu AdvancedWorldMap.Menu.Map
 local function menuOpened(menu)
 
-    -- Получаем высоту шапки меню карты
+    -- Get the height of the map menu header
     local headerHeight = menu.headerHeight
 
     local iconLayout = {
