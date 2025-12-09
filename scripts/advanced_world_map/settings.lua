@@ -152,6 +152,7 @@ I.Settings.registerGroup{
         numberSetting{key = "main.updateFrequency", name = "SettingUpdateFrequency", description = "SettingUpdateFrequencyDescription", default = config.default.main.updateFrequency, min = 1},
         numberSetting{key = "main.discoveryRadius", name = "SettingDiscoveryRadius", description = "SettingDiscoveryRadiusDescription", default = config.default.main.discoveryRadius, min = 500, max = 10000, integer = true},
         boolSetting{key = "main.fastClose", name = "SettingFastClose", description = "SettingFastCloseDescription", default = config.default.main.fastClose},
+        boolSetting{key = "main.overrideDefault", name = "SettingOverrideDefaultMap", description = "SettingOverrideDefaultMapDescription", default = config.default.main.overrideDefault},
         boolSetting{key = "main.firstInitMenu", name = "SettingFirstInitMenu", description = "SettingFirstInitMenuDescription", default = config.default.main.firstInitMenu},
     },
 }

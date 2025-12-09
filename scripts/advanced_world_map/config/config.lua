@@ -25,6 +25,7 @@ this.default = {
         firstInitMenu = true,
         fastClose = false,
         clearCacheOnClose = true,
+        overrideDefault = false,
     },
     legend = {
         markerSize = 6,

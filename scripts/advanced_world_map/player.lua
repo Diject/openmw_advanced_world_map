@@ -160,6 +160,16 @@ local function openMenu(inMenuMode)
 end
 
 
+if configLib.data.main.overrideDefault then
+    I.UI.registerWindow("Map",
+        function() openMenu() end,
+        function ()
+            menuHandler.destroyAllMenus()
+        end
+    )
+end
+
+
 local function toggleMenu()
     if not mapDataHandler.isInitialized() then
         ui.showMessage(l10n("mapDataNotInitialized"))
