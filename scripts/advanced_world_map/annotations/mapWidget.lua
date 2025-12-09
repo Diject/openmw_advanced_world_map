@@ -61,7 +61,6 @@
 ---@field showWhenZoomedIn boolean? Only show when zoomed in
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2)? Custom scaling function
----@field useCache boolean? Use cached marker layout
 ---@field userData table? Custom user data
 
 ---Parameters for creating a text marker
@@ -84,7 +83,6 @@
 ---@field showWhenZoomedIn boolean? Only show when zoomed in
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2)? Custom scaling function
----@field useCache boolean? Use cached marker layout
 ---@field userData table? Custom user data
 
 ---Parameters for creating a map widget

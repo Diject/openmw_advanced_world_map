@@ -529,7 +529,6 @@ function mapWidgetMeta:updateMarkers()
 end
 
 
-local createMarkerFuncCache = {}
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@field layerId integer,
@@ -546,7 +545,7 @@ local createMarkerFuncCache = {}
 ---@field showWhenZoomedIn boolean?
 ---@field showWhenZoomedOut boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
----@field useCache boolean?
+---@field useCache boolean? deprecated
 ---@field searchText string? lowercase
 ---@field searchLabel string?
 ---@field userData table?
@@ -570,7 +569,7 @@ local createMarkerFuncCache = {}
 ---@field showWhenZoomedIn boolean?
 ---@field showWhenZoomedOut boolean?
 ---@field scaleFunc (fun(size: any, zoom: number): number)?
----@field useCache boolean?
+---@field useCache boolean? deprecated
 ---@field searchText string? lowercase
 ---@field searchLabel string?
 ---@field userData table?
@@ -624,10 +623,10 @@ local function createMarker(self, params, onlyInitialize)
     params.pos = params.pos or util.vector3(0, 0, 0)
     local relPos = self:getRelativePositionByWorldPosition(params.pos)
 
-    if not onlyInitialize and params.useCache and params.id then
+    if not onlyInitialize and params.id then
         local id = params.id
         local cacheId = id.."_"..tostring(params.layerId)
-        local cachedLayout = createMarkerFuncCache[cacheId]
+        local cachedLayout = self._markerLayoutCache[cacheId]
         if cachedLayout then
             addZoomInOutData(id, cachedLayout)
 
@@ -746,7 +745,7 @@ local function createMarker(self, params, onlyInitialize)
         }
     }
 
-    createMarkerFuncCache[markerName.."_"..tostring(params.layerId)] = marker
+    self._markerLayoutCache[markerName.."_"..tostring(params.layerId)] = marker
 
     local markerELement = mapElement.new(self, markerName, params.layerId, params, marker)
     marker.userData.markerElement = markerELement
@@ -806,11 +805,15 @@ local function removeMarker(self, id, layer)
 end
 
 function mapWidgetMeta:removeMarker(id, layer)
+    if not id then return end
     removeMarker(self, id, layer)
-    if id and self.zoomMarkersCellIdById[id] then
+    if self.zoomMarkersCellIdById[id] then
         (self.zoomInMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
         (self.zoomOutMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
         self.zoomMarkersCellIdById[id] = nil
+    end
+    if self._markerLayoutCache[id] then
+        self._markerLayoutCache[id] = nil
     end
 end
 
@@ -1135,6 +1138,8 @@ function this.new(params)
     meta.cellId = params.cellId
     ---@type number[][] {x, y, width, height}
     meta.cellStatics = nil
+
+    meta._markerLayoutCache = {}
 
     local mapLayout
 
