@@ -700,6 +700,11 @@ local function createMarker(self, params, onlyInitialize)
             cellId = self.cellId,
             pressed = {},
             movedDistance = 0,
+            onMouseWheel = function(value)
+                if not marker.userData.inFocus then return end
+                setZoom(self, value > 0 and self.zoom * 1.25 or self.zoom * 0.75)
+                self:update()
+            end,
         },
         events = {
             focusLoss = async:callback(function(e, layout)
