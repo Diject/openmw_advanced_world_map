@@ -111,7 +111,7 @@ function this.createOrMove(coord, parent, layoutContent)
     if not parent.userData then parent.userData = {} end
 
     if not parent.userData.tooltip and this.create(coord, parent, layoutContent) then
-        return
+        return true
     end
 
     this.move(coord, parent)
@@ -127,7 +127,7 @@ end
 
 
 function this.isExists(parent)
-    return parent and parent.userData and parent.userData.tooltip and parent.userData.tooltip.valid
+    return parent and parent.userData and parent.userData.tooltip and parent.userData.tooltip.layout and true or false
 end
 
 
