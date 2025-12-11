@@ -27,6 +27,8 @@ local this = {}
 
 this.followers = {}
 
+this.lastTimestamp = -config.data.fastTravel.cooldown * 120
+
 
 local fastTravelFunc
 local rightBtnMenuFunc
@@ -40,7 +42,7 @@ local function fastTravel(menu, cellId, relPos)
     end
 
     local timestamp = localStorage.data[commonData.fastTravelTimestampFieldId] or 0
-    local realTimestamp = localStorage.data[commonData.fastTravelRealTimestampFieldId] or 0
+    local realTimestamp = this.lastTimestamp or 0
     local currentGameTime = core.getGameTime()
     local currentRealTime = core.getRealTime()
     if currentGameTime < timestamp + config.data.fastTravel.cooldown * 3600 then

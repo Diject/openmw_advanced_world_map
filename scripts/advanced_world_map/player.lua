@@ -356,7 +356,7 @@ local function fastTravelMessageCallback(data)
             end
 
             localStorage.data[commonData.fastTravelTimestampFieldId] = core.getGameTime()
-            localStorage.data[commonData.fastTravelRealTimestampFieldId] = core.getRealTime()
+            fastTravel.lastTimestamp = core.getRealTime()
 
             menuHandler.destroyMenu(commonData.mapMenuId)
         end,
