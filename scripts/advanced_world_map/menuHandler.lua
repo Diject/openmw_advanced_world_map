@@ -43,6 +43,14 @@ function this.destroyAllMenus()
 end
 
 
+function this.hasActiveMenus()
+    for _, _ in pairs(this.activeMenus) do
+        return true
+    end
+    return false
+end
+
+
 function this.onMouseReleaseCallback(buttonId)
     for _, menu in pairs(this.activeMenus) do
         if menu.onMouseClick then

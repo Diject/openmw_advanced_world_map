@@ -406,25 +406,25 @@ return {
             realTimer.updateTimers()
         end,
         onMouseWheel = onMouseWheel,
-        onKeyPress = keyBinding.onKeyPress,
-        onMouseButtonPress = keyBinding.onMouseButtonPress,
-        onControllerButtonPress = keyBinding.onControllerButtonPress,
-        onKeyRelease = function (key)
-            keyBinding.onKeyRelease(key)
+        onKeyPress = function (key)
+            keyBinding.onKeyPress(key)
             if key.code == input.KEY.Escape then
                 menuHandler.destroyAllMenus()
             end
         end,
+        onMouseButtonPress = keyBinding.onMouseButtonPress,
+        onControllerButtonPress = function (buttonId)
+            keyBinding.onControllerButtonPress(buttonId)
+            if buttonId == input.CONTROLLER_BUTTON.B and menuHandler.hasActiveMenus() then
+                menuHandler.destroyAllMenus()
+            end
+        end,
+        onKeyRelease = keyBinding.onKeyRelease,
         onMouseButtonRelease = function (buttonId)
             keyBinding.onMouseButtonRelease(buttonId)
             menuHandler.onMouseReleaseCallback(buttonId)
         end,
-        onControllerButtonRelease = function (buttonId)
-            keyBinding.onControllerButtonRelease(buttonId)
-            if buttonId == input.CONTROLLER_BUTTON.B then
-                menuHandler.destroyAllMenus()
-            end
-        end
+        onControllerButtonRelease = keyBinding.onControllerButtonRelease,
     },
     eventHandlers = {
         -- when changing location, a loading menu is displayed, which triggers this event
