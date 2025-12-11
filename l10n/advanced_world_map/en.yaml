@@ -68,7 +68,7 @@ SettingUpdateFrequencyDescription: "How often (in times per second) the map upda
 SettingFastClose: "Fast close"
 SettingFastCloseDescription: "When enabled, the map will close immediately when the hotkey is pressed while the map is open. If disabled, pressing the hotkey while the map is open and interactive will only exit the interactive mode first, before closing the map on the next press."
 SettingOverrideDefaultMap: "Override default map"
-SettingOverrideDefaultMapDescription: "When enabled, the Advanced World Map will replace the default Morrowind map menu. Requires a save reload to take effect. Important: the ability to pin the map window is not implemented at this time. If the standard map does not appear after disabling this option, click on the minimap in the game interface."
+SettingOverrideDefaultMapDescription: "When enabled, the Advanced World Map will replace the default Morrowind map menu. Requires a save reload to take effect. Important: Important: this option doesn't work correctly with the controller menu!, and the ability to pin the map window is not implemented at this time. If the standard map does not appear after disabling this option, click on the minimap in the game interface."
 SettingFirstInitMenu: "Show first-time setup menu"
 SettingFirstInitMenuDescription: "When enabled, the first-time setup menu will be shown the next time the mod menu is opened."
 
