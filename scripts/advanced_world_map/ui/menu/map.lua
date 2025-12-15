@@ -18,6 +18,7 @@ local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler"
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
+local menuHandler = require("scripts.advanced_world_map.menuHandler")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -308,9 +309,16 @@ function menuMeta:updateInteractiveElements()
         header.props.visible = true
         header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
         header.content[2] = self.widgetActiveHeaderLayout
+        self.mainLayout.content[2].props.visible = true
     else
+        if not localStorage.data[commonData.pinnedStateFieldId] then
+            menuHandler.destroyMenu(commonData.mapMenuId)
+            return false
+        end
+
         header.content[1].props.alpha = 0
         header.content[2] = self.widgetInactiveHeaderLayout
+        self.mainLayout.content[2].props.visible = false
         if #self.widgetInactiveHeaderLayout.content == 0 then
             header.props.visible = false
         end
@@ -364,7 +372,10 @@ function menuMeta:close()
     end
     mapTextureHandler.clearInteriorTextureCache()
 
-    self.menu:destroy()
+    local co = coroutine.create(function ()
+        self.menu:destroy()
+    end)
+    coroutine.resume(co)
 end
 
 
@@ -379,6 +390,10 @@ end
 ---@return advancedWorldMap.ui.menu.map
 function this.create(params)
     if not params then params = {} end
+
+    if localStorage.data[commonData.pinnedStateFieldId] == nil then
+        localStorage.data[commonData.pinnedStateFieldId] = not config.data.main.fastClose
+    end
 
     ---@class advancedWorldMap.ui.menu.map
     local meta = setmetatable({}, menuMeta)
@@ -525,26 +540,93 @@ function this.create(params)
             },
             menuMode.isMenuInteractive() and meta.widgetActiveHeaderLayout or meta.widgetInactiveHeaderLayout,
             {
-                type = ui.TYPE.Text,
+                type = ui.TYPE.Flex,
                 props = {
-                    text = l10n("Close"),
-                    textSize = params.fontSize * 1.4,
-                    autoSize = true,
-                    anchor = util.vector2(1, 0.5),
+                    horizontal = true,
+                    arrange = ui.ALIGNMENT.Center,
                     relativePosition = util.vector2(1, 0.5),
-                    textColor = config.data.ui.defaultColor,
-                    textShadow = true,
-                    textShadowColor = config.data.ui.textShadowColor,
-                    propagateEvents = false,
-                    visible = menuMode.isMenuInteractive(),
+                    anchor = util.vector2(1, 0.5)
                 },
                 userData = {},
-                events = {
-                    mouseRelease = async:callback(function(_, layout)
-                        meta:close()
-                    end),
-                }
-            }
+                content = ui.content{
+                    {
+                        type = ui.TYPE.Widget,
+                        props = {
+                            size = util.vector2(meta.headerHeight, meta.headerHeight),
+                            anchor = util.vector2(0.5, 0.5),
+                            visible = config.data.main.overrideDefault or config.data.main.fastClose,
+                        },
+                        userData = {},
+                        events = {
+                            mousePress = async:callback(function(e, layout)
+                                if e.button ~= 1 then return end
+                                layout.userData.pressed = true
+                            end),
+
+                            mouseRelease = async:callback(function(e, layout)
+                                if layout.userData.pressed and meta.headerMovedDistance <= 15 then
+                                    local newVal = not localStorage.data[commonData.pinnedStateFieldId]
+                                    localStorage.data[commonData.pinnedStateFieldId] = newVal
+                                    layout.content[1].props.alpha = newVal and 1 or 0.5
+                                    layout.content[1].props.color = newVal and config.data.ui.whiteColor or config.data.ui.defaultColor
+                                    meta:update()
+                                end
+                            end),
+                        },
+                        content = ui.content{
+                            {
+                                type = ui.TYPE.Image,
+                                props = {
+                                    resource = ui.texture{ path = commonData.pinIconPath },
+                                    alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
+                                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
+                                    color = localStorage.data[commonData.pinnedStateFieldId] and config.data.ui.whiteColor or
+                                        config.data.ui.defaultColor,
+                                    anchor = util.vector2(0.5, 0.5),
+                                    position = util.vector2(meta.headerHeight / 2, meta.headerHeight / 2),
+                                },
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                props = {
+                                    resource = uiUtils.whiteTexture,
+                                    alpha = 0,
+                                    size = util.vector2(meta.headerHeight, meta.headerHeight),
+                                },
+                            },
+                        }
+                    },
+                    interval(params.fontSize / 2, 0),
+                    {
+                        type = ui.TYPE.Text,
+                        props = {
+                            text = l10n("Close"),
+                            textSize = params.fontSize * 1.4,
+                            autoSize = true,
+                            anchor = util.vector2(1, 0.5),
+                            relativePosition = util.vector2(1, 0.5),
+                            textColor = config.data.ui.defaultColor,
+                            textShadow = true,
+                            textShadowColor = config.data.ui.textShadowColor,
+                            propagateEvents = false,
+                            visible = menuMode.isMenuInteractive(),
+                        },
+                        userData = {},
+                        events = {
+                            mousePress = async:callback(function(e, layout)
+                                if e.button ~= 1 then return end
+                                layout.userData.pressed = true
+                            end),
+                            mouseRelease = async:callback(function(_, layout)
+                                if layout.userData.pressed then
+                                    meta:close()
+                                end
+                                layout.userData.pressed = false
+                            end),
+                        }
+                    }
+                },
+            },
         }
     }
 

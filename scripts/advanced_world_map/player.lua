@@ -164,6 +164,14 @@ if configLib.data.main.overrideDefault then
     I.UI.registerWindow("Map",
         function() openMenu() end,
         function ()
+            if localStorage.data[commonData.pinnedStateFieldId] then
+                local menu = menuHandler.getMenu(commonData.mapMenuId)
+                if menu then
+                    menu:updateInteractiveElements()
+                    return
+                end
+            end
+
             menuHandler.destroyAllMenus()
         end
     )
@@ -177,8 +185,12 @@ local function toggleMenu()
     end
 
     if menuHandler.getMenu(commonData.mapMenuId) then
-        if menuMode.isActive() and not configLib.data.main.fastClose then
-            menuMode.deactivate()
+        if menuMode.isActive() then
+            if localStorage.data[commonData.pinnedStateFieldId] then
+                menuMode.deactivate()
+            else
+                menuHandler.destroyMenu(commonData.mapMenuId)
+            end
         else
             menuHandler.destroyMenu(commonData.mapMenuId)
         end

@@ -44,6 +44,7 @@ this.notesFieldId = "notes"
 this.fastTravelTimestampFieldId = "fastTravelTimestampFieldId"
 this.fastTravelRealTimestampFieldId = "fastTravelRealTimestampFieldId"
 this.lastMapPosFieldId = "lastMapPosFieldId"
+this.pinnedStateFieldId = "pinnedStateFieldId"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
@@ -107,6 +108,7 @@ this.mapMarkerPath = "textures/icons/advanced_world_map/squareMarker.dds"
 this.mapMarkerForExPath = "textures/icons/advanced_world_map/squareMarker45.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"
 this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
+this.pinIconPath = "textures/icons/advanced_world_map/pinIco.png"
 
 this.searchWidgetIcon = "textures/icons/advanced_world_map/widget/searchIco.dds"
 this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"

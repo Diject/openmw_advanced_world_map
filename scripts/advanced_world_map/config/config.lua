@@ -23,7 +23,7 @@ this.default = {
         discoveryRadius = 1500,
         updateFrequency = 30,
         firstInitMenu = true,
-        fastClose = false,
+        fastClose = false, -- deprecated
         clearCacheOnClose = true,
         overrideDefault = false,
     },
