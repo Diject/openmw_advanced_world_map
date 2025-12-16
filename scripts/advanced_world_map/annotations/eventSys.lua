@@ -13,6 +13,12 @@
 ---@class AdvancedWorldMap.Event.OnMenuClosedEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
 
+---Event data for world map texture initialize event
+---@class AdvancedWorldMap.Event.OnWorldMapTextureInitializeEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
+---@field mapInfo AdvancedWorldMap.MapWidget.MapImageInfo? Map image information (nil for no texture)
+---@field texture TextureResource? Texture object (nil for no texture)
+
 ---Event data for map initialized event
 ---@class AdvancedWorldMap.Event.OnMapInitializedEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
@@ -163,7 +169,7 @@ local AdvancedWorldMapEvent = {}
 AdvancedWorldMapEvent.EVENT = {
     onMenuOpened = "onMenuOpened", -- Event triggered when the map menu is opened
     onMenuClosed = "onMenuClosed", -- Event triggered when the map menu is closed
-    onMapInitialized = "onMapInitialized", -- Event triggered when the map is initialized
+    onWorldMapTextureInitialize = "onWorldMapTextureInitialize", -- Event triggered when the world map texture is initializing. You can replace the map texture here
     onMapShown = "onMapShown", -- Event triggered when the map is shown
     onMapClosed = "onMapClosed", -- Event triggered when the map is closed
     onMarkerClick = "onMarkerClick", -- Event triggered when a built-in marker is clicked
@@ -194,6 +200,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@param priority number? Handler priority (default is 0, higher value = higher priority)
 ---@overload fun(eventId: "onMenuOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuOpenedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMenuClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuClosedEvent): boolean?, priority: number?)
+---@overload fun(eventId: "onWorldMapTextureInitialize", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureInitializeEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapClosedEvent): boolean?, priority: number?)

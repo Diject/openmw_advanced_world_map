@@ -18,6 +18,14 @@
 ---@field marker fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2 Marker scaling function (uses fourth root)
 ---@field playerMarker fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2 Player marker scaling function
 
+---World map image information
+---@class AdvancedWorldMap.MapWidget.MapImageInfo
+---@field height integer Height of the map texture in pixels
+---@field width integer Width of the map texture in pixels
+---@field pixelsPerCell integer Number of pixels per cell
+---@field gridX {min: integer, max: integer} Grid X boundaries in cells
+---@field gridY {min: integer, max: integer} Grid Y boundaries in cells
+
 ---Rectangular region definition
 ---@class AdvancedWorldMap.MapWidget.Region
 ---@field left number Left boundary coordinate
@@ -241,6 +249,11 @@ function AdvancedWorldMapMapWidget:getLayerVisibility(layerId) end
 ---Gets all currently active markers (including zoom-dependent ones)
 ---@return AdvancedWorldMap.MapElement[] markers Array of active marker instances
 function AdvancedWorldMapMapWidget:getActiveMarkers() end
+
+---Updates the world map texture
+---@param texture string|TextureResource? New texture resource (string path or ui.texture)
+---@param mapInfo AdvancedWorldMap.MapWidget.MapImageInfo? New map image information
+function AdvancedWorldMapMapWidget:updateWorldMapTexture(texture, mapInfo) end
 
 ---Checks if a point is within a rectangular region
 ---@param region AdvancedWorldMap.MapWidget.Region Region to check

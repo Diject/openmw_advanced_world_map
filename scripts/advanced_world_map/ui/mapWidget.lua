@@ -1009,6 +1009,116 @@ function mapWidgetMeta:placeGroundTextures(region)
 end
 
 
+---@param self advancedWorldMap.ui.mapWidgetMeta
+---@param mapInfo advancedWorldMap.mapImageInfo?
+---@param texture string|any?
+local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
+    if not mapInfo then
+        mapInfo = {
+            gridX = {min = 0, max = 0},
+            gridY =  {min = 0, max = 0},
+            height = 32,
+            pixelsPerCell = 32,
+            time = 0,
+            version = 0,
+            width = 32,
+            file = "",
+        }
+    end
+
+    self.mapTexture = texture
+    self.mapInfo = mapInfo
+
+    local padding = 1
+
+    padding = math.max(padding, math.max(0, mapDataHandler.grid.max.x - self.mapInfo.gridX.max) +
+        math.max(0, self.mapInfo.gridX.min - mapDataHandler.grid.min.x))
+    padding = math.max(padding, math.max(0, mapDataHandler.grid.max.y - self.mapInfo.gridY.max) +
+        math.max(0, self.mapInfo.gridY.min - mapDataHandler.grid.min.y))
+
+    padding = padding * self.mapInfo.pixelsPerCell
+
+    self.borderPadding = util.vector2(padding, padding)
+    self.displayMapSize = util.vector2(self.mapInfo.width + padding * 2, self.mapInfo.height + padding * 2)
+
+    if oldMapLayout then
+        uiUtils.clearContent(oldMapLayout.content)
+    end
+
+    local mapLayout = oldMapLayout or {
+        type = ui.TYPE.Widget,
+        props = {
+            position = util.vector2(0, 0),
+            relativeSize = util.vector2(1, 1),
+        },
+        userData = {},
+        content = ui.content {},
+    }
+
+    if texture then
+
+        mapLayout.content:add{
+            type = ui.TYPE.Image,
+            props = {
+                resource = texture,
+                relativePosition = util.vector2(self.borderPadding.x / self.displayMapSize.x, self.borderPadding.y / self.displayMapSize.y),
+                relativeSize = util.vector2(self.mapInfo.width / self.displayMapSize.x, self.mapInfo.height / self.displayMapSize.y),
+            }
+        }
+
+    else
+        local pixelsPerCell = self.mapInfo.pixelsPerCell
+
+        local layout = {
+            type = ui.TYPE.Widget,
+            props = {
+                relativePosition = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {},
+        }
+
+        for i, dt in pairs(mapDataHandler.worldMapTileRectangles or {}) do
+            local widthHeight = util.vector2(dt[3] - dt[1] + 1, dt[4] - dt[2] + 1)
+            local pos = util.vector2(dt[1] - 0.125, dt[2] - 0.125) * 8192
+            local relSize = util.vector2(
+                ((widthHeight.x + 0.25) * pixelsPerCell) / self.displayMapSize.x,
+                ((widthHeight.y + 0.25) * pixelsPerCell) / self.displayMapSize.y
+            )
+
+            local lay = {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = uiUtils.whiteTexture,
+                    color = config.data.ui.defaultTextureColor,
+                    anchor = util.vector2(0, 1),
+                    relativePosition = self:getRelativePositionByWorldPosition(pos),
+                    relativeSize = relSize,
+                }
+            }
+            layout.content:add(lay)
+        end
+
+        mapLayout.content:add(layout)
+    end
+
+    return mapLayout
+end
+
+
+---@param texture string|any?
+---@param mapInfo advancedWorldMap.mapImageInfo?
+function mapWidgetMeta:updateWorldMapTexture(texture, mapInfo)
+    if self.cellId then return end
+    if not mapInfo then mapInfo = self.mapInfo end
+
+    if type(texture) == "string" then
+        texture = ui.texture{ path = texture }
+    end
+    getWorldMapTextureLayout(self, mapInfo, texture, self:getLayerLayout(this.layerId.map))
+end
+
 
 ---@param focusOnPlayer boolean?
 ---@return boolean
@@ -1211,95 +1321,9 @@ function this.new(params)
         }
 
     else
-        local mapInfo
-        if not mapTextureHandler.mapInfo then
-            mapInfo = {
-                gridX = {min = 0, max = 0},
-                gridY =  {min = 0, max = 0},
-                height = 32,
-                pixelsPerCell = 32,
-                time = 0,
-                version = 0,
-                width = 32,
-            }
-        else
-            mapInfo = mapTextureHandler.mapInfo
-        end
-
-        local texture = mapTextureHandler.getWorldMapTexture()
-
-        meta.mapTexture = texture
-        meta.mapInfo = mapInfo
-
-        local padding = 1
-
-        padding = math.max(padding, math.max(0, mapDataHandler.grid.max.x - meta.mapInfo.gridX.max) +
-            math.max(0, meta.mapInfo.gridX.min - mapDataHandler.grid.min.x))
-        padding = math.max(padding, math.max(0, mapDataHandler.grid.max.y - meta.mapInfo.gridY.max) +
-            math.max(0, meta.mapInfo.gridY.min - mapDataHandler.grid.min.y))
-
-        padding = padding * meta.mapInfo.pixelsPerCell
-
-        meta.borderPadding = util.vector2(padding, padding)
-        meta.displayMapSize = util.vector2(meta.mapInfo.width + padding * 2, meta.mapInfo.height + padding * 2)
-
-        mapLayout = {
-            type = ui.TYPE.Widget,
-            props = {
-                position = util.vector2(0, 0),
-                relativeSize = util.vector2(1, 1),
-            },
-            userData = {},
-            content = ui.content {},
-        }
-
-        if texture then
-
-            mapLayout.content:add{
-                type = ui.TYPE.Image,
-                props = {
-                    resource = texture,
-                    relativePosition = util.vector2(meta.borderPadding.x / meta.displayMapSize.x, meta.borderPadding.y / meta.displayMapSize.y),
-                    relativeSize = util.vector2(meta.mapInfo.width / meta.displayMapSize.x, meta.mapInfo.height / meta.displayMapSize.y),
-                }
-            }
-
-        else
-            local pixelsPerCell = meta.mapInfo.pixelsPerCell
-
-            local layout = {
-                type = ui.TYPE.Widget,
-                props = {
-                    relativePosition = util.vector2(0, 0),
-                    relativeSize = util.vector2(1, 1),
-                },
-                userData = {},
-                content = ui.content {},
-            }
-
-            for i, dt in pairs(mapDataHandler.worldMapTileRectangles or {}) do
-                local widthHeight = util.vector2(dt[3] - dt[1] + 1, dt[4] - dt[2] + 1)
-                local pos = util.vector2(dt[1] - 0.125, dt[2] - 0.125) * 8192
-                local relSize = util.vector2(
-                    ((widthHeight.x + 0.25) * pixelsPerCell) / meta.displayMapSize.x,
-                    ((widthHeight.y + 0.25) * pixelsPerCell) / meta.displayMapSize.y
-                )
-
-                local lay = {
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = uiUtils.whiteTexture,
-                        color = config.data.ui.defaultTextureColor,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = meta:getRelativePositionByWorldPosition(pos),
-                        relativeSize = relSize,
-                    }
-                }
-                layout.content:add(lay)
-            end
-
-            mapLayout.content:add(layout)
-        end
+        local eventParams = {mapWidget = meta, mapInfo = mapTextureHandler.mapInfo, texture = mapTextureHandler.getWorldMapTexture()}
+        eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInitialize, eventParams)
+        mapLayout = getWorldMapTextureLayout(meta, eventParams.mapInfo, eventParams.texture)
     end
 
 

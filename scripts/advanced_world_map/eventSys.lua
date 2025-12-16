@@ -7,6 +7,7 @@ local this = {}
 this.EVENT = {
     onMenuOpened = "onMenuOpened",
     onMenuClosed = "onMenuClosed",
+    onWorldMapTextureInitialize = "onWorldMapTextureInitialize",
     onMapInitialized = "onMapInitialized",
     onMapShown = "onMapShown",
     onMapClosed = "onMapClosed",
@@ -37,6 +38,7 @@ this.handlers = {}
 ---@param handlerFunc fun(e : table)
 ---@overload fun(eventId : "onMenuOpened", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMenuClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onWorldMapTextureInitialize", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, mapInfo : advancedWorldMap.mapImageInfo?, texture : string|any?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapInitialized", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapShown", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
