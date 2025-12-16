@@ -136,8 +136,6 @@ end
 local function createMarkers(widget, cellId)
     local entrances = mapDataHandler.entrances or {}
 
-    local screenSize = uiUtils.getScaledScreenSize()
-
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
     local lineHeight = 4 * config.data.legend.markerSize * uiUtils.getUIScale()
@@ -389,28 +387,6 @@ local function createMarkers(widget, cellId)
                 this.markerById[textId] = textMarkerHandler
             end
 
-            local tooltipContent = ui.content{}
-
-            if dt.fName ~= "" then
-                local tooltipWidth = math.max(200,
-                    math.min(screenSize.x / 6, stringLib.length(dt.fName) * config.data.ui.fontSize * config.data.ui.textHeightMul))
-                tooltipContent:add{
-                    type = ui.TYPE.TextEdit,
-                    props = {
-                        text = dt.fName,
-                        textColor = config.data.ui.markerDefaultColor,
-                        textSize = config.data.ui.fontSize,
-                        anchor = util.vector2(0.5, 0),
-                        size = util.vector2(tooltipWidth, 0),
-                        multiline = true,
-                        wordWrap = true,
-                        textAlignH = ui.ALIGNMENT.Center,
-                        textAlignV = ui.ALIGNMENT.Center,
-                        readOnly = true,
-                        autoSize = true,
-                    },
-                }
-            end
 
             local imageMarkerHandler
             imageMarkerHandler = widget:createImageMarker{
@@ -431,6 +407,8 @@ local function createMarkers(widget, cellId)
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                     textMarker = textMarkerHandler,
+                    name = dt.name,
+                    fullName = dt.fName,
                 },
                 events = {
                     mouseRelease = function (e, layout, pressed)
@@ -450,17 +428,24 @@ local function createMarkers(widget, cellId)
                     end,
 
                     mouseMove = function(e, layout)
-                        if #tooltipContent > 0 and not tooltip.isExists(layout) then
+                        if not tooltip.isExists(layout) then
+                            local tooltipContent = ui.content{}
                             if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
                                 return
                             end
-                            if tooltip.createOrMove(e, layout, tooltipContent) then
-                                eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
-                                    marker = imageMarkerHandler,
-                                    content = tooltipContent,
-                                    tooltip = tooltip.get(layout)
-                                })
+
+                            if #tooltipContent > 0 then
+                                layout.userData.tooltipContent = tooltipContent
+                                tooltip.createOrMove(e, layout, tooltipContent)
+                            else
+                                layout.userData.tooltipContent = nil
                             end
+                        elseif tooltip.createOrMove(e, layout) then
+                            eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
+                                marker = imageMarkerHandler,
+                                content = layout.userData.tooltipContent,
+                                tooltip = tooltip.get(layout)
+                            })
                         end
                     end,
                 },
@@ -542,6 +527,31 @@ local function createMarkers(widget, cellId)
 
     widget:updateMarkers()
 end
+
+
+eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
+    local screenSize = uiUtils.getScaledScreenSize()
+    local text = e.marker:getUserData().fullName or ""
+    local tooltipWidth = math.max(250,
+        math.min(screenSize.x / 6, stringLib.length(text) * config.data.ui.fontSize * config.data.ui.textHeightMul))
+
+    e.content:add{
+        type = ui.TYPE.TextEdit,
+        props = {
+            text = text,
+            textColor = config.data.ui.markerDefaultColor,
+            textSize = config.data.ui.fontSize,
+            anchor = util.vector2(0.5, 0),
+            size = util.vector2(tooltipWidth, 0),
+            multiline = true,
+            wordWrap = true,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            readOnly = true,
+            autoSize = true,
+        },
+    }
+end, 10000)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
