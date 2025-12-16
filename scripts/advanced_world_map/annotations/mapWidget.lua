@@ -246,6 +246,15 @@ function AdvancedWorldMapMapWidget:setLayerVisibility(layerId, visible) end
 ---@return boolean? visible Visibility state, or nil if layer doesn't exist
 function AdvancedWorldMapMapWidget:getLayerVisibility(layerId) end
 
+---Sets the visibility of the player marker. If set to false, the map will not follow the player. Use setLayerVisibility to hide the marker visually without disabling map following
+---@param visible boolean Visibility state
+---@return boolean success True if the visibility state was changed
+function AdvancedWorldMapMapWidget:setPlayerMarkerVisibility(visible) end
+
+---Gets the visibility state of the player marker
+---@return boolean visible Visibility state
+function AdvancedWorldMapMapWidget:getPlayerMarkerVisibility() end
+
 ---Gets all currently active markers (including zoom-dependent ones)
 ---@return AdvancedWorldMap.MapElement[] markers Array of active marker instances
 function AdvancedWorldMapMapWidget:getActiveMarkers() end

@@ -1134,8 +1134,10 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
         playerMarkerLayout.props.visible = false
         return visible ~= false
     else
-        playerMarkerLayout.props.visible = true
+        playerMarkerLayout.props.visible = self._playerMarkerVisible ~= false
     end
+
+    if self._playerMarkerVisible == false then return false end
 
     local pos = self.cellId and playerRef.position or playerPos.gexExteriorPos()
     local dist = (playerMarkerLayout.userData.lastPos - pos):length()
@@ -1221,6 +1223,31 @@ function mapWidgetMeta:getLayerVisibility(layerId)
     if layout then
         return layout.props.visible ~= false
     end
+end
+
+
+---@param visible boolean
+---@return boolean changed
+function mapWidgetMeta:setPlayerMarkerVisibility(visible)
+    local lay = self:getPlayerLayout()
+
+    local playerMarkerLayout = lay.content[1]
+    local playerCell = playerRef.cell
+    local oldState = playerMarkerLayout.props.visible
+
+   if self.cellId and self.cellId ~= (not playerCell.isExterior and playerRef.cell.id) then
+        playerMarkerLayout.props.visible = false
+        return oldState ~= false
+    else
+        self._playerMarkerVisible = visible
+        playerMarkerLayout.props.visible = visible
+        return oldState ~= visible
+    end
+end
+
+function mapWidgetMeta:getPlayerMarkerVisibility()
+    local lay = self:getPlayerLayout()
+    return lay.content[1].props.visible ~= false
 end
 
 
