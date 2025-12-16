@@ -37,6 +37,11 @@
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field cellId string? Cell identifier (nil for exterior/world map)
 
+---Event data for cell markers create event
+---@class AdvancedWorldMap.Event.OnCellMarkersCreateEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
+---@field cellId string? Cell identifier (nil for exterior/world map)
+
 ---Event data for marker click event
 ---@class AdvancedWorldMap.Event.OnMarkerClickEvent
 ---@field marker AdvancedWorldMap.MapElement Marker that was clicked
@@ -172,6 +177,7 @@ AdvancedWorldMapEvent.EVENT = {
     onWorldMapTextureInitialize = "onWorldMapTextureInitialize", -- Event triggered when the world map texture is initializing. You can replace the map texture here
     onMapShown = "onMapShown", -- Event triggered when the map is shown
     onMapClosed = "onMapClosed", -- Event triggered when the map is closed
+    onCellMarkersCreate = "onCellMarkersCreate", -- Event triggered when built-in cell markers are being created. You can prevent default markers from being created here by returning second value as true: like `return nil, true`
     onMarkerClick = "onMarkerClick", -- Event triggered when a built-in marker is clicked
     onMarkerClicked = "onMarkerClicked", -- Event triggered after a built-in marker click is completed
     onMarkerTooltipShow = "onMarkerTooltipShow", -- Event triggered when a built-in marker tooltip is about to be shown
@@ -204,6 +210,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMapClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapClosedEvent): boolean?, priority: number?)
+---@overload fun(eventId: "onCellMarkersCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnCellMarkersCreateEvent): boolean?, boolean?, priority: number?)
 ---@overload fun(eventId: "onMarkerClick", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickEvent): boolean?, boolean?, priority: number?)
 ---@overload fun(eventId: "onMarkerClicked", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickedEvent): boolean?, priority: number?)
 ---@overload fun(eventId: "onMarkerTooltipShow", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowEvent): boolean?, boolean?, priority: number?)

@@ -134,6 +134,9 @@ end
 
 ---@param widget advancedWorldMap.ui.mapWidgetMeta
 local function createMarkers(widget, cellId)
+    if eventSys.triggerEvent(eventSys.EVENT.onCellMarkersCreate, {mapWidget = widget, cellId = cellId}) then
+        return
+    end
     local entrances = mapDataHandler.entrances or {}
 
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
