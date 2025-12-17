@@ -88,17 +88,17 @@ return{
     engineHandlers = {
         onKeyPress = function(key)
             if not recording then return end
-            keyBinding.onKeyPress(key)
+            keyBinding.onKeyPressRenderer(key)
         end,
 
         onMouseButtonPress = function(button)
             if not recording then return end
-            keyBinding.onMouseButtonPress(button)
+            keyBinding.onMouseButtonPressRenderer(button)
         end,
 
         onControllerButtonPress = function(id)
             if not recording then return end
-            keyBinding.onControllerButtonPress(id)
+            keyBinding.onControllerButtonPressRenderer(id)
         end,
 
         onKeyRelease = function (key)
@@ -116,7 +116,7 @@ return{
                 recording.comb = comb
             end
 
-            keyBinding.onKeyRelease(key)
+            keyBinding.onKeyReleaseRenderer(key)
 
             if not keyBinding.hasPressedKeys() then
                 registerBinding()
@@ -135,7 +135,7 @@ return{
                 recording.comb = comb
             end
 
-            keyBinding.onMouseButtonRelease(buttonId)
+            keyBinding.onMouseButtonReleaseRenderer(buttonId)
 
             if not isFirstKey and not keyBinding.hasPressedKeys() then
                 registerBinding()
@@ -153,7 +153,7 @@ return{
             local isFirstKey = not recording.isSecondInput
             recording.isSecondInput = true
 
-            keyBinding.onControllerButtonRelease(key)
+            keyBinding.onControllerButtonReleaseRenderer(key)
 
             local keyCode = keyCodes.getControllerButtonId(key)
             local comb, keys = keyBinding.getKeyCombinationString(keyCode)

@@ -62,4 +62,39 @@ function this.getCombinationString(combination)
 end
 
 
+
+function this.getAllCombinationsMap(combination)
+    local resMap = {}
+
+    table.sort(combination, function (a, b)
+        return a > b
+    end)
+
+    local n = #combination
+    local totalCombinations = 2^n - 1
+
+    for i = 1, totalCombinations do
+        local comboStr
+        local keys = {}
+        local num = i
+        for j = 1, n do
+            if num % 2 == 1 then
+                local keyCode = combination[j]
+                local keyName = this.keyByCode[keyCode]
+                if keyName then
+                    keys[keyCode] = keyName
+                    comboStr = comboStr and comboStr.." + "..keyName or keyName
+                end
+            end
+            num = math.floor(num / 2)
+        end
+        if comboStr then
+            resMap[comboStr] = keys
+        end
+    end
+
+    return resMap
+end
+
+
 return this
