@@ -529,6 +529,25 @@ function mapWidgetMeta:updateMarkers()
 end
 
 
+function mapWidgetMeta:refreshVisibleArea()
+    if not self.onZoomMarkersCenter then return end
+    local centerWorldPos = self:getWorldPositionOfVisibleCenter()
+    centerWorldPos = util.vector2(centerWorldPos.x, centerWorldPos.y - 8192)
+
+    local dist = (self.onZoomMarkersCenter - centerWorldPos):length()
+
+    local size = self:getSize()
+    local mul = 4096 / (self.mapInfo.pixelsPerCell * self.zoom)
+    local paddingX = size.x * mul
+    local paddingY = size.y * mul
+
+    if dist > math.min(paddingX, paddingY) then
+        self:updateOnZoomMarkers()
+        self._updatePlayerTiles = true
+    end
+end
+
+
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@field layerId integer,
@@ -1263,6 +1282,11 @@ function mapWidgetMeta:getActiveMarkers()
 end
 
 
+function mapWidgetMeta:isInFocus()
+    return self.layout.userData.inFocus == true
+end
+
+
 ---@class advancedWorldMap.ui.mapWidget.params
 ---@field size any
 ---@field fontSize integer?
@@ -1295,10 +1319,10 @@ function this.new(params)
         local localCellInfo = mapTextureHandler.getLocalCellInfo(params.cellId)
         if not localCellInfo.mX then
             localCellInfo = {
-                height = 5,
-                width = 5,
-                mX = 1280,
-                mY = -1280,
+                height = 20,
+                width = 20,
+                mX = 5120,
+                mY = -5120,
                 nA = 0,
             }
             core.sendGlobalEvent("AdvWMap:getMapStatics", {cellId = params.cellId})
@@ -1605,22 +1629,7 @@ function this.new(params)
                 newPos = clampAndCenterPosition(newPos, mapSize, mainSize)
                 props.position = newPos
 
-                if meta.onZoomMarkersCenter then
-                    local centerWorldPos = meta:getWorldPositionOfVisibleCenter()
-                    centerWorldPos = util.vector2(centerWorldPos.x, centerWorldPos.y - 8192)
-
-                    local dist = (meta.onZoomMarkersCenter - centerWorldPos):length()
-
-                    local size = meta:getSize()
-                    local mul = 4096 / (meta.mapInfo.pixelsPerCell * meta.zoom)
-                    local paddingX = size.x * mul
-                    local paddingY = size.y * mul
-
-                    if dist > math.min(paddingX, paddingY) then
-                        meta:updateOnZoomMarkers()
-                        meta._updatePlayerTiles = true
-                    end
-                end
+                meta:refreshVisibleArea()
 
                 meta:update()
 

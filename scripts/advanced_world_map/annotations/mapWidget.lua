@@ -259,6 +259,10 @@ function AdvancedWorldMapMapWidget:getPlayerMarkerVisibility() end
 ---@return AdvancedWorldMap.MapElement[] markers Array of active marker instances
 function AdvancedWorldMapMapWidget:getActiveMarkers() end
 
+---Checks if the map widget is currently in focus
+---@return boolean inFocus True if the map is in focus
+function AdvancedWorldMapMapWidget:isInFocus() end
+
 ---Updates the world map texture
 ---@param texture string|TextureResource? New texture resource (string path or ui.texture)
 ---@param mapInfo AdvancedWorldMap.MapWidget.MapImageInfo? New map image information
