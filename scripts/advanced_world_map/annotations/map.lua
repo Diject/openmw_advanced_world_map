@@ -50,6 +50,10 @@ function AdvancedWorldMapMenuMap:addWidget(params) end
 ---@return boolean isActive True if the specified widget is currently active/open
 function AdvancedWorldMapMenuMap:isWidgetActive(id) end
 
+---Returns whether any header widget is currently active/open.
+---@return boolean hasActive True if any widget is currently active/open
+function AdvancedWorldMapMenuMap:hasActiveWidget() end
+
 ---Gets or creates a map widget for a specific cell.
 ---Uses cached widgets if available. Creates new widget if needed.
 ---@param cellId string? Cell identifier (nil for exterior/world map)
