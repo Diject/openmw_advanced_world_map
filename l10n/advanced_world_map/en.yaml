@@ -125,6 +125,10 @@ SettingFastTravelBaseMagickaCostDescription: "The base magicka cost for fast tra
 SettingFastTravelAdditionalCost: "Magicka cost per unit distance"
 SettingFastTravelAdditionalCostDescription: "The additional magicka cost per unit distance traveled when fast traveling."
 
+InputSettings: "Input"
+SettingInputGamepadControls: "Improved gamepad controls"
+SettingInputGamepadControlsDescription: "When enabled, allows using gamepad to pan and zoom the map. Right analog stick to pan, right and left triggers to zoom in and out."
+
 UISettings: "UI"
 SettingUIFontSize: "Font size"
 SettingUIFontSizeDescription: "The font size of all UI text elements is scaled according to this value."

@@ -63,6 +63,9 @@ this.default = {
     data = {
         initializer = commonData.dataInitializerTypes[1],
     },
+    input = {
+        gamepadControls = true,
+    },
     ui = {
         fontSize = 18,
         defaultColor = commonData.defaultColor,

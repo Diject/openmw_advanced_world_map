@@ -60,9 +60,11 @@ function this.onMouseReleaseCallback(buttonId)
 end
 
 
-function this.onMouseWheelCallback(vertical)
+function this.onMouseWheelCallback(vertical, isController)
     for _, menu in pairs(this.activeMenus) do
-        if menu.onMouseWheel then
+        if isController and menu.onControllerScroll then
+            menu:onControllerScroll(vertical)
+        elseif menu.onMouseWheel then
             menu:onMouseWheel(vertical)
         end
     end

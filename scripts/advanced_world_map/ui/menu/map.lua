@@ -3,13 +3,13 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
-local types = require("openmw.types")
-local storage = require("openmw.storage")
+local input = require("openmw.input")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 
+local realTimer = require("scripts.advanced_world_map.realTimer")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local log = require("scripts.advanced_world_map.utils.log")
@@ -200,6 +200,11 @@ end
 
 function menuMeta:isWidgetActive(id)
     return self.activeWidgetId == id
+end
+
+
+function menuMeta:hasActiveWidget()
+    return self.activeWidgetId ~= nil
 end
 
 
@@ -791,10 +796,72 @@ function this.create(params)
         onMouseWheelCallback(layout.content, vertical)
     end
 
-    meta.onMouseClick = function (self, buttonId)
-
+    meta.onControllerScroll = function (self, vertical)
+        if not config.data.input.gamepadControls or
+                (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
+            meta.onMouseWheel(self, vertical)
+        end
     end
 
+
+    if config.data.input.gamepadControls then
+        local gamepadControlsRealTimer
+
+        local function updateRealTimerCallback()
+            if not meta.menu.layout then return end
+            if not menuMode.isMenuInteractive() or
+                    (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
+                goto continue
+
+            end
+
+            do
+                local rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
+                local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
+                local lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
+                local rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
+
+                local hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
+                local hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25
+
+                if not hasAxisInput and not hasTriggerInput then
+                    goto continue
+                end
+
+                local zoom = meta.mapWidget.zoom
+
+                if hasAxisInput then
+                    local centerPos = meta.mapWidget:getWorldPositionOfVisibleCenter()
+
+                    if math.abs(rAxisX) > 0.25 then
+                        centerPos = util.vector2(centerPos.x + rAxisX * 16384 / zoom, centerPos.y)
+                    end
+                    if math.abs(rAxisY) > 0.25 then
+                        centerPos = util.vector2(centerPos.x, centerPos.y - rAxisY * 16384 / zoom)
+                    end
+
+                    meta.mapWidget:focusOnWorldPosition(centerPos)
+                end
+
+                if hasTriggerInput then
+                    if lTrigger > 0.25 then
+                        zoom = zoom * (1 - 0.25 * lTrigger)
+                        meta.mapWidget:setZoom(zoom)
+                    elseif rTrigger > 0.25 then
+                        zoom = zoom * (1 + 0.25 * rTrigger)
+                        meta.mapWidget:setZoom(zoom)
+                    end
+                end
+
+                meta.mapWidget:refreshVisibleArea()
+                meta.update()
+            end
+
+            ::continue::
+            gamepadControlsRealTimer = realTimer.newTimer(0.1, updateRealTimerCallback)
+        end
+        updateRealTimerCallback()
+    end
 
     local func
     func = function ()

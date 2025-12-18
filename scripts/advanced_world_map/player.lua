@@ -234,9 +234,9 @@ local function updateTimer()
 
     local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
     if rAxisY > 0.5 then
-        onMouseWheel(-1)
+        menuHandler.onMouseWheelCallback(-1, true)
     elseif rAxisY < -0.5 then
-        onMouseWheel(1)
+        menuHandler.onMouseWheelCallback(1, true)
     end
 
     realTimer.newTimer(0.2, function ()

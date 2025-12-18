@@ -18,6 +18,7 @@ this.storageSections = {
     storage.playerSection(commonData.configTilesetSectionName),
     storage.playerSection(commonData.configFastTravelSectionName),
     storage.playerSection(commonData.configDataSectionName),
+    storage.playerSection(commonData.configInputSectionName),
     storage.playerSection(commonData.configUISectionName),
     storage.playerSection(commonData.configNotesSectionName),
     defaultStorage,

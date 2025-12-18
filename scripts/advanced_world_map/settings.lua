@@ -238,12 +238,25 @@ I.Settings.registerGroup{
 
 
 I.Settings.registerGroup{
+    key = commonData.configInputSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "InputSettings",
+    permanentStorage = true,
+    order = 6,
+    settings = {
+        boolSetting{key = "input.gamepadControls", name = "SettingInputGamepadControls", description = "SettingInputGamepadControlsDescription", default = config.default.input.gamepadControls},
+    }
+}
+
+
+I.Settings.registerGroup{
     key = commonData.configUISectionName,
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
     name = "UISettings",
     permanentStorage = true,
-    order = 6,
+    order = 7,
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
         numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},
