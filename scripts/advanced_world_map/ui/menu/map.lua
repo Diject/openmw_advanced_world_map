@@ -490,8 +490,22 @@ function this.create(params)
         }
     }
 
+    local updateCDTimer
+    local doUpdate = false
     meta.update = function ()
-        meta.menu:update()
+        if not meta.menu then return end
+        if not updateCDTimer then
+            meta.menu:update()
+            updateCDTimer = realTimer.newTimer(0, function ()
+                updateCDTimer = nil
+                if doUpdate then
+                    doUpdate = false
+                    meta.update()
+                end
+            end)
+        else
+            doUpdate = true
+        end
     end
 
 
