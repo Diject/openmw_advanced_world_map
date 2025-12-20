@@ -19,6 +19,7 @@ local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
+local actionBinding = require("scripts.advanced_world_map.input.keyAction")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -482,9 +483,62 @@ function this.create(params)
     }
 
     meta.update = function ()
-        if not meta.menu then return end
         meta.menu:update()
     end
+
+
+    local pinBtnLayout = {
+        type = ui.TYPE.Widget,
+        props = {
+            size = util.vector2(meta.headerHeight, meta.headerHeight),
+            anchor = util.vector2(0.5, 0.5),
+            visible = config.data.main.overrideDefault or config.data.main.fastClose,
+        },
+        userData = {},
+        events = {
+            mousePress = async:callback(function(e, layout)
+                if e.button ~= 1 then return end
+                layout.userData.pressed = true
+            end),
+
+            mouseRelease = async:callback(function(e, layout)
+                if layout.userData.pressed and meta.headerMovedDistance <= 15 then
+                    meta:togglePin()
+                    meta:update()
+                end
+            end),
+        },
+        content = ui.content{
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = ui.texture{ path = commonData.pinIconPath },
+                    alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
+                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
+                    color = localStorage.data[commonData.pinnedStateFieldId] and config.data.ui.whiteColor or
+                        config.data.ui.defaultColor,
+                    anchor = util.vector2(0.5, 0.5),
+                    position = util.vector2(meta.headerHeight / 2, meta.headerHeight / 2),
+                },
+            },
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = uiUtils.whiteTexture,
+                    alpha = 0,
+                    size = util.vector2(meta.headerHeight, meta.headerHeight),
+                },
+            },
+        }
+    }
+
+    meta.togglePin = function (self)
+        local newVal = not localStorage.data[commonData.pinnedStateFieldId]
+        localStorage.data[commonData.pinnedStateFieldId] = newVal
+        pinBtnLayout.content[1].props.alpha = newVal and 1 or 0.5
+        pinBtnLayout.content[1].props.color = newVal and config.data.ui.whiteColor or config.data.ui.defaultColor
+    end
+
 
     local headerLayout = {
         type = ui.TYPE.Widget,
@@ -554,53 +608,7 @@ function this.create(params)
                 },
                 userData = {},
                 content = ui.content{
-                    {
-                        type = ui.TYPE.Widget,
-                        props = {
-                            size = util.vector2(meta.headerHeight, meta.headerHeight),
-                            anchor = util.vector2(0.5, 0.5),
-                            visible = config.data.main.overrideDefault or config.data.main.fastClose,
-                        },
-                        userData = {},
-                        events = {
-                            mousePress = async:callback(function(e, layout)
-                                if e.button ~= 1 then return end
-                                layout.userData.pressed = true
-                            end),
-
-                            mouseRelease = async:callback(function(e, layout)
-                                if layout.userData.pressed and meta.headerMovedDistance <= 15 then
-                                    local newVal = not localStorage.data[commonData.pinnedStateFieldId]
-                                    localStorage.data[commonData.pinnedStateFieldId] = newVal
-                                    layout.content[1].props.alpha = newVal and 1 or 0.5
-                                    layout.content[1].props.color = newVal and config.data.ui.whiteColor or config.data.ui.defaultColor
-                                    meta:update()
-                                end
-                            end),
-                        },
-                        content = ui.content{
-                            {
-                                type = ui.TYPE.Image,
-                                props = {
-                                    resource = ui.texture{ path = commonData.pinIconPath },
-                                    alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
-                                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
-                                    color = localStorage.data[commonData.pinnedStateFieldId] and config.data.ui.whiteColor or
-                                        config.data.ui.defaultColor,
-                                    anchor = util.vector2(0.5, 0.5),
-                                    position = util.vector2(meta.headerHeight / 2, meta.headerHeight / 2),
-                                },
-                            },
-                            {
-                                type = ui.TYPE.Image,
-                                props = {
-                                    resource = uiUtils.whiteTexture,
-                                    alpha = 0,
-                                    size = util.vector2(meta.headerHeight, meta.headerHeight),
-                                },
-                            },
-                        }
-                    },
+                    pinBtnLayout,
                     interval(params.fontSize / 2, 0),
                     {
                         type = ui.TYPE.Text,
@@ -883,10 +891,29 @@ function this.create(params)
 end
 
 
+local togglePinActionFunc
+
+eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
+    togglePinActionFunc = function ()
+        e.menu:togglePin()
+        if not localStorage.data[commonData.pinnedStateFieldId] and not menuMode.isMenuInteractive() then
+            menuHandler.destroyMenu(commonData.mapMenuId)
+            return true
+        end
+        e.menu:update()
+    end
+
+    actionBinding.registerAction(commonData.togglePinKeyId, togglePinActionFunc)
+end, 10000)
+
+eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
+    actionBinding.unregisterAction(commonData.togglePinKeyId, togglePinActionFunc)
+end, 10000)
+
 eventSys.registerHandler(eventSys.EVENT.onMapClosed, function (e)
     localStorage.data[commonData.lastCellIdFieldId] = e.mapWidget.cellId
     localStorage.data[commonData.lastMapPosFieldId] = e.mapWidget:getWorldPositionOfVisibleCenter()
-end)
+end, 10000)
 
 
 

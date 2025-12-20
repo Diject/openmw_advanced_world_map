@@ -65,6 +65,8 @@ this.default = {
     },
     input = {
         gamepadControls = true,
+        togglePinHotkey = nil,
+        toggleMapTypeHotkey = nil,
     },
     ui = {
         fontSize = 18,

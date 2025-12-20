@@ -6,7 +6,7 @@ local playerRef = require("openmw.self")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
-local localStorage = require("scripts.advanced_world_map.storage.localStorage")
+local actionBinding = require("scripts.advanced_world_map.input.keyAction")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
@@ -34,27 +34,30 @@ local function updateLabel(mapWidget)
     end
 end
 
+
 ---@param menu advancedWorldMap.ui.menu.map
-local function create(menu)
+local function toggleMap(menu)
+    if menu.mapWidget.cellId then
+        menu:updateMapWidgetCell()
+    else
+        local playerCell = playerRef.cell
 
-    local function toggleMap()
-        if menu.mapWidget.cellId then
-            menu:updateMapWidgetCell()
-        else
-            local playerCell = playerRef.cell
-
-            if playerCell.isExterior then
-                if isMapTypeWorld(menu.mapWidget) then
-                    menu.mapWidget:setZoom(config.data.tileset.zoomToShow + 1)
-                else
-                    menu.mapWidget:setZoom(config.data.tileset.zoomToShow - 1)
-                end
+        if playerCell.isExterior then
+            if isMapTypeWorld(menu.mapWidget) then
+                menu.mapWidget:setZoom(config.data.tileset.zoomToShow + 1)
             else
-                menu:updateMapWidgetCell(playerCell.id)
-                menu.mapWidget:focusOnWorldPosition(playerRef.position)
+                menu.mapWidget:setZoom(config.data.tileset.zoomToShow - 1)
             end
+        else
+            menu:updateMapWidgetCell(playerCell.id)
+            menu.mapWidget:focusOnWorldPosition(playerRef.position)
         end
     end
+end
+
+
+---@param menu advancedWorldMap.ui.menu.map
+local function create(menu)
 
     btnLayout = {
         type = ui.TYPE.Text,
@@ -72,13 +75,16 @@ local function create(menu)
         id = "AdvancedWorldMap:MapTypeLabel",
         layout = btnLayout,
         onClick = function (m, e)
-            toggleMap()
+            toggleMap(menu)
             updateLabel(m.mapWidget)
         end,
         priority = 10000,
     }
 
 end
+
+
+local toogleMapTypeActionFunc
 
 
 eventSys.registerHandler(eventSys.EVENT.onZoomed, function (e)
@@ -91,4 +97,16 @@ end)
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     create(e.menu)
+
+    toogleMapTypeActionFunc = function ()
+        toggleMap(e.menu)
+        updateLabel(e.menu.mapWidget)
+        e.menu:update()
+    end
+
+    actionBinding.registerAction(commonData.toggleMapTypeKeyId, toogleMapTypeActionFunc)
 end, 10000)
+
+eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
+    actionBinding.unregisterAction(commonData.toggleMapTypeKeyId, toogleMapTypeActionFunc)
+end)
