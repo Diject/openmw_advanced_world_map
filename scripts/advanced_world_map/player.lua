@@ -428,7 +428,15 @@ return {
         onMouseWheel = onMouseWheel,
         onKeyPress = function (key)
             keyBinding.onKeyPress(key)
-            if key.code == input.KEY.Escape then
+            if key.code == input.KEY.Escape and menuHandler.hasActiveMenus() then
+                if localStorage.data[commonData.pinnedStateFieldId] and menuMode.isMenuInteractive() then
+                    local menu = menuHandler.getMenu(commonData.mapMenuId)
+                    if menu then
+                        menuMode.deactivate()
+                        return
+                    end
+                end
+
                 menuHandler.destroyAllMenus()
             end
         end,
@@ -436,6 +444,14 @@ return {
         onControllerButtonPress = function (buttonId)
             keyBinding.onControllerButtonPress(buttonId)
             if buttonId == input.CONTROLLER_BUTTON.B and menuHandler.hasActiveMenus() then
+                if localStorage.data[commonData.pinnedStateFieldId] and menuMode.isMenuInteractive() then
+                    local menu = menuHandler.getMenu(commonData.mapMenuId)
+                    if menu then
+                        menuMode.deactivate()
+                        return
+                    end
+                end
+
                 menuHandler.destroyAllMenus()
             end
         end,
