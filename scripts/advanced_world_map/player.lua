@@ -225,6 +225,8 @@ end
 actionBinding.registerAction(commonData.menuKeyId, function ()
     if types.Player.isCharGenFinished(self) then
         toggleMenu()
+    else
+        ui.showMessage(l10n("charGenNotFinished"))
     end
 end)
 
