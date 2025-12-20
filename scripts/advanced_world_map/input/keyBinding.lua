@@ -45,11 +45,12 @@ end
 
 ---@param keyCombination string?
 ---@return boolean
+---@return boolean
 function this.trigger(keyCombination)
-    if not keyCombination then return false end
+    if not keyCombination then return false, false end
 
     local handlers = this.binds[keyCombination]
-    if not handlers then return false end
+    if not handlers then return false, false end
 
     local sortedHandlers = {}
     for _, v in pairs(handlers) do
@@ -60,13 +61,14 @@ function this.trigger(keyCombination)
     end)
 
     local res = false
+    local handlerRes = false
     for _, handlerData in ipairs(sortedHandlers) do
         local handlerFunc = handlerData[1]
-        handlerFunc(handlerData[3])
+        handlerRes = handlerFunc(handlerData[3]) or handlerRes or false
         res = true
     end
 
-    return res
+    return res, handlerRes
 end
 
 
@@ -85,17 +87,14 @@ local function createKeyCombinationDataSimple()
 end
 
 
----@return boolean
 function this.triggerKeyCombinations(lastKeyCode)
     local combination = createKeyCombinationDataSimple()
 
-    local res = false
-
     if #combination > 4 then
         local combStr = keyCodes.getCombinationString(combination)
-        res = this.trigger(combStr)
+        this.trigger(combStr)
     else
-        local keyCombMap = keyCodes.getAllCombinationsMap(combination)
+        local keyCombMap, keyCombArr = keyCodes.getAllCombinationsMap(combination)
 
         for keyStr, _ in pairs(this.triggered) do
             if not keyCombMap[keyStr] then
@@ -103,17 +102,25 @@ function this.triggerKeyCombinations(lastKeyCode)
             end
         end
 
-        for keyStr, keyMap in pairs(keyCombMap) do
+        table.sort(keyCombArr, function (a, b)
+            return a[2] > b[2]
+        end)
+
+        for _, keyData in ipairs(keyCombArr) do
+            local keyStr = keyData[1]
+            local keyMap = keyData[3]
             if this.isContainsHandler(keyStr) then
                 if not this.triggered[keyStr] or keyMap[lastKeyCode] then
-                    res = this.trigger(keyStr) or res
+                    local res, handlerRes = this.trigger(keyStr)
                     this.triggered[keyStr] = true
+
+                    if handlerRes then
+                        break
+                    end
                 end
             end
         end
     end
-
-    return res
 end
 
 

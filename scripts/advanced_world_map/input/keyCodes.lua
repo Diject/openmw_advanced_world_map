@@ -65,6 +65,7 @@ end
 
 function this.getAllCombinationsMap(combination)
     local resMap = {}
+    local resArr = {}
 
     table.sort(combination, function (a, b)
         return a > b
@@ -77,12 +78,14 @@ function this.getAllCombinationsMap(combination)
         local comboStr
         local keys = {}
         local num = i
+        local count = 0
         for j = 1, n do
             if num % 2 == 1 then
                 local keyCode = combination[j]
                 local keyName = this.keyByCode[keyCode]
                 if keyName then
                     keys[keyCode] = keyName
+                    count = count + 1
                     comboStr = comboStr and comboStr.." + "..keyName or keyName
                 end
             end
@@ -90,10 +93,11 @@ function this.getAllCombinationsMap(combination)
         end
         if comboStr then
             resMap[comboStr] = keys
+            table.insert(resArr, {comboStr, count, keys})
         end
     end
 
-    return resMap
+    return resMap, resArr
 end
 
 

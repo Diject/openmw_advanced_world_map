@@ -21,12 +21,20 @@ this.actionBindingById = {}
 this.registeredHandlers = {}
 
 
+--- Registers an action handler. When the action is triggered, the handler function will be called.
+--- If the handler function returns true or nil, the action is considered handled and no further handlers for the pressed key combination will be called.
+--- For example, if Ctrl + M is pressed and there is an action "1" for it, and an action "2" for "M":
+--- If the handler for action "1" returns true or nil, the handler for action "2" will not be called.
+---@param action string
+---@param func fun(keyCombination : string, actionId : string)
 function this.registerAction(action, func)
+    if not action or not func then return end
     this.registeredHandlers[action] = this.registeredHandlers[action] or {}
     this.registeredHandlers[action][func] = true
 end
 
 function this.unregisterAction(action, func)
+    if not action or not func then return end
     this.registeredHandlers[action] = this.registeredHandlers[action] or {}
     this.registeredHandlers[action][func] = nil
 end
@@ -34,13 +42,20 @@ end
 
 local function bindingCallback(keyCombination)
     local handler = this.actionBindingByKey[keyCombination]
+    local triggered = false
     if not handler then return end
 
     for actionId, _ in pairs(handler.actions) do
         for func, _ in pairs(this.registeredHandlers[actionId] or {}) do
-            func(keyCombination, actionId)
+            local res = func(keyCombination, actionId)
+            if res ~= nil then
+                triggered = res or triggered
+            else
+                triggered = true
+            end
         end
     end
+    return triggered
 end
 
 
