@@ -222,12 +222,18 @@ function menuMeta:getMapWidgetForCell(cellId)
             updateFunc = self.update,
             size = self.mainSize,
             position = util.vector2(0, 0),
-            cellId = cellId
+            cellId = cellId,
+            screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerHeight),
         }
         isNew = true
     end
 
-    return this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId], isNew
+    local meta = this.cachedMapWidgetMetatable[cellKeyId]
+    if meta then
+        meta.screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerHeight)
+    end
+
+    return this.cachedMapWidgetLayout[cellKeyId], meta, isNew
 end
 
 
@@ -417,6 +423,8 @@ function this.create(params)
     local screenSize = uiUtils.getScaledScreenSize()
     meta.size = screenSize:emul(params.relativeSize)
 
+    meta.screenPosition = params.relativePosition:emul(screenSize)
+
     local headerHeight = params.fontSize * 1.25
     meta.headerHeight = headerHeight
     local headerSize = util.vector2(meta.size.x, headerHeight)
@@ -569,13 +577,14 @@ function this.create(params)
                 if not layout.userData.lastMousePos then return end
 
                 local props = meta.menu.layout.props
-                local relativePos = util.vector2(e.position.x / screenSize.x, e.position.y / screenSize.y)
 
                 meta.headerMovedDistance = meta.headerMovedDistance +
                     (e.position - layout.userData.lastMousePos):length()
 
                 if meta.headerMovedDistance > 15 then
                     props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - e.position):ediv(screenSize)
+                    meta.screenPosition = props.relativePosition:emul(screenSize)
+                    meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(meta:getWidgetWindowWidth(), meta.headerHeight)
                     meta:update()
                 end
 
@@ -657,8 +666,10 @@ function this.create(params)
     end
 
     meta.updateMapWidgetWidth = function (self)
-        local mapWidgetSize = util.vector2(math.max(1, self.mainSize.x - meta:getWidgetWindowWidth()), self.mainSize.y)
+        local widgetWindowWidth = meta:getWidgetWindowWidth()
+        local mapWidgetSize = util.vector2(math.max(1, self.mainSize.x - widgetWindowWidth), self.mainSize.y)
         self.mapWidget:setSize(mapWidgetSize)
+        self.mapWidget.screenPosition = self.screenPosition + util.vector2(widgetWindowWidth, headerHeight)
     end
 
     local mainLayout

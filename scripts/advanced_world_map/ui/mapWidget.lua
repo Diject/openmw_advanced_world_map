@@ -224,7 +224,7 @@ end
 
 function mapWidgetMeta:getRelativePositionOfCursor()
     local main = self.layout
-    local mouseOffset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset
+    local mouseOffset = main.userData.mainMouseOffset
     local widget = self:getMapLayersLayout()
     local mapPos = widget.props.position
     local mapSize = widget.props.size
@@ -445,7 +445,7 @@ local function setZoom(self, zoom, relativePos)
             -relativePos.y * newSize.y + mainSize.y / 2
         )
     else
-        local mouseOffset = self.layout.userData.mainMouseOffset + self.layout.userData.additiveMouseOffset
+        local mouseOffset = self.layout.userData.mainMouseOffset
         local mouseOnMap = mouseOffset - oldPos
 
         local rel = util.vector2(mouseOnMap.x / oldSize.x, mouseOnMap.y / oldSize.y)
@@ -736,7 +736,6 @@ local function createMarker(self, params, onlyInitialize)
 
             mouseMove = async:callback(function(e, layout)
                 self.layout.userData.inFocus = true
-                self.layout.userData.additiveMouseOffset = e.offset
                 if layout.userData.pressed[1] and self.layout.userData.lastMousePos then
                     layout.userData.movedDistance = layout.userData.movedDistance +
                         (e.position - self.layout.userData.lastMousePos):length()
@@ -1300,6 +1299,7 @@ end
 ---@field anchor any?
 ---@field cellId string?
 ---@field updateFunc function
+---@field screenPosition any?
 
 ---@param params advancedWorldMap.ui.mapWidget.params
 ---@return table?
@@ -1317,6 +1317,8 @@ function this.new(params)
     meta.cellStatics = nil
 
     meta._markerLayoutCache = {}
+
+    meta.screenPosition = params.screenPosition or util.vector2(0, 0)
 
     local mapLayout
 
@@ -1513,7 +1515,6 @@ function this.new(params)
             inFocus = false,
             mousePos = util.vector2(0, 0),
             mainMouseOffset = util.vector2(0, 0),
-            additiveMouseOffset = util.vector2(0, 0),
             lastMarkerElement = nil
         },
         events = {
@@ -1524,7 +1525,8 @@ function this.new(params)
                 e.marker = markerElement
                 e.mapWidget = meta
                 if markerElement then
-                    e.offset = main.userData.mainMouseOffset + e.offset
+                    e.offset = e.position - meta.screenPosition
+                    main.userData.mainMouseOffset = e.offset
                 end
 
                 if eventSys.triggerEvent(eventSys.EVENT["onMousePress"], e) then
@@ -1542,7 +1544,8 @@ function this.new(params)
                 e.marker = markerElement
                 e.mapWidget = meta
                 if markerElement then
-                    e.offset = main.userData.mainMouseOffset + e.offset
+                    e.offset = e.position - meta.screenPosition
+                    main.userData.mainMouseOffset = e.offset
                 end
                 if eventSys.triggerEvent(eventSys.EVENT["onMouseRelease"], e) then
                     main.userData.lastDraggedMousePos = nil
@@ -1609,13 +1612,15 @@ function this.new(params)
                 main.userData.mousePos = e.position
                 if not markerElement then
                     main.userData.mainMouseOffset = e.offset
-                    main.userData.additiveMouseOffset = util.vector2(0, 0)
+                else
+                    e.offset = e.position - meta.screenPosition
+                    main.userData.mainMouseOffset = e.offset
                 end
                 main.userData.inFocus = true
 
                 e.mapWidget = meta
                 if eventSys.triggerEvent(eventSys.EVENT["onMouseMove"], {
-                        position = e.position, offset = main.userData.mainMouseOffset + main.userData.additiveMouseOffset,
+                        position = e.position, offset = main.userData.mainMouseOffset,
                         marker = markerElement}) then
                     main.userData.lastDraggedMousePos = nil
                     return
