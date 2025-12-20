@@ -129,6 +129,8 @@ SettingFastTravelAdditionalCostDescription: "The additional magicka cost per uni
 InputSettings: "Input"
 SettingInputGamepadControls: "Improved gamepad controls"
 SettingInputGamepadControlsDescription: "When enabled, allows using gamepad to pan and zoom the map. Right analog stick to pan, right and left triggers to zoom in and out."
+SettingInputGamepadControlsBumperMode: "Gamepad bumper mode"
+SettingInputGamepadControlsBumperModeDescription: "Remaps gamepad controls to use right and left bumper buttons for zooming instead of triggers."
 SettingInputToggleMapTypeKey: "Toggle local/world map key"
 SettingInputToggleMapTypeKeyDescription: "The key used to toggle between local and world map views."
 SettingInputTogglePinKey: "Toggle pin map key"

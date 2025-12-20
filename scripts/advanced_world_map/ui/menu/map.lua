@@ -851,8 +851,18 @@ function this.create(params)
             do
                 local rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
                 local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
-                local lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
-                local rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
+                local lTrigger
+                if config.data.input.gamepadControlsBumperMode then
+                    lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and 0.75 or 0
+                else
+                    lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
+                end
+                local rTrigger
+                if config.data.input.gamepadControlsBumperMode then
+                    rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and 0.75 or 0
+                else
+                    rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
+                end
 
                 local hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
                 local hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25

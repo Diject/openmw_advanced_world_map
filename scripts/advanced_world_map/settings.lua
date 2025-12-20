@@ -246,6 +246,7 @@ I.Settings.registerGroup{
     order = 6,
     settings = {
         boolSetting{key = "input.gamepadControls", name = "SettingInputGamepadControls", description = "SettingInputGamepadControlsDescription", default = config.default.input.gamepadControls},
+        boolSetting{key = "input.gamepadControlsBumperMode", name = "SettingInputGamepadControlsBumperMode", description = "SettingInputGamepadControlsBumperModeDescription", default = config.default.input.gamepadControlsBumperMode},
         inputKey{key = "input.toggleMapTypeHotkey", name = "SettingInputToggleMapTypeKey", description = "SettingInputToggleMapTypeKeyDescription", action = commonData.toggleMapTypeKeyId, default = config.default.input.toggleMapTypeHotkey},
         inputKey{key = "input.togglePinHotkey", name = "SettingInputTogglePinKey", description = "SettingInputTogglePinKeyDescription", action = commonData.togglePinKeyId, default = config.default.input.togglePinHotkey},
     }

@@ -65,6 +65,7 @@ this.default = {
     },
     input = {
         gamepadControls = true,
+        gamepadControlsBumperMode = false,
         togglePinHotkey = nil,
         toggleMapTypeHotkey = nil,
     },
