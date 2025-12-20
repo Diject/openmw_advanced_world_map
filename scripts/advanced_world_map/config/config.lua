@@ -26,6 +26,7 @@ this.default = {
         fastClose = false, -- deprecated
         clearCacheOnClose = true,
         overrideDefault = false,
+        saveVisibilityStateInInterfaceMenu = false,
     },
     legend = {
         markerSize = 6,

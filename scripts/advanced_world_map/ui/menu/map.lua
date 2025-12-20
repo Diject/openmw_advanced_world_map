@@ -4,6 +4,7 @@ local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
 local input = require("openmw.input")
+local UI = require("openmw.interfaces").UI
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -383,6 +384,19 @@ function menuMeta:close()
         end
     end
     mapTextureHandler.clearInteriorTextureCache()
+
+    if config.data.main.saveVisibilityStateInInterfaceMenu then
+        local isInterfaceMode = false
+        for _, mode in pairs(UI.modes) do
+            if mode == "Interface" then
+                isInterfaceMode = true
+                break
+            end
+        end
+        if isInterfaceMode then
+            localStorage.data[commonData.hideInInterfaceMenuFieldId] = true
+        end
+    end
 
     local co = coroutine.create(function ()
         self.menu:destroy()
@@ -929,6 +943,20 @@ end
 local togglePinActionFunc
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
+
+    if config.data.main.saveVisibilityStateInInterfaceMenu then
+        local isInterfaceMode = false
+        for _, mode in pairs(UI.modes) do
+            if mode == "Interface" then
+                isInterfaceMode = true
+                break
+            end
+        end
+        if isInterfaceMode then
+            localStorage.data[commonData.hideInInterfaceMenuFieldId] = false
+        end
+    end
+
     togglePinActionFunc = function ()
         e.menu:togglePin()
         if not localStorage.data[commonData.pinnedStateFieldId] and not menuMode.isMenuInteractive() then

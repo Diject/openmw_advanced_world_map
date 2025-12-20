@@ -48,6 +48,7 @@ this.fastTravelTimestampFieldId = "fastTravelTimestampFieldId"
 this.fastTravelRealTimestampFieldId = "fastTravelRealTimestampFieldId"
 this.lastMapPosFieldId = "lastMapPosFieldId"
 this.pinnedStateFieldId = "pinnedStateFieldId"
+this.hideInInterfaceMenuFieldId = "hideInInterfaceMenuFieldId"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
