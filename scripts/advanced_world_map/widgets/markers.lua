@@ -19,6 +19,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
+local interval = require("scripts.advanced_world_map.ui.interval")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -438,8 +439,16 @@ local function createMarkers(widget, cellId)
                             end
 
                             if #tooltipContent > 0 then
-                                layout.userData.tooltipContent = tooltipContent
-                                tooltip.createOrMove(e, layout, tooltipContent)
+                                local newTooltipContent = ui.content{}
+                                for i = 1, #tooltipContent - 1 do
+                                    local item = tooltipContent[i]
+                                    newTooltipContent:add(item)
+                                    newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
+                                end
+                                newTooltipContent:add(tooltipContent[#tooltipContent])
+
+                                layout.userData.tooltipContent = newTooltipContent
+                                tooltip.createOrMove(e, layout, newTooltipContent)
                             else
                                 layout.userData.tooltipContent = nil
                             end
@@ -536,7 +545,7 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
     local screenSize = uiUtils.getScaledScreenSize()
     local text = e.marker:getUserData().fullName or ""
     local tooltipWidth = math.max(250,
-        math.min(screenSize.x / 6, stringLib.length(text) * config.data.ui.fontSize * config.data.ui.textHeightMul))
+        math.min(screenSize.x / 5, stringLib.length(text) * config.data.ui.fontSize * config.data.ui.textHeightMul))
 
     e.content:add{
         type = ui.TYPE.TextEdit,
