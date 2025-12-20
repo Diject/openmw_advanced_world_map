@@ -941,6 +941,10 @@ end
 function mapWidgetMeta:placeGroundTextures(region)
     self:removeGroundTextures()
 
+    if eventSys.triggerEvent(eventSys.EVENT.onGroundTexturesPlace, {mapWidget = self, region = region}) then
+        return
+    end
+
     if self.localCellInfo then
         if self.cellStatics then
             for _, dt in pairs(self.cellStatics) do
@@ -1136,6 +1140,7 @@ function mapWidgetMeta:updateWorldMapTexture(texture, mapInfo)
         texture = ui.texture{ path = texture }
     end
     getWorldMapTextureLayout(self, mapInfo, texture, self:getLayerLayout(this.layerId.map))
+    self:setZoom(self.zoom)
 end
 
 

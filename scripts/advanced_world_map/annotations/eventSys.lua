@@ -122,6 +122,11 @@
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field zoom number New zoom level
 
+---Event data for place ground textures event
+---@class AdvancedWorldMap.Event.onGroundTexturesPlaceEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
+---@field region AdvancedWorldMap.MapWidget.Region Region data for placing ground textures
+
 ---Search event result entry
 ---@class AdvancedWorldMap.Event.OnSearchEvent.Result
 ---@field cellId string? Cell identifier (nil for exterior/world map)
@@ -193,6 +198,7 @@ AdvancedWorldMapEvent.EVENT = {
     onResized = "onResized", -- Event triggered when the map window is resized
     onZoomed = "onZoomed", -- Event triggered when the map zoom level changes
     onSearch = "onSearch", -- Event triggered when a search is performed
+    onGroundTexturesPlace = "onGroundTexturesPlace", -- Event triggered before ground textures are placed on the map. You can prevent default ground texture placement by returning second value as true: like `return nil, true`
     onFastTravel = "onFastTravel", -- Event triggered when a fast travel is initiated
     onFastTravelResolve = "onFastTravelResolve", -- Event triggered when a fast travel is being resolved
     onFastTravelResolved = "onFastTravelResolved", -- Event triggered after a fast travel has been resolved
@@ -204,31 +210,32 @@ AdvancedWorldMapEvent.EVENT = {
 ---  - Second value (boolean?): if true, prevents default behavior from happening (only used in some events)
 ---@param eventId string Event identifier
 ---@param priority number? Handler priority (default is 0, higher value = higher priority)
----@overload fun(eventId: "onMenuOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuOpenedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMenuClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuClosedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onWorldMapTextureInitialize", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureInitializeEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMapClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapClosedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onCellMarkersCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnCellMarkersCreateEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onMarkerClick", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onMarkerClicked", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMarkerTooltipShow", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onMarkerTooltipShowed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMapElementInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementInitializedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMapElementCreated", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementCreatedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMapElementRemoved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementRemovedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onMousePress", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMousePressEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onMouseRelease", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMouseReleaseEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onFocusLoss", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFocusLossEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onMouseMove", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMouseMoveEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onRightMouseMenu", handlerFunc: fun(e: AdvancedWorldMap.Event.OnRightMouseMenuEvent): boolean?, priority: number?)
----@overload fun(eventId: "onResized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnResizedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onZoomed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnZoomedEvent): boolean?, priority: number?)
----@overload fun(eventId: "onSearch", handlerFunc: fun(e: AdvancedWorldMap.Event.OnSearchEvent): boolean?, priority: number?)
----@overload fun(eventId: "onFastTravel", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onFastTravelResolve", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolveEvent): boolean?, boolean?, priority: number?)
----@overload fun(eventId: "onFastTravelResolved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolvedEvent): boolean?, priority: number?)
+---@overload fun(eventId: "onMenuOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuOpenedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMenuClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuClosedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWorldMapTextureInitialize", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureInitializeEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapClosedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onCellMarkersCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnCellMarkersCreateEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onMarkerClick", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onMarkerClicked", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMarkerTooltipShow", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onMarkerTooltipShowed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerTooltipShowedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapElementInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementInitializedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapElementCreated", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementCreatedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapElementRemoved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapElementRemovedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onMousePress", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMousePressEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onMouseRelease", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMouseReleaseEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onFocusLoss", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFocusLossEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onMouseMove", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMouseMoveEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onRightMouseMenu", handlerFunc: fun(e: AdvancedWorldMap.Event.OnRightMouseMenuEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onResized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnResizedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onZoomed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnZoomedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onGroundTexturesPlace", handlerFunc: fun(e: AdvancedWorldMap.Event.onGroundTexturesPlaceEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onSearch", handlerFunc: fun(e: AdvancedWorldMap.Event.OnSearchEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onFastTravel", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onFastTravelResolve", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolveEvent): (boolean?, boolean?), priority: number?)
+---@overload fun(eventId: "onFastTravelResolved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolvedEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system
