@@ -27,7 +27,7 @@ end
 
 ---@class advancedWorldMap.widget.notes.data.markerData
 ---@field cellId string?
----@field pos openmw.util.Vector2
+---@field pos Vector2
 ---@field name string?
 ---@field descr string?
 ---@field colorId integer?
@@ -36,7 +36,7 @@ end
 
 ---@class advancedWorldMap.widget.notes.data.addMarkerDataParams
 ---@field cellId string?
----@field pos openmw.util.Vector2
+---@field pos Vector2
 ---@field name string?
 ---@field descr string?
 ---@field colorId integer?

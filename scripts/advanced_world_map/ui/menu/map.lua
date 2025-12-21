@@ -309,11 +309,24 @@ end
 
 ---@return boolean
 function menuMeta:updateInteractiveElements()
+    local shouldUpdate = false
+    local layout = self.menu.layout
+    if not layout then return shouldUpdate end
+
     local isMenuMode = menuMode.isMenuInteractive()
     if self.lastMenuMode == isMenuMode then
-        return false
+        return shouldUpdate
     else
         self.lastMenuMode = isMenuMode
+    end
+
+    local lastUIMode = UI.getMode()
+    if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated())) then
+        shouldUpdate = layout.props.visible ~= false or shouldUpdate
+        layout.props.visible = false
+        return shouldUpdate
+    else
+        layout.props.visible = true
     end
 
     local header = self.headerLayout
@@ -326,7 +339,7 @@ function menuMeta:updateInteractiveElements()
     else
         if not localStorage.data[commonData.pinnedStateFieldId] then
             menuHandler.destroyMenu(commonData.mapMenuId)
-            return false
+            return shouldUpdate
         end
 
         header.content[1].props.alpha = 0
@@ -528,7 +541,6 @@ function this.create(params)
         props = {
             size = util.vector2(meta.headerHeight, meta.headerHeight),
             anchor = util.vector2(0.5, 0.5),
-            visible = config.data.main.overrideDefault or config.data.main.fastClose,
         },
         userData = {},
         events = {

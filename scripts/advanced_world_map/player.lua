@@ -469,6 +469,9 @@ return {
                 menuStateUpdateTimer()
             end
             menuStateUpdateTimer = realTimer.newTimer(0.1, function ()
+                if not menuMode.isMenuInteractive() then
+                    menuMode.setActivatedFlag(false)
+                end
                 local menu = menuHandler.getMenu(commonData.mapMenuId)
                 if menu and menu:updateInteractiveElements() then
                     menu:update()
