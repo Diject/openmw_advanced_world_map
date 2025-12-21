@@ -3,15 +3,18 @@ local core = require("openmw.core")
 local this = {}
 
 this.timers = {}
+this.nextTimerId = 0
 
 
 function this.newTimer(duration, callback, ...)
+    local timerId = this.nextTimerId
+    this.nextTimerId = timerId + 1
+
     local timer = {
         endTime = core.getRealTime() + duration,
         callback = callback,
         args = {...},
     }
-    local timerId = #this.timers + 1
     this.timers[timerId] = timer
     return function ()
         this.timers[timerId] = nil
