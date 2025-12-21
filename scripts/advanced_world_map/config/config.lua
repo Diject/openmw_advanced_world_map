@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 3,
+    version = 4,
     main = {
         menuKey = "N",
         relativeSize = {
