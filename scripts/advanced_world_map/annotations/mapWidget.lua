@@ -14,9 +14,9 @@
 
 ---Scale functions for different element types
 ---@class AdvancedWorldMap.MapWidget.ScaleFunctions
----@field linear fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2 Linear scaling function
----@field marker fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2 Marker scaling function (uses fourth root)
----@field playerMarker fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2 Player marker scaling function
+---@field linear fun(size: number|Vector2, zoom: number): number|Vector2 Linear scaling function
+---@field marker fun(size: number|Vector2, zoom: number): number|Vector2 Marker scaling function (uses fourth root)
+---@field playerMarker fun(size: number|Vector2, zoom: number): number|Vector2 Player marker scaling function
 
 ---World map image information
 ---@class AdvancedWorldMap.MapWidget.MapImageInfo
@@ -44,8 +44,8 @@
 ---Event data for mouse event
 ---@class AdvancedWorldMap.MapWidget.CreateMarker.Events.MouseEvent
 ---@field button integer? Mouse button index
----@field offset openmw.util.Vector2 Cursor offset relative to marker
----@field position openmw.util.Vector2 Cursor position
+---@field offset Vector2 Cursor offset relative to marker
+---@field position Vector2 Cursor position
 
 ---@class AdvancedWorldMap.MapWidget.CreateMarker.Events
 ---@field focusLoss fun(e : nil, layout : Layout)?
@@ -57,49 +57,49 @@
 ---@class AdvancedWorldMap.MapWidget.CreateImageMarkerParams
 ---@field layerId integer Target layer for the marker
 ---@field id string? Unique identifier (auto-generated if not provided)
----@field pos openmw.util.Vector2|openmw.util.Vector3 World position (vector3 or vector2)
+---@field pos Vector2|Vector3 World position (vector3 or vector2)
 ---@field texture TextureResource UI texture resource
 ---@field events AdvancedWorldMap.MapWidget.CreateMarker.Events? Event handlers table
 ---@field tooltipContent Content? Content to display in tooltip
----@field size openmw.util.Vector2 Marker size (vector2)
----@field color openmw.util.Color? RGB color (vector3 or array)
----@field anchor openmw.util.Vector2? Anchor point (vector2, default 0.5, 0.5)
+---@field size Vector2 Marker size (vector2)
+---@field color Color? RGB color (vector3 or array)
+---@field anchor Vector2? Anchor point (vector2, default 0.5, 0.5)
 ---@field alpha number? Opacity [0-1] (default 1)
 ---@field visible boolean? Visibility state (default true)
 ---@field showWhenZoomedIn boolean? Only show when zoomed in
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
----@field scaleFunc (fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2)? Custom scaling function
+---@field scaleFunc (fun(size: number|Vector2, zoom: number): number|Vector2)? Custom scaling function
 ---@field userData table? Custom user data
 
 ---Parameters for creating a text marker
 ---@class AdvancedWorldMap.MapWidget.CreateTextMarkerParams
 ---@field layerId integer Target layer for the marker
 ---@field id string? Unique identifier (auto-generated if not provided)
----@field pos openmw.util.Vector2|openmw.util.Vector3 World position (vector3 or vector2)
+---@field pos Vector2|Vector3 World position (vector3 or vector2)
 ---@field text string Text content to display
 ---@field events AdvancedWorldMap.MapWidget.CreateMarker.Events? Event handlers table
 ---@field tooltipContent Content? Content to display in tooltip
 ---@field fontSize number? Font size (default 18)
----@field size openmw.util.Vector2? Marker size (vector2, auto if not provided)
+---@field size Vector2? Marker size (vector2, auto if not provided)
 ---@field autoHeight boolean? Automatically adjust height based on text content. size.y must be 0. Not allowed on 'marker' layer.
----@field color openmw.util.Color? RGB color (vector3 or array)
----@field anchor openmw.util.Vector2? Anchor point (vector2, default 0.5, 0.5)
+---@field color Color? RGB color (vector3 or array)
+---@field anchor Vector2? Anchor point (vector2, default 0.5, 0.5)
 ---@field textAlignH ALIGNMENT? Horizontal text alignment
 ---@field textAlignV ALIGNMENT? Vertical text alignment
 ---@field alpha number? Opacity [0-1] (default 1)
 ---@field visible boolean? Visibility state (default true)
 ---@field showWhenZoomedIn boolean? Only show when zoomed in
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
----@field scaleFunc (fun(size: number|openmw.util.Vector2, zoom: number): number|openmw.util.Vector2)? Custom scaling function
+---@field scaleFunc (fun(size: number|Vector2, zoom: number): number|Vector2)? Custom scaling function
 ---@field userData table? Custom user data
 
 ---Parameters for creating a map widget
 ---@class AdvancedWorldMap.MapWidget.Params
----@field size openmw.util.Vector2 Widget size (vector2)
+---@field size Vector2 Widget size (vector2)
 ---@field fontSize integer? Font size for UI elements
----@field position openmw.util.Vector2? Absolute position (vector2)
----@field relativePosition openmw.util.Vector2? Relative position (vector2, [0-1] range)
----@field anchor openmw.util.Vector2? Anchor point (vector2)
+---@field position Vector2? Absolute position (vector2)
+---@field relativePosition Vector2? Relative position (vector2, [0-1] range)
+---@field anchor Vector2? Anchor point (vector2)
 ---@field cellId string? Interior cell ID (nil for exterior/world map)
 ---@field updateFunc function Callback function to trigger UI updates
 
@@ -121,12 +121,12 @@ function AdvancedWorldMapMapWidget:getUniqueId() end
 
 ---Gets the display size of the map (including padding)
 ---@param scale number? Scale multiplier (uses current zoom if not provided)
----@return openmw.util.Vector2 size Display size as vector2
+---@return Vector2 size Display size as vector2
 function AdvancedWorldMapMapWidget:getDisplaySize(scale) end
 
 ---Gets the padding around the map
 ---@param scale number? Scale multiplier (uses current zoom if not provided)
----@return openmw.util.Vector2 padding Padding as vector2
+---@return Vector2 padding Padding as vector2
 function AdvancedWorldMapMapWidget:getPadding(scale) end
 
 ---Gets the layout for a specific layer
@@ -135,36 +135,36 @@ function AdvancedWorldMapMapWidget:getPadding(scale) end
 function AdvancedWorldMapMapWidget:getLayerLayout(id) end
 
 ---Gets the relative center point of the map (normalized coordinates)
----@return openmw.util.Vector2 center Center position as vector2 [0-1]
+---@return Vector2 center Center position as vector2 [0-1]
 function AdvancedWorldMapMapWidget:getRelativeCenter() end
 
 ---Gets the relative rotation pivot point (for rotated interior maps)
----@return openmw.util.Vector2 pivot Pivot position as vector2 [0-1]
+---@return Vector2 pivot Pivot position as vector2 [0-1]
 function AdvancedWorldMapMapWidget:getRelativeRotationPivot() end
 
 ---Gets the absolute rotation pivot point in pixels
 ---@param scale number? Scale multiplier (uses 1 if not provided)
----@return openmw.util.Vector2 pivot Pivot position as vector2 in pixels
+---@return Vector2 pivot Pivot position as vector2 in pixels
 function AdvancedWorldMapMapWidget:getRotationPivot(scale) end
 
 ---Converts world position to relative map position [0-1]
----@param worldPos openmw.util.Vector2|openmw.util.Vector3 World coordinates (vector2 or vector3)
----@return openmw.util.Vector2 relPos Relative position as vector2 [0-1]
+---@param worldPos Vector2|Vector3 World coordinates (vector2 or vector3)
+---@return Vector2 relPos Relative position as vector2 [0-1]
 function AdvancedWorldMapMapWidget:getRelativePositionByWorldPosition(worldPos) end
 
 ---Converts world position to absolute pixel position on the map
----@param worldPos openmw.util.Vector2|openmw.util.Vector3 World coordinates (vector2 or vector3)
+---@param worldPos Vector2|Vector3 World coordinates (vector2 or vector3)
 ---@param ignoreNorthAngle boolean? If true, ignores map rotation
----@return openmw.util.Vector2 absPos Absolute position as vector2 in pixels
+---@return Vector2 absPos Absolute position as vector2 in pixels
 function AdvancedWorldMapMapWidget:getAbsolutePositionByWorldPosition(worldPos, ignoreNorthAngle) end
 
 ---Gets the relative position [0-1] of the cursor on the map
----@return openmw.util.Vector2 relPos Cursor position as vector2 [0-1]
+---@return Vector2 relPos Cursor position as vector2 [0-1]
 function AdvancedWorldMapMapWidget:getRelativePositionOfCursor() end
 
 ---Converts relative map position [0-1] to world coordinates
----@param relPos openmw.util.Vector2 Relative position as vector2 [0-1]
----@return openmw.util.Vector2 worldPos World coordinates as vector2
+---@param relPos Vector2 Relative position as vector2 [0-1]
+---@return Vector2 worldPos World coordinates as vector2
 function AdvancedWorldMapMapWidget:getWorldPositionByRelativePosition(relPos) end
 
 ---Gets the currently visible rectangular area of the map
@@ -177,15 +177,15 @@ function AdvancedWorldMapMapWidget:getVisibleMapRect() end
 function AdvancedWorldMapMapWidget:getVisibleMapRectInWorldCoordinates() end
 
 ---Gets the world position at the center of the visible area
----@return openmw.util.Vector2 worldPos Center world position as vector2
+---@return Vector2 worldPos Center world position as vector2
 function AdvancedWorldMapMapWidget:getWorldPositionOfVisibleCenter() end
 
 ---Gets the relative position [0-1] at the center of the visible area
----@return openmw.util.Vector2 relPos Center relative position as vector2 [0-1]
+---@return Vector2 relPos Center relative position as vector2 [0-1]
 function AdvancedWorldMapMapWidget:getRelativePositionOfVisibleCenter() end
 
 ---Gets the current widget size
----@return openmw.util.Vector2 size Widget size as vector2
+---@return Vector2 size Widget size as vector2
 function AdvancedWorldMapMapWidget:getSize() end
 
 ---Updates markers that appear/disappear based on zoom level
@@ -193,7 +193,7 @@ function AdvancedWorldMapMapWidget:updateOnZoomMarkers() end
 
 ---Sets the zoom level, optionally centering on a specific point
 ---@param zoom number New zoom level
----@param relativePos openmw.util.Vector2? Position to center on (vector2 [0-1], defaults to visible center)
+---@param relativePos Vector2? Position to center on (vector2 [0-1], defaults to visible center)
 function AdvancedWorldMapMapWidget:setZoom(zoom, relativePos) end
 
 ---Checks if the map is currently in zoomed-in mode
@@ -201,7 +201,7 @@ function AdvancedWorldMapMapWidget:setZoom(zoom, relativePos) end
 function AdvancedWorldMapMapWidget:isInZoomInMode() end
 
 ---Centers the map view on a specific world position
----@param worldPos openmw.util.Vector2|openmw.util.Vector3 World coordinates to focus on (vector2 or vector3)
+---@param worldPos Vector2|Vector3 World coordinates to focus on (vector2 or vector3)
 function AdvancedWorldMapMapWidget:focusOnWorldPosition(worldPos) end
 
 ---Forces a complete marker update (recalculates zoom and visibility)

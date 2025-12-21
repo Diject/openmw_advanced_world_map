@@ -80,16 +80,16 @@
 ---@class AdvancedWorldMap.Event.OnMousePressEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
----@field offset openmw.util.Vector2 Cursor offset relative to marker
----@field position openmw.util.Vector2 Cursor position
+---@field offset Vector2 Cursor offset relative to marker
+---@field position Vector2 Cursor position
 ---@field button integer Pressed mouse button number
 
 ---Event data for mouse release event
 ---@class AdvancedWorldMap.Event.OnMouseReleaseEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
----@field offset openmw.util.Vector2 Cursor offset relative to marker
----@field position openmw.util.Vector2 Cursor position
+---@field offset Vector2 Cursor offset relative to marker
+---@field position Vector2 Cursor position
 ---@field button integer Released mouse button number
 
 ---Event data for focus loss event
@@ -101,21 +101,21 @@
 ---@class AdvancedWorldMap.Event.OnMouseMoveEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
----@field offset openmw.util.Vector2 Cursor offset relative to marker
----@field position openmw.util.Vector2 Cursor position
+---@field offset Vector2 Cursor offset relative to marker
+---@field position Vector2 Cursor position
 
 ---Event data for right mouse menu event
 ---@class AdvancedWorldMap.Event.OnRightMouseMenuEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field marker AdvancedWorldMap.MapElement? Marker under cursor (if any)
 ---@field content Content Context menu content
----@field relPos openmw.util.Vector2 Relative cursor position
+---@field relPos Vector2 Relative cursor position
 
 ---Event data for window resized event
 ---@class AdvancedWorldMap.Event.OnResizedEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
----@field size openmw.util.Vector2 New window size
----@field mapWidgetSize openmw.util.Vector2 New map widget size
+---@field size Vector2 New window size
+---@field mapWidgetSize Vector2 New map widget size
 
 ---Event data for zoom changed event
 ---@class AdvancedWorldMap.Event.OnZoomedEvent
@@ -130,9 +130,9 @@
 ---Search event result entry
 ---@class AdvancedWorldMap.Event.OnSearchEvent.Result
 ---@field cellId string? Cell identifier (nil for exterior/world map)
----@field pos openmw.util.Vector2 World position
+---@field pos Vector2 World position
 ---@field text string Marker text
----@field color openmw.util.Color Marker color
+---@field color Color Marker color
 ---@field priority number? Marker priority in search results
 
 ---Search event parameters
@@ -148,25 +148,25 @@
 
 ---Event data for fast travel event
 ---@class AdvancedWorldMap.Event.OnFastTravelEvent
----@field position openmw.util.Vector3 Target world position
+---@field position Vector3 Target world position
 ---@field cellId string? Target cell identifier (nil for exterior/world map)
 
 ---Event data for fast travel resolve event
 ---@class AdvancedWorldMap.Event.OnFastTravelResolveEvent
 ---@field cost number Fast travel cost
 ---@field message string Fast travel message
----@field position openmw.util.Vector3 Target world position
+---@field position Vector3 Target world position
 ---@field cell any Target cell
----@field rotation openmw.util.Vector3 Target rotation
+---@field rotation Vector3 Target rotation
 ---@field followers GameObject[] List of follower actors
 
 ---Event data for fast travel resolved event
 ---@class AdvancedWorldMap.Event.OnFastTravelResolvedEvent
 ---@field cost number Fast travel cost
 ---@field message string Fast travel message
----@field position openmw.util.Vector3 Target world position
+---@field position Vector3 Target world position
 ---@field cell any Target cell
----@field rotation openmw.util.Vector3 Target rotation
+---@field rotation Vector3 Target rotation
 ---@field followers GameObject[]? List of follower actors
 
 ---Advanced World Map event system

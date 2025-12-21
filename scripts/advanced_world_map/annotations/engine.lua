@@ -1,77 +1,77 @@
 ---@meta OpenMW.Engine
 
----@class openmw.util.Vector2
+---@class Vector2
 ---@field x number
 ---@field y number
 ---@field xyz01 string swizzle support
----@field add fun(self: openmw.util.Vector2, v: openmw.util.Vector2): openmw.util.Vector2
----@field sub fun(self: openmw.util.Vector2, v: openmw.util.Vector2): openmw.util.Vector2
----@field mul fun(self: openmw.util.Vector2, k: number): openmw.util.Vector2
----@field div fun(self: openmw.util.Vector2, k: number): openmw.util.Vector2
----@field length fun(self: openmw.util.Vector2): number
----@field length2 fun(self: openmw.util.Vector2): number
----@field normalize fun(self: openmw.util.Vector2): openmw.util.Vector2 -- (also returns original length as 2nd return value)
----@field rotate fun(self: openmw.util.Vector2, angle: number): openmw.util.Vector2
----@field dot fun(self: openmw.util.Vector2, v: openmw.util.Vector2): number
----@field emul fun(self: openmw.util.Vector2, v: openmw.util.Vector2): openmw.util.Vector2
----@field ediv fun(self: openmw.util.Vector2, v: openmw.util.Vector2): openmw.util.Vector2
+---@field add fun(self: Vector2, v: Vector2): Vector2
+---@field sub fun(self: Vector2, v: Vector2): Vector2
+---@field mul fun(self: Vector2, k: number): Vector2
+---@field div fun(self: Vector2, k: number): Vector2
+---@field length fun(self: Vector2): number
+---@field length2 fun(self: Vector2): number
+---@field normalize fun(self: Vector2): Vector2 -- (also returns original length as 2nd return value)
+---@field rotate fun(self: Vector2, angle: number): Vector2
+---@field dot fun(self: Vector2, v: Vector2): number
+---@field emul fun(self: Vector2, v: Vector2): Vector2
+---@field ediv fun(self: Vector2, v: Vector2): Vector2
 
----@class openmw.util.Vector3
+---@class Vector3
 ---@field x number
 ---@field y number
 ---@field z number
 ---@field xyz01 string swizzle support
----@field add fun(self: openmw.util.Vector3, v: openmw.util.Vector3): openmw.util.Vector3
----@field sub fun(self: openmw.util.Vector3, v: openmw.util.Vector3): openmw.util.Vector3
----@field mul fun(self: openmw.util.Vector3, k: number): openmw.util.Vector3
----@field div fun(self: openmw.util.Vector3, k: number): openmw.util.Vector3
----@field tostring fun(self: openmw.util.Vector3): string
----@field length fun(self: openmw.util.Vector3): number
----@field length2 fun(self: openmw.util.Vector3): number
----@field normalize fun(self: openmw.util.Vector3): openmw.util.Vector3 -- (also returns original length as 2nd return value)
----@field dot fun(self: openmw.util.Vector3, v: openmw.util.Vector3): number
----@field cross fun(self: openmw.util.Vector3, v: openmw.util.Vector3): openmw.util.Vector3
----@field emul fun(self: openmw.util.Vector3, v: openmw.util.Vector3): openmw.util.Vector3
----@field ediv fun(self: openmw.util.Vector3, v: openmw.util.Vector3): openmw.util.Vector3
+---@field add fun(self: Vector3, v: Vector3): Vector3
+---@field sub fun(self: Vector3, v: Vector3): Vector3
+---@field mul fun(self: Vector3, k: number): Vector3
+---@field div fun(self: Vector3, k: number): Vector3
+---@field tostring fun(self: Vector3): string
+---@field length fun(self: Vector3): number
+---@field length2 fun(self: Vector3): number
+---@field normalize fun(self: Vector3): Vector3 -- (also returns original length as 2nd return value)
+---@field dot fun(self: Vector3, v: Vector3): number
+---@field cross fun(self: Vector3, v: Vector3): Vector3
+---@field emul fun(self: Vector3, v: Vector3): Vector3
+---@field ediv fun(self: Vector3, v: Vector3): Vector3
 
----@class openmw.util.Vector4
+---@class Vector4
 ---@field x number
 ---@field y number
 ---@field z number
 ---@field w number
 ---@field xyzw01 string swizzle support
----@field add fun(self: openmw.util.Vector4, v: openmw.util.Vector4): openmw.util.Vector4
----@field sub fun(self: openmw.util.Vector4, v: openmw.util.Vector4): openmw.util.Vector4
----@field mul fun(self: openmw.util.Vector4, k: number): openmw.util.Vector4
----@field div fun(self: openmw.util.Vector4, k: number): openmw.util.Vector4
----@field tostring fun(self: openmw.util.Vector4): string
----@field length fun(self: openmw.util.Vector4): number
----@field length2 fun(self: openmw.util.Vector4): number
----@field normalize fun(self: openmw.util.Vector4): openmw.util.Vector4 -- (also returns original length as 2nd return value)
----@field dot fun(self: openmw.util.Vector4, v: openmw.util.Vector4): number
----@field emul fun(self: openmw.util.Vector4, v: openmw.util.Vector4): openmw.util.Vector4
----@field ediv fun(self: openmw.util.Vector4, v: openmw.util.Vector4): openmw.util.Vector4
+---@field add fun(self: Vector4, v: Vector4): Vector4
+---@field sub fun(self: Vector4, v: Vector4): Vector4
+---@field mul fun(self: Vector4, k: number): Vector4
+---@field div fun(self: Vector4, k: number): Vector4
+---@field tostring fun(self: Vector4): string
+---@field length fun(self: Vector4): number
+---@field length2 fun(self: Vector4): number
+---@field normalize fun(self: Vector4): Vector4 -- (also returns original length as 2nd return value)
+---@field dot fun(self: Vector4, v: Vector4): number
+---@field emul fun(self: Vector4, v: Vector4): Vector4
+---@field ediv fun(self: Vector4, v: Vector4): Vector4
 
----@class openmw.util.Transform
----@field position openmw.util.Vector3
----@field rotation openmw.util.Vector3
+---@class Transform
+---@field position Vector3
+---@field rotation Vector3
 ---@field scale number
 
 ---@class openmw.util.Box
----@field center openmw.util.Vector3
----@field halfSize openmw.util.Vector3
----@field transform openmw.util.Transform
----@field vertices openmw.util.Vector3[]
+---@field center Vector3
+---@field halfSize Vector3
+---@field transform Transform
+---@field vertices Vector3[]
 
 ---Color in RGBA format. All of the component values are in the range [0, 1].
----@class openmw.util.Color
+---@class Color
 ---@field r number Red component
 ---@field g number Green component
 ---@field b number Blue component
 ---@field a number Alpha (transparency) component
----@field asRgba fun(self: openmw.util.Color): openmw.util.Vector4 Returns a Vector4 with RGBA components of the Color
----@field asRgb fun(self: openmw.util.Color): openmw.util.Vector3 Returns a Vector3 with RGB components of the Color
----@field asHex fun(self: openmw.util.Color): string Converts the color into a HEX string
+---@field asRgba fun(self: Color): Vector4 Returns a Vector4 with RGBA components of the Color
+---@field asRgb fun(self: Color): Vector3 Returns a Vector3 with RGB components of the Color
+---@field asHex fun(self: Color): string Converts the color into a HEX string
 
 ---@class ObjectList
 ---@field items GameObject[] A list-like container of `GameObject`s
@@ -83,7 +83,7 @@
 
 ---@class PathGridPoint
 ---@field autoGenerated boolean True if this node was automatically generated in the editor.
----@field relativePosition openmw.util.Vector3 The point's position relative to the cell's origin.
+---@field relativePosition Vector3 The point's position relative to the cell's origin.
 ---@field connections PathGridPoint[] A list of points connected to this point.
 
 ---@class PathGrid
@@ -113,11 +113,11 @@
 ---@field id string A unique id of this object (not record id), can be used as a key in a table.
 ---@field contentFile string Lower cased file name of the content file that defines this object; nil for dynamically created objects.
 ---@field enabled boolean Whether the object is enabled or disabled. Global scripts can set the value. Items in containers or inventories can't be disabled.
----@field position openmw.util.Vector3 Object position.
+---@field position Vector3 Object position.
 ---@field scale number Object scale.
----@field rotation openmw.util.Transform Object rotation.
----@field startingPosition openmw.util.Vector3 The object original position
----@field startingRotation openmw.util.Transform The object original rotation
+---@field rotation Transform Object rotation.
+---@field startingPosition Vector3 The object original position
+---@field startingRotation Transform The object original rotation
 ---@field owner ObjectOwner Ownership information
 ---@field cell Cell The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
 ---@field parentContainer GameObject Container or actor that contains (or has in inventory) this object. It is nil if the object is in a cell.
@@ -132,7 +132,7 @@
 ---@field hasScript fun(self: GameObject, scriptPath: string): boolean
 ---@field removeScript fun(self: GameObject, scriptPath: string)
 ---@field setScale fun(self: GameObject, scale: number)
----@field teleport fun(self: GameObject, cellOrName: any, position: openmw.util.Vector3, options: any?)
+---@field teleport fun(self: GameObject, cellOrName: any, position: Vector3, options: any?)
 ---@field moveInto fun(self: GameObject, dest: any)
 ---@field remove fun(self: GameObject, count: number?)
 ---@field split fun(self: GameObject, count: number): GameObject
@@ -189,8 +189,8 @@
 
 ---Mouse event, passed as an argument to relevant UI events
 ---@class MouseEvent
----@field position openmw.util.Vector2 Absolute position of the mouse cursor
----@field offset openmw.util.Vector2 Position of the mouse cursor relative to the widget
+---@field position Vector2 Absolute position of the mouse cursor
+---@field offset Vector2 Position of the mouse cursor relative to the widget
 ---@field button number|nil Mouse button which triggered the event. Matches the arguments of openmw_input.isMouseButtonPressed (nil for none, 1 for left, 3 for right).
 
 ---A texture ready to be used by UI widgets

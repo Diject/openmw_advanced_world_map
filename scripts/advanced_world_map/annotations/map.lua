@@ -15,8 +15,8 @@
 
 ---Parameters for creating a map menu
 ---@class AdvancedWorldMap.Menu.Map.CreateParams
----@field relativePosition openmw.util.Vector2? Menu position relative to screen [0-1] (vector2)
----@field relativeSize openmw.util.Vector2? Menu size relative to screen [0-1] (vector2)
+---@field relativePosition Vector2? Menu position relative to screen [0-1] (vector2)
+---@field relativeSize Vector2? Menu size relative to screen [0-1] (vector2)
 ---@field fontSize number? Font size for UI text elements
 ---@field onClose fun()? Callback function when menu is closed
 
@@ -24,8 +24,8 @@
 ---@class AdvancedWorldMap.Menu.Map
 ---@field menu Element OpenMW UI menu instance
 ---@field params AdvancedWorldMap.Menu.Map.CreateParams Creation parameters
----@field size openmw.util.Vector2 Menu size as vector2
----@field mainSize openmw.util.Vector2 Main content area size as vector2
+---@field size Vector2 Menu size as vector2
+---@field mainSize Vector2 Main content area size as vector2
 ---@field headerHeight number Height of the header bar
 ---@field mapWidget AdvancedWorldMap.MapWidget Current active map widget instance
 ---@field centerOnPlayer boolean Whether to center map on player position
