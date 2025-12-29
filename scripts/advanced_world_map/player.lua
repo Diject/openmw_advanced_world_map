@@ -13,6 +13,8 @@ local ambient = require('openmw.ambient')
 local animation = require("openmw.animation")
 local nearby = require("openmw.nearby")
 
+local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
+
 local log = require("scripts.advanced_world_map.utils.log")
 
 local commonData = require("scripts.advanced_world_map.common")
@@ -275,8 +277,8 @@ local function discoverNearby()
             goto continue
         end
 
-        local cell = types.Door.destCell(ref)
-        if not discoveredLocs.isDiscovered(cell.id) then
+        local cell = pDoor.destCell(ref)
+        if cell and not discoveredLocs.isDiscovered(cell.id) then
             local newDiscovered = discoveredLocs.addDiscoveredCell(cell)
             if newDiscovered then
                 markers.updateDiscovered(newDiscovered)
@@ -313,12 +315,14 @@ local function fastTravelMessageCallback(data)
 
     local eventData = {
         cost = cost,
-        cell = types.Door.destCell(data.targetDoor),
-        position = types.Door.destPosition(data.targetDoor),
-        rotation = types.Door.destRotation(data.targetDoor),
+        cell = pDoor.destCell(data.targetDoor),
+        position = pDoor.destPosition(data.targetDoor),
+        rotation = pDoor.destRotation(data.targetDoor),
         message = data.message,
         followers = followers,
     }
+
+    if not eventData.cell then return end
 
     if eventSys.triggerEvent(eventSys.EVENT.onFastTravelResolve, eventData) then
         return

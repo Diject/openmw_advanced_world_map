@@ -3,6 +3,7 @@ local world = require('openmw.world')
 local types = require("openmw.types")
 local core = require("openmw.core")
 
+local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
 local Door = types.Door
 
 local config = require("scripts.advanced_world_map.config.config")
@@ -106,14 +107,14 @@ return {
                 for _, ref in pairs(cell:getAll(types.Door)) do
 
                     if checkDoorAvailability(ref) then
-                        local dest = types.Door.destCell(ref)
+                        local dest = pDoor.destCell(ref)
                         if dest and (not data.availableCells or data.availableCells[dest.id]) then
 
                             for _, r in pairs(dest:getAll(types.Door)) do
                                 if checkDoorAvailability(r) then
-                                    local destPos = types.Door.destPosition(r)
-                                    local destCell = types.Door.destCell(r)
-                                    if (destCell.isExterior and cell.isExterior) or destCell.id == cell.id then
+                                    local destPos = pDoor.destPosition(r)
+                                    local destCell = pDoor.destCell(r)
+                                    if destCell and destPos and ((destCell.isExterior and cell.isExterior) or destCell.id == cell.id) then
                                         table.insert(destinations, {
                                             ref = r,
                                             destPos = destPos,

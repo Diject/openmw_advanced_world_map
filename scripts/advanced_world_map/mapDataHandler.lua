@@ -3,6 +3,8 @@ local storage = require("openmw.storage")
 local types = require("openmw.types")
 local util = require("openmw.util")
 
+local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
+
 local log = require("scripts.advanced_world_map.utils.log")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
@@ -329,8 +331,10 @@ local function buildData()
         for _, door in pairs(doors) do
             if not types.Door.isTeleport(door) then goto continue end
 
-            local dest = types.Door.destCell(door)
-            local destPos = types.Door.destPosition(door)
+            local dest = pDoor.destCell(door)
+            local destPos = pDoor.destPosition(door)
+
+            if not dest or not destPos then goto continue end
 
             local name = getCellName(dest)
             if name:find(",") then

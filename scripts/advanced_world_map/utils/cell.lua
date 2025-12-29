@@ -1,5 +1,7 @@
 local types = require("openmw.types")
 
+local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
+
 local commonData = require("scripts.advanced_world_map.common")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
@@ -50,8 +52,8 @@ function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCell
             goto continue
         end
 
-        local destCell = types.Door.destCell(door)
-        local destPos = types.Door.destPosition(door)
+        local destCell = pDoor.destCell(door)
+        local destPos = pDoor.destPosition(door)
 
         if not destCell or not destPos then goto continue end
 

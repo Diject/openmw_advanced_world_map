@@ -3,6 +3,8 @@ local util = require("openmw.util")
 local ui = require("openmw.ui")
 local types = require("openmw.types")
 
+local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
+
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
@@ -105,7 +107,10 @@ end
 
 
 function this.updateDoorMarkerVisibility(doorRef)
-    local doorHash = commonData.doorHash(doorRef, types.Door.destCell(doorRef).id)
+    local destCell = pDoor.destCell(doorRef)
+    if not destCell then return end
+
+    local doorHash = commonData.doorHash(doorRef, destCell.id)
     local visible = not disabledDoors.contains(doorRef)
 
     local markers = this.markersByDoorHash[doorHash]
