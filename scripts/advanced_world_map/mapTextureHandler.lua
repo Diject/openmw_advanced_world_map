@@ -30,6 +30,15 @@ local mapData = require("scripts.advanced_world_map.mapDataHandler")
 ---@field width integer
 ---@field height integer
 
+---@class advancedWorldMap.localCellInfoV2
+---@field v integer
+---@field oX integer
+---@field oY integer
+---@field nA number
+---@field wT integer
+---@field hT integer
+---@field mBnds {min : number[], max : number[]}
+
 local this = {}
 
 
@@ -52,7 +61,7 @@ this.localCellTextureCache = {}
 
 this.worldTextureCache = {}
 
----@type table<string, advancedWorldMap.localCellInfo>
+---@type table<string, advancedWorldMap.localCellInfo|advancedWorldMap.localCellInfoV2>
 this.localCellInfo = {}
 
 
@@ -218,31 +227,42 @@ function this.getLocalCellMapTextures(cellId)
     end
 
     local cellInfo = this.getLocalCellInfo(cellId)
-    if not cellInfo.mX then return end
+    if not cellInfo.oX and not cellInfo.mX then return end
 
     local res = {}
-    for y = 1, cellInfo.height do
-        local arr = {}
-        for x = 1, cellInfo.width do
-            local path = string.format("%s%s [%d,%d]", commonData.localMapTexturesDir, cellId:gsub(":", ""), x - 1, y - 1)
-            local pathPng = path..".png"
-            local pathTga = path..".tga"
 
-            local foundPath
-            if vfs.fileExists(pathPng) then
-                foundPath = pathPng
-            elseif vfs.fileExists(pathTga) then
-                foundPath = pathTga
-            else
-                goto continue
-            end
+    if cellInfo.v == 2 then
+        local path = string.format("%s%s.png", commonData.localMapTexturesDir, cellId:gsub(":", ""))
 
-            local texture = ui.texture{ path = foundPath, offset = util.vector2(1, 1), size = util.vector2(254, 254) }
-            arr[x] = texture
-
-            ::continue::
+        if vfs.fileExists(path) then
+            local texture = ui.texture{ path = path }
+            res[1] = {[1] = texture}
         end
-        res[y] = arr
+
+    else
+        for y = 1, cellInfo.height do
+            local arr = {}
+            for x = 1, cellInfo.width do
+                local path = string.format("%s%s [%d,%d]", commonData.localMapTexturesDir, cellId:gsub(":", ""), x - 1, y - 1)
+                local pathPng = path..".png"
+                local pathTga = path..".tga"
+
+                local foundPath
+                if vfs.fileExists(pathPng) then
+                    foundPath = pathPng
+                elseif vfs.fileExists(pathTga) then
+                    foundPath = pathTga
+                else
+                    goto continue
+                end
+
+                local texture = ui.texture{ path = foundPath, offset = util.vector2(1, 1), size = util.vector2(254, 254) }
+                arr[x] = texture
+
+                ::continue::
+            end
+            res[y] = arr
+        end
     end
 
     this.localCellTextureCache[cellId] = res

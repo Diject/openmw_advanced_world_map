@@ -963,33 +963,59 @@ function mapWidgetMeta:placeGroundTextures(region)
 
         local mapLayout = self:getMapLayout()
 
-        local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
-        local tileSize = util.vector2(tileHeight, tileHeight)
-        local startPos = self:getAbsolutePositionByWorldPosition(
-            util.vector2(
-                self.mapInfo.gridX.min * 8192,
-                self.mapInfo.gridY.min * 8192
-            ),
-            true
-        )
+        -- Version 2 uses single texture for the whole cell
+        if self.localCellInfo.v == 2 then
+            local texture = (self.mapTexture[1] or {})[1]
+            if not texture then return end
 
-        for y = 1, self.localCellInfo.height do
-            for x = 1, self.localCellInfo.width do
-                local texture = (self.mapTexture[y] or {})[x]
-                if not texture then goto continue end
+            local startingPos = self:getAbsolutePositionByWorldPosition(
+                util.vector2(
+                    self.mapInfo.gridX.min * 8192,
+                    self.mapInfo.gridY.max * 8192
+                ),
+                true
+            )
+            local side = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+            local size = util.vector2(self.localCellInfo.wT * side, self.localCellInfo.hT * side)
 
-                local pos = util.vector2(startPos.x + tileHeight * (x - 1), startPos.y - tileHeight * (y - 1))
-
-                mapLayout.content:add{
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = texture,
-                        size = tileSize,
-                        position = pos
-                    }
+            mapLayout.content:add{
+                type = ui.TYPE.Image,
+                props = {
+                    resource = texture,
+                    size = size,
+                    position = startingPos,
                 }
+            }
 
-                ::continue::
+        -- Version 1 uses multiple textures for the cell
+        elseif self.localCellInfo.height then
+            local startingPos = self:getAbsolutePositionByWorldPosition(
+                util.vector2(
+                    self.mapInfo.gridX.min * 8192,
+                    self.mapInfo.gridY.min * 8192
+                ),
+                true
+            )
+            local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+            local tileSize = util.vector2(tileHeight, tileHeight)
+            for y = 1, self.localCellInfo.height do
+                for x = 1, self.localCellInfo.width do
+                    local texture = (self.mapTexture[y] or {})[x]
+                    if not texture then goto continue end
+
+                    local pos = util.vector2(startingPos.x + tileHeight * (x - 1), startingPos.y - tileHeight * (y - 1))
+
+                    mapLayout.content:add{
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = texture,
+                            size = tileSize,
+                            position = pos
+                        }
+                    }
+
+                    ::continue::
+                end
             end
         end
 
@@ -1324,7 +1350,7 @@ function this.new(params)
 
     if params.cellId then
         local localCellInfo = mapTextureHandler.getLocalCellInfo(params.cellId)
-        if not localCellInfo.mX then
+        if not localCellInfo.oX and not localCellInfo.mX then
             localCellInfo = {
                 height = 20,
                 width = 20,
@@ -1338,20 +1364,23 @@ function this.new(params)
         local mapTextures = mapTextureHandler.getLocalCellMapTextures(params.cellId)
         if not mapTextures then mapTextures = {} end
 
-        local width = localCellInfo.width * 32
-        local height = localCellInfo.height * 32
+        local wT = localCellInfo.wT or localCellInfo.width
+        local hT = localCellInfo.hT or localCellInfo.height
+
+        local width = wT * 32
+        local height = hT * 32
 
         local mapInfo = {
             width = width,
             height = height,
             pixelsPerCell = 32,
             gridX = {
-                min = -localCellInfo.mX / 512,
-                max = -localCellInfo.mX / 512 + localCellInfo.width - 1,
+                min = localCellInfo.oX and -localCellInfo.oX / 256 or -localCellInfo.mX / 512,
+                max = (localCellInfo.oX and -localCellInfo.oX / 256 or -localCellInfo.mX / 512) + wT - 1,
             },
             gridY = {
-                min = (-localCellInfo.height - localCellInfo.mY / 512),
-                max = (-localCellInfo.height - localCellInfo.mY / 512) + localCellInfo.height - 1
+                min = localCellInfo.oY and -localCellInfo.oY / 256 or (-hT - localCellInfo.mY / 512),
+                max = (localCellInfo.oY and -localCellInfo.oY / 256 or (-hT - localCellInfo.mY / 512)) + hT - 1
             },
         }
 
