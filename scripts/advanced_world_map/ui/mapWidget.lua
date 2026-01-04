@@ -1275,6 +1275,24 @@ function mapWidgetMeta:getLayerVisibility(layerId)
 end
 
 
+---@param self advancedWorldMap.ui.mapWidgetMeta
+local function getMapBackgroundColor(self)
+    if self.cellId then return commonData.mapInteriorBackgroundColor end
+    if self.mapInfo and self.mapInfo.bColor then
+        local bCol = self.mapInfo.bColor
+        return util.color.rgb(bCol[1] or 1, bCol[2] or 1, bCol[3] or 1)
+    else
+        return commonData.mapWaterColor
+    end
+end
+
+
+function mapWidgetMeta:setMapBackgroundColor(color)
+    if not self.layout then return end
+    self.layout.content[1].props.color = color
+end
+
+
 ---@param visible boolean
 ---@return boolean changed
 function mapWidgetMeta:setPlayerMarkerVisibility(visible)
@@ -1681,7 +1699,7 @@ function this.new(params)
                 props = {
                     resource = commonData.whiteTexture,
                     relativeSize = util.vector2(1, 1),
-                    color = meta.cellId and commonData.mapInteriorBackgroundColor or commonData.mapWaterColor,
+                    color = getMapBackgroundColor(meta),
                 }
             },
             {

@@ -268,6 +268,10 @@ function AdvancedWorldMapMapWidget:isInFocus() end
 ---@param mapInfo AdvancedWorldMap.MapWidget.MapImageInfo? New map image information
 function AdvancedWorldMapMapWidget:updateWorldMapTexture(texture, mapInfo) end
 
+---Sets the background color of the mapWidget
+---@param color Color RGB color
+function AdvancedWorldMapMapWidget:setMapBackgroundColor(color) end
+
 ---Checks if a point is within a rectangular region
 ---@param region AdvancedWorldMap.MapWidget.Region Region to check
 ---@param x number X coordinate

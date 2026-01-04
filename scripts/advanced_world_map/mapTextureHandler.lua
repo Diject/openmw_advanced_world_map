@@ -22,6 +22,7 @@ local mapData = require("scripts.advanced_world_map.mapDataHandler")
 ---@field pixelsPerCell integer
 ---@field gridX {min : integer, max : integer}
 ---@field gridY {min : integer, max : integer}
+---@field bColor number[]?
 
 ---@class advancedWorldMap.localCellInfo
 ---@field mX integer?
