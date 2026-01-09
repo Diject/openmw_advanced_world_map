@@ -530,16 +530,15 @@ end
 
 
 function mapWidgetMeta:refreshVisibleArea()
-    if not self.onZoomMarkersCenter then return end
+    if not self.onZoomMarkersCenter or not self.onZoomMarkersRectSize then return end
     local centerWorldPos = self:getWorldPositionOfVisibleCenter()
     centerWorldPos = util.vector2(centerWorldPos.x, centerWorldPos.y - 8192)
 
     local dist = (self.onZoomMarkersCenter - centerWorldPos):length()
 
-    local size = self:getSize()
-    local mul = 4096 / (self.mapInfo.pixelsPerCell * self.zoom)
-    local paddingX = size.x * mul
-    local paddingY = size.y * mul
+    local size = self:getSize() * 8192 / (self.mapInfo.pixelsPerCell * self.zoom)
+    local paddingX = (self.onZoomMarkersRectSize.x - size.x) * 0.5
+    local paddingY = (self.onZoomMarkersRectSize.y - size.y) * 0.5
 
     if dist > math.min(paddingX, paddingY) then
         self:updateOnZoomMarkers()
@@ -871,6 +870,11 @@ function mapWidgetMeta:createZoomOutMarkers(region)
         (minGridX + maxGridX) / 2 * 8192,
         (minGridY + maxGridY) / 2 * 8192
     )
+
+    self.onZoomMarkersRectSize = util.vector2(
+        (maxGridX - minGridX) * 8192,
+        (maxGridY - minGridY) * 8192
+    )
 end
 
 
@@ -902,6 +906,11 @@ function mapWidgetMeta:createZoomInMarkers(region)
         self.onZoomMarkersCenter = util.vector2(
             (minGridX + maxGridX) / 2 * 8192,
             (minGridY + maxGridY) / 2 * 8192
+        )
+
+        self.onZoomMarkersRectSize = util.vector2(
+            (maxGridX - minGridX) * 8192,
+            (maxGridY - minGridY) * 8192
         )
     end
 end
