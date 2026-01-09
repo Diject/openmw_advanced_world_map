@@ -13,6 +13,10 @@
 ---@class AdvancedWorldMap.Event.OnMenuClosedEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
 
+---Event data for update event
+---@class AdvancedWorldMap.Event.OnUpdateEvent
+---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+
 ---Event data for world map texture initialize event
 ---@class AdvancedWorldMap.Event.OnWorldMapTextureInitializeEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
@@ -122,6 +126,11 @@
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field zoom number New zoom level
 
+---Event data for zoom markers updated event
+---@class AdvancedWorldMap.Event.OnZoomMarkersUpdatedEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
+---@field region AdvancedWorldMap.MapWidget.Region Visible region data
+
 ---Event data for place ground textures event
 ---@class AdvancedWorldMap.Event.onGroundTexturesPlaceEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
@@ -179,6 +188,7 @@ local AdvancedWorldMapEvent = {}
 AdvancedWorldMapEvent.EVENT = {
     onMenuOpened = "onMenuOpened", -- Event triggered when the map menu is opened
     onMenuClosed = "onMenuClosed", -- Event triggered when the map menu is closed
+    onUpdate = "onUpdate", -- Event triggered before the map menu render is updated
     onWorldMapTextureInitialize = "onWorldMapTextureInitialize", -- Event triggered when the world map texture is initializing. You can replace the map texture here
     onMapShown = "onMapShown", -- Event triggered when the map is shown
     onMapClosed = "onMapClosed", -- Event triggered when the map is closed
@@ -197,6 +207,7 @@ AdvancedWorldMapEvent.EVENT = {
     onRightMouseMenu = "onRightMouseMenu", -- Event triggered when the right-click context menu is opened
     onResized = "onResized", -- Event triggered when the map window is resized
     onZoomed = "onZoomed", -- Event triggered when the map zoom level changes
+    onZoomMarkersUpdated = "onZoomMarkersUpdated", -- Event triggered when the map zoom level changes and markers are updated, or when the visible region changes due to panning
     onSearch = "onSearch", -- Event triggered when a search is performed
     onGroundTexturesPlace = "onGroundTexturesPlace", -- Event triggered before ground textures are placed on the map. You can prevent default ground texture placement by returning second value as true: like `return nil, true`
     onFastTravel = "onFastTravel", -- Event triggered when a fast travel is initiated
@@ -212,6 +223,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@param priority number? Handler priority (default is 0, higher value = higher priority)
 ---@overload fun(eventId: "onMenuOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuOpenedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onMenuClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMenuClosedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onUpdate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnUpdateEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWorldMapTextureInitialize", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureInitializeEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): (boolean?), priority: number?)
@@ -231,6 +243,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onRightMouseMenu", handlerFunc: fun(e: AdvancedWorldMap.Event.OnRightMouseMenuEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onResized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnResizedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onZoomed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnZoomedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onZoomMarkersUpdated", handlerFunc: fun(e: AdvancedWorldMap.Event.OnZoomMarkersUpdatedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onGroundTexturesPlace", handlerFunc: fun(e: AdvancedWorldMap.Event.onGroundTexturesPlaceEvent): (boolean?, boolean?), priority: number?)
 ---@overload fun(eventId: "onSearch", handlerFunc: fun(e: AdvancedWorldMap.Event.OnSearchEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onFastTravel", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelEvent): (boolean?, boolean?), priority: number?)

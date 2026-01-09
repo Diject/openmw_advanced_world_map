@@ -522,6 +522,7 @@ function this.create(params)
     meta.update = function ()
         if not meta.menu then return end
         if not updateCDTimer then
+            eventSys.triggerEvent(eventSys.EVENT.onUpdate, {menu = meta})
             meta.menu:update()
             updateCDTimer = realTimer.newTimer(0, function ()
                 updateCDTimer = nil

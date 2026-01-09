@@ -421,6 +421,8 @@ function mapWidgetMeta:updateOnZoomMarkers()
         self:removeGroundTextures()
     end
     self._lastOnZoomZoom = self.zoom
+
+    eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = visibleRect})
 end
 
 
