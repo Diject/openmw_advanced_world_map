@@ -51,10 +51,12 @@ local directories = {
 }
 
 
----@type string
+---@type string?
 this.mapImagePath = nil
 ---@type advancedWorldMap.mapImageInfo?
 this.mapInfo = nil
+---@type string?
+this.mapDir = nil
 
 this.localMapTextureCache = {}
 
@@ -68,6 +70,7 @@ this.localCellInfo = {}
 
 ---@return string?
 ---@return advancedWorldMap.mapImageInfo?
+---@return string?
 local function getMapImage(dirPath)
     local mapInfo
     local imagePath
@@ -86,22 +89,22 @@ local function getMapImage(dirPath)
         return
     end
 
-    return imagePath, mapInfo
+    return imagePath, mapInfo, dirPath
 end
 
 
 ---@return boolean
 local function initMapImage(initializerType)
-    local imagePath, mapInfo
+    local imagePath, mapInfo, dirPath
 
     if initializerType == commonData.dataInitializerTypes[2] then
-        imagePath, mapInfo = getMapImage(commonData.customMapDir)
+        imagePath, mapInfo, dirPath = getMapImage(commonData.customMapDir)
     elseif initializerType == commonData.dataInitializerTypes[3] then
-        imagePath, mapInfo = getMapImage(commonData.questDataMapDir)
+        imagePath, mapInfo, dirPath = getMapImage(commonData.questDataMapDir)
     elseif initializerType == commonData.dataInitializerTypes[4] then
-        imagePath, mapInfo = getMapImage(commonData.defaultTRMapDir)
+        imagePath, mapInfo, dirPath = getMapImage(commonData.defaultTRMapDir)
     elseif initializerType == commonData.dataInitializerTypes[5] then
-        imagePath, mapInfo = getMapImage(commonData.defaultBaseMapDir)
+        imagePath, mapInfo, dirPath = getMapImage(commonData.defaultBaseMapDir)
     elseif initializerType == commonData.dataInitializerTypes[1] then
         local mapGridArea = 1
         if mapData.grid then
@@ -110,12 +113,13 @@ local function initMapImage(initializerType)
 
         do
             local path, info = getMapImage(commonData.customMapDir)
-            if path and info then
+            if info then
                 local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
                 local v = area / mapGridArea
                 if v > 0.9 and v < 1.1 then
                     imagePath = path
                     mapInfo = info
+                    dirPath = commonData.customMapDir
                     goto next
                 end
             end
@@ -124,9 +128,9 @@ local function initMapImage(initializerType)
         local data = {}
         for id, dir in pairs(directories) do
             local path, info = getMapImage(dir)
-            if path and info then
+            if info then
                 local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
-                table.insert(data, {path, info, area / mapGridArea})
+                table.insert(data, {path, info, area / mapGridArea, dir})
             end
         end
 
@@ -139,25 +143,28 @@ local function initMapImage(initializerType)
             if v > 0.9 then
                 imagePath = dt[1]
                 mapInfo = dt[2]
+                dirPath = dt[4]
                 break
             end
         end
 
-        if not imagePath or not mapInfo then
+        if not mapInfo then
             if next(data) then
                 local dt = data[#data]
                 imagePath = dt[1]
                 mapInfo = dt[2]
+                dirPath = dt[4]
             end
         end
     end
 
     ::next::
 
-    if imagePath and mapInfo then
+    if mapInfo and dirPath then
         this.mapImagePath = imagePath
         this.mapInfo = mapInfo
-        log("World map image initialized from: "..imagePath)
+        this.mapDir = dirPath
+        log("World map image initialized from: "..dirPath)
         return true
     end
     return false
@@ -290,6 +297,21 @@ function this.getWorldMapTexture()
 
     local texture = ui.texture{ path = this.mapImagePath }
     this.worldTextureCache[this.mapImagePath] = texture
+    return texture
+end
+
+
+function this.getWorldMapTextureV2(x, y)
+    if not this.mapDir then return end
+    local path = this.mapDir..string.format("(%d,%d).png", x, y)
+    if not vfs.fileExists(path) then return end
+
+    if this.worldTextureCache[path] then
+        return this.worldTextureCache[path]
+    end
+
+    local texture = ui.texture{ path = path }
+    this.worldTextureCache[path] = texture
     return texture
 end
 

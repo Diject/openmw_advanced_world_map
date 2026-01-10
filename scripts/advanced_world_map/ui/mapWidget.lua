@@ -413,12 +413,12 @@ function mapWidgetMeta:updateOnZoomMarkers()
 
     if self:isInZoomInMode() then
         self:removeOnZoomMarkers()
-        self:createZoomInMarkers(visibleRect)
         self:placeGroundTextures(visibleRect)
+        self:createZoomInMarkers(visibleRect)
     else
         self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
+        self:placeGroundTextures(visibleRect)
         self:createZoomOutMarkers(visibleRect)
-        self:removeGroundTextures()
     end
     self._lastOnZoomZoom = self.zoom
 
@@ -1036,10 +1036,60 @@ function mapWidgetMeta:placeGroundTextures(region)
         local minGridY = math.floor(region.bottom / 8192)
         local maxGridY = math.ceil(region.top / 8192)
 
+
+        if self.mapInfo and self.mapInfo.version == 2 then
+            local gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / 16 - 1 or minGridX / 16)
+            local gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / 16 - 1 or maxGridX / 16)
+            local gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / 16 - 1 or minGridY / 16)
+            local gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / 16 - 1 or maxGridY / 16)
+
+            local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(131072 * gridTileMinX, 131072 * gridTileMinY - 8192))
+            startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
+            local tileFullHeight = self.mapInfo.pixelsPerCell * 16 * self.zoom
+
+            local mapLayout = self:getMapLayout()
+
+            local xP = startPos.x + tileFullHeight * -1
+            for x = 0, gridTileMaxX - gridTileMinX do
+                local lxP = xP
+                xP = startPos.x + tileFullHeight * x
+                local xPr = math.floor(xP)
+                local xS = xPr - math.floor(lxP) + 1
+
+                local yP = startPos.y
+                for y = 0, gridTileMaxY - gridTileMinY do
+                    local texture = mapTextureHandler.getWorldMapTextureV2(gridTileMinX + x, gridTileMinY + y)
+
+                    local lyP = yP
+                    yP = startPos.y - tileFullHeight * y
+                    local yPr = math.floor(yP)
+                    local yS = math.floor(lyP) - yPr + 1
+                    local pos = util.vector2(xPr, yPr)
+                    local sz = util.vector2(xS, yS)
+
+                    if not texture then goto continue end
+
+                    mapLayout.content:add{
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = texture,
+                            size = sz,
+                            position = pos,
+                            anchor = util.vector2(0, 1)
+                        }
+                    }
+
+                    ::continue::
+                end
+            end
+        end
+
+        if not self:isInZoomInMode() then return end
+
+
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
         startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
         local tileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
-        local tileHeight = math.floor(tileFullHeight)
 
         local mapLayout = self:getMapLayout()
 
@@ -1137,6 +1187,17 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
                 resource = texture,
                 relativePosition = util.vector2(self.borderPadding.x / self.displayMapSize.x, self.borderPadding.y / self.displayMapSize.y),
                 relativeSize = util.vector2(self.mapInfo.width / self.displayMapSize.x, self.mapInfo.height / self.displayMapSize.y),
+            }
+        }
+
+    elseif mapInfo.version == 2 then
+        mapLayout.content:add{
+            type = ui.TYPE.Image,
+            props = {
+                resource = uiUtils.whiteTexture,
+                relativePosition = util.vector2(self.borderPadding.x / self.displayMapSize.x, self.borderPadding.y / self.displayMapSize.y),
+                relativeSize = util.vector2(self.mapInfo.width / self.displayMapSize.x, self.mapInfo.height / self.displayMapSize.y),
+                color = mapInfo.bColor and util.color.rgb(mapInfo.bColor[1], mapInfo.bColor[2], mapInfo.bColor[3]) or commonData.mapWaterColor
             }
         }
 
@@ -1452,7 +1513,11 @@ function this.new(params)
         }
 
     else
-        local eventParams = {mapWidget = meta, mapInfo = mapTextureHandler.mapInfo, texture = mapTextureHandler.getWorldMapTexture()}
+        local texture
+        if not mapTextureHandler.mapInfo or mapTextureHandler.mapInfo.version ~= 2 then
+            texture = mapTextureHandler.getWorldMapTexture()
+        end
+        local eventParams = {mapWidget = meta, mapInfo = mapTextureHandler.mapInfo, texture = texture}
         eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInitialize, eventParams)
         mapLayout = getWorldMapTextureLayout(meta, eventParams.mapInfo, eventParams.texture)
     end
