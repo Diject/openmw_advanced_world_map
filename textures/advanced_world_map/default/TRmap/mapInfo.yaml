@@ -1,6 +1,5 @@
-﻿"version": 1
-"time": 1760253993
-"file": "map.png"
+﻿"version": 2
+"time": 1768055913
 "width": 6112
 "height": 3040
 "pixelsPerCell": 32
@@ -10,3 +9,7 @@
 "gridY":
   "max": 34
   "min": -60
+"bColor":
+- 0.0941176488995552
+- 0.141176477074623
+- 0.129411771893501
