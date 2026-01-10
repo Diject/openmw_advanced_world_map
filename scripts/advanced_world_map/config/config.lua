@@ -34,7 +34,7 @@ this.default = {
         alpha = {
             region = 8,
             entrance = 80,
-            city = 40,
+            city = 50,
         },
         visibility = {
             regions = true,
