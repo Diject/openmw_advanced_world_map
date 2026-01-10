@@ -11,6 +11,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local cellLib = require("scripts.advanced_world_map.utils.cell")
+local dateLib = require("scripts.advanced_world_map.utils.date")
 
 local commonData = require("scripts.advanced_world_map.common")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
@@ -548,7 +549,10 @@ end
 
 eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
     local screenSize = uiUtils.getScaledScreenSize()
-    local text = e.marker:getUserData().fullName or ""
+    local userData = e.marker:getUserData()
+    if not userData then return end
+
+    local text = userData.fullName or ""
     local tooltipWidth = math.max(250,
         math.min(screenSize.x / 5, stringLib.length(text) * config.data.ui.fontSize * config.data.ui.textHeightMul))
 
@@ -557,7 +561,7 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
         props = {
             text = text,
             textColor = config.data.ui.markerDefaultColor,
-            textSize = config.data.ui.fontSize,
+            textSize = config.data.ui.fontSize * 1.1,
             anchor = util.vector2(0.5, 0),
             size = util.vector2(tooltipWidth, 0),
             multiline = true,
@@ -569,6 +573,36 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
         },
     }
 end, 10000)
+
+eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
+    local screenSize = uiUtils.getScaledScreenSize()
+    local userData = e.marker:getUserData()
+    if not userData then return end
+
+    local lastVisited = discoveredLocs.isVisited(userData.cellId or "")
+    if lastVisited then
+        local lastVisitedText = l10n("LastVisited"):format(dateLib.getDateByTime(lastVisited))
+        local width = math.max(250,
+            math.min(screenSize.x / 5, stringLib.length(lastVisitedText) * config.data.ui.fontSize * config.data.ui.textHeightMul))
+
+        e.content:add{
+            type = ui.TYPE.TextEdit,
+            props = {
+                text = l10n("LastVisited"):format(dateLib.getDateByTime(lastVisited)),
+                textColor = config.data.ui.defaultDarkColor,
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0.5, 0),
+                size = util.vector2(width, 0),
+                multiline = true,
+                wordWrap = true,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+                readOnly = true,
+                autoSize = true,
+            },
+        }
+    end
+end, -1000)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
