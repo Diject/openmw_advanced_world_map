@@ -1037,27 +1037,42 @@ function mapWidgetMeta:placeGroundTextures(region)
         local maxGridY = math.ceil(region.top / 8192)
 
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
-        local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
-        local tileSize = util.vector2(tileHeight, tileHeight)
+        startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
+        local tileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
+        local tileHeight = math.floor(tileFullHeight)
 
         local mapLayout = self:getMapLayout()
-        for x = -1, maxGridX - minGridX - 1 do
-            for y = 1, maxGridY - minGridY + 1 do
-                local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y)
 
-                local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y)
+        local xP = startPos.x + tileFullHeight * -2
+        for x = -1, maxGridX - minGridX - 1 do
+            local lxP = xP
+            xP = startPos.x + tileFullHeight * x
+            local xPr = math.floor(xP)
+            local xS = xPr - math.floor(lxP) + 1
+
+            local yP = startPos.y
+            for y = 0, maxGridY - minGridY do
+                local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y + 1)
+
+                local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y + 1)
                 local isDiscovered = not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
 
-                if not texture or not isDiscovered then goto continue end
+                local lyP = yP
+                yP = startPos.y - tileFullHeight * y
+                local yPr = math.floor(yP)
+                local yS = math.floor(lyP) - yPr + 1
+                local pos = util.vector2(xPr, yPr)
+                local sz = util.vector2(xS, yS)
 
-                local pos = util.vector2(startPos.x + tileHeight * x, startPos.y - tileHeight * y)
+                if not texture or not isDiscovered then goto continue end
 
                 mapLayout.content:add{
                     type = ui.TYPE.Image,
                     props = {
                         resource = texture,
-                        size = tileSize,
+                        size = sz,
                         position = pos,
+                        anchor = util.vector2(0, 1)
                     }
                 }
 
