@@ -4,7 +4,8 @@ local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
 local input = require("openmw.input")
-local UI = require("openmw.interfaces").UI
+local I = require("openmw.interfaces")
+local UI = I.UI
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -18,9 +19,7 @@ local log = require("scripts.advanced_world_map.utils.log")
 local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
-local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
-local actionBinding = require("scripts.advanced_world_map.input.keyAction")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -382,7 +381,7 @@ function menuMeta:close()
     eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
     this.activeMenuMeta = nil
 
-    keyBinding.unregister("C_Y", controllerYCallback)
+    I.DijectKeyBindings.keybind.unregister("C_Y", controllerYCallback)
 
     if config.data.main.clearCacheOnClose then
         for id, _ in pairs(this.cachedMapWidgetLayout) do
@@ -945,7 +944,7 @@ function this.create(params)
     end
     async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
 
-    keyBinding.register("C_Y", controllerYCallback, 100)
+    I.DijectKeyBindings.keybind.register("C_Y", controllerYCallback, 100)
 
     eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 
@@ -979,11 +978,11 @@ eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
         e.menu:update()
     end
 
-    actionBinding.registerAction(commonData.togglePinKeyId, togglePinActionFunc)
+    I.DijectKeyBindings.action.register(commonData.togglePinKeyId, togglePinActionFunc)
 end, 10000)
 
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
-    actionBinding.unregisterAction(commonData.togglePinKeyId, togglePinActionFunc)
+    I.DijectKeyBindings.action.unregister(commonData.togglePinKeyId, togglePinActionFunc)
 end, 10000)
 
 eventSys.registerHandler(eventSys.EVENT.onMapClosed, function (e)

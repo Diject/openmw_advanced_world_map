@@ -6,6 +6,15 @@ local util = require("openmw.util")
 local async = require("openmw.async")
 local I = require("openmw.interfaces")
 
+
+local wasInitialized = I.DijectKeyBindings ~= nil
+if wasInitialized then return end
+
+
+local bindingSection = storage.playerSection("AdvWMap:InputBindings")
+bindingSection:setLifeTime(storage.LIFE_TIME.Persistent)
+
+
 local commonData = require("scripts.advanced_world_map.common")
 
 local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
@@ -13,10 +22,6 @@ local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
 
 local defaultColor = util.color.rgb(202/255, 165/255, 96/255)
-
-
-local bindingSection = storage.playerSection(commonData.inputBindingsSection)
-bindingSection:setLifeTime(storage.LIFE_TIME.Persistent)
 
 
 ---@type {func : function, id : string, comb : string?, combLen : integer, isSecondInput : boolean?}?
@@ -85,6 +90,13 @@ end
 
 
 return{
+    interfaceName = "DijectKeyBindings",
+    interface = {
+        version = 1,
+        registerKey = function (id, keyStr)
+            bindingSection:set(id, keyStr)
+        end
+    },
     engineHandlers = {
         onKeyPress = function(key)
             if not recording then return end
@@ -124,7 +136,7 @@ return{
         end,
 
         onMouseButtonRelease = function (buttonId)
-            if not recording then return end
+            if wasInitialized or not recording then return end
 
             local isFirstKey = not recording.isSecondInput
             recording.isSecondInput = true
@@ -143,7 +155,7 @@ return{
         end,
 
         onControllerButtonRelease = function (key)
-            if not recording then return end
+            if wasInitialized or not recording then return end
 
             if key == input.CONTROLLER_BUTTON.B and recording.combLen == 0 then
                 registerBinding()

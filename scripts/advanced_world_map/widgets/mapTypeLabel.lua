@@ -3,10 +3,10 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
+local I = require("openmw.interfaces")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
-local actionBinding = require("scripts.advanced_world_map.input.keyAction")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
@@ -104,9 +104,9 @@ eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
         e.menu:update()
     end
 
-    actionBinding.registerAction(commonData.toggleMapTypeKeyId, toogleMapTypeActionFunc)
+    I.DijectKeyBindings.action.register(commonData.toggleMapTypeKeyId, toogleMapTypeActionFunc)
 end, 10000)
 
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
-    actionBinding.unregisterAction(commonData.toggleMapTypeKeyId, toogleMapTypeActionFunc)
+    I.DijectKeyBindings.action.unregister(commonData.toggleMapTypeKeyId, toogleMapTypeActionFunc)
 end)

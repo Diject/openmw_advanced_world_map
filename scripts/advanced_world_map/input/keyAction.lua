@@ -7,7 +7,7 @@ local keyBinding = require("scripts.advanced_world_map.input.keyBinding")
 local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
 
-local bindingSection = storage.playerSection(commonData.inputBindingsSection)
+local bindingSection = storage.playerSection("AdvWMap:InputBindings")
 
 
 local this = {}
