@@ -196,6 +196,7 @@ I.Settings.registerGroup{
     order = 3,
     settings = {
         boolSetting{key = "legend.onlyDiscovered", name = "SettingLegendOnlyDiscovered", description = "SettingLegendOnlyDiscoveredDescription", default = config.default.legend.onlyDiscovered},
+        boolSetting{key = "legend.visitedCellsOnWorldMap", name = "SettingLegendVisitedCellsOnWorldMap", description = "SettingLegendVisitedCellsOnWorldMapDescription", default = config.default.legend.visitedCellsOnWorldMap},
         numberSetting{key = "legend.markerSize", name = "SettingLegendMarkerSize", description = "SettingLegendMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},
         numberSetting{key = "legend.alpha.region", name = "SettingLegendRegionAlpha", description = "SettingLegendRegionAlphaDescription", default = config.default.legend.alpha.region, min = 0, max = 100},
         numberSetting{key = "legend.alpha.city", name = "SettingLegendCityAlpha", description = "SettingLegendCityAlphaDescription", default = config.default.legend.alpha.city, min = 0, max = 100},

@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 4,
+    version = 5,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -31,6 +31,7 @@ this.default = {
     legend = {
         markerSize = 6,
         onlyDiscovered = true,
+        visitedCellsOnWorldMap = false,
         alpha = {
             region = 8,
             entrance = 80,

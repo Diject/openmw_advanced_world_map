@@ -1083,7 +1083,8 @@ function mapWidgetMeta:placeGroundTextures(region)
             end
         end
 
-        if not self:isInZoomInMode() then return end
+        local isZoomOut = not self:isInZoomInMode()
+        if isZoomOut and not config.data.legend.visitedCellsOnWorldMap then return end
 
 
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
@@ -1104,7 +1105,8 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y + 1)
 
                 local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y + 1)
-                local isDiscovered = not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)
+                local isValid = not isZoomOut and (not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
+                    isZoomOut and config.data.legend.visitedCellsOnWorldMap and discoveredLocs.isVisited(cellId)
 
                 local lyP = yP
                 yP = startPos.y - tileFullHeight * y
@@ -1113,7 +1115,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local pos = util.vector2(xPr, yPr)
                 local sz = util.vector2(xS, yS)
 
-                if not texture or not isDiscovered then goto continue end
+                if not texture or not isValid then goto continue end
 
                 mapLayout.content:add{
                     type = ui.TYPE.Image,
