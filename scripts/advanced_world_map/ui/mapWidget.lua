@@ -538,9 +538,9 @@ function mapWidgetMeta:refreshVisibleArea()
 
     local dist = (self.onZoomMarkersCenter - centerWorldPos):length()
 
-    local size = self:getSize() * 8192 / (self.mapInfo.pixelsPerCell * self.zoom)
-    local paddingX = (self.onZoomMarkersRectSize.x - size.x) * 0.5
-    local paddingY = (self.onZoomMarkersRectSize.y - size.y) * 0.5
+    local size = self:getSize() * (8192 / (self.mapInfo.pixelsPerCell * self.zoom))
+    local paddingX = (self.onZoomMarkersRectSize.x - size.x) * 0.6
+    local paddingY = (self.onZoomMarkersRectSize.y - size.y) * 0.6
 
     if dist > math.min(paddingX, paddingY) then
         self:updateOnZoomMarkers()
@@ -854,8 +854,8 @@ function mapWidgetMeta:createZoomOutMarkers(region)
     local maxGridX = math.ceil(region.right / 8192)
     local minGridY = math.floor(region.bottom / 8192)
     local maxGridY = math.ceil(region.top / 8192)
-    for x = minGridX - 1, maxGridX - 1 do
-        for y = minGridY + 1, maxGridY + 1 do
+    for x = minGridX - 1, maxGridX + 1 do
+        for y = minGridY - 1, maxGridY + 1 do
             local cellId = cellLib.getCellIdByGrid(x, y)
 
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
@@ -874,8 +874,8 @@ function mapWidgetMeta:createZoomOutMarkers(region)
     )
 
     self.onZoomMarkersRectSize = util.vector2(
-        (maxGridX - minGridX) * 8192,
-        (maxGridY - minGridY) * 8192
+        (maxGridX - minGridX + 1) * 8192,
+        (maxGridY - minGridY + 1) * 8192
     )
 end
 
@@ -894,8 +894,8 @@ function mapWidgetMeta:createZoomInMarkers(region)
         local minGridY = math.floor(region.bottom / 8192)
         local maxGridY = math.ceil(region.top / 8192)
 
-        for x = minGridX - 1, maxGridX - 1 do
-            for y = minGridY + 1, maxGridY + 1 do
+        for x = minGridX - 1, maxGridX + 1 do
+            for y = minGridY - 1, maxGridY + 1 do
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
@@ -911,8 +911,8 @@ function mapWidgetMeta:createZoomInMarkers(region)
         )
 
         self.onZoomMarkersRectSize = util.vector2(
-            (maxGridX - minGridX) * 8192,
-            (maxGridY - minGridY) * 8192
+            (maxGridX - minGridX + 1) * 8192,
+            (maxGridY - minGridY + 1) * 8192
         )
     end
 end
@@ -1049,15 +1049,15 @@ function mapWidgetMeta:placeGroundTextures(region)
 
             local mapLayout = self:getMapLayout()
 
-            local xP = startPos.x + tileFullHeight * -1
-            for x = 0, gridTileMaxX - gridTileMinX do
+            local xP = startPos.x + tileFullHeight * -2
+            for x = -1, gridTileMaxX - gridTileMinX do
                 local lxP = xP
                 xP = startPos.x + tileFullHeight * x
                 local xPr = math.floor(xP)
                 local xS = xPr - math.floor(lxP) + 1
 
-                local yP = startPos.y
-                for y = 0, gridTileMaxY - gridTileMinY do
+                local yP = startPos.y - tileFullHeight * -2
+                for y = -1, gridTileMaxY - gridTileMinY do
                     local texture = mapTextureHandler.getWorldMapTextureV2(gridTileMinX + x, gridTileMinY + y)
 
                     local lyP = yP
@@ -1094,14 +1094,14 @@ function mapWidgetMeta:placeGroundTextures(region)
         local mapLayout = self:getMapLayout()
 
         local xP = startPos.x + tileFullHeight * -2
-        for x = -1, maxGridX - minGridX - 1 do
+        for x = -1, maxGridX - minGridX do
             local lxP = xP
             xP = startPos.x + tileFullHeight * x
             local xPr = math.floor(xP)
             local xS = xPr - math.floor(lxP) + 1
 
-            local yP = startPos.y
-            for y = 0, maxGridY - minGridY do
+            local yP = startPos.y - tileFullHeight * -2
+            for y = -1, maxGridY - minGridY do
                 local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y + 1)
 
                 local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y + 1)
