@@ -101,7 +101,6 @@ local mapWidgetMeta = {}
 mapWidgetMeta.__index = mapWidgetMeta
 
 mapWidgetMeta.LAYER = this.layerId
-mapWidgetMeta.SCALE_FUNCTION = this.scaleFunction
 
 mapWidgetMeta.getUniqueId = function (self)
     return this.getUniqueId()
@@ -474,6 +473,7 @@ local function setZoom(self, zoom, relativePos)
         eventSys.triggerEvent(eventSys.EVENT.onZoomed, {mapWidget = self, zoom = zoom})
     end
     tooltip.destroyLast()
+    print(self.zoom)
 end
 
 ---@param zoom number
@@ -502,7 +502,7 @@ end
 function mapWidgetMeta:updateMarkersScale()
     local playerMarkerLayout = self:getPlayerLayout()
 
-    local playerMarkerImageSize = this.scaleFunction.playerMarker(playerMarkerLayout.content[1].userData.size, self.zoom)
+    local playerMarkerImageSize = self.SCALE_FUNCTION.playerMarker(playerMarkerLayout.content[1].userData.size, self.zoom)
 
     playerMarkerLayout.content[1].props.size = playerMarkerImageSize
     playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
@@ -513,12 +513,12 @@ function mapWidgetMeta:updateMarkersScale()
             if elem.userData and elem.userData.autoScale then
                 if elem.userData.text then
                     elem.props = tableLib.copy(elem.props)
-                    elem.props.textSize = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.fontSize, self.zoom)
+                    elem.props.textSize = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
                     if elem.props.size then
-                        elem.props.size = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.size, self.zoom)
+                        elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                     end
                 elseif elem.userData.texture then
-                    elem.props.size = (elem.userData.scaleFunc or this.scaleFunction.marker)(elem.userData.size, self.zoom)
+                    elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
             end
         end
@@ -657,10 +657,10 @@ local function createMarker(self, params, onlyInitialize)
             end
 
             if cachedLayout.props.textSize then
-                cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.fontSize, self.zoom)
+                cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.fontSize, self.zoom)
             end
             if cachedLayout.props.size then
-                cachedLayout.props.size = (cachedLayout.userData.scaleFunc or this.scaleFunction.marker)(cachedLayout.userData.size, self.zoom)
+                cachedLayout.props.size = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.size, self.zoom)
             end
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
@@ -693,7 +693,7 @@ local function createMarker(self, params, onlyInitialize)
         name = markerName,
         props = {
             text = params.text,
-            textSize = params.text and fontSize and (params.scaleFunc or this.scaleFunction.marker)(fontSize, self.zoom),
+            textSize = params.text and fontSize and (params.scaleFunc or self.SCALE_FUNCTION.marker)(fontSize, self.zoom),
             autoSize = params.autoHeight and true or size == nil,
             anchor = anchor,
             relativePosition = relPos,
@@ -701,7 +701,7 @@ local function createMarker(self, params, onlyInitialize)
             visible = params.visible,
             alpha = alpha,
             resource = texture,
-            size = size and (params.scaleFunc or this.scaleFunction.marker)(size, self.zoom),
+            size = size and (params.scaleFunc or self.SCALE_FUNCTION.marker)(size, self.zoom),
             color = params.texture and color,
             propagateEvents = false,
             textAlignH = params.textAlignH,
@@ -1450,6 +1450,25 @@ function this.new(params)
     meta._markerLayoutCache = {}
 
     meta.screenPosition = params.screenPosition or util.vector2(0, 0)
+
+    meta.SCALE_FUNCTION = {
+        linear = function(size, zoom)
+            return size * (zoom * meta.mapInfo.pixelsPerCell / 32)
+        end,
+
+        marker = function(size, zoom)
+            zoom = zoom * (meta.mapInfo.pixelsPerCell / 32)
+            return size * math.sqrt(math.sqrt(zoom))
+        end,
+
+        playerMarker = function(size, zoom)
+            if zoom < 1 then
+                zoom = zoom * (meta.mapInfo.pixelsPerCell / 32)
+                return size * zoom ^ 0.5
+            end
+            return size
+        end
+    }
 
     local mapLayout
 

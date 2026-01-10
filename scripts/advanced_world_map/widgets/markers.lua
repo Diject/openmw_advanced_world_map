@@ -19,7 +19,6 @@ local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
 local config = require("scripts.advanced_world_map.config.configLib")
 
-local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local interval = require("scripts.advanced_world_map.ui.interval")
 
@@ -384,6 +383,7 @@ local function createMarkers(widget, cellId)
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                     imageMarker = nil,
+                    anchor = textAnchor,
                 },
             }
             if textMarkerHandler then
@@ -503,7 +503,7 @@ local function createMarkers(widget, cellId)
             pos = util.vector2(dt.posX, dt.posY),
             color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
             fontSize = 10 + math.min(8, dt.count) * 2,
-            scaleFunc = mapWidget.scaleFunction.linear,
+            scaleFunc = widget.SCALE_FUNCTION.linear,
             alpha = config.data.legend.alpha.city * 0.01,
             useCache = true,
             showWhenZoomedOut = true,
@@ -530,7 +530,7 @@ local function createMarkers(widget, cellId)
             pos = util.vector2(info.posX, info.posY),
             color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
             fontSize = fontSize,
-            scaleFunc = mapWidget.scaleFunction.linear,
+            scaleFunc = widget.SCALE_FUNCTION.linear,
             alpha = config.data.legend.alpha.region * 0.01,
             showWhenZoomedOut = true,
             useCache = true,
