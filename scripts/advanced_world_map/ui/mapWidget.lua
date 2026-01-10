@@ -393,7 +393,7 @@ end
 
 
 function mapWidgetMeta:isInZoomInMode()
-    return self.cellId ~= nil or self.zoom >= config.data.tileset.zoomToShow
+    return self.cellId ~= nil or self.zoom >= (config.data.tileset.zoomToShow * 32 / self.mapInfo.pixelsPerCell)
 end
 
 
