@@ -473,7 +473,6 @@ local function setZoom(self, zoom, relativePos)
         eventSys.triggerEvent(eventSys.EVENT.onZoomed, {mapWidget = self, zoom = zoom})
     end
     tooltip.destroyLast()
-    print(self.zoom)
 end
 
 ---@param zoom number
