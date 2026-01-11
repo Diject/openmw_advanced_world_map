@@ -22,13 +22,14 @@ local keyCodes = require("scripts.advanced_world_map.input.keyCodes")
 
 
 local defaultColor = util.color.rgb(202/255, 165/255, 96/255)
+local rendererName = "DijectKeyBindings:inputBinding"
 
 
 ---@type {func : function, id : string, comb : string?, combLen : integer, isSecondInput : boolean?}?
 local recording = nil
 
 
-I.Settings.registerRenderer("AdvWMap:inputBinding", function(value, set, argument)
+I.Settings.registerRenderer(rendererName, function(value, set, argument)
     argument = argument or {}
 
     local l10n = core.l10n(argument.l10n or commonData.l10nKey)
@@ -93,6 +94,7 @@ return{
     interfaceName = "DijectKeyBindings",
     interface = {
         version = 1,
+        rendererName = rendererName,
         registerKey = function (id, keyStr)
             bindingSection:set(id, keyStr)
         end

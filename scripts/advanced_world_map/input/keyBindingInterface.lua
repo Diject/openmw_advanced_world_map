@@ -14,6 +14,7 @@ return{
     interfaceName = "DijectKeyBindings",
     interface = {
         version = 1,
+        rendererName = "DijectKeyBindings:inputBinding",
         registerKey = function (id, keyStr)
             bindingSection:set(id, keyStr)
         end,

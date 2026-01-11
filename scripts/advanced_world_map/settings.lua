@@ -87,7 +87,7 @@ end
 
 local function inputKey(args)
     local data = {
-        renderer = "AdvWMap:inputBinding",
+        renderer = "DijectKeyBindings:inputBinding",
         key = args.key,
         name = args.name,
         description = args.description,
@@ -132,7 +132,7 @@ end
 
 
 local sections = storage:allPlayerSections()
-if sections and not sections[commonData.configMainSectionName] then
+if sections and not sections[commonData.configMainSectionName] and I.DijectKeyBindings then
     I.DijectKeyBindings.registerKey(commonData.menuKeyId, config.default.main.menuKey)
 end
 

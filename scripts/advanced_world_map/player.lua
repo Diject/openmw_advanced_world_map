@@ -227,14 +227,15 @@ local function toggleMenu()
     end
 end
 
-
-I.DijectKeyBindings.action.register(commonData.menuKeyId, function ()
-    if types.Player.isCharGenFinished(self) then
-        toggleMenu()
-    else
-        ui.showMessage(l10n("charGenNotFinished"))
-    end
-end)
+if I.DijectKeyBindings then
+    I.DijectKeyBindings.action.register(commonData.menuKeyId, function ()
+        if types.Player.isCharGenFinished(self) then
+            toggleMenu()
+        else
+            ui.showMessage(l10n("charGenNotFinished"))
+        end
+    end)
+end
 
 
 local function updateTimer()
@@ -395,7 +396,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 5,
+        version = 6,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
