@@ -131,6 +131,11 @@ local function onCombatTargetsChanged(eventData)
 end
 
 
+local function getMenu()
+    return menuHandler.getMenu(commonData.mapMenuId)
+end
+
+
 local function openMenu(inMenuMode)
     if not mapDataHandler.isInitialized() then
         ui.showMessage(l10n("mapDataNotInitialized"))
@@ -141,8 +146,9 @@ local function openMenu(inMenuMode)
         menuMode.activate()
     end
 
-    if menuHandler.getMenu(commonData.mapMenuId) then
-        return
+    local menu = menuHandler.getMenu(commonData.mapMenuId)
+    if menu then
+        return menu
     end
 
     menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
@@ -157,6 +163,12 @@ local function openMenu(inMenuMode)
     if menu and menu:updateInteractiveElements() then
         menu:update()
     end
+    return menu
+end
+
+
+local function closeMenu()
+    menuHandler.destroyAllMenus()
 end
 
 
@@ -178,7 +190,7 @@ if configLib.data.main.overrideDefault then
                 end
             end
 
-            menuHandler.destroyAllMenus()
+            closeMenu()
         end
     )
 end
@@ -392,13 +404,15 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 6,
+        version = 7,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
         end,
         openMapMenu = openMenu,
+        closeMapMenu = closeMenu,
         toggleMapMenu = toggleMenu,
+        getMapMenu = getMenu,
         isDiscovered = function (cellId)
             return discoveredLocs.isDiscovered(cellId)
         end,
@@ -435,7 +449,7 @@ return {
                     end
                 end
 
-                menuHandler.destroyAllMenus()
+                closeMenu()
             end
         end,
         onControllerButtonPress = function (buttonId)
@@ -448,7 +462,7 @@ return {
                     end
                 end
 
-                menuHandler.destroyAllMenus()
+                closeMenu()
             end
         end,
         onMouseButtonRelease = function (buttonId)
