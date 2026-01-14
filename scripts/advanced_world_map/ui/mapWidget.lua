@@ -604,6 +604,8 @@ local function createMarker(self, params, onlyInitialize)
     if not params then params = {layerId = this.layerId.marker} end
     if not params.layerId then return end
 
+    local isLayerInteractive = params.layerId == this.layerId.marker
+
     local content = self:getLayerLayout(params.layerId).content
 
     if params.id and uiUtils.isExistsInContent(content, params.id) then
@@ -675,7 +677,6 @@ local function createMarker(self, params, onlyInitialize)
     local color = params.color or config.data.ui.defaultColor
     local alpha = params.alpha or 1
     local anchor = params.anchor or util.vector2(0.5, 0.5)
-    local tooltipContent = params.tooltipContent
 
     local size = params.size
     local texture = params.texture
@@ -696,12 +697,12 @@ local function createMarker(self, params, onlyInitialize)
             autoSize = params.autoHeight and true or size == nil,
             anchor = anchor,
             relativePosition = relPos,
-            textColor = params.text and color,
+            textColor = params.text and color or nil,
             visible = params.visible,
             alpha = alpha,
             resource = texture,
             size = size and (params.scaleFunc or self.SCALE_FUNCTION.marker)(size, self.zoom),
-            color = params.texture and color,
+            color = params.texture and color or nil,
             propagateEvents = false,
             textAlignH = params.textAlignH,
             textAlignV = params.textAlignV,
@@ -715,6 +716,7 @@ local function createMarker(self, params, onlyInitialize)
             fontSize = params.text and fontSize,
             size = size,
             params = params,
+            events = events,
             userData = params.userData,
             cellId = self.cellId,
             pressed = {},
@@ -725,47 +727,7 @@ local function createMarker(self, params, onlyInitialize)
                 self:update()
             end,
         },
-        events = {
-            focusLoss = async:callback(function(e, layout)
-                self.layout.userData.inFocus = false
-                marker.userData.pressed = {}
-                if events.focusLoss then events.focusLoss(e, layout) end
-                self.layout.events.focusLoss(e, layout, layout.userData.markerElement)
-                tooltip.destroy(layout)
-            end),
-
-            mouseMove = async:callback(function(e, layout)
-                self.layout.userData.inFocus = true
-                if layout.userData.pressed[1] and self.layout.userData.lastMousePos then
-                    layout.userData.movedDistance = layout.userData.movedDistance +
-                        (e.position - self.layout.userData.lastMousePos):length()
-                end
-
-                if events.mouseMove then events.mouseMove(e, layout) end
-                self.layout.events.mouseMove({offset = e.offset, position = e.position}, layout, layout.userData.markerElement)
-
-                if not tooltipContent then return end
-                tooltip.createOrMove(e, layout, tooltipContent)
-            end),
-
-            mousePress = async:callback(function(e, layout)
-                marker.userData.pressed[e.button] = true
-                if e.button == 1 then
-                    layout.userData.movedDistance = 0
-                end
-
-                if events.mousePress then events.mousePress(e, layout) end
-                self.layout.events.mousePress(e, layout, layout.userData.markerElement)
-            end),
-
-            mouseRelease = async:callback(function(e, layout)
-                if events.mouseRelease then
-                    events.mouseRelease(e, layout, marker.userData.pressed[e.button] and layout.userData.movedDistance < 30 and true or false)
-                end
-                marker.userData.pressed[e.button] = false
-                self.layout.events.mouseRelease(e, layout, layout.userData.markerElement)
-            end),
-        }
+        events = isLayerInteractive and self.markerEvents or nil,
     }
 
     self._markerLayoutCache[markerName.."_"..tostring(params.layerId)] = marker
@@ -1086,6 +1048,7 @@ function mapWidgetMeta:placeGroundTextures(region)
         local isZoomOut = not self:isInZoomInMode()
         if isZoomOut and not config.data.legend.visitedCellsOnWorldMap then return end
 
+        self:preloadLocalMapTextures()
 
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
         startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
@@ -1131,6 +1094,36 @@ function mapWidgetMeta:placeGroundTextures(region)
             end
         end
     end
+end
+
+
+function mapWidgetMeta:preloadLocalMapTextures()
+    if self.cellId or self._isLocalTexturesPreloaded then return end
+
+    local visibleRect = self:getVisibleMapRectInWorldCoordinates()
+
+    local size = self:getSize()
+    local mul = 4096 / (self.mapInfo.pixelsPerCell * config.data.tileset.zoomToShow)
+    local paddingX = math.max(8192, size.x * mul)
+    local paddingY = math.max(8192, size.y * mul)
+
+    visibleRect.bottom = visibleRect.bottom - paddingY
+    visibleRect.top = visibleRect.top + paddingY
+    visibleRect.left = visibleRect.left - paddingX
+    visibleRect.right = visibleRect.right + paddingX
+
+    local minGridX = math.floor(visibleRect.left / 8192)
+    local maxGridX = math.ceil(visibleRect.right / 8192)
+    local minGridY = math.floor(visibleRect.bottom / 8192)
+    local maxGridY = math.ceil(visibleRect.top / 8192)
+
+    for x = minGridX - 1, maxGridX + 1 do
+        for y = minGridY - 1, maxGridY + 1 do
+            mapTextureHandler.getLocalMapTexture(x, y + 1)
+        end
+    end
+
+    self._isLocalTexturesPreloaded = true
 end
 
 
@@ -1651,7 +1644,52 @@ function this.new(params)
         },
     }
 
-    meta.layers = tableLib.copy(mapLayers)
+    meta.layers = mapLayers
+
+
+    meta.markerEvents = {
+        focusLoss = async:callback(function(e, layout)
+            meta.layout.userData.inFocus = false
+            local userData = layout.userData
+            layout.userData.pressed = {}
+            if layout.userData.events.focusLoss then layout.userData.events.focusLoss(e, layout) end
+            meta.layout.events.focusLoss(e, layout, layout.userData.markerElement)
+            tooltip.destroy(layout)
+        end),
+
+        mouseMove = async:callback(function(e, layout)
+            meta.layout.userData.inFocus = true
+            if layout.userData.pressed[1] and meta.layout.userData.lastMousePos then
+                layout.userData.movedDistance = layout.userData.movedDistance +
+                    (e.position - meta.layout.userData.lastMousePos):length()
+            end
+
+            if layout.userData.events.mouseMove then layout.userData.events.mouseMove(e, layout) end
+            meta.layout.events.mouseMove({offset = e.offset, position = e.position}, layout, layout.userData.markerElement)
+
+            if not layout.userData.params.tooltipContent then return end
+            tooltip.createOrMove(e, layout, layout.userData.params.tooltipContent)
+        end),
+
+        mousePress = async:callback(function(e, layout)
+            layout.userData.pressed[e.button] = true
+            if e.button == 1 then
+                layout.userData.movedDistance = 0
+            end
+
+            if layout.userData.events.mousePress then layout.userData.events.mousePress(e, layout) end
+            meta.layout.events.mousePress(e, layout, layout.userData.markerElement)
+        end),
+
+        mouseRelease = async:callback(function(e, layout)
+            if layout.userData.events.mouseRelease then
+                layout.userData.events.mouseRelease(e, layout, layout.userData.pressed[e.button] and layout.userData.movedDistance < 30 and true or false)
+            end
+            layout.userData.pressed[e.button] = false
+            meta.layout.events.mouseRelease(e, layout, layout.userData.markerElement)
+        end),
+    }
+
 
     local main
     main = {
