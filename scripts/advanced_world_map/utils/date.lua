@@ -1,4 +1,7 @@
 local core = require("openmw.core")
+local commonData = require("scripts.advanced_world_map.common")
+
+local l10n = core.l10n(commonData.l10nKey)
 
 local this = {}
 
@@ -59,19 +62,23 @@ local months_in_year = 12
     end
 
     local function day_suffix(d)
-        if d >= 11 and d <= 13 then return "th" end
+        if d >= 11 and d <= 13 then return l10n("date.suffix.th") end
         local last = d % 10
-        if last == 1 then return "st"
-        elseif last == 2 then return "nd"
-        elseif last == 3 then return "rd"
-        else return "th" end
+        if last == 1 then return l10n("date.suffix.st")
+        elseif last == 2 then return l10n("date.suffix.nd")
+        elseif last == 3 then return l10n("date.suffix.rd")
+        else return l10n("date.suffix.th") end
     end
 
     local suffix = day_suffix(day)
     local month_name = morrowindMonths[month][1]
 
-    local result = string.format("%d%s %s, 3E %d",
-        day, suffix, month_name, year)
+    local result = l10n("date.format", {
+        day = day,
+        suffix = suffix,
+        month = month_name,
+        year = year,
+    })
 
     return result
 end
