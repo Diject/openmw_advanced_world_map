@@ -229,11 +229,7 @@ end
 
 if I.DijectKeyBindings then
     I.DijectKeyBindings.action.register(commonData.menuKeyId, function ()
-        if types.Player.isCharGenFinished(self) then
-            toggleMenu()
-        else
-            ui.showMessage(l10n("charGenNotFinished"))
-        end
+        core.sendGlobalEvent("AdvWMap:toggleMenuCheck", self.object)
     end)
 end
 
@@ -508,6 +504,15 @@ return {
         end,
 
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
+
+        -- for compatibility with mods that change player chargen state
+        ["AdvWMap:toggleMenuCheck"] = function (data)
+            if types.Player.isCharGenFinished(self) or data.isCharGenFinished then
+                toggleMenu()
+            else
+                ui.showMessage(l10n("charGenNotFinished"))
+            end
+        end,
 
         ["AdvWMap:initMapData"] = function (data)
             if mapDataHandler.playerInit(data and data.cellCount) then

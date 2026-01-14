@@ -79,6 +79,15 @@ return {
             tableLib.applyChanges(config.data, data)
         end,
 
+        -- for compatibility with mods that change player chargen state
+        ["AdvWMap:toggleMenuCheck"] = function (player)
+            local vars = world.mwscript.getGlobalVariables(player)
+            local charGenState = vars["charGenState"]
+            player:sendEvent("AdvWMap:toggleMenuCheck", {
+                isCharGenFinished = charGenState and charGenState <= -1 or false
+            })
+        end,
+
         ["AdvWMap:rebuildMapData"] = function ()
             mapDataHandler.globalBuildData()
         end,
