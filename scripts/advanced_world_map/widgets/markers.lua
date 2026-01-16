@@ -147,8 +147,8 @@ local function createMarkers(widget, cellId)
 
     ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
     local entranceByLine = {}
-    local lineHeight = 4 * config.data.legend.markerSize * uiUtils.getUIScale()
-    local charWidth = 2 * 4 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local lineHeight = 10 * config.data.legend.markerSize * uiUtils.getUIScale()
+    local charWidth = 10 * config.data.legend.markerSize * uiUtils.getUIScale()
     local maxLine
     local minLine
 
@@ -221,7 +221,7 @@ local function createMarkers(widget, cellId)
             local dt = data.dt
 
             local textAnchor = anchors[1]
-            local text = "  "..dt.name
+            local text = "  "..dt.name.."  "
             local textWidth = (charWidth + 2) * stringLib.length(dt.name)
 
             local currentLines = {}
@@ -251,7 +251,7 @@ local function createMarkers(widget, cellId)
 
                 local funcs = {}
 
-                local function calcTextAnchor(arr, s, e, anchor, name)
+                local function calcTextAnchor(arr, s, e, anchor)
                     local valid = true
                     local cnt = 0
                     for _, lin in pairs(arr) do
@@ -264,7 +264,6 @@ local function createMarkers(widget, cellId)
 
                     local func = function ()
                         textAnchor = anchor
-                        text = name
                         for _, lin in pairs(arr) do
                             table.insert(lin, {s, e})
                         end
@@ -280,48 +279,48 @@ local function createMarkers(widget, cellId)
 
                 if currentLine then
                     local s, e = dt.pos.x, dt.pos.x + textWidth
-                    if calcTextAnchor(currentLines, s, e, anchors[1], "  "..dt.name) then
+                    if calcTextAnchor(currentLines, s, e, anchors[1]) then
                         goto next
                     end
 
                     s, e = dt.pos.x - textWidth, dt.pos.x
-                    if calcTextAnchor(currentLines, s, e, anchors[2], dt.name.."  ") then
+                    if calcTextAnchor(currentLines, s, e, anchors[2]) then
                         goto next
                     end
                 end
 
                 if upperLine then
                     local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
-                    if calcTextAnchor(upperLines, s, e, anchors[3], dt.name) then
+                    if calcTextAnchor(upperLines, s, e, anchors[3]) then
                         goto next
                     end
                 end
 
                 if lowerLine then
                     local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
-                    if calcTextAnchor(lowerLines, s, e, anchors[4], dt.name) then
+                    if calcTextAnchor(lowerLines, s, e, anchors[4]) then
                         goto next
                     end
                 end
 
                 if upperLine then
                     local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
-                    if calcTextAnchor(upperLines, s, e, anchors[5], dt.name) then
+                    if calcTextAnchor(upperLines, s, e, anchors[5]) then
                         goto next
                     end
                     s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
-                    if calcTextAnchor(upperLines, s, e, anchors[6], dt.name) then
+                    if calcTextAnchor(upperLines, s, e, anchors[6]) then
                         goto next
                     end
                 end
 
                 if lowerLine then
                     local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
-                    if calcTextAnchor(lowerLines, s, e, anchors[7], dt.name) then
+                    if calcTextAnchor(lowerLines, s, e, anchors[7]) then
                         goto next
                     end
                     s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
-                    if calcTextAnchor(lowerLines, s, e, anchors[8], dt.name) then
+                    if calcTextAnchor(lowerLines, s, e, anchors[8]) then
                         goto next
                     end
                 end
@@ -382,6 +381,7 @@ local function createMarkers(widget, cellId)
                     type = commonData.doorDescrMarkerType,
                     cellId = dt.dCId,
                     searchText = stringLib.utf8_lower(dt.name),
+                    fullName = dt.fName,
                     allowSearchFilter = true,
                     imageMarker = nil,
                     anchor = textAnchor,
@@ -603,6 +603,185 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
         }
     end
 end, -1000)
+
+
+local function getClusterBoundingBox(cluster)
+    local fpos = cluster[1]._params.pos
+    local minX, maxX = fpos.x, fpos.x
+    local minY, maxY = fpos.y, fpos.y
+    for _, m in pairs(cluster) do
+        local pos = m._params.pos
+        if pos.x < minX then minX = pos.x end
+        if pos.x > maxX then maxX = pos.x end
+        if pos.y < minY then minY = pos.y end
+        if pos.y > maxY then maxY = pos.y end
+    end
+    return {x = util.vector2(minX, minY), y = util.vector2(maxX, maxY), center = util.vector2((minX + maxX) / 2, (minY + maxY) / 2)}
+end
+
+local function gridClustering(markers, cellSize)
+    local grid = {}
+    for i, marker in ipairs(markers) do
+        local pos = marker._params.pos
+        local x = math.floor(pos.x / cellSize)
+        local y = math.floor(pos.y / cellSize)
+        local key = string.format("%d,%d", x, y)
+        grid[key] = grid[key] or {x = x, y = y, m = {}}
+        table.insert(grid[key].m, marker)
+    end
+
+    local clusters = {}
+
+    local checked = {}
+    local function addNearby(key, arr)
+        local dt = grid[key]
+        if not dt then return end
+
+        for x = dt.x - 1, dt.x + 1 do
+            for y = dt.y - 1, dt.y + 1 do
+                local nKey = string.format("%d,%d", x, y)
+                if checked[nKey] then goto continue end
+
+                local nDt = grid[nKey]
+                checked[nKey] = true
+                if nDt then
+                    tableLib.addValues(nDt.m, arr)
+                    addNearby(nKey, arr)
+                end
+
+                ::continue::
+            end
+        end
+    end
+
+
+    for key, arr in pairs(grid) do
+        if checked[key] then goto continue end
+
+        local cluster = {}
+        addNearby(key, cluster)
+
+        table.insert(clusters, {
+            c = cluster,
+            bb = getClusterBoundingBox(cluster)
+        })
+
+        ::continue::
+    end
+
+    return clusters
+end
+
+
+eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, function (e)
+    local mapWidget = e.mapWidget
+    if mapWidget.cellId then return end
+
+    if mapWidget.zoom * 32 / mapWidget.mapInfo.pixelsPerCell > config.data.legend.zoomToGroup then return end
+
+    local fsize = mapWidget.SCALE_FUNCTION.marker(config.data.legend.markerSize, mapWidget.zoom)
+
+    local markerList = {}
+
+    local activeMarkers = mapWidget:getActiveMarkers()
+    for _, marker in pairs(activeMarkers) do
+        local userData = marker:getUserData()
+        if not userData then goto continue end
+        if userData.type ~= commonData.doorDescrMarkerType then goto continue end
+
+        table.insert(markerList, marker)
+
+        ::continue::
+    end
+
+    local fontInWorldCoords = fsize * 8192 / (mapWidget.mapInfo.pixelsPerCell * mapWidget.zoom)
+
+    local eps = 5 * fsize * 8192 / (mapWidget.mapInfo.pixelsPerCell * mapWidget.zoom) * config.data.ui.textHeightMul
+    local clusters = gridClustering(markerList, eps)
+
+    for _, cluster in pairs(clusters) do
+        local count = #cluster.c
+        if count <= 2 then goto continue end
+
+        ---@type table<string, advancedWorldMap.ui.mapElementMeta>[]
+        local quadrants = {{}, {}, {}, {}}
+
+        for _, marker in pairs(cluster.c) do
+            local pos = marker._params.pos
+            if pos.x >= cluster.bb.center.x and pos.y >= cluster.bb.center.y then
+                quadrants[2][marker._params.text] = marker
+            elseif pos.x < cluster.bb.center.x and pos.y >= cluster.bb.center.y then
+                quadrants[1][marker._params.text] = marker
+            elseif pos.x < cluster.bb.center.x and pos.y < cluster.bb.center.y then
+                quadrants[3][marker._params.text] = marker
+            else
+                quadrants[4][marker._params.text] = marker
+            end
+
+            ---@diagnostic disable-next-line: missing-fields
+            marker:updateLayout{
+                visible = false,
+            }
+        end
+
+        for qn, quadrant in ipairs(quadrants) do
+            quadrants[qn] = tableLib.values(quadrant, qn <= 2 and
+                function (a, b)
+                    return (a._params.pos.y < b._params.pos.y)
+                end or
+                function (a, b)
+                    return (a._params.pos.y > b._params.pos.y)
+                end
+            )
+        end
+
+        local quadrantSize = util.vector2(
+            (cluster.bb.y.x - cluster.bb.x.x) / 2,
+            (cluster.bb.y.y - cluster.bb.x.y) / 2
+        ) + util.vector2(fontInWorldCoords, fontInWorldCoords) * 12
+
+        local newFontWorldSize = fontInWorldCoords
+        local newFontSize = config.data.legend.markerSize
+
+        for qn, quadrant in ipairs(quadrants) do
+            if not next(quadrant) then goto continue end
+            local c = #quadrant
+            local columns = c <= 5 and 1 or math.ceil((c * newFontWorldSize) / quadrantSize.y)
+            columns = util.clamp(columns, 1, 3)
+            local columnWidth = columns == 1 and 999999 or quadrantSize.x / columns
+            columnWidth = math.max(newFontWorldSize * 8 * config.data.ui.textHeightMul, columnWidth)
+            local textMaxLength = columns <= 1 and 99 or math.floor(columnWidth / (newFontWorldSize * config.data.ui.textHeightMul))
+            textMaxLength = math.max(8, textMaxLength)
+
+            local qAnchor = util.vector2(
+                (qn == 1 or qn == 3) and 1 or 0,
+                (qn > 2) and 1 or 0
+            )
+            local posMulY = (qn <= 2) and 1 or -1
+            local posMulX = (qn == 1 or qn == 3) and -1 or 1
+            for i, marker in ipairs(quadrant) do
+
+                local center = cluster.bb.center
+                ---@diagnostic disable-next-line: missing-fields
+                marker:updateLayout{
+                    anchor = qAnchor,
+                    pos = center + util.vector2((i % columns) * columnWidth * posMulX, (math.floor(i / columns)) *
+                        newFontWorldSize * posMulY),
+                    fontSize = newFontSize,
+                    visible = true,
+                    text = stringLib.utf8_sub(marker._params.text, 2, textMaxLength) ..
+                        ((stringLib.length(marker._params.text) - 2) > textMaxLength and "..." or "")
+                }
+
+            end
+
+            ::continue::
+        end
+
+        ::continue::
+    end
+
+end)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
