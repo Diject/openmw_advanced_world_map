@@ -602,7 +602,7 @@ end
 ---@return any? layout
 local function createMarker(self, params, onlyInitialize)
     if not params then params = {layerId = this.layerId.marker} end
-    if not params.layerId then return end
+    if not params.layerId then params.layerId = this.layerId.marker end
 
     local isLayerInteractive = params.layerId == this.layerId.marker
 
@@ -649,13 +649,21 @@ local function createMarker(self, params, onlyInitialize)
         local cacheId = id.."_"..tostring(params.layerId)
         local cachedLayout = self._markerLayoutCache[cacheId]
         if cachedLayout then
-            addZoomInOutData(id, cachedLayout)
 
             if cachedLayout.userData.forceChanged then
                 cachedLayout.userData.markerElement:restoreLayout()
             else
                 cachedLayout.props.relativePosition = relPos
             end
+
+            if eventSys.triggerEvent(
+                        eventSys.EVENT.onMapElementCreate,
+                        {mapWidget = self, marker = cachedLayout.userData.markerElement}
+                    ) then
+                return
+            end
+
+            addZoomInOutData(id, cachedLayout)
 
             if cachedLayout.props.textSize then
                 cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.fontSize, self.zoom)
@@ -675,7 +683,7 @@ local function createMarker(self, params, onlyInitialize)
 
     local fontSize = params.fontSize or 18
     local color = params.color or config.data.ui.defaultColor
-    local alpha = params.alpha or 1
+    local alpha = params.alpha
     local anchor = params.anchor or util.vector2(0.5, 0.5)
 
     local size = params.size
@@ -721,11 +729,11 @@ local function createMarker(self, params, onlyInitialize)
             cellId = self.cellId,
             pressed = {},
             movedDistance = 0,
-            onMouseWheel = function(value)
+            onMouseWheel = isLayerInteractive and function(value)
                 if not marker.userData.inFocus then return end
                 setZoom(self, value > 0 and self.zoom * 1.25 or self.zoom * 0.75)
                 self:update()
-            end,
+            end or nil,
         },
         events = isLayerInteractive and self.markerEvents or nil,
     }
@@ -741,6 +749,10 @@ local function createMarker(self, params, onlyInitialize)
 
     if onlyInitialize then
         return markerName, params.layerId, markerELement, marker
+    end
+
+    if eventSys.triggerEvent(eventSys.EVENT.onMapElementCreate, {mapWidget = self, marker = markerELement}) then
+        return
     end
 
     if uiUtils.safeAddToContent(content, marker) then
@@ -820,10 +832,9 @@ function mapWidgetMeta:createZoomOutMarkers(region)
             local cellId = cellLib.getCellIdByGrid(x, y)
 
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
-                if dt.params.text then
-                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
-                else
-                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
+                local mDt = {createMarker(self, dt.params)}
+                if mDt[1] then
+                    table.insert(self.activeZoomMarkers, mDt)
                 end
             end
         end
@@ -847,7 +858,10 @@ function mapWidgetMeta:createZoomInMarkers(region)
 
     if self.cellId then
         for _, dt in pairs(self.zoomInMarkers[self.cellId] or {}) do
-            table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
+            local mDt = {createMarker(self, dt.params)}
+            if mDt[1] then
+                table.insert(self.activeZoomMarkers, mDt)
+            end
         end
     else
         local minGridX = math.floor(region.left / 8192)
@@ -860,7 +874,10 @@ function mapWidgetMeta:createZoomInMarkers(region)
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
-                    table.insert(self.activeZoomMarkers, {createMarker(self, dt.params)})
+                    local mDt = {createMarker(self, dt.params)}
+                    if mDt[1] then
+                        table.insert(self.activeZoomMarkers, mDt)
+                    end
                 end
 
             end
@@ -1323,7 +1340,7 @@ local function getDefaultLayerLayout()
         props = {
             position = util.vector2(0, 0),
             relativeSize = util.vector2(1, 1),
-            visible = false,
+            visible = true,
         },
         userData = {},
         content = ui.content {
@@ -1651,17 +1668,17 @@ function this.new(params)
         focusLoss = async:callback(function(e, layout)
             meta.layout.userData.inFocus = false
             local userData = layout.userData
-            layout.userData.pressed = {}
-            if layout.userData.events.focusLoss then layout.userData.events.focusLoss(e, layout) end
-            meta.layout.events.focusLoss(e, layout, layout.userData.markerElement)
+            userData.pressed = {}
+            if userData.events.focusLoss then userData.events.focusLoss(e, layout) end
+            meta.layout.events.focusLoss(e, layout, userData.markerElement)
             tooltip.destroy(layout)
         end),
 
         mouseMove = async:callback(function(e, layout)
             meta.layout.userData.inFocus = true
-            if layout.userData.pressed[1] and meta.layout.userData.lastMousePos then
+            if layout.userData.pressed[1] and meta.layout.userData.lastDraggedMousePos then
                 layout.userData.movedDistance = layout.userData.movedDistance +
-                    (e.position - meta.layout.userData.lastMousePos):length()
+                    (e.position - meta.layout.userData.lastDraggedMousePos):length()
             end
 
             if layout.userData.events.mouseMove then layout.userData.events.mouseMove(e, layout) end
