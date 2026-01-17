@@ -48,6 +48,14 @@ function AdvancedWorldMapMapElement:getColor() end
 ---@param color number[] RGB color array
 function AdvancedWorldMapMapElement:setColor(color) end
 
+---Sets the position of the map element in world coordinates
+---@param pos Vector2 World position vector
+function AdvancedWorldMapMapElement:setPosition(pos) end
+
+---Gets the current position of the map element in world coordinates
+---@return Vector2 pos World position vector
+function AdvancedWorldMapMapElement:getPosition() end
+
 ---Updates the UI layout properties of the map element.
 ---Only updates properties that are provided in the data parameter.
 ---@param data AdvancedWorldMap.MapWidget.CreateImageMarkerParams|AdvancedWorldMap.MapWidget.CreateTextMarkerParams New property values to apply

@@ -79,6 +79,15 @@ function mapElementMeta:setColor(color)
     end
 end
 
+function mapElementMeta:setPosition(pos)
+    self._params.pos = pos
+    self._elemLayout.props.relativePosition = self._parent:getRelativePositionByWorldPosition(pos)
+end
+
+function mapElementMeta:getPosition()
+    return self._params.pos
+end
+
 
 ---@param data advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 function mapElementMeta:updateLayout(data)
