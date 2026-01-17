@@ -34,6 +34,8 @@ this.EVENT = {
     onFastTravel = "onFastTravel",
     onFastTravelResolve = "onFastTravelResolve",
     onFastTravelResolved = "onFastTravelResolved",
+    onWidgetOpened = "onWidgetOpened",
+    onWidgetClosed = "onWidgetClosed",
 }
 
 
@@ -70,6 +72,8 @@ this.handlers = {}
 ---@overload fun(eventId : "onFastTravel", handlerFunc: fun(e : {position : any, cellId : string?}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onFastTravelResolve", handlerFunc: fun(e : {cost : number, message : string, position : any, cell : any, rotation : any, followers : any[]}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onFastTravelResolved", handlerFunc: fun(e : {cost : number, message : string, position : any, cell : any, rotation : any, followers : any[]?}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onWidgetOpened", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, widgetId : string, content : any}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onWidgetClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, widgetId : string}) : (boolean?), priority : number?)
 function this.registerHandler(eventId, handlerFunc, priority)
     if type(handlerFunc) ~= "function" then return end
     this.handlers[eventId] = this.handlers[eventId] or {}

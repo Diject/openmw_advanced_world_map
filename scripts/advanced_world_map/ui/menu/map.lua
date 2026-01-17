@@ -53,28 +53,38 @@ menuMeta.__index = menuMeta
 menuMeta.menu = nil
 
 
+local function openWidget(self, widgetData)
+    if not widgetData or not widgetData.params.onOpen then return end
+    widgetData.params.onOpen(self, self.widgetWindowLayout.content)
+    eventSys.triggerEvent(eventSys.EVENT.onWidgetOpened, {menu = self, widgetId = widgetData.params.id, content = self.widgetWindowLayout.content})
+end
+
+local function closeWidget(self, widgetData)
+    if not widgetData or not widgetData.params.onClose then return end
+    widgetData.params.onClose(self)
+    eventSys.triggerEvent(eventSys.EVENT.onWidgetClosed, {menu = self, widgetId = widgetData.params.id})
+end
+
 ---@return boolean
 function menuMeta:openWidget(id)
     local widget = self.widgets[id]
     if not widget then return false end
 
     if self.activeWidgetId == id then
-        if widget.params.onClose then widget.params.onClose(self) end
+        closeWidget(self, widget)
         self.widgetWindowLayout.content = ui.content{}
         self.activeWidgetId = nil
         self:updateMapWidgetWidth()
     else
         if self.activeWidgetId then
             local widgetData = self.widgets[self.activeWidgetId]
-            if widgetData and widgetData.params.onClose then
-                widgetData.params.onClose(self)
-            end
+            closeWidget(self, widgetData)
             self.widgetWindowLayout.content = ui.content{}
             self.activeWidgetId = nil
             self:updateMapWidgetWidth()
         end
 
-        if widget.params.onOpen then widget.params.onOpen(self, self.widgetWindowLayout.content) end
+        openWidget(self, widget)
         self.activeWidgetId = id
     end
 
@@ -88,9 +98,7 @@ function menuMeta:closeActiveWidget()
     if not self.activeWidgetId then return end
 
     local widgetData = self.widgets[self.activeWidgetId]
-    if widgetData and widgetData.params.onClose then
-        widgetData.params.onClose(self)
-    end
+    closeWidget(self, widgetData)
     self.widgetWindowLayout.content = ui.content{}
     self.activeWidgetId = nil
 

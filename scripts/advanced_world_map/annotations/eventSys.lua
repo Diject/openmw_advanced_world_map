@@ -183,6 +183,17 @@
 ---@field rotation Vector3 Target rotation
 ---@field followers GameObject[]? List of follower actors
 
+---Event data for widget opened event
+---@class AdvancedWorldMap.Event.OnWidgetOpenedEvent
+---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+---@field widgetId string Opened widget identifier
+---@field content Content Widget content
+
+---Event data for widget closed event
+---@class AdvancedWorldMap.Event.OnWidgetClosedEvent
+---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+---@field widgetId string Closed widget identifier
+
 ---Advanced World Map event system
 ---@class AdvancedWorldMap.Event
 ---@field EVENT AdvancedWorldMap.Event.EVENT Table containing event identifiers
@@ -219,6 +230,8 @@ AdvancedWorldMapEvent.EVENT = {
     onFastTravel = "onFastTravel", -- Event triggered when a fast travel is initiated
     onFastTravelResolve = "onFastTravelResolve", -- Event triggered when a fast travel is being resolved
     onFastTravelResolved = "onFastTravelResolved", -- Event triggered after a fast travel has been resolved
+    onWidgetOpened = "onWidgetOpened", -- Event triggered when a map widget is opened
+    onWidgetClosed = "onWidgetClosed", -- Event triggered when a map widget is closed
 }
 
 ---Registers an event handler in the event system.
@@ -256,6 +269,8 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onFastTravel", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelEvent): (boolean?, boolean?), priority: number?)
 ---@overload fun(eventId: "onFastTravelResolve", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolveEvent): (boolean?, boolean?), priority: number?)
 ---@overload fun(eventId: "onFastTravelResolved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolvedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWidgetOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetOpenedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWidgetClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetClosedEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system
