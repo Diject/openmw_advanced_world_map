@@ -2,6 +2,7 @@ local core = require("openmw.core")
 local util = require("openmw.util")
 local ui = require("openmw.ui")
 local types = require("openmw.types")
+local playerRef = require("openmw.self")
 
 local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
 
@@ -492,7 +493,8 @@ local function createMarkers(widget, cellId)
     for _, dt in pairs(mapDataHandler.cellNameData or {}) do
         local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
 
-        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name)
+        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name) or
+            types.Player.journal and types.Player.journal(playerRef).topics[dt.name] and true or false
 
         this.markersByName[dt.name] = this.markersByName[dt.name] or {}
 
