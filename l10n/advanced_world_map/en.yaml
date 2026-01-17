@@ -56,6 +56,7 @@ firstInitMenuDataSourceNote: "If the world map texture will not display correctl
 mapDataNotInitialized: "Map data is not available. Report this issue on the mod page on Nexus Mods."
 charGenNotFinished: "You cannot open the map until character generation is complete."
 LastVisited: "Last visited: %s"
+PinUnpin: "Pin/Unpin"
 
 date.suffix.st: "st"
 date.suffix.nd: "nd"

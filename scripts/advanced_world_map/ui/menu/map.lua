@@ -544,6 +544,17 @@ function this.create(params)
     end
 
 
+    local pinBtnTooltipContent = ui.content{
+        {
+            type = ui.TYPE.Text,
+            props = {
+                text = l10n("PinUnpin"),
+                textSize = params.fontSize,
+                textColor = config.data.ui.defaultColor,
+            },
+        }
+    }
+
     local pinBtnLayout = {
         type = ui.TYPE.Widget,
         props = {
@@ -562,6 +573,14 @@ function this.create(params)
                     meta:togglePin()
                     meta:update()
                 end
+            end),
+
+            mouseMove = async:callback(function(e, layout)
+                tooltip.createOrMove(e, layout, pinBtnTooltipContent)
+            end),
+
+            focusLoss = async:callback(function(e, layout)
+                tooltip.destroy(layout)
             end),
         },
         content = ui.content{
