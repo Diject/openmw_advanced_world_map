@@ -130,9 +130,16 @@ local function selectSetting(args)
 end
 
 
+local res, isKeyAvailable = pcall(function()
+    local bindingSection = storage.playerSection('OMWInputBindings')
+    return bindingSection:get(config.default.main.menuKey) == nil
+end)
+if not res then
+    print(isKeyAvailable)
+end
 
 local sections = storage:allPlayerSections()
-if sections and not sections[commonData.configMainSectionName] and I.DijectKeyBindings then
+if sections and not sections[commonData.configMainSectionName] and I.DijectKeyBindings and isKeyAvailable then
     I.DijectKeyBindings.registerKey(commonData.menuKeyId, config.default.main.menuKey)
 end
 
