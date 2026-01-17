@@ -822,7 +822,7 @@ end
 
 
 ---@param region advancedWorldMap.ui.mapWidget.region
-function mapWidgetMeta:createZoomOutMarkers(region)
+function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly)
     local minGridX = math.floor(region.left / 8192)
     local maxGridX = math.ceil(region.right / 8192)
     local minGridY = math.floor(region.bottom / 8192)
@@ -832,13 +832,15 @@ function mapWidgetMeta:createZoomOutMarkers(region)
             local cellId = cellLib.getCellIdByGrid(x, y)
 
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
-                local mDt = {createMarker(self, dt.params)}
+                local mDt = {createMarker(self, dt.params, preloadOnly)}
                 if mDt[1] then
                     table.insert(self.activeZoomMarkers, mDt)
                 end
             end
         end
     end
+
+    if preloadOnly then return end
 
     self.onZoomMarkersCenter = util.vector2(
         (minGridX + maxGridX) / 2 * 8192,
@@ -854,11 +856,11 @@ end
 
 
 ---@param region advancedWorldMap.ui.mapWidget.region
-function mapWidgetMeta:createZoomInMarkers(region)
+function mapWidgetMeta:createZoomInMarkers(region, preloadOnly)
 
     if self.cellId then
         for _, dt in pairs(self.zoomInMarkers[self.cellId] or {}) do
-            local mDt = {createMarker(self, dt.params)}
+            local mDt = {createMarker(self, dt.params, preloadOnly)}
             if mDt[1] then
                 table.insert(self.activeZoomMarkers, mDt)
             end
@@ -874,7 +876,7 @@ function mapWidgetMeta:createZoomInMarkers(region)
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
-                    local mDt = {createMarker(self, dt.params)}
+                    local mDt = {createMarker(self, dt.params, preloadOnly)}
                     if mDt[1] then
                         table.insert(self.activeZoomMarkers, mDt)
                     end
@@ -882,6 +884,8 @@ function mapWidgetMeta:createZoomInMarkers(region)
 
             end
         end
+
+        if preloadOnly then return end
 
         self.onZoomMarkersCenter = util.vector2(
             (minGridX + maxGridX) / 2 * 8192,
@@ -918,6 +922,12 @@ end
 
 
 function mapWidgetMeta:removeGroundTextures()
+    if self._groundTexturesCoroutine and coroutine.status(self._groundTexturesCoroutine) ~= "dead" then
+        self._coroutineCancelFlags[self._groundTexturesCoroutine] = true
+        coroutine.resume(self._groundTexturesCoroutine)
+        self._groundTexturesCoroutine = nil
+    end
+
     local mapLayoutContent = self:getMapLayout().content
     for i = #mapLayoutContent, 2, -1 do
         uiUtils.removeFromContent(mapLayoutContent, i)
@@ -1065,13 +1075,13 @@ function mapWidgetMeta:placeGroundTextures(region)
         local isZoomOut = not self:isInZoomInMode()
         if isZoomOut and not config.data.legend.visitedCellsOnWorldMap then return end
 
-        self:preloadLocalMapTextures()
 
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
         startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
         local tileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
 
         local mapLayout = self:getMapLayout()
+        local queue = {}
 
         local xP = startPos.x + tileFullHeight * -2
         for x = -1, maxGridX - minGridX do
@@ -1082,9 +1092,10 @@ function mapWidgetMeta:placeGroundTextures(region)
 
             local yP = startPos.y - tileFullHeight * -2
             for y = -1, maxGridY - minGridY do
-                local texture = mapTextureHandler.getLocalMapTexture(minGridX + x, minGridY + y + 1)
+                local grx = minGridX + x
+                local gry = minGridY + y + 1
 
-                local cellId = cellLib.getCellIdByGrid(minGridX + x, minGridY + y + 1)
+                local cellId = cellLib.getCellIdByGrid(grx, gry)
                 local isValid = not isZoomOut and (not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
                     isZoomOut and config.data.legend.visitedCellsOnWorldMap and discoveredLocs.isVisited(cellId)
 
@@ -1095,32 +1106,71 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local pos = util.vector2(xPr, yPr)
                 local sz = util.vector2(xS, yS)
 
-                if not texture or not isValid then goto continue end
+                if not isValid then goto continue end
 
-                mapLayout.content:add{
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = texture,
-                        size = sz,
-                        position = pos,
-                        anchor = util.vector2(0, 1)
+                if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) then
+                    mapLayout.content:add{
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = mapTextureHandler.getLocalMapTexture(grx, gry),
+                            size = sz,
+                            position = pos,
+                            anchor = util.vector2(0, 1)
+                        }
                     }
-                }
+                else
+                    table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz})
+                end
 
                 ::continue::
             end
         end
+
+        local function updateTiles()
+            for i, dt in pairs(queue) do
+                mapLayout.content:add{
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = mapTextureHandler.getLocalMapTexture(dt.grx, dt.gry),
+                        size = dt.sz,
+                        position = dt.pos,
+                        anchor = util.vector2(0, 1)
+                    }
+                }
+                if i % 4 == 0 then
+                    coroutine.yield()
+                end
+            end
+        end
+
+        local co = coroutine.create(updateTiles)
+        self._groundTexturesCoroutine = co
+        local function runCo()
+            if self._coroutineCancelFlags[co] then
+                self._coroutineCancelFlags[co] = nil
+                return
+            end
+            if coroutine.status(co) ~= "dead" then
+                coroutine.resume(co)
+                self:update()
+                realTimer.newTimer(0, runCo)
+            else
+                self._coroutineCancelFlags[co] = nil
+            end
+        end
+        runCo()
     end
 end
 
 
-function mapWidgetMeta:preloadLocalMapTextures()
-    if self.cellId or self._isLocalTexturesPreloaded then return end
+-- This is no longer needed because of the coroutine-based ground texture loading
+function mapWidgetMeta:preloadLocalMap()
+    if self.cellId or self._isLocalMapPreloaded then return end
 
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
 
     local size = self:getSize()
-    local mul = 4096 / (self.mapInfo.pixelsPerCell * config.data.tileset.zoomToShow)
+    local mul = 8192 / (self.mapInfo.pixelsPerCell * config.data.tileset.zoomToShow)
     local paddingX = math.max(8192, size.x * mul)
     local paddingY = math.max(8192, size.y * mul)
 
@@ -1140,7 +1190,27 @@ function mapWidgetMeta:preloadLocalMapTextures()
         end
     end
 
-    self._isLocalTexturesPreloaded = true
+    if self.mapInfo then
+        if self.mapInfo.version == 2 then
+            local gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / 16 - 1 or minGridX / 16)
+            local gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / 16 - 1 or maxGridX / 16)
+            local gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / 16 - 1 or minGridY / 16)
+            local gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / 16 - 1 or maxGridY / 16)
+
+            for x = gridTileMinX - 1, gridTileMaxX + 1 do
+                for y = gridTileMinY - 1, gridTileMaxY + 1 do
+                    mapTextureHandler.getWorldMapTextureV2(x, y)
+                end
+            end
+        else
+            mapDataHandler.getWorldMapTexture()
+        end
+    end
+
+    self:createZoomInMarkers(visibleRect, true)
+    self:createZoomOutMarkers(visibleRect, true)
+
+    self._isLocalMapPreloaded = true
 end
 
 
@@ -1459,6 +1529,7 @@ function this.new(params)
     meta.cellStatics = nil
 
     meta._markerLayoutCache = {}
+    meta._coroutineCancelFlags = {}
 
     meta.screenPosition = params.screenPosition or util.vector2(0, 0)
 

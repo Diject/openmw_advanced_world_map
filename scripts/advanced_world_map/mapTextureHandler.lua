@@ -190,12 +190,16 @@ end
 
 
 
+---@return any texture
+---@return boolean? wasInCache
 function this.getLocalMapTexture(gridX, gridY)
-    local path = string.format("%s(%d,%d)", commonData.localMapTexturesDir, gridX, gridY)
+    local id = string.format("(%d,%d)", gridX, gridY)
+
+    if this.localMapTextureCache[id] then return this.localMapTextureCache[id], true end
+
+    local path = string.format("%s%s", commonData.localMapTexturesDir, id)
     local pathPng = path..".png"
     local pathTga = path..".tga"
-
-    if this.localMapTextureCache[path] then return this.localMapTextureCache[path] end
 
     local foundPath
     if vfs.fileExists(pathPng) then
@@ -207,9 +211,14 @@ function this.getLocalMapTexture(gridX, gridY)
     end
 
     local texture = ui.texture{ path = foundPath }
-    this.localMapTextureCache[path] = texture
+    this.localMapTextureCache[id] = texture
 
     return texture
+end
+
+
+function this.isLocalWorldMapTextureInCache(gridX, gridY)
+    return this.localMapTextureCache[string.format("(%d,%d)", gridX, gridY)] ~= nil
 end
 
 
@@ -278,6 +287,11 @@ function this.getLocalCellMapTextures(cellId)
 end
 
 
+function this.isLocalCellTextureInCache(cellId)
+    return this.localCellTextureCache[cellId] ~= nil
+end
+
+
 function this.clearInteriorTextureCache()
     for i, _ in pairs(this.localCellTextureCache) do
         this.localCellTextureCache[i] = nil
@@ -301,6 +315,11 @@ function this.getWorldMapTexture()
 end
 
 
+function this.isWorldMapTextureInCache()
+    return this.worldTextureCache[this.mapImagePath or ""] ~= nil
+end
+
+
 function this.getWorldMapTextureV2(x, y)
     if not this.mapDir then return end
     local path = this.mapDir..string.format("(%d,%d).png", x, y)
@@ -313,6 +332,11 @@ function this.getWorldMapTextureV2(x, y)
     local texture = ui.texture{ path = path }
     this.worldTextureCache[path] = texture
     return texture
+end
+
+
+function this.isWorldMapTextureV2InCache(x, y)
+    return this.worldTextureCache[string.format("(%d,%d).png", x, y)] ~= nil
 end
 
 
