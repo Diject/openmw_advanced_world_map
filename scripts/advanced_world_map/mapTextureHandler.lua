@@ -264,7 +264,7 @@ function this.getLocalCellMapTextures(cellId)
                     goto continue
                 end
 
-                local texture = ui.texture{ path = foundPath, offset = util.vector2(1, 1), size = util.vector2(254, 254) }
+                local texture = ui.texture{ path = foundPath }
                 arr[x] = texture
 
                 ::continue::
