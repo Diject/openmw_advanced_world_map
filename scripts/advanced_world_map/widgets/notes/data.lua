@@ -134,6 +134,19 @@ function this.removeMarkerDataAlt(data)
 end
 
 
+---@param cellId string? nil for exterior map
+function this.hasCellNotes(cellId)
+    local dataTable = getDataTable()
+    if not dataTable then return false end
+
+    cellId = cellId or commonData.exteriorMapId
+
+    if not dataTable[cellId] then return false end
+
+    return next(dataTable[cellId]) ~= nil
+end
+
+
 ---@param cellId string?
 ---@return fun(): (cellId: string, id: string, data: advancedWorldMap.widget.notes.data.markerData)
 function this.getCellIterator(cellId)
@@ -171,18 +184,22 @@ end
 
 
 ---@param dt advancedWorldMap.widget.notes.data.markerData
-function this.getDataText(dt)
+---@param includeCellPos boolean? default=true
+---@param insertLineBreaks boolean? default=true
+function this.getDataText(dt, includeCellPos, insertLineBreaks)
     local text = ""
     if dt.name and dt.name ~= "" then
-        text = text.."#"..this.colors[dt.nameColorId or 1]:asHex()..dt.name.."#"..config.data.ui.defaultColor:asHex().."\n\n"
+        text = text.."#"..this.colors[dt.nameColorId or 1]:asHex()..dt.name.."#"..config.data.ui.defaultColor:asHex()
     end
-    do
+    if includeCellPos ~= false then
+        text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
         local cellId = not dt.cellId and commonData.exteriorCellIdFormat:format(dt.pos.x / 8192, dt.pos.y / 8192) or dt.cellId
         local str = string.format("%s (%d, %d)", mapDataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
         text = text..str
     end
     if dt.descr and dt.descr ~= "" then
-        text = text.."\n\n"..dt.descr
+        text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
+        text = text..dt.descr
     end
 
     return text

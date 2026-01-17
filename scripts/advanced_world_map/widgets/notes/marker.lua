@@ -28,6 +28,34 @@ end
 
 
 ---@param data advancedWorldMap.widget.notes.data.markerData
+---@param includeCellPos boolean? default=true
+---@param insertLineBreaks boolean? default=true
+---@return Content?
+function this.getTooltipContentLayout(data, includeCellPos, insertLineBreaks)
+    if (data.descr and data.descr ~= "") or (data.name and data.name ~= "") then
+        local text = widgetData.getDataText(data, includeCellPos, insertLineBreaks)
+
+        return {
+            {
+                type = ui.TYPE.TextEdit,
+                props = {
+                    text = text,
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                    autoSize = true,
+                    multiline = true,
+                    wordWrap = true,
+                    readOnly = true,
+                    size = util.vector2(uiUtils.getScaledScreenSize().x / 4, 0),
+                    textAlignH = ui.ALIGNMENT.Center,
+                }
+            }
+        }
+    end
+end
+
+
+---@param data advancedWorldMap.widget.notes.data.markerData
 ---@param mapWidget AdvancedWorldMap.MapWidget?
 ---@param update boolean?
 ---@return boolean?
@@ -46,25 +74,9 @@ function this.create(data, mapWidget, update)
     -- Create tooltip content if there is something to show
     -- The marker API has a built-in tooltip support
     local tooltipContent
-    if (data.descr and data.descr ~= "") or (data.name and data.name ~= "") then
-        local text = widgetData.getDataText(data)
-
-        tooltipContent = ui.content{
-            {
-                type = ui.TYPE.TextEdit,
-                props = {
-                    text = text,
-                    textSize = config.data.ui.fontSize,
-                    textColor = config.data.ui.defaultColor,
-                    autoSize = true,
-                    multiline = true,
-                    wordWrap = true,
-                    readOnly = true,
-                    size = util.vector2(uiUtils.getScaledScreenSize().x / 5, 0),
-                    textAlignH = ui.ALIGNMENT.Center,
-                }
-            }
-        }
+    local tooltipContentLayout = this.getTooltipContentLayout(data, mapWidget.cellId == nil)
+    if tooltipContentLayout then
+        tooltipContent = ui.content(tooltipContentLayout)
     end
 
     -- Note: the marker size is related to 1 zoom

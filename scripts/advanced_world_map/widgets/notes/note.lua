@@ -8,6 +8,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.config")
 
 local button = require("scripts.advanced_world_map.ui.button")
+local interval = require("scripts.advanced_world_map.ui.interval")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -184,6 +185,57 @@ local function init()
             widgetMenu.update()
         end
     end)
+
+
+    -- Event triggered before showing the tooltip for a door marker
+    -- We will add note info to the tooltip if there are notes for that cell
+    events.registerHandler(events.EVENT.onMarkerTooltipShow, function (e)
+        -- Check if the marker is a door marker with a cellId
+        -- All door markers have cellId in their userData
+        local userData = e.marker:getUserData()
+        if not userData or userData.type ~= commonData.doorMarkerType or not userData.cellId then return end
+        if not widgetData.hasCellNotes(userData.cellId) then return end
+
+        local layout = {
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = false,
+                anchor = util.vector2(0, 0.5),
+                arrange = ui.ALIGNMENT.Center,
+            },
+            content = ui.content{}
+        }
+
+        local cellId = userData.cellId
+        local addedCount = 0
+        for _, mId, data in widgetData.getCellIterator(cellId) do
+            if addedCount >= 2 then
+                layout.content:add{
+                    type = ui.TYPE.Text,
+                    props = {
+                        text = "...",
+                        textColor = config.data.ui.defaultColor,
+                        textSize = config.data.ui.fontSize,
+                    }
+                }
+                break
+            end
+
+            local tooltipContLay = widgetMarker.getTooltipContentLayout(data, false, false)
+            if tooltipContLay then
+                if addedCount ~= 0 then
+                    layout.content:add(interval(0, config.data.ui.fontSize / 3))
+                end
+                layout.content:add(tooltipContLay[1])
+
+                addedCount = addedCount + 1
+            end
+        end
+
+        if addedCount > 0 then
+            e.content:add(layout)
+        end
+    end, -10)
 end
 
 
