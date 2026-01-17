@@ -206,6 +206,7 @@ AdvancedWorldMapEvent.EVENT = {
     onMenuClosed = "onMenuClosed", -- Event triggered when the map menu is closed
     onUpdate = "onUpdate", -- Event triggered before the map menu render is updated
     onWorldMapTextureInitialize = "onWorldMapTextureInitialize", -- Event triggered when the world map texture is initializing. You can replace the map texture here
+    onMapInitialized = "onMapInitialized", -- Event triggered when a map widget is initialized
     onMapShown = "onMapShown", -- Event triggered when the map is shown
     onMapClosed = "onMapClosed", -- Event triggered when the map is closed
     onCellMarkersCreate = "onCellMarkersCreate", -- Event triggered when built-in cell markers are being created. You can prevent default markers from being created here by returning second value as true: like `return nil, true`
