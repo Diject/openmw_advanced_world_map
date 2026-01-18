@@ -4,6 +4,7 @@ local core = require("openmw.core")
 local async = require("openmw.async")
 local input = require("openmw.input")
 local playerRef = require("openmw.self")
+local vfs = require("openmw.vfs")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.config")
@@ -13,6 +14,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 
 local widgetData = require("scripts.advanced_world_map.widgets.notes.data")
+local editorMenu = require("scripts.advanced_world_map.widgets.notes.editorMenu")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -22,6 +24,7 @@ local button = require("scripts.advanced_world_map.ui.button")
 local interval = require('scripts.advanced_world_map.ui.interval')
 
 local thinLineTexture = ui.texture{ path = "textures/menu_thin_border_top.dds" }
+local defaultMarkerTexture = ui.texture{ path = commonData.noteMarkerPath }
 
 
 local this = {}
@@ -99,16 +102,38 @@ local function fill(menu, sb, filter)
                 end),
 
                 mouseRelease = async:callback(function(e, layout)
-                    if e.button ~= 1 then return end
-
                     sb:mouseRelease(e)
 
+                    if e.button ~= 1 and e.button ~= 3 then return end
+
                     if sb.lastMovedDistance < 20 then
-                        if menu.mapWidget.cellId ~= dt.cellId then
-                            menu:updateMapWidgetCell(dt.cellId)
+
+                        if e.button == 1 then
+                            if menu.mapWidget.cellId ~= dt.cellId then
+                                menu:updateMapWidgetCell(dt.cellId)
+                            end
+                            menu.mapWidget:focusOnWorldPosition(dt.pos)
+                            menu.mapWidget:updateMarkers()
+
+                        elseif e.button == 3 then
+                            editorMenu.create{
+                                data = dt,
+                                yesCallback = function (dt)
+                                    if dt.pos then
+                                        widgetData.addMarkerData(dt)
+                                        require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
+                                        menu.mapWidget:updateMarkers()
+                                        fill(menu, sb, filter)
+                                    end
+                                end,
+                                removeCallback = function (dt)
+                                    widgetData.removeMarkerDataAlt(dt)
+                                    require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
+                                    menu.mapWidget:updateMarkers()
+                                    fill(menu, sb, filter)
+                                end
+                            }
                         end
-                        menu.mapWidget:focusOnWorldPosition(dt.pos)
-                        menu.mapWidget:updateMarkers()
 
                         menu:update()
                     end
@@ -121,7 +146,7 @@ local function fill(menu, sb, filter)
         local layout = {
             type = ui.TYPE.Widget,
             props = {
-                size = util.vector2(sbSize.x, textHeight),
+                size = util.vector2(sbSize.x, textHeight + config.data.ui.fontSize),
             },
             content = ui.content{
                 {
@@ -136,7 +161,27 @@ local function fill(menu, sb, filter)
                         relativePosition = util.vector2(0, 0),
                     },
                 },
-                textLay,
+                {
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = false,
+                        position = util.vector2(2, 2),
+                        size = util.vector2(sbSize.x - 4, height),
+                    },
+                    content = ui.content{
+                        {
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = dt.icon and vfs.fileExists(dt.icon) and ui.texture{ path = dt.icon } or defaultMarkerTexture,
+                                size = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize),
+                                anchor = util.vector2(0, 0.5),
+                                position = util.vector2(config.data.ui.fontSize / 2, 0),
+                                color = dt and dt.colorId and widgetData.colors[dt.colorId] or config.data.ui.defaultColor
+                            },
+                        },
+                        textLay,
+                    }
+                }
             }
         }
 

@@ -118,6 +118,7 @@ this.searchWidgetIcon = "textures/icons/advanced_world_map/widget/searchIco.dds"
 this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"
 this.noteMarkerPath = "textures/icons/advanced_world_map/featherIco.png"
 
+this.widgetIconsDir = "textures/icons/advanced_world_map/widget/"
 
 this.customMapDir = "textures/advanced_world_map/custom/"
 this.defaultTRMapDir = "textures/advanced_world_map/default/TRmap/"

@@ -1,5 +1,6 @@
 local ui = require("openmw.ui")
 local util = require("openmw.util")
+local vfs = require("openmw.vfs")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
@@ -79,14 +80,23 @@ function this.create(data, mapWidget, update)
         tooltipContent = ui.content(tooltipContentLayout)
     end
 
+    data.size = data.size or 2
+    local markerSizeMul = (0.5 + data.size * 0.5)
+    if data.size > 3 then
+        markerSizeMul = markerSizeMul * 2 ^ (data.size - 3)
+    end
+    if data.onWorldMap then
+        markerSizeMul = markerSizeMul * 6
+    end
+
     -- Note: the marker size is related to 1 zoom
     -- and the final size may depend on map zoom and the scaling function used!
-    local imageMarkerSize = 1. * (config.data.notes.mapFontSize / 18)
+    local imageMarkerSize = 1. * (config.data.notes.mapFontSize / 18) * markerSizeMul
 
     -- Create an image marker for the note on the map
     local imageMarkerHandler = mapWidget:createImageMarker{
         -- marker texture
-        texture = markerTexture,
+        texture = data.icon and vfs.fileExists(data.icon) and ui.texture{ path = data.icon } or markerTexture,
         -- marker layer. Markers on this layer can interact with the mouse.
         layerId = mapWidget.LAYER.marker,
         -- marker size
@@ -103,9 +113,10 @@ function this.create(data, mapWidget, update)
         color = data.colorId and widgetData.colors[data.colorId] or nil,
         -- Tooltip content when hovering over the marker
         tooltipContent = tooltipContent,
-        -- Show marker when zoomed in. The world map has two zoom levels: near (zoomIn) and far (zoomOut).
+        -- The world map has two zoom levels: near (zoomIn) and far (zoomOut).
         -- If not specified, the marker is shown at any zoom by default.
-        showWhenZoomedIn = true,
+        showWhenZoomedIn = data.onWorldMap ~= true,
+        showWhenZoomedOut = data.onWorldMap == true,
         -- Additional marker data. Can be retrieved via the marker handler.
         userData = {
             type = commonData.noteMarkerType,
@@ -152,13 +163,13 @@ function this.create(data, mapWidget, update)
         local textAlignV = ui.ALIGNMENT.Center
 
         if data.namePosId == 0 then
-            anchor = util.vector2(0.5, 1.5)
+            anchor = util.vector2(0.5, 1.55)
             textAlignV = ui.ALIGNMENT.End
         elseif data.namePosId == 1 then
             anchor = util.vector2(-0.025, 0.5)
             textAlignH = ui.ALIGNMENT.Start
         elseif data.namePosId == 2 then
-            anchor = util.vector2(0.5, -0.5)
+            anchor = util.vector2(0.5, -0.55)
             textAlignV = ui.ALIGNMENT.Start
         elseif data.namePosId == 3 then
             anchor = util.vector2(1.025, 0.5)
@@ -186,7 +197,7 @@ function this.create(data, mapWidget, update)
             scaleFunc = mapWidget.SCALE_FUNCTION.linear,
             -- Marker font size. If not specified, default from config is used.
             -- Final font size depends on map zoom and the scaling function.
-            fontSize = 1. * (config.data.notes.mapFontSize / 18),
+            fontSize = 1. * (config.data.notes.mapFontSize / 18) * markerSizeMul,
             -- Horizontal alignment of the marker text
             textAlignH = textAlignH,
             -- Vertical alignment of the marker text
@@ -195,9 +206,10 @@ function this.create(data, mapWidget, update)
             pos = data.pos,
             -- Anchor point of the marker.
             anchor = anchor,
-            -- Show marker when zoomed in. The world map has two zoom levels: near (zoomIn) and far (zoomOut).
+            -- The world map has two zoom levels: near (zoomIn) and far (zoomOut).
             -- If not specified, the marker is shown at any zoom by default.
-            showWhenZoomedIn = true,
+            showWhenZoomedIn = data.onWorldMap ~= true,
+            showWhenZoomedOut = data.onWorldMap == true,
             -- Additional marker data. Can be retrieved via the marker handler.
             userData = {
                 type = commonData.noteNameMarkerType,

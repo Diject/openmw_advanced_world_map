@@ -71,10 +71,14 @@ end
 ---@param e AdvancedWorldMap.Event.OnRightMouseMenuEvent
 local function onRightMouseMenu(e)
 
+    -- Deprecated
     -- Only add note buttons when in zoom-in mode (interior or exterior with sufficient zoom)
-    if not e.mapWidget:isInZoomInMode() then
-        return
-    end
+    -- if not e.mapWidget:isInZoomInMode() then
+    --     return
+    -- end
+
+    -- Interior cells always use zoom-in mode. Exteriors depend on zoom level.
+    local isInZoomInMode = e.mapWidget:isInZoomInMode()
 
     ---@type Layout
     local btn
@@ -93,7 +97,7 @@ local function onRightMouseMenu(e)
                         data = userData.noteData,
                         yesCallback = function (dt)
                             if dt.pos then
-                                widgetData.addMarkerData(dt)
+                                widgetData.addMarkerData(dt, not isInZoomInMode)
                                 widgetMarker.create(dt, e.mapWidget, true)
                                 widgetMenu.update()
                             end
@@ -124,7 +128,7 @@ local function onRightMouseMenu(e)
                     },
                     yesCallback = function (dt)
                         if dt.pos then
-                            widgetData.addMarkerData(dt)
+                            widgetData.addMarkerData(dt, not isInZoomInMode)
                             widgetMarker.create(dt, e.mapWidget, true)
                             widgetMenu.update()
                         end

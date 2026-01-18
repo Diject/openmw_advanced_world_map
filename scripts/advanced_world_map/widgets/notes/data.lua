@@ -33,6 +33,10 @@ end
 ---@field colorId integer?
 ---@field nameColorId integer?
 ---@field namePosId integer?
+---@field plName string?
+---@field icon string?
+---@field size number?
+---@field onWorldMap boolean?
 
 ---@class advancedWorldMap.widget.notes.data.addMarkerDataParams
 ---@field cellId string?
@@ -42,7 +46,10 @@ end
 ---@field colorId integer?
 ---@field nameColorId integer?
 ---@field namePosId integer?
-
+---@field plName string?
+---@field icon string?
+---@field size number?
+---@field onWorldMap boolean?
 
 this.colors = {
     commonData.defaultColor,
@@ -56,9 +63,20 @@ this.colors = {
 }
 
 
+this.markerSizeNames = {
+    "S",
+    "M",
+    "L",
+    "X1",
+    "X2",
+    "X3",
+}
+
+
 ---@param params advancedWorldMap.widget.notes.data.addMarkerDataParams|advancedWorldMap.widget.notes.data.markerData
+---@param onWorldMap boolean?
 ---@return advancedWorldMap.widget.notes.data.markerData?
-function this.addMarkerData(params)
+function this.addMarkerData(params, onWorldMap)
     local cellId = params.cellId or commonData.exteriorMapId
     local id = this.getMarkerId(cellId, params.pos)
 
@@ -74,7 +92,14 @@ function this.addMarkerData(params)
         colorId = params.colorId,
         nameColorId = params.nameColorId,
         namePosId = params.namePosId,
+        plName = params.plName,
+        icon = params.icon,
+        size = params.size,
     }
+    if onWorldMap ~= nil then
+        params.onWorldMap = onWorldMap
+        dt.onWorldMap = onWorldMap
+    end
     dataTable[cellId][id] = dt
 
     return dt
@@ -191,15 +216,15 @@ function this.getDataText(dt, includeCellPos, insertLineBreaks)
     if dt.name and dt.name ~= "" then
         text = text.."#"..this.colors[dt.nameColorId or 1]:asHex()..dt.name.."#"..config.data.ui.defaultColor:asHex()
     end
+    if dt.descr and dt.descr ~= "" then
+        text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
+        text = text..dt.descr
+    end
     if includeCellPos ~= false then
         text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
         local cellId = not dt.cellId and commonData.exteriorCellIdFormat:format(dt.pos.x / 8192, dt.pos.y / 8192) or dt.cellId
         local str = string.format("%s (%d, %d)", mapDataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
         text = text..str
-    end
-    if dt.descr and dt.descr ~= "" then
-        text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
-        text = text..dt.descr
     end
 
     return text

@@ -56,6 +56,7 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("FollowPlayer"),
             textSize = config.data.ui.fontSize * 0.9,
+            anchor = util.vector2(0, 0.5),
             position = util.vector2(4, config.data.ui.fontSize),
             checked = config.data.main.centerOnPlayer,
             event = function (checked, layout)
@@ -75,6 +76,21 @@ local function create(menu)
             end
         }
 
+        local function addVPadding(elem, padding)
+            return {
+                type = ui.TYPE.Widget,
+                props = {
+                    size = util.vector2(
+                        size.x,
+                        (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
+                    ),
+                },
+                content = ui.content{
+                    elem
+                }
+            }
+        end
+
         local layerVisibilityLabel = {
             type = ui.TYPE.Text,
             props = {
@@ -82,7 +98,8 @@ local function create(menu)
                 textSize = config.data.ui.fontSize,
                 textColor = config.data.ui.defaultColor,
                 autoSize = true,
-                position = util.vector2(4, config.data.ui.fontSize * 3),
+                anchor = util.vector2(0, 0.5),
+                position = util.vector2(4, config.data.ui.fontSize * 0.75),
             },
         }
 
@@ -90,7 +107,8 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Regions"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 4.75),
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.legend.visibility.regions,
             event = function (checked, layout)
                 config.setValue("legend.visibility.regions", checked)
@@ -102,7 +120,8 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Cities"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 6.5),
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.legend.visibility.cities,
             event = function (checked, layout)
                 config.setValue("legend.visibility.cities", checked)
@@ -114,7 +133,8 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("PlayerMarker"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 8.25),
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.legend.visibility.playerMarker,
             event = function (checked, layout)
                 config.setValue("legend.visibility.playerMarker", checked)
@@ -129,7 +149,8 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Labels"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 10),
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.legend.visibility.labels,
             event = function (checked, layout)
                 config.setValue("legend.visibility.labels", checked)
@@ -141,7 +162,8 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("Markers"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 11.75),
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.legend.visibility.markers,
             event = function (checked, layout)
                 config.setValue("legend.visibility.markers", checked)
@@ -170,13 +192,23 @@ local function create(menu)
                         resource = uiUtils.whiteTexture,
                     },
                 },
-                focusOnPlayerCB,
-                layerVisibilityLabel,
-                regionsLayerCB,
-                citiesLayerCB,
-                playerLayerCB,
-                labelLayerCB,
-                markerLayerCB,
+                {
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = false,
+                        size = size,
+                        autoSize = false,
+                    },
+                    content = ui.content{
+                        addVPadding(focusOnPlayerCB, 2),
+                        addVPadding(layerVisibilityLabel),
+                        addVPadding(regionsLayerCB),
+                        addVPadding(citiesLayerCB),
+                        addVPadding(playerLayerCB),
+                        addVPadding(labelLayerCB),
+                        addVPadding(markerLayerCB),
+                    }
+                },
                 borders()
             }
         }
