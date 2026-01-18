@@ -227,7 +227,7 @@ function this.create(data, mapWidget, update)
 
     end
 
-    local markerDataId = widgetData.getMarkerId(data.cellId, data.pos)
+    local markerDataId = widgetData.getMarkerId(data.plName, data.cellId, data.pos)
     if this.activeMarkers[markerDataId] then
         if this.activeMarkers[markerDataId].imageH then
             this.activeMarkers[markerDataId].imageH:destroy()
@@ -255,7 +255,7 @@ end
 ---@param data advancedWorldMap.widget.notes.data.markerData
 ---@param update boolean?
 function this.remove(data, update)
-    local markerDataId = widgetData.getMarkerId(data.cellId, data.pos)
+    local markerDataId = widgetData.getMarkerId(data.plName, data.cellId, data.pos)
     if this.activeMarkers[markerDataId] then
         local mWidget
 

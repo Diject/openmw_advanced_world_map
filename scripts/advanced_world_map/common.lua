@@ -30,6 +30,7 @@ this.firstInitMenuId = "__FIRSTINIT__"
 this.messageBoxMenuId = "__MESSAGEBOX__"
 
 this.mapDataStorageName = "AdvancedWorldMap:mapDataStorage"
+this.notesStorageName = "AdvancedWorldMap:notes"
 
 this.messageLayer = "AdvWMap:Message"
 

@@ -1,27 +1,46 @@
 local util = require("openmw.util")
+local playerRef = require("openmw.self")
+local NPC = require("openmw.types").NPC
+local storage = require("openmw.storage")
 
 local commonData = require("scripts.advanced_world_map.common")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local config = require("scripts.advanced_world_map.config.config")
 
 
-local function getDataTable()
+local function getOldDataTable()
     if not localStorage.isPlayerStorageReady() then return end
 
-    localStorage.data[commonData.notesFieldId] = localStorage.data[commonData.notesFieldId] or {}
+    local data = localStorage.data[commonData.notesFieldId]
+    localStorage.data[commonData.notesFieldId] = nil
 
-    return localStorage.data[commonData.notesFieldId]
+    if data then
+        local newData = {}
+        for cellId, cellData in pairs(data) do
+            newData[cellId] = {}
+            for id, dt in pairs(cellData) do
+                dt.plName = NPC.record(playerRef.recordId).name or ""
+                newData[cellId][dt.plName..id] = dt
+            end
+        end
+        return newData
+    end
 end
-
 
 
 local this = {}
 
+this.data = nil
 
-function this.getMarkerId(cellId, pos)
-    return string.format("%s_%d_%d", cellId or commonData.exteriorMapId, pos.x, pos.y)
+local function getDataTable()
+    return this.data
+end
+
+function this.getMarkerId(plName, cellId, pos)
+    return string.format("%s_%s_%d_%d", plName or NPC.record(playerRef.recordId).name, cellId or commonData.exteriorMapId, pos.x, pos.y)
 end
 
 
@@ -78,7 +97,7 @@ this.markerSizeNames = {
 ---@return advancedWorldMap.widget.notes.data.markerData?
 function this.addMarkerData(params, onWorldMap)
     local cellId = params.cellId or commonData.exteriorMapId
-    local id = this.getMarkerId(cellId, params.pos)
+    local id = this.getMarkerId(params.plName, cellId, params.pos)
 
     local dataTable = getDataTable()
     if not dataTable then return end
@@ -127,7 +146,7 @@ function this.getMarkerDataAlt(data)
     if not dataTable then return end
 
     local cellId = data.cellId or commonData.exteriorMapId
-    local id = this.getMarkerId(cellId, data.pos)
+    local id = this.getMarkerId(data.plName, cellId, data.pos)
 
     return this.getMarkerData(id, cellId)
 end
@@ -153,7 +172,7 @@ function this.removeMarkerDataAlt(data)
     if not dataTable then return end
 
     local cellId = data.cellId or commonData.exteriorMapId
-    local id = this.getMarkerId(cellId, data.pos)
+    local id = this.getMarkerId(data.plName, cellId, data.pos)
 
     return this.removeMarkerData(id, cellId)
 end
@@ -250,6 +269,24 @@ function this.getDataText(dt, includeCellPos, insertLineBreaks)
     end
 
     return text
+end
+
+
+function this.loadData()
+    local notesStorage = storage.playerSection(commonData.notesStorageName)
+    local dt = notesStorage:asTable() or {}
+    this.data = dt[commonData.notesFieldId] or {}
+
+    local oldData = getOldDataTable()
+    if oldData then
+        tableLib.addMissing(this.data, oldData)
+    end
+end
+
+
+function this.saveData()
+    local notesStorage = storage.playerSection(commonData.notesStorageName)
+    notesStorage:set(commonData.notesFieldId, this.data)
 end
 
 

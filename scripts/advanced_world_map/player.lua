@@ -42,6 +42,7 @@ local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
 local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
 
 local markers = require("scripts.advanced_world_map.widgets.markers")
+local notesWidgetData = require("scripts.advanced_world_map.widgets.notes.data")
 
 -- widgets
 require("scripts.advanced_world_map.widgets.mapTypeLabel")
@@ -95,6 +96,8 @@ local function onInit()
     playerPos.init()
     discoveredLocs.init()
     disabledDoors.init()
+    -- must be after localStorage init
+    notesWidgetData.loadData()
 end
 
 
@@ -103,12 +106,15 @@ local function onLoad(data)
     playerPos.init()
     discoveredLocs.init()
     disabledDoors.init()
+    -- must be after localStorage init
+    notesWidgetData.loadData()
 end
 
 
 local function onSave()
     local data = {}
     localStorage.save(data)
+    notesWidgetData.saveData()
     return data
 end
 

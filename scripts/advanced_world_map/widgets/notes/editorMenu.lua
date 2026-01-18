@@ -47,8 +47,7 @@ function this.create(params)
 
     params.data = params.data and tableLib.copy(params.data) or {}
 
-    local playerName = types.NPC.record(plRef.recordId).name or ""
-    params.data.plName = playerName
+    params.data.plName = params.data.plName or types.NPC.record(plRef.recordId).name or ""
     params.data.size = params.data.size or 2
 
     local screenSize = uiUtils.getScaledScreenSize()
