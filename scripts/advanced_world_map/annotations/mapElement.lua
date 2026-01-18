@@ -82,6 +82,10 @@ function AdvancedWorldMapMapElement:getId() end
 ---@return integer layerId Layer identifier (e.g., marker layer, region layer, etc.)
 function AdvancedWorldMapMapElement:getLayerId() end
 
+--- Checks if this map element is still valid (i.e., has not been removed from the map widget)
+---@return boolean isValid True if the element is valid, false if it has been removed
+function AdvancedWorldMapMapElement:isValid() end
+
 ---Removes this map element from the map widget.
 ---After calling this method, the element is no longer visible and cannot be used.
 function AdvancedWorldMapMapElement:destroy() end

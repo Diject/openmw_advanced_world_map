@@ -194,7 +194,17 @@ end
 
 function mapElementMeta:destroy()
     if self._parent:removeMarker(self._id, self._layerId) then
+        self.invalid = true
         eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self, marker = self})
+    end
+end
+
+
+function mapElementMeta:isValid()
+    if self.invalid then return false end
+    if not self._parent:hasMarker(self._id) then
+        self.invalid = true
+        return false
     end
 end
 
