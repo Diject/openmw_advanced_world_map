@@ -7,6 +7,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local tableLib = require("scripts.advanced_world_map.utils.table")
+local celllLib = require("scripts.advanced_world_map.utils.cell")
 
 local config = require("scripts.advanced_world_map.config.config")
 
@@ -243,7 +244,7 @@ end
 ---@param dt advancedWorldMap.widget.notes.data.markerData
 ---@return string
 function this.getPosText(dt)
-    local cellId = not dt.cellId and commonData.exteriorCellIdFormat:format(dt.pos.x / 8192, dt.pos.y / 8192) or dt.cellId
+    local cellId = not dt.cellId and celllLib.getCellIdByPos(dt.pos) or dt.cellId
     local str = string.format("%s (%d, %d)", mapDataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
     return str
 end
@@ -263,7 +264,7 @@ function this.getDataText(dt, includeCellPos, insertLineBreaks)
     end
     if includeCellPos ~= false then
         text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
-        local cellId = not dt.cellId and commonData.exteriorCellIdFormat:format(dt.pos.x / 8192, dt.pos.y / 8192) or dt.cellId
+        local cellId = not dt.cellId and celllLib.getCellIdByPos(dt.pos) or dt.cellId
         local str = string.format("%s (%d, %d)", mapDataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
         text = text..str
     end

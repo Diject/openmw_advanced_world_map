@@ -10,8 +10,8 @@ local this = {}
 
 
 function this.getGridCoordinates(pos)
-    local gridX = math.floor(pos.x / 8192)
-    local gridY = math.floor(pos.y / 8192)
+    local gridX = pos.x < 0 and math.floor(pos.x / 8192) or math.floor(1 + pos.x / 8192)
+    local gridY = pos.y < 0 and math.floor(pos.y / 8192) or math.floor(1 + pos.y / 8192)
     return gridX, gridY
 end
 
