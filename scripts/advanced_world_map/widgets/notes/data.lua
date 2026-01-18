@@ -222,6 +222,15 @@ end
 
 
 ---@param dt advancedWorldMap.widget.notes.data.markerData
+---@return string
+function this.getPosText(dt)
+    local cellId = not dt.cellId and commonData.exteriorCellIdFormat:format(dt.pos.x / 8192, dt.pos.y / 8192) or dt.cellId
+    local str = string.format("%s (%d, %d)", mapDataHandler.cellNameById[cellId] or "", dt.pos.x, dt.pos.y)
+    return str
+end
+
+
+---@param dt advancedWorldMap.widget.notes.data.markerData
 ---@param includeCellPos boolean? default=true
 ---@param insertLineBreaks boolean? default=true
 function this.getDataText(dt, includeCellPos, insertLineBreaks)

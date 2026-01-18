@@ -53,7 +53,7 @@ local function fill(menu, sb, filter)
     ---@param filterTags string?
     local function add(dt, filterTags)
 
-        local text = widgetData.getDataText(dt)
+        local text = widgetData.getDataText(dt, false)
 
         if filter and filter ~= "" then
             local textLower = (filterTags or "")..stringLib.utf8_lower(text)
@@ -74,75 +74,43 @@ local function fill(menu, sb, filter)
                 position = util.vector2(0, 2),
                 multiline = true,
                 wordWrap = true,
-                textShadow = true,
+                textShadow = false,
                 textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
-                propagateEvents = false,
             },
-            userData = {
+        }
 
+        local posText = widgetData.getPosText(dt)
+        local posTextHeight = uiUtils.getTextHeight(posText, config.data.ui.fontSize * 0.9, sbSize.x - config.data.ui.fontSize,
+            config.data.ui.textHeightMul, 0)
+        local posLay = {
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+                size = util.vector2(sbSize.x - 4, config.data.ui.fontSize),
             },
-            events = {
-                mousePress = async:callback(function(e, layout)
-                    sb:mousePress(e)
-                end),
-
-                focusLoss = async:callback(function(e, layout)
-                    sb:focusLoss(e)
-
-                    if layout.props.textShadowColor then
-                        layout.props.textShadowColor = nil
-                        menu:update()
-                    end
-                end),
-
-                mouseMove = async:callback(function(e, layout)
-                    sb:mouseMove(e)
-
-                    if layout.props.textShadowColor ~= config.data.ui.textShadowColor then
-                        layout.props.textShadowColor = config.data.ui.textShadowColor
-                        menu:update()
-                    end
-                end),
-
-                mouseRelease = async:callback(function(e, layout)
-                    sb:mouseRelease(e)
-
-                    if e.button ~= 1 and e.button ~= 3 then return end
-
-                    if sb.lastMovedDistance < 20 then
-
-                        if e.button == 1 then
-                            if menu.mapWidget.cellId ~= dt.cellId then
-                                menu:updateMapWidgetCell(dt.cellId)
-                            end
-                            menu.mapWidget:focusOnWorldPosition(dt.pos)
-                            menu.mapWidget:updateMarkers()
-
-                        elseif e.button == 3 then
-                            editorMenu.create{
-                                data = dt,
-                                yesCallback = function (dt)
-                                    if dt.pos then
-                                        widgetData.addMarkerData(dt)
-                                        require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
-                                        menu.mapWidget:updateMarkers()
-                                        fill(menu, sb, filter)
-                                    end
-                                end,
-                                removeCallback = function (dt)
-                                    widgetData.removeMarkerDataAlt(dt)
-                                    require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
-                                    menu.mapWidget:updateMarkers()
-                                    fill(menu, sb, filter)
-                                end
-                            }
-                        end
-
-                        menu:update()
-                    end
-                end),
-            },
+            content = ui.content{
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = dt.icon and vfs.fileExists(dt.icon) and ui.texture{ path = dt.icon } or defaultMarkerTexture,
+                        size = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize),
+                        anchor = util.vector2(0, 0.5),
+                        position = util.vector2(config.data.ui.fontSize / 2, 0),
+                        color = dt and dt.colorId and widgetData.colors[dt.colorId] or config.data.ui.defaultColor
+                    },
+                },
+                {
+                    type = ui.TYPE.Text,
+                    props = {
+                        text = " "..posText,
+                        textSize = config.data.ui.fontSize * 0.9,
+                        size = util.vector2(sbSize.x - config.data.ui.fontSize, posTextHeight),
+                        textColor = config.data.ui.defaultColor,
+                        textShadow = false,
+                    },
+                }
+            }
         }
 
         local height = textHeight + 2
@@ -150,7 +118,7 @@ local function fill(menu, sb, filter)
         local layout = {
             type = ui.TYPE.Widget,
             props = {
-                size = util.vector2(sbSize.x, textHeight + config.data.ui.fontSize),
+                size = util.vector2(sbSize.x, textHeight + posTextHeight + 2),
             },
             content = ui.content{
                 {
@@ -172,17 +140,76 @@ local function fill(menu, sb, filter)
                         position = util.vector2(2, 2),
                         size = util.vector2(sbSize.x - 4, height),
                     },
+                    userData = {},
+                    events = {
+                        mousePress = async:callback(function(e, layout)
+                            sb:mousePress(e)
+                        end),
+
+                        focusLoss = async:callback(function(e, layout)
+                            sb:focusLoss(e)
+
+                            if textLay.props.textShadowColor then
+                                textLay.props.textShadow = nil
+                                textLay.props.textShadowColor = nil
+                                posLay.content[2].props.textShadow = nil
+                                posLay.content[2].props.textShadowColor = nil
+                                menu:update()
+                            end
+                        end),
+
+                        mouseMove = async:callback(function(e, layout)
+                            sb:mouseMove(e)
+
+                            if textLay.props.textShadowColor ~= config.data.ui.textShadowColor then
+                                textLay.props.textShadow = true
+                                textLay.props.textShadowColor = config.data.ui.textShadowColor
+                                posLay.content[2].props.textShadow = true
+                                posLay.content[2].props.textShadowColor = config.data.ui.textShadowColor
+                                menu:update()
+                            end
+                        end),
+
+                        mouseRelease = async:callback(function(e, layout)
+                            sb:mouseRelease(e)
+
+                            if e.button ~= 1 and e.button ~= 3 then return end
+
+                            if sb.lastMovedDistance < 20 then
+
+                                if e.button == 1 then
+                                    if menu.mapWidget.cellId ~= dt.cellId then
+                                        menu:updateMapWidgetCell(dt.cellId)
+                                    end
+                                    menu.mapWidget:focusOnWorldPosition(dt.pos)
+                                    menu.mapWidget:updateMarkers()
+
+                                elseif e.button == 3 then
+                                    editorMenu.create{
+                                        data = dt,
+                                        yesCallback = function (dt)
+                                            if dt.pos then
+                                                widgetData.addMarkerData(dt)
+                                                require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
+                                                menu.mapWidget:updateMarkers()
+                                                fill(menu, sb, filter)
+                                            end
+                                        end,
+                                        removeCallback = function (dt)
+                                            widgetData.removeMarkerDataAlt(dt)
+                                            require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
+                                            menu.mapWidget:updateMarkers()
+                                            fill(menu, sb, filter)
+                                        end
+                                    }
+                                end
+
+                                menu:update()
+                            end
+                        end),
+                    },
                     content = ui.content{
-                        {
-                            type = ui.TYPE.Image,
-                            props = {
-                                resource = dt.icon and vfs.fileExists(dt.icon) and ui.texture{ path = dt.icon } or defaultMarkerTexture,
-                                size = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize),
-                                anchor = util.vector2(0, 0.5),
-                                position = util.vector2(config.data.ui.fontSize / 2, 0),
-                                color = dt and dt.colorId and widgetData.colors[dt.colorId] or config.data.ui.defaultColor
-                            },
-                        },
+                        posLay,
                         textLay,
                     }
                 }
