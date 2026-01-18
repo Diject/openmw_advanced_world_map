@@ -19,7 +19,9 @@ function this.updateLabel(menu)
     if not nameLayout or not menu or not menu.mapWidget then return end
     local mapWidget = menu.mapWidget
     local text
-    if mapWidget.cellId then
+    if not config.data.main.centerOnPlayer then
+        text = ""
+    elseif mapWidget.cellId then
         local cellName = mapDataHandler.cellNameById[mapWidget.cellId]
         if cellName then
             text = string.format(" %s ", cellName)
