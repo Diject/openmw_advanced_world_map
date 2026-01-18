@@ -62,6 +62,11 @@ this.default = {
     },
     notes = {
         mapFontSize = 10,
+        markerVisibility = {
+            personal = true,
+            global = true,
+        },
+        listForAllCharacters = true,
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],

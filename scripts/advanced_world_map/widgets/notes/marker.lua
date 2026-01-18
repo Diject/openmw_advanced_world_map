@@ -1,6 +1,8 @@
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local vfs = require("openmw.vfs")
+local playerRef = require("openmw.self")
+local NPC = require("openmw.types").NPC
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
@@ -15,7 +17,7 @@ local markerTexture = ui.texture{ path = commonData.noteMarkerPath }
 
 local this = {}
 
----@type table<string, {textH : AdvancedWorldMap.MapElement?, imageH : AdvancedWorldMap.MapElement?}> by marker id
+---@type table<string, {textH : AdvancedWorldMap.MapElement?, imageH : AdvancedWorldMap.MapElement?, data : advancedWorldMap.widget.notes.data.markerData?}> by marker id
 this.activeMarkers = {}
 
 ---@type AdvancedWorldMap.Menu.Map?
@@ -61,6 +63,12 @@ end
 ---@param update boolean?
 ---@return boolean?
 function this.create(data, mapWidget, update)
+
+    local playerName = NPC.record(playerRef.recordId).name or ""
+    if data.plName and ((not config.data.notes.markerVisibility.personal and data.plName == playerName) or
+            (not config.data.notes.markerVisibility.global and data.plName ~= playerName)) then
+        return
+    end
 
     if not mapWidget then
         if not this.lastMenu then return end
@@ -231,6 +239,7 @@ function this.create(data, mapWidget, update)
     this.activeMarkers[markerDataId] = {
         imageH = imageMarkerHandler,
         textH = textMarkerHandler,
+        data = data,
     }
 
     if update then
@@ -267,6 +276,45 @@ function this.remove(data, update)
             mWidget:update()
         end
     end
+end
+
+
+---@param cellId string?
+function this.dispose(cellId)
+    for id, dt in pairs(this.activeMarkers) do
+        if dt.data.cellId == cellId then
+            if dt.imageH then
+                dt.imageH:destroy()
+            end
+            if dt.textH then
+                dt.textH:destroy()
+            end
+            this.activeMarkers[id] = nil
+        end
+    end
+end
+
+
+---@params menu AdvancedWorldMap.Menu.Map
+function this.recreate(menu)
+    for id, markerHandlers in pairs(this.activeMarkers) do
+        if markerHandlers.imageH then
+            markerHandlers.imageH:destroy()
+            markerHandlers.imageH._parent:update()
+        end
+        if markerHandlers.textH then
+            markerHandlers.textH:destroy()
+            markerHandlers.textH._parent:update()
+        end
+        this.activeMarkers[id] = nil
+    end
+
+    menu:iterateCachedMapWidgets(function (cellId, mapWidget)
+        for id, dt in pairs(widgetData.getCellData(cellId) or {}) do
+            this.create(dt, mapWidget)
+            mapWidget:updateMarkers()
+        end
+    end)
 end
 
 

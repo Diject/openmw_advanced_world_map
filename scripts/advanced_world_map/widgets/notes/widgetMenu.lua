@@ -5,9 +5,10 @@ local async = require("openmw.async")
 local input = require("openmw.input")
 local playerRef = require("openmw.self")
 local vfs = require("openmw.vfs")
+local NPC = require("openmw.types").NPC
 
 local commonData = require("scripts.advanced_world_map.common")
-local config = require("scripts.advanced_world_map.config.config")
+local config = require("scripts.advanced_world_map.config.configLib")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
@@ -22,6 +23,7 @@ local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require('scripts.advanced_world_map.ui.interval')
+local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 
 local thinLineTexture = ui.texture{ path = "textures/menu_thin_border_top.dds" }
 local defaultMarkerTexture = ui.texture{ path = commonData.noteMarkerPath }
@@ -37,6 +39,8 @@ this.update = function () end
 ---@param filter string
 local function fill(menu, sb, filter)
     sb:clearContent()
+
+    local playerName = NPC.record(playerRef.recordId).name or ""
 
     local sbSize = sb:getSize()
 
@@ -195,6 +199,10 @@ local function fill(menu, sb, filter)
     local noteData = {}
 
     for cellId, _, dt in widgetData.getIterator() do
+        if not config.data.notes.listForAllCharacters and (not dt.plName or dt.plName ~= playerName) then
+            goto continue
+        end
+
         local tags = ""
         local isEx = false
 
@@ -209,6 +217,8 @@ local function fill(menu, sb, filter)
         end
 
         table.insert(noteData, {dt, tags, isEx, commonData.distance2D(isEx and playerExPos or playerRef.position, dt.pos)})
+
+        ::continue::
     end
 
     -- Sort first by location type (exterior/interior), then by distance to the player
@@ -241,14 +251,13 @@ function  this.create(menu, content)
 
     local scrollBoxContent = ui.content{}
 
-    local scrollBoxSize = util.vector2(size.x, size.y - (searchBarFontSize + config.data.ui.fontSize / 2 + 6))
+    local scrollBoxSize = util.vector2(size.x, size.y - (searchBarFontSize + config.data.ui.fontSize * 2 + 8))
 
     local scrollBoxLayout = scrollBox{
         updateFunc = menu.update,
         contentHeight = 0,
         leftOffset = 2,
         size = scrollBoxSize,
-        position = util.vector2(0, size.y - scrollBoxSize.y),
         scrollAmount = config.data.ui.fontSize * 2,
         content = scrollBoxContent,
     }
@@ -259,6 +268,19 @@ function  this.create(menu, content)
     local textFilter = ":here:"
 
     fill(menu, scrollBoxMeta, textFilter)
+
+    local allNotesCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("ListAllCharactersNotes"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(4, config.data.ui.fontSize * 1),
+        checked = config.data.notes.listForAllCharacters,
+        event = function (checked, layout)
+            config.setValue("notes.listForAllCharacters", checked)
+            fill(menu, scrollBoxMeta, textFilter)
+        end
+    }
 
     local searchBarLayout
     searchBarLayout = {
@@ -328,8 +350,26 @@ function  this.create(menu, content)
                     resource = uiUtils.whiteTexture,
                 },
             },
-            searchBarLayout,
-            scrollBoxLayout,
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = false,
+                    size = size,
+                },
+                content = ui.content{
+                    searchBarLayout,
+                    {
+                        type = ui.TYPE.Widget,
+                        props = {
+                            size = util.vector2(size.x, config.data.ui.fontSize * 2),
+                        },
+                        content = ui.content{
+                            allNotesCB,
+                        }
+                    },
+                    scrollBoxLayout,
+                }
+            },
             borders()
         }
     }

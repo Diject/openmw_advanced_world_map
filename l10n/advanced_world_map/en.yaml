@@ -57,6 +57,9 @@ mapDataNotInitialized: "Map data is not available. Report this issue on the mod 
 charGenNotFinished: "You cannot open the map until character generation is complete."
 LastVisited: "Last visited: %s"
 PinUnpin: "Pin/Unpin"
+PersonalNotesCB: "Personal"
+GlobalNotesCB: "Global"
+ListAllCharactersNotes: "All characters' notes"
 
 date.suffix.st: "st"
 date.suffix.nd: "nd"

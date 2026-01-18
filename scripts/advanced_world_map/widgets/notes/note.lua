@@ -3,12 +3,15 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local I = require("openmw.interfaces")
+local NPC = require("openmw.types").NPC
+local playerRef = require("openmw.self")
 
 local commonData = require("scripts.advanced_world_map.common")
-local config = require("scripts.advanced_world_map.config.config")
+local config = require("scripts.advanced_world_map.config.configLib")
 
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
+local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -148,6 +151,8 @@ end
 
 
 local function init()
+    local playerName = NPC.record(playerRef.recordId).name or ""
+
     ---@type AdvancedWorldMap.Event
     local events = AdvancedWorldMap.events
 
@@ -191,6 +196,14 @@ local function init()
     end)
 
 
+    -- Event triggered when a location map widget is destroyed
+    -- This event is called when the map widget is removed from cache
+    -- Remove all markers related to that map widget to free memory
+    events.registerHandler(events.EVENT.onMapDestroyed, function (e)
+        widgetMarker.dispose(e.mapWidget.cellId)
+    end)
+
+
     -- Event triggered before showing the tooltip for a door marker
     -- We will add note info to the tooltip if there are notes for that cell
     events.registerHandler(events.EVENT.onMarkerTooltipShow, function (e)
@@ -213,6 +226,11 @@ local function init()
         local cellId = userData.cellId
         local addedCount = 0
         for _, mId, data in widgetData.getCellIterator(cellId) do
+            if data.plName and ((not config.data.notes.markerVisibility.personal and data.plName == playerName) or
+                    (not config.data.notes.markerVisibility.global and data.plName ~= playerName)) then
+                goto continue
+            end
+
             if addedCount >= 2 then
                 layout.content:add{
                     type = ui.TYPE.Text,
@@ -234,12 +252,88 @@ local function init()
 
                 addedCount = addedCount + 1
             end
+
+            ::continue::
         end
 
         if addedCount > 0 then
             e.content:add(layout)
         end
     end, -10)
+
+    -- Event triggered when a widget is opened.
+    -- This code is for personal use. Do not change the layout of the default widgets unless you know what you are doing.
+    events.registerHandler(events.EVENT.onWidgetOpened, function (e)
+        if e.widgetId ~= "AdvancedWorldMap:Legend" then return end
+
+        local flexContent = e.content[1].content[2].content
+        if not flexContent then return end
+
+        local size = e.content[1].props.size
+
+        local function addVPadding(elem, padding)
+            return {
+                type = ui.TYPE.Widget,
+                props = {
+                    size = util.vector2(
+                        size.x,
+                        (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
+                    ),
+                },
+                content = ui.content{
+                    elem
+                }
+            }
+        end
+
+        local label = {
+            type = ui.TYPE.Text,
+            props = {
+                text = l10n("Notes"),
+                textSize = config.data.ui.fontSize,
+                textColor = config.data.ui.defaultColor,
+                autoSize = true,
+                anchor = util.vector2(0, 0.5),
+                position = util.vector2(4, config.data.ui.fontSize * 0.75),
+            },
+        }
+
+        local personalCB = checkBox{
+            updateFunc = e.menu.update,
+            text = l10n("PersonalNotesCB"),
+            textSize = config.data.ui.fontSize * 0.9,
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+            checked = config.data.notes.markerVisibility.personal,
+            event = function (checked, layout)
+                config.setValue("notes.markerVisibility.personal", checked)
+                widgetMarker.recreate(e.menu)
+            end
+        }
+
+        local globalCB = checkBox{
+            updateFunc = e.menu.update,
+            text = l10n("GlobalNotesCB"),
+            textSize = config.data.ui.fontSize * 0.9,
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+            checked = config.data.notes.markerVisibility.global,
+            event = function (checked, layout)
+                config.setValue("notes.markerVisibility.global", checked)
+                widgetMarker.recreate(e.menu)
+            end
+        }
+
+        flexContent:add(
+            addVPadding(label)
+        )
+        flexContent:add(
+            addVPadding(personalCB)
+        )
+        flexContent:add(
+            addVPadding(globalCB)
+        )
+    end)
 end
 
 

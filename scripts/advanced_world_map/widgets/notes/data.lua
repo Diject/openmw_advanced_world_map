@@ -172,6 +172,19 @@ function this.hasCellNotes(cellId)
 end
 
 
+---@param cellId string? nil for exterior map
+function this.getCellData(cellId)
+    local dataTable = getDataTable()
+    if not dataTable then return false end
+
+    cellId = cellId or commonData.exteriorMapId
+
+    if not dataTable[cellId] then return false end
+
+    return dataTable[cellId]
+end
+
+
 ---@param cellId string?
 ---@return fun(): (cellId: string, id: string, data: advancedWorldMap.widget.notes.data.markerData)
 function this.getCellIterator(cellId)
