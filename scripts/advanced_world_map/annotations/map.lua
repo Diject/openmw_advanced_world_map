@@ -67,6 +67,10 @@ function AdvancedWorldMapMenuMap:getMapWidgetForCell(cellId) end
 ---@return AdvancedWorldMap.MapWidget? widget Cached widget instance, or nil if not found
 function AdvancedWorldMapMenuMap:getCachedMapWidget(cellId) end
 
+---Iterates over all cached map widgets, calling the provided function for each.
+---@param func fun(cellId: string?, widget: AdvancedWorldMap.MapWidget) Function to call for each cached widget. 'cellId' is nil for exterior/world map.
+function AdvancedWorldMapMenuMap:iterateCachedMapWidgets(func) end
+
 ---Switches the displayed map to a different cell.
 ---Triggers onMapClosed, onMapInitialized (if new), and onMapShown events.
 ---@param cellId string? Cell identifier (nil for exterior/world map)

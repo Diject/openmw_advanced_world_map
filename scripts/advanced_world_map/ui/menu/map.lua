@@ -252,6 +252,13 @@ function menuMeta:getCachedMapWidget(cellId)
 end
 
 
+function menuMeta:iterateCachedMapWidgets(func)
+    for cellId, meta in pairs(this.cachedMapWidgetMetatable) do
+        func(cellId ~= commonData.exteriorMapId and cellId or nil, meta)
+    end
+end
+
+
 local function controllerYCallback()
     local self = this.activeMenuMeta
     if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
