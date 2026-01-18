@@ -263,6 +263,10 @@ function AdvancedWorldMapMapWidget:getActiveMarkers() end
 ---@return boolean inFocus True if the map is in focus
 function AdvancedWorldMapMapWidget:isInFocus() end
 
+---Checks if the map widget is valid (not destroyed or removed from cache)
+---@return boolean isValid True if the map widget is valid
+function AdvancedWorldMapMapWidget:isValid() end
+
 ---Updates the world map texture
 ---@param texture string|TextureResource? New texture resource (string path or ui.texture)
 ---@param mapInfo AdvancedWorldMap.MapWidget.MapImageInfo? New map image information

@@ -38,7 +38,11 @@ this.cachedMapWidgetMetatable = {}
 
 function this.clearMapWidgetCache()
     this.cachedMapWidgetLayout = {}
-    this.cachedMapWidgetMetatable = {}
+    for id, m in pairs(this.cachedMapWidgetMetatable) do
+        m.invalid = true
+        eventSys.triggerEvent(eventSys.EVENT.onMapDestroyed, {mapWidget = m})
+        this.cachedMapWidgetMetatable[id] = nil
+    end
 end
 
 
@@ -404,8 +408,10 @@ function menuMeta:close()
                 this.cachedMapWidgetLayout[id] = nil
             end
         end
-        for id, _ in pairs(this.cachedMapWidgetMetatable) do
+        for id, m in pairs(this.cachedMapWidgetMetatable) do
             if id ~= commonData.exteriorMapId then
+                m.invalid = true
+                eventSys.triggerEvent(eventSys.EVENT.onMapDestroyed, {mapWidget = m})
                 this.cachedMapWidgetMetatable[id] = nil
             end
         end

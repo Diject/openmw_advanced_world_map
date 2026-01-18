@@ -12,6 +12,7 @@ this.EVENT = {
     onMapInitialized = "onMapInitialized",
     onMapShown = "onMapShown",
     onMapClosed = "onMapClosed",
+    onMapDestroyed = "onMapDestroyed",
     onCellMarkersCreate = "onCellMarkersCreate",
     onMarkerClick = "onMarkerClick",
     onMarkerClicked = "onMarkerClicked",
@@ -50,6 +51,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onMapInitialized", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapShown", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onMapDestroyed", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onCellMarkersCreate", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onMarkerClick", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onMarkerClicked", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta}) : (boolean?), priority : number?)

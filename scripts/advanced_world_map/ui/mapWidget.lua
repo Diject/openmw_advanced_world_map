@@ -821,6 +821,11 @@ function mapWidgetMeta:removeMarker(id, layer)
 end
 
 
+function mapWidgetMeta:hasMarker(id)
+    return self.zoomMarkersCellIdById[id] ~= nil
+end
+
+
 ---@param region advancedWorldMap.ui.mapWidget.region
 function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly)
     local minGridX = math.floor(region.left / 8192)
@@ -1500,6 +1505,11 @@ end
 
 function mapWidgetMeta:isInFocus()
     return self.layout.userData.inFocus == true
+end
+
+
+function mapWidgetMeta:isValid()
+    return not self.invalid ---@diagnostic disable-line: undefined-field
 end
 
 
