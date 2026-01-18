@@ -64,9 +64,9 @@ this.default = {
         mapFontSize = 10,
         markerVisibility = {
             personal = true,
-            global = true,
+            global = false,
         },
-        listForAllCharacters = true,
+        listForAllCharacters = false,
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],

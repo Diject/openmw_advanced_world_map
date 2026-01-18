@@ -49,6 +49,7 @@ function this.create(params)
 
     params.data.plName = params.data.plName or types.NPC.record(plRef.recordId).name or ""
     params.data.size = params.data.size or 2
+    params.data.icon = params.data.icon or commonData.widgetIconsDir.."default/featherico.png"
 
     local screenSize = uiUtils.getScaledScreenSize()
 

@@ -43,6 +43,7 @@ local function fill(menu, sb, filter)
     local playerName = NPC.record(playerRef.recordId).name or ""
 
     local sbSize = sb:getSize()
+    sbSize = util.vector2(sbSize.x - 6, sbSize.y)
 
     ---@type Content
     local content = sb:getMainFlex().content
@@ -87,7 +88,7 @@ local function fill(menu, sb, filter)
             type = ui.TYPE.Flex,
             props = {
                 horizontal = true,
-                size = util.vector2(sbSize.x - 4, config.data.ui.fontSize),
+                size = util.vector2(sbSize.x, config.data.ui.fontSize),
             },
             content = ui.content{
                 {
@@ -138,7 +139,7 @@ local function fill(menu, sb, filter)
                     props = {
                         horizontal = false,
                         position = util.vector2(2, 2),
-                        size = util.vector2(sbSize.x - 4, height),
+                        size = util.vector2(sbSize.x, height),
                     },
                     userData = {},
                     events = {
@@ -180,6 +181,11 @@ local function fill(menu, sb, filter)
                                 if e.button == 1 then
                                     if menu.mapWidget.cellId ~= dt.cellId then
                                         menu:updateMapWidgetCell(dt.cellId)
+                                    end
+                                    if menu.mapWidget:isInZoomInMode() and dt.onWorldMap then
+                                        menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 0.9)
+                                    elseif not menu.mapWidget:isInZoomInMode() and dt.onWorldMap == false then
+                                        menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 2)
                                     end
                                     menu.mapWidget:focusOnWorldPosition(dt.pos)
                                     menu.mapWidget:updateMarkers()
