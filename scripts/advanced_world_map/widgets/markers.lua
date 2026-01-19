@@ -722,7 +722,7 @@ eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, function (e)
 
             ---@diagnostic disable-next-line: missing-fields
             marker:updateLayout{
-                visible = false,
+                alpha = 0,
             }
         end
 
@@ -770,7 +770,7 @@ eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, function (e)
                     pos = center + util.vector2((i % columns) * columnWidth * posMulX, (math.floor(i / columns)) *
                         newFontWorldSize * posMulY),
                     fontSize = newFontSize,
-                    visible = true,
+                    alpha = marker:getAlpha(),
                     text = stringLib.utf8_sub(marker._params.text, 2, textMaxLength) ..
                         ((stringLib.length(marker._params.text) - 2) > textMaxLength and "..." or "")
                 }
