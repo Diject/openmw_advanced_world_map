@@ -1361,6 +1361,8 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
 
     if self._playerMarkerVisible == false then return false end
 
+    local mapLayerPosition = self:getMapLayersLayout().props.position
+
     local pos = self.cellId and playerRef.position or playerPos.gexExteriorPos()
     local dist = (playerMarkerLayout.userData.lastPos - pos):length()
 
@@ -1376,11 +1378,12 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local playerRelPos = self:getRelativePositionByWorldPosition(pos)
     playerMarkerLayout.props.relativePosition = playerRelPos
     playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle, yaw) or playerMarkerTexture
-    if commonData.distance2D(playerMarkerLayout.userData.lastPos, pos) > 4096 then
+    if dist > 4096 or commonData.distance2D(playerMarkerLayout.userData.lastLayPos, mapLayerPosition) > 1000 then
         self._updatePlayerTiles = true
     end
     playerMarkerLayout.userData.lastPos = pos
     playerMarkerLayout.userData.lastYaw = yaw
+    playerMarkerLayout.userData.lastLayPos = mapLayerPosition
 
     if focusOnPlayer then
         if self._updatePlayerTiles then
@@ -1711,6 +1714,7 @@ function this.new(params)
                         size = util.vector2(48, 48),
                         lastPos = playerPos.gexExteriorPos(),
                         lastYaw = playerRef.rotation:getYaw(),
+                        lastLayPos = util.vector2(0, 0),
                         lastNorthAngle = meta.northDirectionAngle or 0,
                     },
                 },
