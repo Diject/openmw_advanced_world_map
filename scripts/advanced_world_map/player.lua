@@ -410,7 +410,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 7,
+        version = 8,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
