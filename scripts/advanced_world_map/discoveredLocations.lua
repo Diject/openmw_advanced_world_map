@@ -43,6 +43,13 @@ function this.addVisitedCell(cell)
 end
 
 
+function this.updateVisited(cell)
+    if this.visited[cell.id] then
+        this.visited[cell.id] = core.getGameTime()
+    end
+end
+
+
 function this.addDiscoveredCell(cell, addNearbyExteriors)
     if this.blockDiscovery then return end
 
