@@ -43,7 +43,7 @@ local function fill(menu, sb, filter)
     local playerName = NPC.record(playerRef.recordId).name or ""
 
     local sbSize = sb:getSize()
-    sbSize = util.vector2(sbSize.x - 6, sbSize.y)
+    sbSize = util.vector2(sbSize.x - 4, sbSize.y)
 
     ---@type Content
     local content = sb:getMainFlex().content
@@ -82,13 +82,15 @@ local function fill(menu, sb, filter)
         }
 
         local posText = widgetData.getPosText(dt)
+        if dt.plName ~= playerName then
+            posText = ""..dt.plName..", "..posText
+        end
         local posTextHeight = uiUtils.getTextHeight(posText, config.data.ui.fontSize * 0.9, sbSize.x - config.data.ui.fontSize,
             config.data.ui.textHeightMul, 0)
         local posLay = {
             type = ui.TYPE.Flex,
             props = {
                 horizontal = true,
-                size = util.vector2(sbSize.x, config.data.ui.fontSize),
             },
             content = ui.content{
                 {
@@ -100,6 +102,46 @@ local function fill(menu, sb, filter)
                         position = util.vector2(config.data.ui.fontSize / 2, 0),
                         color = dt and dt.colorId and widgetData.colors[dt.colorId] or config.data.ui.defaultColor
                     },
+                    userData = {},
+                    events = {
+                        mousePress = async:callback(function(e, layout)
+                            sb:mousePress(e)
+                        end),
+
+                        focusLoss = async:callback(function(e, layout)
+                            sb:focusLoss(e)
+                        end),
+
+                        mouseMove = async:callback(function(e, layout)
+                            sb:mouseMove(e)
+                        end),
+
+                        mouseRelease = async:callback(function(e, layout)
+                            sb:mouseRelease(e)
+
+                            if e.button ~= 1 then return end
+
+                            if sb.lastMovedDistance < 20 then
+                                editorMenu.create{
+                                    data = dt,
+                                    yesCallback = function (dt)
+                                        if dt.pos then
+                                            widgetData.addMarkerData(dt)
+                                            require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
+                                            menu.mapWidget:updateMarkers()
+                                            fill(menu, sb, filter)
+                                        end
+                                    end,
+                                    removeCallback = function (dt)
+                                        widgetData.removeMarkerDataAlt(dt)
+                                        require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
+                                        menu.mapWidget:updateMarkers()
+                                        fill(menu, sb, filter)
+                                    end
+                                }
+                            end
+                        end),
+                    },
                 },
                 {
                     type = ui.TYPE.Text,
@@ -107,8 +149,12 @@ local function fill(menu, sb, filter)
                         text = " "..posText,
                         textSize = config.data.ui.fontSize * 0.9,
                         size = util.vector2(sbSize.x - config.data.ui.fontSize, posTextHeight),
+                        autoSize = false,
                         textColor = config.data.ui.defaultColor,
                         textShadow = false,
+                        multiline = true,
+                        wordWrap = true,
+
                     },
                 }
             }
@@ -119,7 +165,7 @@ local function fill(menu, sb, filter)
         local layout = {
             type = ui.TYPE.Widget,
             props = {
-                size = util.vector2(sbSize.x, textHeight + posTextHeight + 2),
+                size = util.vector2(sbSize.x, height + posTextHeight + 6),
             },
             content = ui.content{
                 {
@@ -138,7 +184,7 @@ local function fill(menu, sb, filter)
                     type = ui.TYPE.Flex,
                     props = {
                         horizontal = false,
-                        position = util.vector2(2, 2),
+                        position = util.vector2(0, 4),
                         size = util.vector2(sbSize.x, height),
                     },
                     userData = {},
@@ -182,11 +228,13 @@ local function fill(menu, sb, filter)
                                     if menu.mapWidget.cellId ~= dt.cellId then
                                         menu:updateMapWidgetCell(dt.cellId)
                                     end
+
                                     if menu.mapWidget:isInZoomInMode() and dt.onWorldMap then
                                         menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 0.9)
-                                    elseif not menu.mapWidget:isInZoomInMode() and dt.onWorldMap == false then
-                                        menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 2)
+                                    elseif not menu.mapWidget:isInZoomInMode() and not dt.onWorldMap then
+                                        menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 3)
                                     end
+
                                     menu.mapWidget:focusOnWorldPosition(dt.pos)
                                     menu.mapWidget:updateMarkers()
 
@@ -259,7 +307,7 @@ local function fill(menu, sb, filter)
         if a[3] ~= b[3] then
             return a[3]
         end
-        return a[4] < b[4]
+        return a[4] > b[4]
     end)
 
     for _, data in ipairs(noteData) do
@@ -289,7 +337,7 @@ function  this.create(menu, content)
     local scrollBoxLayout = scrollBox{
         updateFunc = menu.update,
         contentHeight = 0,
-        leftOffset = 2,
+        leftOffset = 4,
         size = scrollBoxSize,
         scrollAmount = config.data.ui.fontSize * 2,
         content = scrollBoxContent,

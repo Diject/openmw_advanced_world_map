@@ -25,6 +25,14 @@ local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local l10n = core.l10n(commonData.l10nKey)
 
 local iconTexture = ui.texture{ path = commonData.noteMarkerPath }
+local arrowLeftTexture = ui.texture{ path = "textures/omw_menu_scroll_left.dds" }
+local arrowRightTexture = ui.texture{ path = "textures/omw_menu_scroll_right.dds" }
+
+local borderTextures = {
+    ui.texture{ path = "textures/menu_thin_border_left.dds" },
+    ui.texture{ path = "textures/menu_thin_border_right.dds" },
+    ui.texture{ path = "textures/menu_thin_border_top.dds" },
+}
 
 
 local this = {}
@@ -55,7 +63,7 @@ function this.create(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(screenSize.x * 0.45, screenSize.y * 0.4)
+    params.size = params.size or util.vector2(screenSize.x * 0.4, screenSize.y * 0.4)
 
     if not params.relativePosition then
         params.relativePosition = util.vector2((screenSize.x - params.size.x) / 2 / screenSize.x, (screenSize.y - params.size.y) / 2 / screenSize.y)
@@ -74,13 +82,14 @@ function this.create(params)
         self.menu:destroy()
     end
 
-    local headerSize = util.vector2(params.size.x, params.fontSize * 1.25)
+    local headerSize = util.vector2(params.size.x, params.fontSize * 1.6)
 
     local mainSize = util.vector2(params.size.x, params.size.y - headerSize.y)
 
 
     local yesCallback = function ()
         if params.yesCallback then params.yesCallback(params.data) end
+        widgetData.saveData()
         meta:close()
     end
 
@@ -91,6 +100,7 @@ function this.create(params)
 
     local removeCallback = function ()
         if params.removeCallback then params.removeCallback(params.data) end
+        widgetData.saveData()
         meta:close()
     end
 
@@ -142,9 +152,47 @@ function this.create(params)
                 props = {
                     text = params.data.plName..":",
                     textColor = config.data.ui.defaultColor,
-                    textSize = config.data.ui.fontSize * 1.25,
+                    textSize = config.data.ui.fontSize * 1.5,
+                    anchor = util.vector2(0, 0.5),
+                    relativePosition = util.vector2(0, 0.5),
                 }
-            }
+            },
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = borderTextures[1],
+                    tileH = false,
+                    tileV = true,
+                    size = util.vector2(2, 0),
+                    relativeSize = util.vector2(0, 1),
+                    anchor = util.vector2(0, 0),
+                    relativePosition = util.vector2(0, 0),
+                },
+            },
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = borderTextures[2],
+                    tileH = false,
+                    tileV = true,
+                    size = util.vector2(2, 0),
+                    relativeSize = util.vector2(0, 1),
+                    anchor = util.vector2(1, 0),
+                    relativePosition = util.vector2(1, 0),
+                },
+            },
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = borderTextures[3],
+                    tileH = true,
+                    tileV = false,
+                    size = util.vector2(0, 2),
+                    relativeSize = util.vector2(1, 0),
+                    anchor = util.vector2(0, 0),
+                    relativePosition = util.vector2(0, 0),
+                },
+            },
         }
     }
 
@@ -316,8 +364,9 @@ function this.create(params)
         }
     }
 
-
-    local maxRows = 5
+-- ######################################################################################
+-- Icon selection layout
+    local maxRows = 3
     local iconsLay = {
         type = ui.TYPE.Flex,
         props = {
@@ -332,6 +381,7 @@ function this.create(params)
     }
 
     local maxIconsInRow = math.floor(iconsLay.props.size.x / (params.fontSize * 1.8))
+    local maxIcons = maxRows * maxIconsInRow
     local horizontalFlex
 
     local lastIcon
@@ -344,7 +394,11 @@ function this.create(params)
     end
 
     local dirFile = vfs.open(commonData.widgetIconsDir.."dir.txt")
+    ---@type string[]
+    local icons = {}
+    local iconEndIndexes = {}
     for line in dirFile:lines() do
+        local hasIcon = false
         pcall(function ()
             line = line and line:gsub("%c", "") or nil
             local nextFile = vfs.pathsWithPrefix(commonData.widgetIconsDir..line)
@@ -353,95 +407,182 @@ function this.create(params)
                 file = nextFile()
                 local extension = file and string.lower(file:sub(-4))
                 if file and (extension == ".png" or extension == ".dds") then
-                    if not horizontalFlex or #horizontalFlex.content >= maxIconsInRow then
-                        local rows = #iconsLay.content
-                        if rows == maxRows then return end
-
-                        iconsLay.props.size = util.vector2(iconsLay.props.size.x, params.fontSize * 1.8 * (rows + 1))
-
-                        horizontalFlex = {
-                            type = ui.TYPE.Flex,
-                            props = {
-                                anchor = util.vector2(0.5, 0.5),
-                                align = ui.ALIGNMENT.Center,
-                                arrange = ui.ALIGNMENT.Center,
-                                horizontal = true,
-                                autoSize = false,
-                                size = util.vector2(mainSize.x, params.fontSize * 1.8),
-                            },
-                            content = ui.content{}
-                        }
-                        iconsLay.content:add(horizontalFlex)
-                    end
-
-                    local file = file
-                    local isSelected = file == params.data.icon
-
-                    horizontalFlex.content:add{
-                        type = ui.TYPE.Widget,
-                        props = {
-                            size = util.vector2(params.fontSize, params.fontSize) * 1.8
-                        },
-                        content = ui.content{
-                            {
-                                type = ui.TYPE.Image,
-                                props = {
-                                    position = util.vector2(params.fontSize * 0.9, params.fontSize * 0.9),
-                                    anchor = util.vector2(0.5, 0.5),
-                                    size = util.vector2(params.fontSize, params.fontSize) * 1.25,
-                                    resource = ui.texture{ path = file },
-                                },
-                            }
-                        },
-                        userData = {},
-                        events = {
-                            mousePress = async:callback(function(e, layout)
-                                if e.button ~= 1 then return end
-                                layout.userData.pressed = true
-                            end),
-                            mouseRelease = async:callback(function(e, layout)
-                                if e.button ~= 1 then return end
-
-                                if layout.userData.pressed then
-                                    params.data.icon = file
-
-                                    if lastIcon ~= layout then
-                                        clearLastIconParams()
-                                        for _, border in pairs({borders()}) do
-                                            layout.content:add(border)
-                                        end
-
-                                        layout.content[1].props.color = widgetData.colors[params.data.colorId or 1]
-
-                                        lastIcon = layout
-                                    else
-                                        params.data.colorId = params.data.colorId or 1
-                                        params.data.colorId = params.data.colorId + 1
-                                        if params.data.colorId > #widgetData.colors then params.data.colorId = 1 end
-
-                                        layout.content[1].props.color = widgetData.colors[params.data.colorId]
-                                    end
-
-                                    meta:update()
-                                end
-
-                                layout.userData.pressed = false
-                            end),
-                        }
-                    }
-
-                    if isSelected then
-                        clearLastIconParams()
-                        lastIcon = horizontalFlex.content[#horizontalFlex.content]
-                        lastIcon.content[1].props.color = widgetData.colors[params.data.colorId or 1]
-                        for _, border in pairs({borders()}) do
-                            lastIcon.content:add(border)
-                        end
-                    end
+                    table.insert(icons, file)
+                    hasIcon = true
                 end
             until file == nil
         end)
+        if hasIcon then
+            table.insert(iconEndIndexes, #icons)
+        end
     end
+
+    local lastIconIndex = 0
+    local function clearIcons()
+        lastIconIndex = 0
+        for i = #iconsLay.content, 1, -1 do
+            uiUtils.removeFromContent(iconsLay.content, i)
+        end
+        horizontalFlex = nil
+    end
+
+    local function placeIcon(path)
+        if not path then return end
+
+        if not horizontalFlex or #horizontalFlex.content >= maxIconsInRow then
+            local rows = #iconsLay.content
+            if rows == maxRows then return end
+
+            iconsLay.props.size = util.vector2(iconsLay.props.size.x, params.fontSize * 1.8 * (rows + 1))
+
+            horizontalFlex = {
+                type = ui.TYPE.Flex,
+                props = {
+                    anchor = util.vector2(0.5, 0.5),
+                    align = ui.ALIGNMENT.Center,
+                    arrange = ui.ALIGNMENT.Center,
+                    horizontal = true,
+                    autoSize = false,
+                    size = util.vector2(mainSize.x, params.fontSize * 1.8),
+                },
+                content = ui.content{}
+            }
+            iconsLay.content:add(horizontalFlex)
+        end
+
+        local isSelected = path == params.data.icon
+
+        horizontalFlex.content:add{
+            type = ui.TYPE.Widget,
+            props = {
+                size = util.vector2(params.fontSize, params.fontSize) * 1.8
+            },
+            content = ui.content{
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        position = util.vector2(params.fontSize * 0.9, params.fontSize * 0.9),
+                        anchor = util.vector2(0.5, 0.5),
+                        size = util.vector2(params.fontSize, params.fontSize) * 1.25,
+                        resource = ui.texture{ path = path },
+                    },
+                }
+            },
+            userData = {},
+            events = {
+                mousePress = async:callback(function(e, layout)
+                    if e.button ~= 1 then return end
+                    layout.userData.pressed = true
+                end),
+                mouseRelease = async:callback(function(e, layout)
+                    if e.button ~= 1 then return end
+
+                    if layout.userData.pressed then
+                        params.data.icon = path
+
+                        if lastIcon ~= layout then
+                            clearLastIconParams()
+                            for _, border in pairs({borders()}) do
+                                layout.content:add(border)
+                            end
+
+                            layout.content[1].props.color = widgetData.colors[params.data.colorId or 1]
+
+                            lastIcon = layout
+                        else
+                            params.data.colorId = params.data.colorId or 1
+                            params.data.colorId = params.data.colorId + 1
+                            if params.data.colorId > #widgetData.colors then params.data.colorId = 1 end
+
+                            layout.content[1].props.color = widgetData.colors[params.data.colorId]
+                        end
+
+                        meta:update()
+                    end
+
+                    layout.userData.pressed = false
+                end),
+            }
+        }
+
+        if isSelected then
+            clearLastIconParams()
+            lastIcon = horizontalFlex.content[#horizontalFlex.content]
+            lastIcon.content[1].props.color = widgetData.colors[params.data.colorId or 1]
+            for _, border in pairs({borders()}) do
+                lastIcon.content:add(border)
+            end
+        end
+
+        return true
+    end
+
+
+    for i, iconPath in ipairs(icons) do
+        if not iconEndIndexes[1] or iconEndIndexes[1] < i then break end
+        if not placeIcon(iconPath) then
+            break
+        else
+            lastIconIndex = i
+        end
+    end
+
+
+    local lastStartIndex = 1
+    local btnLeftLayout = button{
+        updateFunc = meta.update,
+        iconTexture = arrowLeftTexture,
+        iconSize = util.vector2(params.fontSize * 1.25 - 6, params.fontSize * 1.25 - 6),
+        anchor = util.vector2(0.5, 0.5),
+        event = function ()
+            local startIndex = math.max(lastStartIndex - maxIcons, 1)
+            local endIndex = startIndex + maxIcons - 1
+
+            if lastStartIndex == startIndex and iconEndIndexes[1] then
+                endIndex = iconEndIndexes[1]
+            end
+            lastStartIndex = startIndex
+
+            clearIcons()
+            clearLastIconParams()
+
+            for i = startIndex, endIndex do
+                if not placeIcon(icons[i]) then
+                    break
+                else
+                    lastIconIndex = i
+                end
+            end
+
+            meta:update()
+        end,
+    }
+
+    local btnRightLayout = button{
+        updateFunc = meta.update,
+        iconTexture = arrowRightTexture,
+        iconSize = util.vector2(params.fontSize * 1.25 - 6, params.fontSize * 1.25 - 6),
+        anchor = util.vector2(0.5, 0.5),
+        event = function ()
+            local endIndex = math.min(lastIconIndex + maxIcons, #icons)
+            local startIndex = endIndex - maxIcons + 1
+            lastStartIndex = startIndex
+
+            clearIcons()
+            clearLastIconParams()
+
+            for i = startIndex, endIndex do
+                if not placeIcon(icons[i]) then
+                    break
+                else
+                    lastIconIndex = i
+                end
+            end
+
+            meta:update()
+        end,
+    }
+-- ######################################################################################
 
 
     local descriptionLayout = {
@@ -473,9 +614,6 @@ function this.create(params)
         }
     }
 
-
-    local markerColor = params.data and params.data.colorId and
-        widgetData.colors[params.data.colorId] or config.data.ui.defaultColor
 
     local checkBoxes
 
@@ -564,11 +702,57 @@ function this.create(params)
                     align = ui.ALIGNMENT.Center,
                 },
                 content = ui.content{
-                    checkBoxes[4],
+                    {
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = false,
+                            arrange = ui.ALIGNMENT.Center,
+                            align = ui.ALIGNMENT.Center,
+                        },
+                        content = ui.content{
+                            {
+                                type = ui.TYPE.Flex,
+                                props = {
+                                    size = util.vector2(math.ceil(params.fontSize * 1.25), math.ceil(params.fontSize * 1.25)),
+                                    arrange = ui.ALIGNMENT.Center,
+                                    align = ui.ALIGNMENT.Center,
+                                    autoSize = false,
+                                },
+                                content = ui.content{
+                                    btnLeftLayout,
+                                }
+                            },
+                            interval(params.fontSize / 2, params.fontSize / 2),
+                            checkBoxes[4],
+                        }
+                    },
                     interval(params.fontSize / 2, params.fontSize / 2),
                     iconsLay,
                     interval(params.fontSize / 2, params.fontSize / 2),
-                    checkBoxes[2],
+                    {
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = false,
+                            arrange = ui.ALIGNMENT.Center,
+                            align = ui.ALIGNMENT.Center,
+                        },
+                        content = ui.content{
+                            {
+                                type = ui.TYPE.Flex,
+                                props = {
+                                    size = util.vector2(math.ceil(params.fontSize * 1.25), math.ceil(params.fontSize * 1.25)),
+                                    arrange = ui.ALIGNMENT.Center,
+                                    align = ui.ALIGNMENT.Center,
+                                    autoSize = false,
+                                },
+                                content = ui.content{
+                                    btnRightLayout,
+                                }
+                            },
+                            interval(params.fontSize / 2, params.fontSize / 2),
+                            checkBoxes[2],
+                        }
+                    },
                 }
             },
             interval(params.fontSize / 2, params.fontSize / 2),

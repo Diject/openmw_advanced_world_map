@@ -12,6 +12,21 @@ local celllLib = require("scripts.advanced_world_map.utils.cell")
 local config = require("scripts.advanced_world_map.config.config")
 
 
+local this = {}
+
+this.data = nil
+
+
+local function getDataTable()
+    return this.data
+end
+
+
+function this.getMarkerId(plName, cellId, pos)
+    return string.format("%s_%s_%d_%d", plName or NPC.record(playerRef.recordId).name, cellId or commonData.exteriorMapId, pos.x, pos.y)
+end
+
+
 local function getOldDataTable()
     if not localStorage.isPlayerStorageReady() then return end
 
@@ -24,24 +39,12 @@ local function getOldDataTable()
             newData[cellId] = {}
             for id, dt in pairs(cellData) do
                 dt.plName = NPC.record(playerRef.recordId).name or ""
-                newData[cellId][dt.plName..id] = dt
+                local nId = this.getMarkerId(dt.plName, cellId, dt.pos)
+                newData[cellId][nId] = dt
             end
         end
         return newData
     end
-end
-
-
-local this = {}
-
-this.data = nil
-
-local function getDataTable()
-    return this.data
-end
-
-function this.getMarkerId(plName, cellId, pos)
-    return string.format("%s_%s_%d_%d", plName or NPC.record(playerRef.recordId).name, cellId or commonData.exteriorMapId, pos.x, pos.y)
 end
 
 
@@ -115,6 +118,7 @@ function this.addMarkerData(params, onWorldMap)
         plName = params.plName,
         icon = params.icon,
         size = params.size,
+        onWorldMap = params.onWorldMap
     }
     if onWorldMap ~= nil then
         params.onWorldMap = onWorldMap

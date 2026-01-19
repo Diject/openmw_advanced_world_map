@@ -36,7 +36,12 @@ end
 ---@return Content?
 function this.getTooltipContentLayout(data, includeCellPos, insertLineBreaks)
     if (data.descr and data.descr ~= "") or (data.name and data.name ~= "") then
+
+        local playerName = NPC.record(playerRef.recordId).name or ""
         local text = widgetData.getDataText(data, includeCellPos, insertLineBreaks)
+        if data.plName ~= playerName then
+            text = data.plName..": "..text
+        end
 
         return {
             {

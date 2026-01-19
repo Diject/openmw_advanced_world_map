@@ -94,6 +94,7 @@ end)
 ---@field textColor any?
 ---@field size any? util.vector2
 ---@field icon string?
+---@field iconTexture any?
 ---@field iconSize any? util.vector2
 ---@field iconColor any?
 ---@field alpha number?
@@ -119,8 +120,8 @@ return function (params)
     meta.params = params
 
     local buttonContent = ui.content {}
-    if params.icon then
-        local texture = ui.texture{ path = params.icon }
+    if params.icon or params.iconTexture then
+        local texture = params.iconTexture or ui.texture{ path = params.icon }
         buttonContent:add{
             type = ui.TYPE.Image,
             props = {
