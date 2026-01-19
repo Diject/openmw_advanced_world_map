@@ -698,7 +698,7 @@ eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, function (e)
 
     local fontInWorldCoords = fsize * 8192 / (mapWidget.mapInfo.pixelsPerCell * mapWidget.zoom)
 
-    local eps = 5 * fsize * 8192 / (mapWidget.mapInfo.pixelsPerCell * mapWidget.zoom) * config.data.ui.textHeightMul
+    local eps = 5.5 * fsize * 8192 / (mapWidget.mapInfo.pixelsPerCell * mapWidget.zoom) * config.data.ui.textHeightMul
     local clusters = gridClustering(markerList, eps)
 
     for _, cluster in pairs(clusters) do
