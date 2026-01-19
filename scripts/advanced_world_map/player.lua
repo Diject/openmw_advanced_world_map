@@ -415,6 +415,9 @@ return {
         getConfig = function ()
             return configLib.data
         end,
+        setConfigValue = function (valuePath, value)
+            configLib.setValue(valuePath, value)
+        end,
         openMapMenu = openMenu,
         closeMapMenu = closeMenu,
         toggleMapMenu = toggleMenu,
@@ -424,6 +427,9 @@ return {
         end,
         isVisited = function (cellId)
             return discoveredLocs.isVisited(cellId)
+        end,
+        getCellNameById = function (cellId)
+            return mapDataHandler.cellNameById[cellId]
         end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
