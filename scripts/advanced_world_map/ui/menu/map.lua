@@ -543,7 +543,10 @@ function this.create(params)
         if not meta.menu then return end
         if not updateCDTimer then
             eventSys.triggerEvent(eventSys.EVENT.onUpdate, {menu = meta})
-            meta.menu:update()
+            local co = coroutine.create(function ()
+                meta.menu:update()
+            end)
+            coroutine.resume(co)
             updateCDTimer = realTimer.newTimer(0, function ()
                 updateCDTimer = nil
                 if doUpdate then
@@ -721,7 +724,7 @@ function this.create(params)
                             end),
                             mouseRelease = async:callback(function(_, layout)
                                 if layout.userData.pressed then
-                                    meta:close()
+                                    menuHandler.destroyMenu(commonData.mapMenuId)
                                 end
                                 layout.userData.pressed = false
                             end),
