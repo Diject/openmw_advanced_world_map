@@ -206,6 +206,11 @@ function mapElementMeta:isValid()
         self.invalid = true
         return false
     end
+    if not self._parent:isValid() then
+        self.invalid = true
+        return false
+    end
+    return true
 end
 
 
