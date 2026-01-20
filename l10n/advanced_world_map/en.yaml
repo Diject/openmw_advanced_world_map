@@ -60,6 +60,7 @@ PinUnpin: "Pin/Unpin"
 PersonalNotesCB: "Personal"
 GlobalNotesCB: "Global"
 ListAllCharactersNotes: "All characters' notes"
+MapSizePositionResetMessage: "Advanced World Map size and position have been reset to default values."
 
 date.suffix.st: "st"
 date.suffix.nd: "nd"
@@ -85,6 +86,8 @@ SettingSaveVisibilityStateInInterfaceMenu: "Save open/close state in Character m
 SettingSaveVisibilityStateInInterfaceMenuDescription: "When override default map is enabled, saves whether the map was last opened from the Character menu or not, and restores that state the next time the Character menu is opened."
 SettingFirstInitMenu: "Show first-time setup menu"
 SettingFirstInitMenuDescription: "When enabled, the first-time setup menu will be shown the next time the mod menu is opened."
+SettingResetSizePos: "Reset size and position"
+SettingResetSizePosDescription: "Change to 'Yes' to reset the map window size and position to default values. The setting will automatically revert to 'No' after the reset is done."
 
 DataSettings: "Data"
 SettingDataInitializer: "World map texture initializer"

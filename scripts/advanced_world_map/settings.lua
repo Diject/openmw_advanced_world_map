@@ -161,6 +161,7 @@ I.Settings.registerGroup{
         boolSetting{key = "main.overrideDefault", name = "SettingOverrideDefaultMap", description = "SettingOverrideDefaultMapDescription", default = config.default.main.overrideDefault},
         boolSetting{key = "main.saveVisibilityStateInInterfaceMenu", name = "SettingSaveVisibilityStateInInterfaceMenu", description = "SettingSaveVisibilityStateInInterfaceMenuDescription", default = config.default.main.saveVisibilityStateInInterfaceMenu},
         boolSetting{key = "main.firstInitMenu", name = "SettingFirstInitMenu", description = "SettingFirstInitMenuDescription", default = config.default.main.firstInitMenu},
+        boolSetting{key = "main.resetSizePos", name = "SettingResetSizePos", description = "SettingResetSizePosDescription", default = config.default.main.resetSizePos},
     },
 }
 

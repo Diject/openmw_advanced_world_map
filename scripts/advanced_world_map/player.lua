@@ -20,6 +20,7 @@ local log = require("scripts.advanced_world_map.utils.log")
 local commonData = require("scripts.advanced_world_map.common")
 
 local configLib = require("scripts.advanced_world_map.config.configLib")
+local config = require("scripts.advanced_world_map.config.config")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
@@ -86,6 +87,35 @@ storage.playerSection(commonData.configUISectionName):subscribe(async:callback(f
         mapTextureHandler.init()
     end
     mapMenu.clearMapWidgetCache()
+end))
+
+local mainSectionStorage = storage.playerSection(commonData.configMainSectionName)
+
+local function resetSizePos()
+    menuHandler.destroyAllMenus()
+    configLib.setValue("main.relativeSize.x", config.default.main.relativeSize.x)
+    configLib.setValue("main.relativeSize.y", config.default.main.relativeSize.y)
+    configLib.setValue("main.relativePosition.x", config.default.main.relativePosition.x)
+    configLib.setValue("main.relativePosition.y", config.default.main.relativePosition.y)
+    ui.showMessage(l10n("MapSizePositionResetMessage"))
+end
+
+if mainSectionStorage:get("main.resetSizePos") then
+    resetSizePos()
+    mainSectionStorage:set("main.resetSizePos", false)
+end
+
+local isStorageTimerRunning = false
+mainSectionStorage:subscribe(async:callback(function(_, _)
+    local reset = mainSectionStorage:get("main.resetSizePos")
+    if reset and not isStorageTimerRunning then
+        isStorageTimerRunning = true
+        async:newUnsavableSimulationTimer(0.1, function ()
+            resetSizePos()
+            mainSectionStorage:set("main.resetSizePos", false)
+            isStorageTimerRunning = false
+        end)
+    end
 end))
 
 
