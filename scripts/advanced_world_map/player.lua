@@ -440,7 +440,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 8,
+        version = 9,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -467,7 +467,8 @@ return {
             button = require("scripts.advanced_world_map.ui.button"),
             interval = require("scripts.advanced_world_map.ui.interval"),
             checkbox = require("scripts.advanced_world_map.ui.checkBox"),
-        }
+        },
+        realTimer = realTimer.newTimer,
     },
     engineHandlers = {
         onSave = onSave,
