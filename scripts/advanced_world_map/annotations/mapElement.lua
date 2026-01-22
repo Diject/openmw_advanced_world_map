@@ -1,8 +1,5 @@
 ---@meta AdvancedWorldMap.MapElement
 
----Forward declaration for map widget type
----@class AdvancedWorldMap.MapWidget
-
 ---Map element wrapper providing methods to manipulate markers on the map
 ---@class AdvancedWorldMap.MapElement
 ---@field _id string Unique identifier of the map element

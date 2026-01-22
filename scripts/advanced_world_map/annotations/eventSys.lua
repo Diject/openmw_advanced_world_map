@@ -41,6 +41,10 @@
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field cellId string? Cell identifier (nil for exterior/world map)
 
+---Event data for map destroyed event
+---@class AdvancedWorldMap.Event.OnMapDestroyedEvent
+---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
+
 ---Event data for cell markers create event
 ---@class AdvancedWorldMap.Event.OnCellMarkersCreateEvent
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
@@ -249,7 +253,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onMapInitialized", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapInitializedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onMapShown", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapShownEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onMapClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapClosedEvent): (boolean?), priority: number?)
----@overload fun(eventId: "onMapDestroyed", handlerFunc: fun(e: {mapWidget : advancedWorldMap.ui.mapWidgetMeta}): (boolean?), priority: number?)
+---@overload fun(eventId: "onMapDestroyed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMapDestroyedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onCellMarkersCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnCellMarkersCreateEvent): (boolean?, boolean?), priority: number?)
 ---@overload fun(eventId: "onMarkerClick", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickEvent): (boolean?, boolean?), priority: number?)
 ---@overload fun(eventId: "onMarkerClicked", handlerFunc: fun(e: AdvancedWorldMap.Event.OnMarkerClickedEvent): (boolean?), priority: number?)

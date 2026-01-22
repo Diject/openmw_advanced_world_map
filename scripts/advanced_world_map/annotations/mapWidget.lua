@@ -1,8 +1,5 @@
 ---@meta AdvancedWorldMap.MapWidget
 
----Forward declaration for map element type
----@class AdvancedWorldMap.MapElement
-
 ---Layer identifiers for different map elements
 ---@class AdvancedWorldMap.MapWidget.LayerId
 ---@field map integer Base map layer (ground textures)

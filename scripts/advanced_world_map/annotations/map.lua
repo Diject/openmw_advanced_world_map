@@ -1,8 +1,5 @@
 ---@meta AdvancedWorldMap.Menu.Map
 
----Forward declaration for map widget type
----@class AdvancedWorldMap.MapWidget
-
 ---Parameters for adding a header widget/button
 ---@class AdvancedWorldMap.Menu.AddHeaderElementParams
 ---@field id string Unique identifier for the widget
