@@ -13,7 +13,7 @@ local commonData = require("scripts.advanced_world_map.common")
 
 local this = {}
 
-this.version = 2
+this.version = 3
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -212,9 +212,9 @@ local function buildData()
 
     local function getRegionName(id)
         if not id then return "" end
-        if not core.regions then return stringLib.capitalizeFirst(id) end
+        if not core.regions or not core.regions.records then return stringLib.capitalizeFirst(id) end
 
-        local region = core.regions[id]
+        local region = core.regions.records[id]
         if not region then return stringLib.capitalizeFirst(id) end
 
         return region.name or ""
