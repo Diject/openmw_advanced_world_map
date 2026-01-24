@@ -410,6 +410,10 @@ function mapWidgetMeta:updateOnZoomMarkers()
     visibleRect.left = visibleRect.left - paddingX
     visibleRect.right = visibleRect.right + paddingX
 
+    if eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdate, {mapWidget = self, region = visibleRect}) then
+        return
+    end
+
     if self:isInZoomInMode() then
         self:removeOnZoomMarkers()
         self:placeGroundTextures(visibleRect)
