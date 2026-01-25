@@ -377,7 +377,7 @@ end
 
 
 function menuMeta:requestUpdate()
-    menuMeta._requestedUpdate = true
+    self._requestedUpdate = true
 end
 
 
@@ -979,8 +979,8 @@ function this.create(params)
     func = function ()
         if meta.menu.layout then
             if meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer) or meta._requestedUpdate then
-                meta:update()
                 meta._requestedUpdate = false
+                meta:update()
             end
             async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
         end
