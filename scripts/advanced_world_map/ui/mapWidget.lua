@@ -426,6 +426,8 @@ function mapWidgetMeta:updateOnZoomMarkers()
     self._lastOnZoomZoom = self.zoom
 
     eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = visibleRect})
+
+    self._markerRect = visibleRect
 end
 
 
@@ -600,6 +602,7 @@ end
 
 ---@param self advancedWorldMap.ui.mapWidgetMeta
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+---@param onlyInitialize boolean? if true, the marker will only be initialized and not added to the map.
 ---@return string? id
 ---@return integer? layerId
 ---@return advancedWorldMap.ui.mapElementMeta?
@@ -648,7 +651,10 @@ local function createMarker(self, params, onlyInitialize)
     params.pos = params.pos or util.vector3(0, 0, 0)
     local relPos = self:getRelativePositionByWorldPosition(params.pos)
 
-    if not onlyInitialize and params.id then
+    local placeOnMap = onlyInitialize == nil or self.cellId ~= nil or
+        onlyInitialize == false and self._markerRect and this.isPointInRegion(self._markerRect, params.pos.x, params.pos.y) or false
+
+    if placeOnMap and params.id then
         local id = params.id
         local cacheId = id.."_"..tostring(params.layerId)
         local cachedLayout = self._markerLayoutCache[cacheId]
@@ -751,7 +757,7 @@ local function createMarker(self, params, onlyInitialize)
 
     eventSys.triggerEvent(eventSys.EVENT.onMapElementInitialized, {mapWidget = self, marker = markerELement})
 
-    if onlyInitialize then
+    if not placeOnMap then
         return markerName, params.layerId, markerELement, marker
     end
 
@@ -778,7 +784,7 @@ function mapWidgetMeta:createImageMarker(params)
         params.showWhenZoomedOut = true
     end
 
-    local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
+    local id, layerId, element = createMarker(self, params, false)
     return element
 end
 
@@ -795,7 +801,7 @@ function mapWidgetMeta:createTextMarker(params)
         return
     end
 
-    local id, layerId, element = createMarker(self, params, (params.showWhenZoomedIn or params.showWhenZoomedOut) and true)
+    local id, layerId, element = createMarker(self, params, false)
     return element
 end
 
