@@ -233,9 +233,10 @@ function menuMeta:getMapWidgetForCell(cellId)
         this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId] = mapWidget.new{
             updateFunc = self.update,
             size = self.mainSize,
-            position = util.vector2(0, 0),
+            position = localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0),
             cellId = cellId,
             screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerHeight),
+            zoom = cellId and (localStorage.data[commonData.localMapZoomFieldId] or 0.5) or (localStorage.data[commonData.worldMapZoomFieldId] or 1),
         }
         isNew = true
     end
@@ -306,14 +307,17 @@ function menuMeta:updateMapWidgetCell(cellId)
     self.mapWidget:setUpdateFunction(self.update)
     self:updateMapWidgetWidth()
 
-    if cellId then
-        meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
-    else
-        meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
-    end
-
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
-    self.mapWidget:updateMarkers()
+
+    if not isNew then
+        if cellId then
+            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
+        else
+            meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
+        end
+    else
+        self.mapWidget:updateMarkers()
+    end
 
     if isNew then
         eventSys.triggerEvent(eventSys.EVENT.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})

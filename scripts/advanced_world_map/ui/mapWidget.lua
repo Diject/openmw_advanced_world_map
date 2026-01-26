@@ -410,7 +410,7 @@ function mapWidgetMeta:updateOnZoomMarkers()
     visibleRect.left = visibleRect.left - paddingX
     visibleRect.right = visibleRect.right + paddingX
 
-    if eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdate, {mapWidget = self, region = visibleRect}) then
+    if self.initialized and eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdate, {mapWidget = self, region = visibleRect}) then
         return
     end
 
@@ -425,7 +425,9 @@ function mapWidgetMeta:updateOnZoomMarkers()
     end
     self._lastOnZoomZoom = self.zoom
 
-    eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = visibleRect})
+    if self.initialized then
+        eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = visibleRect})
+    end
 
     self._markerRect = visibleRect
 end
@@ -1535,6 +1537,7 @@ end
 ---@field cellId string?
 ---@field updateFunc function
 ---@field screenPosition any?
+---@field zoom number?
 
 ---@param params advancedWorldMap.ui.mapWidget.params
 ---@return table?
@@ -1659,11 +1662,7 @@ function this.new(params)
     ---@type {[2] : string, [1] : integer, [3] : advancedWorldMap.ui.mapElementMeta}[] {marker Id, layer}
     meta.activeZoomMarkers = {}
 
-    if meta.cellId then
-        meta.zoom = localStorage.data[commonData.localMapZoomFieldId] or 16
-    else
-        meta.zoom = localStorage.data[commonData.worldMapZoomFieldId] or 2
-    end
+    meta.zoom = params.zoom or 1
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
     local displaySize = meta:getDisplaySize()
     meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
@@ -1808,7 +1807,7 @@ function this.new(params)
         type = ui.TYPE.Widget,
         props = {
             size = params.size,
-            position = params.position,
+            position = util.vector2(0, 0),
             relativePosition = params.relativePosition,
             anchor = params.anchor,
         },
@@ -1979,7 +1978,9 @@ function this.new(params)
 
     meta.layout = main
 
-    meta:updateMarkers()
+    meta:setZoom(meta.zoom, params.position and meta:getRelativePositionByWorldPosition(params.position) or nil)
+
+    meta.initialized = true
 
     return main, meta
 end
