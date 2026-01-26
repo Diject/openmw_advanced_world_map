@@ -16,6 +16,7 @@ mapElementMeta.__index = mapElementMeta
 function mapElementMeta:setVisibility(val)
     self._elemLayout.props.visible = val
     self._params.visible = val
+    self._parent:setElementVisibility(self._id, self._layerId, val)
 end
 
 ---@return boolean
@@ -107,7 +108,11 @@ function mapElementMeta:updateLayout(data)
         props.color = props.resource and data.color or nil
     end
     if data.visible ~= nil then
+        local last = props.visible
         props.visible = data.visible
+        if last ~= props.visible then
+            self._parent:setElementVisibility(self._id, self._layerId, data.visible)
+        end
     end
     props.alpha = data.alpha or props.alpha
     props.resource = data.texture or props.resource
@@ -147,6 +152,7 @@ end
 
 
 function mapElementMeta:restoreLayout()
+    local isVisibleChanged = self._elemLayout.props.visible ~= self._params.visible
     self._elemLayout.props = {
         type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         text = self._params.text,
@@ -173,6 +179,10 @@ function mapElementMeta:restoreLayout()
     self._elemLayout.userData.size = self._params.size
 
     self._elemLayout.userData.forceChanged = false
+
+    if isVisibleChanged then
+        self._parent:setElementVisibility(self._id, self._layerId, self._params.visible)
+    end
 end
 
 

@@ -767,6 +767,11 @@ local function createMarker(self, params, onlyInitialize)
         return
     end
 
+    if params.visible == false then
+        self.hiddenElements[params.layerId][markerName] = marker
+        return markerName, params.layerId, markerELement, marker
+    end
+
     if uiUtils.safeAddToContent(content, marker) then
         eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = markerELement})
     else
@@ -812,6 +817,11 @@ local function removeMarker(self, id, layer)
     if not id or not layer then return false end
     local content = self:getLayerLayout(layer).content
 
+    if self.hiddenElements[layer][id] then
+        self.hiddenElements[layer][id] = nil
+        return true
+    end
+
     return uiUtils.removeFromContent(content, id) ~= nil
 end
 
@@ -835,6 +845,28 @@ end
 
 function mapWidgetMeta:hasMarker(id)
     return self.zoomMarkersCellIdById[id] ~= nil
+end
+
+
+function mapWidgetMeta:setElementVisibility(id, layer, visible)
+    if not id or not layer then return false end
+    local content = self:getLayerLayout(layer).content
+
+    if visible then
+        if self.hiddenElements[layer][id] then
+            local marker = self.hiddenElements[layer][id]
+            self.hiddenElements[layer][id] = nil
+            return uiUtils.safeAddToContent(content, marker) ~= nil
+        end
+    else
+        local element = uiUtils.getFromContent(content, id)
+        if element then
+            self.hiddenElements[layer][id] = element
+            return uiUtils.removeFromContent(content, id) ~= nil
+        end
+    end
+
+    return false
 end
 
 
@@ -1661,6 +1693,11 @@ function this.new(params)
     meta.zoomMarkersCellIdById = {}
     ---@type {[2] : string, [1] : integer, [3] : advancedWorldMap.ui.mapElementMeta}[] {marker Id, layer}
     meta.activeZoomMarkers = {}
+    ---@type table<integer, table<string, table>> layer id, marker id, marker layout
+    meta.hiddenElements = {}
+    for _, layerId in pairs(this.layerId) do
+        meta.hiddenElements[layerId] = {}
+    end
 
     meta.zoom = params.zoom or 1
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
