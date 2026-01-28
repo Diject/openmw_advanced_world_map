@@ -14,9 +14,12 @@ mapElementMeta.__index = mapElementMeta
 
 ---@param val boolean
 function mapElementMeta:setVisibility(val)
+    local isVisibleChanged = self._elemLayout.props.visible ~= val
     self._elemLayout.props.visible = val
     self._params.visible = val
-    self._parent:setElementVisibility(self._id, self._layerId, val)
+    if isVisibleChanged then
+        self._parent:setElementVisibility(self._id, self._layerId, val)
+    end
 end
 
 ---@return boolean
@@ -203,9 +206,9 @@ end
 
 
 function mapElementMeta:destroy()
+    self.invalid = true
     if self._parent:removeMarker(self._id, self._layerId) then
-        self.invalid = true
-        eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self, marker = self})
+        eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self._parent, marker = self})
     end
 end
 

@@ -401,9 +401,6 @@ function menuMeta:close()
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
 
-    eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
-    this.activeMenuMeta = nil
-
     I.DijectKeyBindings.keybind.unregister("C_Y", controllerYCallback)
 
     if config.data.main.clearCacheOnClose then
@@ -434,6 +431,9 @@ function menuMeta:close()
             localStorage.data[commonData.hideInInterfaceMenuFieldId] = true
         end
     end
+
+    eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
+    this.activeMenuMeta = nil
 
     local co = coroutine.create(function ()
         self.menu:destroy()
