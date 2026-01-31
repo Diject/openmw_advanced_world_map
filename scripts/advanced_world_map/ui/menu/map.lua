@@ -492,7 +492,6 @@ function this.create(params)
 
     meta.widgetActiveHeaderLayout = {
         type = ui.TYPE.Flex,
-        name = commonData.mapWidgetHeaderLayoutId,
         props = {
             horizontal = true,
             anchor = util.vector2(0, 0.5),
@@ -509,12 +508,14 @@ function this.create(params)
 
     meta.widgetInactiveHeaderLayout = {
         type = ui.TYPE.Flex,
-        name = commonData.mapWidgetHeaderLayoutId,
         props = {
             horizontal = true,
+            relativeSize = util.vector2(1, 1),
+            autoSize = false,
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
             arrange = ui.ALIGNMENT.Center,
+            align = ui.ALIGNMENT.Center,
         },
         userData = {
 
@@ -526,7 +527,6 @@ function this.create(params)
 
     meta.widgetWindowLayout = {
         type = ui.TYPE.Flex,
-        name = commonData.mapWidgetHeaderLayoutId,
         props = {
             horizontal = true,
             position = util.vector2(2, 2),
