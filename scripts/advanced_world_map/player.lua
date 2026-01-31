@@ -544,14 +544,15 @@ return {
                     markers.updateDiscovered(newDiscovered)
                 end
 
-                local cellId = self.cell.isExterior and commonData.exteriorMapId or self.cell.id
-                if mapMenu.cachedMapWidgetMetatable[cellId] then
-                    mapMenu.cachedMapWidgetMetatable[cellId]:updateOnZoomMarkers()
-                end
+                local cellId = not self.cell.isExterior and self.cell.id or nil
 
                 local menu = menuHandler.getMenu(commonData.mapMenuId)
                 if menu and menu.centerOnPlayer then
-                    menu:updateMapWidgetCell(cellId)
+                    if menu.mapWidget.cellId == cellId then
+                        menu.mapWidget:updateOnZoomMarkers()
+                    else
+                        menu:updateMapWidgetCell(cellId)
+                    end
                     cellNameWidget.updateLabel(menu)
                     menu:update()
                 end
