@@ -66,7 +66,7 @@
 ---@field showWhenZoomedIn boolean? Only show when zoomed in
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|Vector2, zoom: number): number|Vector2)? Custom scaling function
----@field userData table? Custom user data
+---@field userData any Custom user data
 
 ---Parameters for creating a text marker
 ---@class AdvancedWorldMap.MapWidget.CreateTextMarkerParams
@@ -88,7 +88,7 @@
 ---@field showWhenZoomedIn boolean? Only show when zoomed in
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|Vector2, zoom: number): number|Vector2)? Custom scaling function
----@field userData table? Custom user data
+---@field userData any Custom user data
 
 ---Parameters for creating a map widget
 ---@class AdvancedWorldMap.MapWidget.Params

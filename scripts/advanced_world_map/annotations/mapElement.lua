@@ -46,11 +46,11 @@ function AdvancedWorldMapMapElement:getColor() end
 function AdvancedWorldMapMapElement:setColor(color) end
 
 ---Sets the position of the map element in world coordinates
----@param pos Vector2 World position vector
+---@param pos Vector2|Vector3 World position vector
 function AdvancedWorldMapMapElement:setPosition(pos) end
 
 ---Gets the current position of the map element in world coordinates
----@return Vector2 pos World position vector
+---@return Vector2|Vector3 pos World position vector
 function AdvancedWorldMapMapElement:getPosition() end
 
 ---Updates the UI layout properties of the map element.
@@ -68,7 +68,7 @@ function AdvancedWorldMapMapElement:updateParams(data) end
 function AdvancedWorldMapMapElement:restoreLayout() end
 
 ---Gets the custom user data associated with this element
----@return table? userData Custom user data table, if any was provided during creation
+---@return any userData Custom user data table, if any was provided during creation
 function AdvancedWorldMapMapElement:getUserData() end
 
 ---Gets the unique identifier of this map element
