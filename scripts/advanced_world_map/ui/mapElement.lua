@@ -142,7 +142,9 @@ function mapElementMeta:updateParams(data)
     self._params.anchor = data.anchor or self._params.anchor
     self._params.pos = data.pos or self._params.pos
     self._params.color = data.color or self._params.color
-    self._params.visible = data.visible ~= nil and data.visible or self._params.visible
+    if data.visible ~= nil then
+        self._params.visible = data.visible
+    end
     self._params.alpha = data.alpha or self._params.alpha
     self._params.texture = data.texture or self._params.texture
     self._params.scaleFunc = data.scaleFunc or self._params.scaleFunc

@@ -602,6 +602,13 @@ end
 ---@field userData table?
 
 
+---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+---@return string
+local function getActiveMarkerId(params)
+    return string.format("%s_%d", params.id or "", params.layerId or this.layerId.marker)
+end
+
+
 ---@param self advancedWorldMap.ui.mapWidgetMeta
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@param onlyInitialize boolean? if true, the marker will only be initialized and not added to the map.
@@ -623,7 +630,6 @@ local function createMarker(self, params, onlyInitialize)
 
     local function addZoomInOutData(id, layout)
         if self.zoomMarkersCellIdById[id] then return end
-        local uId = self:getUniqueId()
         local cellId = layout.userData.cellId or cellLib.getCellIdByPos(params.pos)
 
         if params.showWhenZoomedIn then
@@ -635,7 +641,7 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedIn = true
             layout.userData.cellId = cellId
-            self.activeZoomMarkers[uId] = {id, params.layerId, layout.userData.markerElement}
+            self.activeZoomMarkers[getActiveMarkerId(params)] = {id, params.layerId, layout.userData.markerElement}
         end
         if params.showWhenZoomedOut then
             self.zoomOutMarkers[cellId] = self.zoomOutMarkers[cellId] or {}
@@ -646,7 +652,7 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedOut = true
             layout.userData.cellId = cellId
-            self.activeZoomMarkers[uId] = {id, params.layerId, layout.userData.markerElement}
+            self.activeZoomMarkers[getActiveMarkerId(params)] = {id, params.layerId, layout.userData.markerElement}
         end
     end
 
@@ -657,6 +663,7 @@ local function createMarker(self, params, onlyInitialize)
         onlyInitialize == false and self._markerRect and this.isPointInRegion(self._markerRect, params.pos.x, params.pos.y) or false
 
     if placeOnMap and params.id then
+        ---@type string
         local id = params.id
         local cacheId = id.."_"..tostring(params.layerId)
         local cachedLayout = self._markerLayoutCache[cacheId]
@@ -673,6 +680,11 @@ local function createMarker(self, params, onlyInitialize)
                         {mapWidget = self, marker = cachedLayout.userData.markerElement}
                     ) then
                 return
+            end
+
+            if params.visible == false then
+                self.hiddenElements[params.layerId][id] = cachedLayout
+                return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
             end
 
             addZoomInOutData(id, cachedLayout)
@@ -880,6 +892,19 @@ function mapWidgetMeta:setElementVisibility(id, layer, visible)
 end
 
 
+---@param self advancedWorldMap.ui.mapWidgetMeta
+---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
+local function tryCreateActiveMarker(self, params, preloadOnly)
+    local id = getActiveMarkerId(params)
+    if not self.activeZoomMarkers[id] then
+        local mDt = {createMarker(self, params, preloadOnly)}
+        if mDt[1] then
+            self.activeZoomMarkers[id] = mDt
+        end
+    end
+end
+
+
 ---@param region advancedWorldMap.ui.mapWidget.region
 function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly)
     if self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
@@ -895,10 +920,7 @@ function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly)
             local cellId = cellLib.getCellIdByGrid(x, y)
 
             for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
-                local mDt = {createMarker(self, dt.params, preloadOnly)}
-                if mDt[1] then
-                    self.activeZoomMarkers[self:getUniqueId()] = mDt
-                end
+                tryCreateActiveMarker(self, dt.params, preloadOnly)
             end
         end
     end
@@ -915,10 +937,7 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly)
 
     if self.cellId then
         for _, dt in pairs(self.zoomInMarkers[self.cellId] or {}) do
-            local mDt = {createMarker(self, dt.params, preloadOnly)}
-            if mDt[1] then
-                self.activeZoomMarkers[self:getUniqueId()] = mDt
-            end
+            tryCreateActiveMarker(self, dt.params, preloadOnly)
         end
     else
         if self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
@@ -935,10 +954,7 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly)
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
-                    local mDt = {createMarker(self, dt.params, preloadOnly)}
-                    if mDt[1] then
-                        self.activeZoomMarkers[self:getUniqueId()] = mDt
-                    end
+                    tryCreateActiveMarker(self, dt.params, preloadOnly)
                 end
 
             end
@@ -1593,6 +1609,10 @@ function this.new(params)
 
     meta.screenPosition = params.screenPosition or util.vector2(0, 0)
 
+    meta.zoom = params.zoom or 1
+    meta.maxZoom = meta.zoom
+    meta.minZoom = meta.zoom
+
     meta.SCALE_FUNCTION = {
         linear = function(size, zoom)
             return size * (zoom * meta.mapInfo.pixelsPerCell / 32)
@@ -1701,7 +1721,6 @@ function this.new(params)
         meta.hiddenElements[layerId] = {}
     end
 
-    meta.zoom = params.zoom or 1
     meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
     local displaySize = meta:getDisplaySize()
     meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
