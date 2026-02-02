@@ -53,6 +53,18 @@ function AdvancedWorldMapMapElement:setPosition(pos) end
 ---@return Vector2|Vector3 pos World position vector
 function AdvancedWorldMapMapElement:getPosition() end
 
+---Sets the texture resource of the map element.
+---Only applicable for image elements; returns false if called on text elements.
+---@param texture TextureResource
+---@return boolean success
+function AdvancedWorldMapMapElement:setTexture(texture) end
+
+---Sets the text content of the map element.
+---Only applicable for text elements; returns false if called on image elements.
+---@param text string
+---@return boolean success
+function AdvancedWorldMapMapElement:setText(text) end
+
 ---Updates the UI layout properties of the map element.
 ---Only updates properties that are provided in the data parameter.
 ---@param data AdvancedWorldMap.MapWidget.CreateImageMarkerParams|AdvancedWorldMap.MapWidget.CreateTextMarkerParams New property values to apply

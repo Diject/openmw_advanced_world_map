@@ -92,6 +92,24 @@ function mapElementMeta:getPosition()
     return self._params.pos
 end
 
+function mapElementMeta:setTexture(texture)
+    if self._elemLayout.props.type ~= ui.TYPE.Image then
+        return false
+    end
+    self._params.texture = texture
+    self._elemLayout.props.resource = texture
+    return true
+end
+
+function mapElementMeta:setText(text)
+    if self._elemLayout.props.type == ui.TYPE.Image then
+        return false
+    end
+    self._params.text = text
+    self._elemLayout.props.text = text
+    return true
+end
+
 
 ---@param data advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 function mapElementMeta:updateLayout(data)
