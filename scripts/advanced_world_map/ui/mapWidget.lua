@@ -611,7 +611,7 @@ end
 
 ---@param self advancedWorldMap.ui.mapWidgetMeta
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
----@param onlyInitialize boolean? if true, the marker will only be initialized and not added to the map.
+---@param onlyInitialize boolean? if true, the marker will only be initialized and not added to the map. if false, it will be added if possible. If nil, it will be added anyway. 
 ---@return string? id
 ---@return integer? layerId
 ---@return advancedWorldMap.ui.mapElementMeta?
@@ -803,7 +803,11 @@ function mapWidgetMeta:createImageMarker(params)
         params.showWhenZoomedOut = true
     end
 
-    local id, layerId, element = createMarker(self, params, false)
+    local isInZoomInMode = self:isInZoomInMode()
+    local onlyInitializeParam = isInZoomInMode and not params.showWhenZoomedIn or
+        not isInZoomInMode and not params.showWhenZoomedOut
+
+    local id, layerId, element = createMarker(self, params, onlyInitializeParam)
     return element
 end
 
@@ -820,7 +824,11 @@ function mapWidgetMeta:createTextMarker(params)
         return
     end
 
-    local id, layerId, element = createMarker(self, params, false)
+    local isInZoomInMode = self:isInZoomInMode()
+    local onlyInitializeParam = isInZoomInMode and not params.showWhenZoomedIn or
+        not isInZoomInMode and not params.showWhenZoomedOut
+
+    local id, layerId, element = createMarker(self, params, onlyInitializeParam)
     return element
 end
 
