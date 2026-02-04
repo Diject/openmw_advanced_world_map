@@ -1474,6 +1474,49 @@ function mapWidgetMeta:setUpdateFunction(func)
 end
 
 
+function mapWidgetMeta:openRightMouseMenu()
+    if eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
+        local layersLayout = self.layout.content[2]
+        uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
+
+        local relPos = self:getRelativePositionOfCursor()
+        local lay = {
+            name = commonData.rightClickMenuId,
+            type = ui.TYPE.Flex,
+            props = {
+                autoSize = true,
+                relativePosition = relPos,
+                propagateEvents = false,
+            },
+            content = ui.content{
+
+            },
+        }
+        local layContent = lay.content
+        eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
+            mapWidget = self,
+            relPos = relPos,
+            content = layContent,
+            marker = self.layout.userData.lastMarkerElement,
+        })
+
+        if #layContent > 0 then
+            pcall(function ()
+                local i = 2
+                while (rawget(lay.content, i)) do
+                    lay.content:insert(i, interval(0, config.data.ui.fontSize / 3))
+                    i = i + 2
+                end
+            end)
+
+            layersLayout.content:add(lay)
+            self:update()
+            self.layout.userData.hasActiveMenu = true
+        end
+    end
+end
+
+
 function mapWidgetMeta:closeRightMouseMenu()
     if not self.layout.userData.hasActiveMenu then return end
     local layout = self.layout.content[2]
@@ -1925,47 +1968,7 @@ function this.new(params)
                     return
                 end
 
-                if e.button == 3 then
-                    if menuMode.isMenuInteractive() and eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
-                        local layersLayout = main.content[2]
-                        uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
-
-                        local relPos = meta:getRelativePositionOfCursor()
-                        local lay = {
-                            name = commonData.rightClickMenuId,
-                            type = ui.TYPE.Flex,
-                            props = {
-                                autoSize = true,
-                                relativePosition = relPos,
-                                propagateEvents = false,
-                            },
-                            content = ui.content{
-
-                            },
-                        }
-                        local layContent = lay.content
-                        eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
-                            mapWidget = meta,
-                            relPos = relPos,
-                            content = layContent,
-                            marker = markerElement,
-                        })
-
-                        if #layContent > 0 then
-                            pcall(function ()
-                                local i = 2
-                                while (rawget(lay.content, i)) do
-                                    lay.content:insert(i, interval(0, config.data.ui.fontSize / 3))
-                                    i = i + 2
-                                end
-                            end)
-
-                            layersLayout.content:add(lay)
-                            meta:update()
-                            meta.layout.userData.hasActiveMenu = true
-                        end
-                    end
-                elseif e.button == 1 then
+                if e.button == 1 then
                     main.userData.lastDraggedMousePos = nil
                 end
             end),

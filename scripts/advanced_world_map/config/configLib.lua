@@ -5,10 +5,13 @@ local core = require("openmw.core")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local commonData = require("scripts.advanced_world_map.common")
 
+local config = require("scripts.advanced_world_map.config.config")
+
 
 local this = {}
 
-this.data = require("scripts.advanced_world_map.config.config").data
+this.data = config.data
+this.default = config.default
 
 local defaultStorage = storage.playerSection(commonData.configMiscSectionName)
 

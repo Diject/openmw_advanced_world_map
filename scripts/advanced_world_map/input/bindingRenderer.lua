@@ -93,11 +93,15 @@ end
 return{
     interfaceName = "DijectKeyBindings",
     interface = {
-        version = 1,
+        version = 2,
         rendererName = rendererName,
         registerKey = function (id, keyStr)
             bindingSection:set(id, keyStr)
-        end
+        end,
+        -- available in version 2 and higher
+        getActionKey = function (id)
+            return bindingSection:get(id)
+        end,
     },
     engineHandlers = {
         onKeyPress = function(key)

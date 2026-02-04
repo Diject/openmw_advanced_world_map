@@ -267,21 +267,9 @@ end
 local function controllerYCallback()
     local self = this.activeMenuMeta
     if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
-    if not menuMode.isMenuInteractive() then return end
+    if not menuMode.isMenuInteractive() or not self.mapWidget:isInFocus() then return end
 
-    local layout = self.mapWidget.layout
-    local userData = layout.userData
-    ---@type advancedWorldMap.ui.mapElementMeta
-    local lastMarker = userData.lastMarkerElement
-    layout.events.mouseRelease(
-        {
-            position = userData.mousePos,
-            offset = lastMarker and userData.additiveMouseOffset + userData.mainMouseOffset or userData.mainMouseOffset,
-            button = 3,
-        },
-        lastMarker and lastMarker._elemLayout or layout,
-        lastMarker
-    )
+    self.mapWidget:openRightMouseMenu()
 end
 
 
@@ -398,10 +386,15 @@ function menuMeta:close()
     self:closeActiveWidget()
 
     if self.mapWidget then
+        self.mapWidget:closeRightMouseMenu()
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
 
-    I.DijectKeyBindings.keybind.unregister("C_Y", controllerYCallback)
+    eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
+    this.activeMenuMeta = nil
+
+    I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
+    I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
 
     if config.data.main.clearCacheOnClose then
         for id, _ in pairs(this.cachedMapWidgetLayout) do
@@ -991,7 +984,10 @@ function this.create(params)
     end
     async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
 
-    I.DijectKeyBindings.keybind.register("C_Y", controllerYCallback, 100)
+    I.DijectKeyBindings.action.register(commonData.contextMenuKeyId, controllerYCallback)
+    if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
+        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
+    end
 
     eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 
