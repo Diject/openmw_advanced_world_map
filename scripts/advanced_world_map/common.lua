@@ -22,6 +22,7 @@ this.configMiscSectionName = "Settings:AdvWMap:Misc"
 this.menuKeyId = "AdvWMap:menuKey"
 this.toggleMapTypeKeyId = "AdvWMap:toggleMapTypeKey"
 this.togglePinKeyId = "AdvWMap:togglePinKey"
+this.contextMenuKeyId = "AdvWMap:contextMenuKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 

@@ -143,6 +143,10 @@ if sections and not sections[commonData.configMainSectionName] and I.DijectKeyBi
     I.DijectKeyBindings.registerKey(commonData.menuKeyId, config.default.main.menuKey)
 end
 
+if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) then
+    I.DijectKeyBindings.registerKey(commonData.contextMenuKeyId, config.default.input.contextMenuHotkey)
+end
+
 
 
 
@@ -257,6 +261,7 @@ I.Settings.registerGroup{
     settings = {
         boolSetting{key = "input.gamepadControls", name = "SettingInputGamepadControls", description = "SettingInputGamepadControlsDescription", default = config.default.input.gamepadControls},
         boolSetting{key = "input.gamepadControlsBumperMode", name = "SettingInputGamepadControlsBumperMode", description = "SettingInputGamepadControlsBumperModeDescription", default = config.default.input.gamepadControlsBumperMode},
+        inputKey{key = "input.contextMenuHotkey", name = "SettingInputContextMenuKey", description = "SettingInputContextMenuKeyDescription", action = commonData.contextMenuKeyId, default = config.default.input.contextMenuHotkey},
         inputKey{key = "input.toggleMapTypeHotkey", name = "SettingInputToggleMapTypeKey", description = "SettingInputToggleMapTypeKeyDescription", action = commonData.toggleMapTypeKeyId, default = config.default.input.toggleMapTypeHotkey},
         inputKey{key = "input.togglePinHotkey", name = "SettingInputTogglePinKey", description = "SettingInputTogglePinKeyDescription", action = commonData.togglePinKeyId, default = config.default.input.togglePinHotkey},
     }

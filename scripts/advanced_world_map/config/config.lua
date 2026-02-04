@@ -77,6 +77,7 @@ this.default = {
         gamepadControlsBumperMode = false,
         togglePinHotkey = nil,
         toggleMapTypeHotkey = nil,
+        contextMenuHotkey = "C_Y",
     },
     ui = {
         fontSize = 18,
