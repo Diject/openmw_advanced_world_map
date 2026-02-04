@@ -14,8 +14,12 @@ mapElementMeta.__index = mapElementMeta
 
 ---@param val boolean
 function mapElementMeta:setVisibility(val)
+    local isVisibleChanged = self._elemLayout.props.visible ~= val
     self._elemLayout.props.visible = val
     self._params.visible = val
+    if isVisibleChanged then
+        self._parent:setElementVisibility(self._id, self._layerId, val)
+    end
 end
 
 ---@return boolean
@@ -88,6 +92,24 @@ function mapElementMeta:getPosition()
     return self._params.pos
 end
 
+function mapElementMeta:setTexture(texture)
+    if self._elemLayout.props.type ~= ui.TYPE.Image then
+        return false
+    end
+    self._params.texture = texture
+    self._elemLayout.props.resource = texture
+    return true
+end
+
+function mapElementMeta:setText(text)
+    if self._elemLayout.props.type == ui.TYPE.Image then
+        return false
+    end
+    self._params.text = text
+    self._elemLayout.props.text = text
+    return true
+end
+
 
 ---@param data advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 function mapElementMeta:updateLayout(data)
@@ -107,7 +129,11 @@ function mapElementMeta:updateLayout(data)
         props.color = props.resource and data.color or nil
     end
     if data.visible ~= nil then
+        local last = props.visible
         props.visible = data.visible
+        if last ~= props.visible then
+            self._parent:setElementVisibility(self._id, self._layerId, data.visible)
+        end
     end
     props.alpha = data.alpha or props.alpha
     props.resource = data.texture or props.resource
@@ -134,7 +160,9 @@ function mapElementMeta:updateParams(data)
     self._params.anchor = data.anchor or self._params.anchor
     self._params.pos = data.pos or self._params.pos
     self._params.color = data.color or self._params.color
-    self._params.visible = data.visible ~= nil and data.visible or self._params.visible
+    if data.visible ~= nil then
+        self._params.visible = data.visible
+    end
     self._params.alpha = data.alpha or self._params.alpha
     self._params.texture = data.texture or self._params.texture
     self._params.scaleFunc = data.scaleFunc or self._params.scaleFunc
@@ -147,6 +175,7 @@ end
 
 
 function mapElementMeta:restoreLayout()
+    local isVisibleChanged = self._elemLayout.props.visible ~= self._params.visible
     self._elemLayout.props = {
         type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         text = self._params.text,
@@ -173,6 +202,10 @@ function mapElementMeta:restoreLayout()
     self._elemLayout.userData.size = self._params.size
 
     self._elemLayout.userData.forceChanged = false
+
+    if isVisibleChanged then
+        self._parent:setElementVisibility(self._id, self._layerId, self._params.visible)
+    end
 end
 
 
@@ -193,9 +226,9 @@ end
 
 
 function mapElementMeta:destroy()
+    self.invalid = true
     if self._parent:removeMarker(self._id, self._layerId) then
-        self.invalid = true
-        eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self, marker = self})
+        eventSys.triggerEvent(eventSys.EVENT.onMapElementRemoved, {mapWidget = self._parent, marker = self})
     end
 end
 

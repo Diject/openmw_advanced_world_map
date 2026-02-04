@@ -233,9 +233,10 @@ function menuMeta:getMapWidgetForCell(cellId)
         this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId] = mapWidget.new{
             updateFunc = self.update,
             size = self.mainSize,
-            position = util.vector2(0, 0),
+            position = localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0),
             cellId = cellId,
             screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerHeight),
+            zoom = cellId and (localStorage.data[commonData.localMapZoomFieldId] or 0.5) or (localStorage.data[commonData.worldMapZoomFieldId] or 1),
         }
         isNew = true
     end
@@ -294,14 +295,17 @@ function menuMeta:updateMapWidgetCell(cellId)
     self.mapWidget:setUpdateFunction(self.update)
     self:updateMapWidgetWidth()
 
-    if cellId then
-        meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
-    else
-        meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
-    end
-
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
-    self.mapWidget:updateMarkers()
+
+    if not isNew then
+        if cellId then
+            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
+        else
+            meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
+        end
+    else
+        self.mapWidget:updateMarkers()
+    end
 
     if isNew then
         eventSys.triggerEvent(eventSys.EVENT.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
@@ -365,7 +369,7 @@ end
 
 
 function menuMeta:requestUpdate()
-    menuMeta._requestedUpdate = true
+    self._requestedUpdate = true
 end
 
 
@@ -420,6 +424,9 @@ function menuMeta:close()
             localStorage.data[commonData.hideInInterfaceMenuFieldId] = true
         end
     end
+
+    eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
+    this.activeMenuMeta = nil
 
     local co = coroutine.create(function ()
         self.menu:destroy()
@@ -478,7 +485,6 @@ function this.create(params)
 
     meta.widgetActiveHeaderLayout = {
         type = ui.TYPE.Flex,
-        name = commonData.mapWidgetHeaderLayoutId,
         props = {
             horizontal = true,
             anchor = util.vector2(0, 0.5),
@@ -495,12 +501,14 @@ function this.create(params)
 
     meta.widgetInactiveHeaderLayout = {
         type = ui.TYPE.Flex,
-        name = commonData.mapWidgetHeaderLayoutId,
         props = {
             horizontal = true,
+            relativeSize = util.vector2(1, 1),
+            autoSize = false,
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
             arrange = ui.ALIGNMENT.Center,
+            align = ui.ALIGNMENT.Center,
         },
         userData = {
 
@@ -512,7 +520,6 @@ function this.create(params)
 
     meta.widgetWindowLayout = {
         type = ui.TYPE.Flex,
-        name = commonData.mapWidgetHeaderLayoutId,
         props = {
             horizontal = true,
             position = util.vector2(2, 2),
@@ -969,8 +976,8 @@ function this.create(params)
     func = function ()
         if meta.menu.layout then
             if meta.mapWidget:updatePlayerMarker(meta.centerOnPlayer) or meta._requestedUpdate then
-                meta:update()
                 meta._requestedUpdate = false
+                meta:update()
             end
             async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
         end

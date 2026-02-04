@@ -45,12 +45,17 @@ function this.clearContent(content)
 end
 
 
-function this.isExistsInContent(content, index)
+function this.getFromContent(content, index)
     if type(index) == "string" then
-        return rawget(content.__nameIndex, index) ~= nil
+        return rawget(content, content.__nameIndex[index])
     else
-        return rawget(content, index) ~= nil
+        return rawget(content, index)
     end
+end
+
+
+function this.isExistsInContent(content, index)
+    return this.getFromContent(content, index) ~= nil
 end
 
 
