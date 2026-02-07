@@ -97,6 +97,21 @@ function this.getTextHeight(text, fontSize, width, mul, extraRowCount, removeCol
 end
 
 
+function this.getElementHeight(elem)
+    if elem.userData and elem.userData.height then
+        return elem.userData.height
+    elseif elem.props and elem.props.size then
+        return elem.props.size.y
+    elseif elem.props and elem.props.textSize then
+        return elem.props.textSize + (elem.props.textShadow and 1 or 0)
+    elseif elem.content then
+        return this.getContentHeight(elem.content, elem.props and elem.props.horisontal or false)
+    end
+
+    return 0
+end
+
+
 ---@return number
 function this.getContentHeight(content, isHorisontal)
     local res = 0
@@ -110,18 +125,7 @@ function this.getContentHeight(content, isHorisontal)
     end
 
     for _, elem in pairs(content) do
-        if elem.props and elem.props.size then
-            add(elem.props.size.y)
-        elseif elem.props and elem.props.textSize then
-            if elem.props.textShadow then
-                add(1)
-            end
-            add(elem.props.textSize)
-        elseif elem.userData and elem.userData.height then
-            add(elem.userData.height)
-        elseif elem.content then
-            add(this.getContentHeight(elem.content, elem.props and elem.props.horisontal or false))
-        end
+        add(this.getElementHeight(elem))
     end
 
     return res

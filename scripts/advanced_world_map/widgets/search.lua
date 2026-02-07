@@ -486,6 +486,7 @@ local function create(menu)
             position = util.vector2(0, config.data.ui.fontSize * 5),
             scrollAmount = config.data.ui.fontSize * 2,
             content = scrollBoxContent,
+            autoOptimize = true,
         }
 
         ---@type advancedWorldMap.ui.scrollBox
@@ -645,6 +646,7 @@ local function create(menu)
 
             scrollBoxMeta:setScrollPosition(0)
             scrollBoxMeta:setContentHeight(height)
+            scrollBoxMeta:updateContent()
         end
 
 
@@ -729,6 +731,7 @@ local function create(menu)
                     events = {
                         textChanged = async:callback(function(text, layout)
                             textFilter = stringLib.utf8_lower(text)
+                            searchBarLayout.content[1].props.text = text
                         end),
                         keyRelease = async:callback(function(e, layout)
                             if e.code == input.KEY.Enter then

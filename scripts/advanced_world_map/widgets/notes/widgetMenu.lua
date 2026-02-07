@@ -46,7 +46,7 @@ local function fill(menu, sb, filter)
     sbSize = util.vector2(sbSize.x - 4, sbSize.y)
 
     ---@type Content
-    local content = sb:getMainFlex().content
+    local content = sb:getContent()
     local contentHeight = 0
 
 
@@ -315,6 +315,7 @@ local function fill(menu, sb, filter)
     end
 
     sb:setContentHeight(contentHeight)
+    sb:updateContent()
 end
 
 
@@ -341,6 +342,7 @@ function  this.create(menu, content)
         size = scrollBoxSize,
         scrollAmount = config.data.ui.fontSize * 2,
         content = scrollBoxContent,
+        autoOptimize = true,
     }
 
     ---@type advancedWorldMap.ui.scrollBox
@@ -384,6 +386,7 @@ function  this.create(menu, content)
                 events = {
                     textChanged = async:callback(function(text, layout)
                         textFilter = stringLib.utf8_lower(text)
+                        layout.props.text = text
                     end),
                     keyRelease = async:callback(function(e, layout)
                         if e.code == input.KEY.Enter then

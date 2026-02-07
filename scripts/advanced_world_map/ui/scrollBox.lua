@@ -1,8 +1,5 @@
 local ui = require('openmw.ui')
 local util = require('openmw.util')
-local time = require('openmw_aux.time')
-local I = require('openmw.interfaces')
-local templates = require("scripts.advanced_world_map.ui.templates")
 local async = require('openmw.async')
 
 local realTimer = require("scripts.advanced_world_map.realTimer")
@@ -10,6 +7,7 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 local config = require("scripts.advanced_world_map.config.config")
 
 local tableLib = require("scripts.advanced_world_map.utils.table")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local button = require("scripts.advanced_world_map.ui.button")
 
@@ -31,9 +29,13 @@ scrollBoxMeta.scrollUp = function(self, val)
     local pos = fl.props.position
     if not pos then return end
 
-    fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift or (config.data.ui.scrollArrowSize * 2) or 32, pos.y + val))
+    fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift, pos.y + val))
 
     self:updateScrollPosition()
+
+    if self.params.autoOptimize then
+        self:updateContent()
+    end
 
     self:update()
 end
@@ -46,6 +48,10 @@ scrollBoxMeta.scrollDown = function(self, val)
     fl.props.position = util.vector2(self.params.leftOffset, pos.y - val)
 
     self:updateScrollPosition()
+
+    if self.params.autoOptimize then
+        self:updateContent()
+    end
 
     self:update()
 end
@@ -76,7 +82,11 @@ scrollBoxMeta.moveScrollPanel = function(self, height)
     local pos = fl.props.position
     if not pos then return end
 
-    fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift or (config.data.ui.scrollArrowSize * 2) or 32, -height))
+    fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift, -height))
+
+    if self.params.autoOptimize then
+        self:updateContent()
+    end
 end
 
 ---@param value number [0, 1]
@@ -88,13 +98,23 @@ scrollBoxMeta.moveScrollPanelPercent = function(self, value)
 
     local heightPersent = (self.params.contentHeight - self.innnerSize.y) * value
 
-    fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift or (config.data.ui.scrollArrowSize * 2) or 32, -heightPersent))
+    fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift, -heightPersent))
+
+    if self.params.autoOptimize then
+        self:updateContent()
+    end
 end
 
 
 scrollBoxMeta.clearContent = function (self)
     local mainFlex = self:getMainFlex()
-    mainFlex.content = ui.content{}
+    uiUtils.clearContent(mainFlex.content)
+    uiUtils.clearContent(self.params.content)
+end
+
+
+scrollBoxMeta.getContent = function (self)
+    return self.params.content
 end
 
 
@@ -133,6 +153,71 @@ scrollBoxMeta.setContentHeight = function (self, value)
 end
 
 
+scrollBoxMeta.calcContentHeight = function (self)
+    local mainFlex = self:getMainFlex()
+    local height = uiUtils.getContentHeight(mainFlex.content)
+    self.params.contentHeight = height
+    self:updateScrollBarVisibility()
+    self:updateScrollPosition()
+end
+
+
+scrollBoxMeta.updateContent = function (self, force)
+    local mainFlex = self:getMainFlex()
+
+    local startPos = -mainFlex.props.position.y
+    local endPos = startPos + self.innnerSize.y
+
+    if not force and (self.loadedContentTop or 0) < startPos and
+        (self.loadedContentBottom or 0) > endPos then
+        return
+    end
+
+    uiUtils.clearContent(mainFlex.content)
+
+    mainFlex.content:add{
+        type = ui.TYPE.Widget,
+        props = {}
+    }
+
+    local content = self.params.content
+    local topFreeHeight = 0
+    local bottomFreeHeight = 0
+    local height = 0
+    startPos = startPos - self.innnerSize.y * 0.25
+    endPos = endPos + self.innnerSize.y * 0.25
+    for i, elem in ipairs(content) do
+        local h = uiUtils.getElementHeight(elem) + height
+
+        if startPos < h then
+            if endPos >= height then
+                mainFlex.content:add(elem)
+                if elem.events and elem.events.focusLoss then
+                    elem.events.focusLoss(nil, elem)
+                end
+                bottomFreeHeight = h
+            else
+                break
+            end
+        else
+            topFreeHeight = h
+        end
+        height = h
+    end
+
+    mainFlex.content:add{
+        type = ui.TYPE.Widget,
+        props = {
+            size = util.vector2(0, self.params.contentHeight - bottomFreeHeight)
+        }
+    }
+    mainFlex.content[1].props.size = util.vector2(0, topFreeHeight)
+
+    self.loadedContentTop = topFreeHeight ---@diagnostic disable-line: inject-field
+    self.loadedContentBottom = bottomFreeHeight ---@diagnostic disable-line: inject-field
+end
+
+
 scrollBoxMeta.lastMovedDistance = 0
 
 scrollBoxMeta.mousePress = function (self, e)
@@ -152,7 +237,6 @@ scrollBoxMeta.focusLoss = function (self, e)
     local layout = self:getLayout()
     layout.userData.lastMousePos = nil
     layout.userData.inFocus = false
-    self.lastMovedDistance = 0
 end
 
 scrollBoxMeta.mouseMove = function (self, e)
@@ -187,6 +271,7 @@ end
 ---@field updateFunc fun()
 ---@field arrange any?
 ---@field userData table?
+---@field autoOptimize boolean?
 
 
 ---@param params advancedWorldMap.ui.scrollBox.params
@@ -196,7 +281,14 @@ return function(params)
     ---@class advancedWorldMap.ui.scrollBox
     local meta = setmetatable({}, scrollBoxMeta)
 
+    if params.autoOptimize then
+        meta.content = ui.content{}
+    else
+        meta.content = params.content
+    end
+
     if not params.leftOffset then params.leftOffset = 2 end
+    params.maxNegativeShift = params.maxNegativeShift or (config.data.ui.scrollArrowSize * 4)
 
     local flex = {
         type = ui.TYPE.Flex,
@@ -207,7 +299,7 @@ return function(params)
             position = util.vector2(params.leftOffset, 0),
             arrange = params.arrange,
         },
-        content = params.content,
+        content = meta.content,
     }
 
     meta.update = function (self)
@@ -402,6 +494,10 @@ return function(params)
 
     meta.getLayout = function (self)
         return contentData
+    end
+
+    if params.autoOptimize then
+        meta:calcContentHeight()
     end
 
     return contentData
