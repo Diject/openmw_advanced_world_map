@@ -381,6 +381,7 @@ local function createMarkers(widget, cellId)
                 userData = {
                     type = commonData.doorDescrMarkerType,
                     cellId = dt.dCId,
+                    hash = dt.dHash,
                     searchText = stringLib.utf8_lower(dt.name),
                     fullName = dt.fName,
                     allowSearchFilter = true,
@@ -415,6 +416,7 @@ local function createMarkers(widget, cellId)
                 userData = {
                     type = commonData.doorMarkerType,
                     cellId = dt.dCId,
+                    hash = dt.dHash,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                     textMarker = textMarkerHandler,
