@@ -11,7 +11,6 @@ local config = require("scripts.advanced_world_map.config.configLib")
 
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
-local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -261,15 +260,13 @@ local function init()
         end
     end, -10)
 
-    -- Event triggered when a widget is opened.
-    -- This code is for personal use. Do not change the layout of the default widgets unless you know what you are doing.
-    events.registerHandler(events.EVENT.onWidgetOpened, function (e)
-        if e.widgetId ~= "AdvancedWorldMap:Legend" then return end
+    -- Event triggered when the legend widget is created.
+    -- You can add your own elements to the legend by adding them to the provided content layout.
+    events.registerHandler(events.EVENT.onLegendWidgetCreate, function (e)
 
-        local flexContent = e.content[1].content[2].content
-        if not flexContent then return end
+        local flexContent = ui.content{}
 
-        local size = e.content[1].props.size
+        local size = e.size
 
         local function addVPadding(elem, padding)
             return {
@@ -298,7 +295,7 @@ local function init()
             },
         }
 
-        local personalCB = checkBox{
+        local personalCB = AdvancedWorldMap.uiElements.checkbox{
             updateFunc = e.menu.update,
             text = l10n("PersonalNotesCB"),
             textSize = config.data.ui.fontSize * 0.9,
@@ -311,7 +308,7 @@ local function init()
             end
         }
 
-        local globalCB = checkBox{
+        local globalCB = AdvancedWorldMap.uiElements.checkbox{
             updateFunc = e.menu.update,
             text = l10n("GlobalNotesCB"),
             textSize = config.data.ui.fontSize * 0.9,
@@ -333,6 +330,14 @@ local function init()
         flexContent:add(
             addVPadding(globalCB)
         )
+
+        e.content:add{
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = false,
+            },
+            content = flexContent,
+        }
     end)
 end
 

@@ -11,6 +11,8 @@ local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
+local interval = require("scripts.advanced_world_map.ui.interval")
+local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 
@@ -51,126 +53,30 @@ local function create(menu)
             mapWidgetSize.y
         )
 
+        local evContent = ui.content{}
 
-        local focusOnPlayerCB = checkBox{
-            updateFunc = menu.update,
-            text = l10n("FollowPlayer"),
-            textSize = config.data.ui.fontSize * 0.9,
-            anchor = util.vector2(0, 0.5),
-            position = util.vector2(4, config.data.ui.fontSize),
-            checked = config.data.main.centerOnPlayer,
-            event = function (checked, layout)
-                config.setValue("main.centerOnPlayer", checked)
-                menu.centerOnPlayer = checked
-                if checked then
-                    local playerCell = not playerRef.cell.isExterior and playerRef.cell.id or nil
-                    if menu.mapWidget.cellId ~= playerCell then
-                        menu:updateMapWidgetCell(playerCell)
-                    end
-                    if not playerCell then
-                        menu.mapWidget:updatePlayerMarker(true, true)
-                        menu.mapWidget:updateMarkers()
-                    end
-                    menu:update()
-                end
-            end
-        }
+        eventSys.triggerEvent(eventSys.EVENT.onLegendWidgetCreate, {
+            menu = menu,
+            content = evContent,
+            size = size
+        })
 
-        local function addVPadding(elem, padding)
-            return {
-                type = ui.TYPE.Widget,
-                props = {
-                    size = util.vector2(
-                        size.x,
-                        (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
-                    ),
-                },
-                content = ui.content{
-                    elem
-                }
-            }
+        local sbContent = ui.content{interval(0, config.data.ui.fontSize / 2)}
+        for _, elem in ipairs(evContent) do
+            sbContent:add(elem)
+            sbContent:add(interval(0, config.data.ui.fontSize / 2))
         end
 
-        local layerVisibilityLabel = {
-            type = ui.TYPE.Text,
-            props = {
-                text = l10n("LayerVisibility"),
-                textSize = config.data.ui.fontSize,
-                textColor = config.data.ui.defaultColor,
-                autoSize = true,
-                anchor = util.vector2(0, 0.5),
-                position = util.vector2(4, config.data.ui.fontSize * 0.75),
-            },
-        }
-
-        local regionsLayerCB = checkBox{
+        local sb = scrollBox{
             updateFunc = menu.update,
-            text = l10n("Regions"),
-            textSize = config.data.ui.fontSize * 0.9,
-            anchor = util.vector2(0, 0.5),
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
-            checked = config.data.legend.visibility.regions,
-            event = function (checked, layout)
-                config.setValue("legend.visibility.regions", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.region, checked)
-                menu:update()
-            end
+            contentHeight = 0,
+            leftOffset = 2,
+            size = size,
+            scrollAmount = config.data.ui.fontSize * 2,
+            hideScrollBtns = true,
+            content = sbContent,
         }
-        local citiesLayerCB = checkBox{
-            updateFunc = menu.update,
-            text = l10n("Cities"),
-            textSize = config.data.ui.fontSize * 0.9,
-            anchor = util.vector2(0, 0.5),
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
-            checked = config.data.legend.visibility.cities,
-            event = function (checked, layout)
-                config.setValue("legend.visibility.cities", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.name, checked)
-                menu:update()
-            end
-        }
-        local playerLayerCB = checkBox{
-            updateFunc = menu.update,
-            text = l10n("PlayerMarker"),
-            textSize = config.data.ui.fontSize * 0.9,
-            anchor = util.vector2(0, 0.5),
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
-            checked = config.data.legend.visibility.playerMarker,
-            event = function (checked, layout)
-                config.setValue("legend.visibility.playerMarker", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.player, checked)
-                if checked then
-                    menu.mapWidget:updatePlayerMarker(true, true)
-                end
-                menu:update()
-            end
-        }
-        local labelLayerCB = checkBox{
-            updateFunc = menu.update,
-            text = l10n("Labels"),
-            textSize = config.data.ui.fontSize * 0.9,
-            anchor = util.vector2(0, 0.5),
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
-            checked = config.data.legend.visibility.labels,
-            event = function (checked, layout)
-                config.setValue("legend.visibility.labels", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, checked)
-                menu:update()
-            end
-        }
-        local markerLayerCB = checkBox{
-            updateFunc = menu.update,
-            text = l10n("Markers"),
-            textSize = config.data.ui.fontSize * 0.9,
-            anchor = util.vector2(0, 0.5),
-            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
-            checked = config.data.legend.visibility.markers,
-            event = function (checked, layout)
-                config.setValue("legend.visibility.markers", checked)
-                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, checked)
-                menu:update()
-            end
-        }
+        sb.userData.scrollBoxMeta:calcContentHeight() ---@diagnostic disable-line: need-check-nil
 
 
         local windowLayout = {
@@ -192,23 +98,7 @@ local function create(menu)
                         resource = uiUtils.whiteTexture,
                     },
                 },
-                {
-                    type = ui.TYPE.Flex,
-                    props = {
-                        horizontal = false,
-                        size = size,
-                        autoSize = false,
-                    },
-                    content = ui.content{
-                        addVPadding(focusOnPlayerCB, 2),
-                        addVPadding(layerVisibilityLabel),
-                        addVPadding(regionsLayerCB),
-                        addVPadding(citiesLayerCB),
-                        addVPadding(playerLayerCB),
-                        addVPadding(labelLayerCB),
-                        addVPadding(markerLayerCB),
-                    }
-                },
+                sb,
                 borders()
             }
         }
@@ -229,6 +119,153 @@ local function create(menu)
     }
 
 end
+
+
+eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
+    local content = e.content
+    local menu = e.menu
+
+    local function addVPadding(elem, padding)
+        return {
+            type = ui.TYPE.Widget,
+            props = {
+                size = util.vector2(
+                    e.size.x,
+                    (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
+                ),
+            },
+            content = ui.content{
+                elem
+            }
+        }
+    end
+
+    local focusOnPlayerCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("FollowPlayer"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(4, config.data.ui.fontSize),
+        checked = config.data.main.centerOnPlayer,
+        event = function (checked, layout)
+            config.setValue("main.centerOnPlayer", checked)
+            menu.centerOnPlayer = checked
+            if checked then
+                local playerCell = not playerRef.cell.isExterior and playerRef.cell.id or nil
+                if menu.mapWidget.cellId ~= playerCell then
+                    menu:updateMapWidgetCell(playerCell)
+                end
+                if not playerCell then
+                    menu.mapWidget:updatePlayerMarker(true, true)
+                    menu.mapWidget:updateMarkers()
+                end
+                menu:update()
+            end
+        end
+    }
+
+    local layerVisibilityLabel = {
+        type = ui.TYPE.Text,
+        props = {
+            text = l10n("LayerVisibility"),
+            textSize = config.data.ui.fontSize,
+            textColor = config.data.ui.defaultColor,
+            autoSize = true,
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(4, config.data.ui.fontSize * 0.75),
+        },
+    }
+
+    local regionsLayerCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("Regions"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.legend.visibility.regions,
+        event = function (checked, layout)
+            config.setValue("legend.visibility.regions", checked)
+            menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.region, checked)
+            menu:update()
+        end
+    }
+
+    local citiesLayerCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("Cities"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.legend.visibility.cities,
+        event = function (checked, layout)
+            config.setValue("legend.visibility.cities", checked)
+            menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.name, checked)
+            menu:update()
+        end
+    }
+
+    local playerLayerCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("PlayerMarker"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.legend.visibility.playerMarker,
+        event = function (checked, layout)
+            config.setValue("legend.visibility.playerMarker", checked)
+            menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.player, checked)
+            if checked then
+                menu.mapWidget:updatePlayerMarker(true, true)
+            end
+            menu:update()
+        end
+    }
+
+    local labelLayerCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("Labels"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.legend.visibility.labels,
+        event = function (checked, layout)
+            config.setValue("legend.visibility.labels", checked)
+            menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, checked)
+            menu:update()
+        end
+    }
+
+    local markerLayerCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("Markers"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.legend.visibility.markers,
+        event = function (checked, layout)
+            config.setValue("legend.visibility.markers", checked)
+            menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, checked)
+            menu:update()
+        end
+    }
+
+
+    content:add{
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = false,
+        },
+        content = ui.content{
+            addVPadding(focusOnPlayerCB, 2),
+            addVPadding(layerVisibilityLabel),
+            addVPadding(regionsLayerCB),
+            addVPadding(citiesLayerCB),
+            addVPadding(playerLayerCB),
+            addVPadding(labelLayerCB),
+            addVPadding(markerLayerCB),
+        }
+    }
+end, 9900)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMapShown, function (e)

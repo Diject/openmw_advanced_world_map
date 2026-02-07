@@ -272,6 +272,7 @@ end
 ---@field arrange any?
 ---@field userData table?
 ---@field autoOptimize boolean?
+---@field hideScrollBtns boolean?
 
 
 ---@param params advancedWorldMap.ui.scrollBox.params
@@ -450,6 +451,7 @@ return function(params)
         icon = iconUp,
         iconSize = util.vector2(config.data.ui.scrollArrowSize, config.data.ui.scrollArrowSize),
         alpha = 0.8,
+        visible = not params.hideScrollBtns,
         parentScrollBoxUserData = contentData.userData,
         updateFunc = params.updateFunc,
         event = function (layout)
@@ -472,6 +474,7 @@ return function(params)
         icon = iconDown,
         iconSize = util.vector2(config.data.ui.scrollArrowSize, config.data.ui.scrollArrowSize),
         alpha = 0.8,
+        visible = not params.hideScrollBtns,
         parentScrollBoxUserData = contentData.userData,
         updateFunc = params.updateFunc,
         event = function (layout)

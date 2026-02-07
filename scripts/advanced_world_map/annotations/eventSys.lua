@@ -203,6 +203,12 @@
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
 ---@field widgetId string Closed widget identifier
 
+---Event data for legend widget create event
+---@class AdvancedWorldMap.Event.OnLegendWidgetCreateEvent
+---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+---@field content Content Legend widget content
+---@field size Vector2 Legend widget size
+
 ---Advanced World Map event system
 ---@class AdvancedWorldMap.Event
 ---@field EVENT AdvancedWorldMap.Event.EVENT Table containing event identifiers
@@ -244,6 +250,7 @@ AdvancedWorldMapEvent.EVENT = {
     onFastTravelResolved = "onFastTravelResolved", -- Event triggered after a fast travel has been resolved
     onWidgetOpened = "onWidgetOpened", -- Event triggered when a map widget is opened
     onWidgetClosed = "onWidgetClosed", -- Event triggered when a map widget is closed
+    onLegendWidgetCreate = "onLegendWidgetCreate", -- Event triggered when the legend widget is created. You can use this event to add custom content to the legend.
 }
 
 ---Registers an event handler in the event system.
@@ -285,6 +292,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onFastTravelResolved", handlerFunc: fun(e: AdvancedWorldMap.Event.OnFastTravelResolvedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWidgetOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetOpenedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWidgetClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetClosedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onLegendWidgetCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnLegendWidgetCreateEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system
