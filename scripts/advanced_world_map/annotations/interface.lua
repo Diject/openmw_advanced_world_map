@@ -6,6 +6,7 @@
 ---@field borders fun(): Layout[] creates borders
 ---@field checkbox fun(params: any): Layout creates a checkbox
 ---@field interval fun(width: number, height: number): Layout creates an interval
+---@field tooltip table module for creating tooltips
 
 ---@class AdvancedWorldMap.Interface
 ---@field version integer version of the interface

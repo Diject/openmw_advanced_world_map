@@ -63,7 +63,7 @@
 ---@field marker AdvancedWorldMap.MapElement Marker to show tooltip for
 ---@field content Content Tooltip content
 
----Event data for marker tooltip showed event
+---Event data for marker tooltip showed event. Note: I know about this spelling mistake, but changing it now would break compatibility.
 ---@class AdvancedWorldMap.Event.OnMarkerTooltipShowedEvent
 ---@field marker AdvancedWorldMap.MapElement Marker with tooltip
 ---@field content Content Tooltip content
@@ -223,7 +223,7 @@ AdvancedWorldMapEvent.EVENT = {
     onMarkerClick = "onMarkerClick", -- Event triggered when a built-in marker is clicked
     onMarkerClicked = "onMarkerClicked", -- Event triggered after a built-in marker click is completed
     onMarkerTooltipShow = "onMarkerTooltipShow", -- Event triggered when a built-in marker tooltip is about to be shown
-    onMarkerTooltipShowed = "onMarkerTooltipShowed", -- Event triggered after a built-in marker tooltip is shown
+    onMarkerTooltipShowed = "onMarkerTooltipShowed", -- Event triggered after a built-in marker tooltip is shown. Note: I know about this spelling mistake, but changing it now would break compatibility.
     onMapElementInitialized = "onMapElementInitialized", -- Event triggered when a map element (marker) is initialized
     onMapElementCreate = "onMapElementCreate", -- Event triggered when a map element (marker) is being created on the map. You can prevent the marker from being created by returning second value as true: like `return nil, true`
     onMapElementCreated = "onMapElementCreated", -- Event triggered when a map element (marker) is created on the map
