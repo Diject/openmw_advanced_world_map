@@ -56,6 +56,16 @@ local function create(menu)
         layout = nameLayout,
         priority = -100,
         showWhenMenuInactive = true,
+        onClick = function (m, e)
+            local mapWidget = menu.mapWidget
+            local plCell = playerRef.cell
+
+            if not (plCell.isExterior and mapWidget.cellId == nil or plCell.id == mapWidget.cellId) then
+                menu:updateMapWidgetCell(not plCell.isExterior and plCell.id or nil)
+            end
+            menu.mapWidget:focusOnWorldPosition(playerRef.position)
+            menu.mapWidget:updateMarkers()
+        end,
     }
 
 end
