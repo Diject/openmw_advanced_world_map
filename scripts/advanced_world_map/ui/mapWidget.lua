@@ -403,7 +403,7 @@ function mapWidgetMeta:isInZoomInMode()
 end
 
 
-function mapWidgetMeta:updateOnZoomMarkers()
+function mapWidgetMeta:updateOnZoomMarkers(force)
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
 
     local size = self:getSize()
@@ -420,27 +420,25 @@ function mapWidgetMeta:updateOnZoomMarkers()
         return
     end
 
+    local updateOnlyRect = not force and self._lastOnZoomZoom == self.zoom
+
     if self:isInZoomInMode() then
-        self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
+        self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
         self:placeGroundTextures(visibleRect)
-        self:createZoomInMarkers(visibleRect)
+        self:createZoomInMarkers(visibleRect, nil, force)
     else
-        self:removeOnZoomMarkers(self._lastOnZoomZoom == self.zoom and visibleRect or nil)
+        self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
         self:placeGroundTextures(visibleRect)
-        self:createZoomOutMarkers(visibleRect)
+        self:createZoomOutMarkers(visibleRect, nil, force)
     end
     self._lastOnZoomZoom = self.zoom
-
-    if self.initialized then
-        eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = visibleRect})
-    end
 
     self._markerRect = visibleRect
 end
 
 
 ---@param self advancedWorldMap.ui.mapWidgetMeta
-local function setZoom(self, zoom, relativePos)
+local function setZoom(self, zoom, relativePos, force)
     local widget = self:getMapLayersLayout()
 
     local oldZoom = self.zoom
@@ -473,7 +471,7 @@ local function setZoom(self, zoom, relativePos)
     widget.props.position = newPos
     self.zoom = zoom
 
-    self:updateOnZoomMarkers()
+    self:updateOnZoomMarkers(force)
 
     self:updateMarkersScale()
 
@@ -539,8 +537,8 @@ function mapWidgetMeta:updateMarkersScale()
 end
 
 
-function mapWidgetMeta:updateMarkers()
-    setZoom(self, self.zoom)
+function mapWidgetMeta:updateMarkers(force)
+    setZoom(self, self.zoom, nil, force)
 end
 
 
@@ -914,8 +912,8 @@ end
 
 
 ---@param region advancedWorldMap.ui.mapWidget.region
-function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly)
-    if self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
+function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly, force)
+    if not force and self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
         return
     end
 
@@ -935,20 +933,28 @@ function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly)
 
     if preloadOnly then return end
 
+    if self.initialized then
+        eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
+    end
+
     self.onZoomMarkersRect = region
 end
 
 
 
 ---@param region advancedWorldMap.ui.mapWidget.region
-function mapWidgetMeta:createZoomInMarkers(region, preloadOnly)
+function mapWidgetMeta:createZoomInMarkers(region, preloadOnly, force)
 
     if self.cellId then
         for _, dt in pairs(self.zoomInMarkers[self.cellId] or {}) do
             tryCreateActiveMarker(self, dt.params, preloadOnly)
         end
+
+        if self.initialized then
+            eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
+        end
     else
-        if self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
+        if not force and self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
             return
         end
 
@@ -969,6 +975,10 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly)
         end
 
         if preloadOnly then return end
+
+        if self.initialized then
+            eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
+        end
 
         self.onZoomMarkersRect = region
     end

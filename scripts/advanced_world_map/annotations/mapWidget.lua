@@ -186,7 +186,8 @@ function AdvancedWorldMapMapWidget:getRelativePositionOfVisibleCenter() end
 function AdvancedWorldMapMapWidget:getSize() end
 
 ---Updates markers that appear/disappear based on zoom level
-function AdvancedWorldMapMapWidget:updateOnZoomMarkers() end
+---@param force boolean? If true, forces update every marker even if it doesn't appear to need it
+function AdvancedWorldMapMapWidget:updateOnZoomMarkers(force) end
 
 ---Sets the zoom level, optionally centering on a specific point
 ---@param zoom number New zoom level
@@ -202,7 +203,8 @@ function AdvancedWorldMapMapWidget:isInZoomInMode() end
 function AdvancedWorldMapMapWidget:focusOnWorldPosition(worldPos) end
 
 ---Forces a complete marker update (recalculates zoom and visibility)
-function AdvancedWorldMapMapWidget:updateMarkers() end
+---@param force boolean? If true, forces update every marker even if it doesn't appear to need it
+function AdvancedWorldMapMapWidget:updateMarkers(force) end
 
 ---Creates an image marker on the map
 ---@param params AdvancedWorldMap.MapWidget.CreateImageMarkerParams Marker creation parameters
