@@ -18,9 +18,7 @@ local btnLayout
 
 local function isMapTypeWorld(mapWidget)
     if mapWidget.cellId then return false end
-    local normalizedZoom = config.data.tileset.zoomToShow * 32 / mapWidget.mapInfo.pixelsPerCell
-    if mapWidget.zoom >= normalizedZoom then return false end
-    return true
+    return not mapWidget:isInZoomInMode()
 end
 
 local function updateLabel(mapWidget)
@@ -44,13 +42,13 @@ local function toggleMap(menu)
         local playerCell = playerRef.cell
 
         if playerCell.isExterior then
-            local normalizedZoom = config.data.tileset.zoomToShow * 32 / menu.mapWidget.mapInfo.pixelsPerCell
+            local mapWidget = menu.mapWidget
 
-            if isMapTypeWorld(menu.mapWidget) then
-                menu.mapWidget:setZoom(normalizedZoom + 1)
-            else
-                menu.mapWidget:setZoom(normalizedZoom - 1)
-            end
+            local center = mapWidget:getRelativePositionOfVisibleCenter()
+            local normalizedZoom = config.data.tileset.zoomToShow * 32 / menu.mapWidget.mapInfo.pixelsPerCell
+            local zoom = mapWidget:isInZoomInMode() and normalizedZoom * 0.5 or normalizedZoom * 2
+
+            menu.mapWidget:setZoom(zoom, center)
         else
             menu:updateMapWidgetCell(playerCell.id)
             menu.mapWidget:focusOnWorldPosition(playerRef.position)
