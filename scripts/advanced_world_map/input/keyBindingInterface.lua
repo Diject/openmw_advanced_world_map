@@ -13,7 +13,7 @@ bindingSection:setLifeTime(storage.LIFE_TIME.Persistent)
 return{
     interfaceName = "DijectKeyBindings",
     interface = {
-        version = 2,
+        version = 3,
         rendererName = "DijectKeyBindings:inputBinding",
         registerKey = function (id, keyStr)
             bindingSection:set(id, keyStr)
@@ -21,6 +21,16 @@ return{
         -- available in version 2 and higher
         getActionKey = function (id)
             return bindingSection:get(id)
+        end,
+        -- available in version 3 and higher
+        getKeyActions = function (keyCombination)
+            local res = {}
+            for id, bind in pairs(bindingSection:asTable()) do
+                if bind == keyCombination then
+                    table.insert(res, id)
+                end
+            end
+            return next(res) and res or nil
         end,
         keybind = {
             register = keyBinding.register,
