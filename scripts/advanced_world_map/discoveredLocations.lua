@@ -2,6 +2,7 @@ local core = require("openmw.core")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
+local dateLib = require("scripts.advanced_world_map.utils.date")
 
 local commonData = require("scripts.advanced_world_map.common")
 
@@ -19,7 +20,7 @@ this.blockDiscovery = false
 
 
 function this.addVisitedCell(cell)
-    local timeStamp = core.getGameTime()
+    local timeStamp = dateLib.getGlobalTimestamp()
     if not this.visited[cell.id] then
         local res = {cell.id}
 
@@ -45,7 +46,7 @@ end
 
 function this.updateVisited(cell)
     if this.visited[cell.id] then
-        this.visited[cell.id] = core.getGameTime()
+        this.visited[cell.id] = dateLib.getGlobalTimestamp()
     end
 end
 

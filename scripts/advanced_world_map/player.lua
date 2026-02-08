@@ -22,6 +22,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local configLib = require("scripts.advanced_world_map.config.configLib")
 local config = require("scripts.advanced_world_map.config.config")
 local tableLib = require("scripts.advanced_world_map.utils.table")
+local dateLib = require("scripts.advanced_world_map.utils.date")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
@@ -128,6 +129,7 @@ local function onInit()
     disabledDoors.init()
     -- must be after localStorage init
     notesWidgetData.loadData()
+    core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
 end
 
 
@@ -138,6 +140,7 @@ local function onLoad(data)
     disabledDoors.init()
     -- must be after localStorage init
     notesWidgetData.loadData()
+    core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
 end
 
 
@@ -467,6 +470,7 @@ return {
             button = require("scripts.advanced_world_map.ui.button"),
             interval = require("scripts.advanced_world_map.ui.interval"),
             checkbox = require("scripts.advanced_world_map.ui.checkBox"),
+            tooltip = require("scripts.advanced_world_map.ui.tooltip"),
         },
         realTimer = realTimer.newTimer,
     },
@@ -532,6 +536,7 @@ return {
             if e.oldMode == "Loading" or e.oldMode == nil and e.newMode == nil and lastPlayerCellId ~= self.cell.id then
                 lastPlayerCellId = self.cell.id
 
+                core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
                 addNearbyDoors()
                 discoverNearby()
 
@@ -628,6 +633,10 @@ return {
                 menu.mapWidget:updateMarkers()
                 menu:update()
             end
-        end
+        end,
+
+        ["AdvWMap:requestTimeUpdate"] = function (data)
+            dateLib.setGlobalTime(data.day, data.month, data.year)
+        end,
     },
 }

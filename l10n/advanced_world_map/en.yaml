@@ -62,11 +62,7 @@ GlobalNotesCB: "Global"
 ListAllCharactersNotes: "All characters' notes"
 MapSizePositionResetMessage: "Advanced World Map size and position have been reset to default values."
 
-date.suffix.st: "st"
-date.suffix.nd: "nd"
-date.suffix.rd: "rd"
-date.suffix.th: "th"
-date.format: "{day}{suffix} {month}, 3E {year}"
+dateFormat: "%d %B 3E %Y"
 
 MainSettings: "Main"
 SettingMainMenuKey: "Hotkey"

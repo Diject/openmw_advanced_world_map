@@ -64,6 +64,18 @@ local function checkDoor(ref)
 end
 
 
+local function updateTime(pl)
+    local vars = world.mwscript.getGlobalVariables(pl)
+
+    local day = vars["Day"]
+    local month = vars["Month"]
+    local year = vars["Year"]
+    if not year  or not month or not day then return end
+
+    pl:sendEvent("AdvWMap:requestTimeUpdate", {day = day, month = month, year = year})
+end
+
+
 return {
     engineHandlers = {
         onObjectActive = onObjectActive,
@@ -74,6 +86,8 @@ return {
     },
     eventHandlers = {
         ["AdvWMap:objectInactive"] = objectInactive,
+
+        ["AdvWMap:requestTimeUpdate"] = updateTime,
 
         ["AdvWMap:updateConfigData"] = function (data)
             tableLib.applyChanges(config.data, data)
