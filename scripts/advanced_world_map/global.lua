@@ -45,19 +45,19 @@ local function objectInactive(ref)
 end
 
 
-local function checkDoor(ref)
+local function checkDoor(ref, player)
     if Door.objectIsInstance(ref) and Door.isTeleport(ref) then
         local wasDisabled = disabledDoors.contains(ref)
 
         if not ref.enabled then
             disabledDoors.register(ref)
             if not wasDisabled then
-                world.players[1]:sendEvent("AdvWMap:registerDisabledDoor", ref)
+                player:sendEvent("AdvWMap:registerDisabledDoor", ref)
             end
 
         elseif wasDisabled then
             disabledDoors.unregister(ref)
-            world.players[1]:sendEvent("AdvWMap:unregisterDisabledDoor", ref)
+            player:sendEvent("AdvWMap:unregisterDisabledDoor", ref)
         end
 
     end
@@ -318,8 +318,8 @@ return {
             end
         end,
 
-        ["AdvWMap:cellChanged"] = function ()
-            local cell = world.players[1].cell
+        ["AdvWMap:cellChanged"] = function (player)
+            local cell = player.cell
 
             if cell.isExterior then
                 for x = -1, 1 do
@@ -327,14 +327,14 @@ return {
                         local c = world.getExteriorCell(cell.gridX + x, cell.gridY + y)
                         if c then
                             for _, ref in pairs(c:getAll(Door)) do
-                                checkDoor(ref)
+                                checkDoor(ref, player)
                             end
                         end
                     end
                 end
             else
                 for _, ref in pairs(cell:getAll(Door)) do
-                    checkDoor(ref)
+                    checkDoor(ref, player)
                 end
             end
         end,
@@ -355,7 +355,7 @@ return {
                 table.insert(res, {center.x, center.y, width, height})
                 ::continue::
             end
-            world.players[1]:sendEvent("AdvWMap:getMapStatics", {res = res})
+            data.player:sendEvent("AdvWMap:getMapStatics", {res = res})
         end
     },
 }

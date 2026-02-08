@@ -1705,7 +1705,7 @@ function this.new(params)
                 mY = -5120,
                 nA = 0,
             }
-            core.sendGlobalEvent("AdvWMap:getMapStatics", {cellId = params.cellId})
+            core.sendGlobalEvent("AdvWMap:getMapStatics", {cellId = params.cellId, player = playerRef.object})
         end
 
         local mapTextures = mapTextureHandler.getLocalCellMapTextures(params.cellId)

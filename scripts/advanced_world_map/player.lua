@@ -571,7 +571,7 @@ return {
                     menu:update()
                 end
 
-                core.sendGlobalEvent("AdvWMap:cellChanged")
+                core.sendGlobalEvent("AdvWMap:cellChanged", self.object)
             elseif e.newMode == "Loading" then
                 -- update timestamp of the visited cell before the player leaves it
                 discoveredLocs.updateVisited(self.cell)
