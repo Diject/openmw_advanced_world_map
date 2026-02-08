@@ -76,6 +76,13 @@ local function updateTime(pl)
 end
 
 
+local function spendTime(pl, time)
+    if not world.advanceTime then return end
+
+    world.advanceTime(time)
+end
+
+
 return {
     engineHandlers = {
         onObjectActive = onObjectActive,
@@ -109,7 +116,7 @@ return {
         ["AdvWMap:fastTravel"] = function (data)
             local pos = data.pos
             local cellId = data.cellId
-            local playerRef = world.players[1]
+            local playerRef = data.player
             local playerCell = playerRef.cell
 
             local destinations = {}
@@ -273,6 +280,7 @@ return {
 
             -- use the door object to send the position, because cell is not passed
             playerRef:sendEvent("AdvWMap:fastTravelMessage", {
+                player = playerRef,
                 message = message,
                 targetDoor = targetDoor,
                 depthToPoint = depthToPoint,
@@ -284,7 +292,7 @@ return {
         ["AdvWMap:fastTravelTeleport"] = function (data)
             if not data.targetDoor and not (data.position and data.cellId) then return end
 
-            local playerRef = world.players[1]
+            local playerRef = data.player
 
             if data.targetDoor then
                 playerRef:teleport(types.Door.destCell(data.targetDoor), types.Door.destPosition(data.targetDoor),
@@ -292,6 +300,11 @@ return {
             else
                 playerRef:teleport(world.getCellById(data.cellId), data.position, {onGround = true})
             end
+
+            if data.travelTime and data.travelTime > 0 then
+                spendTime(playerRef, data.travelTime)
+            end
+
             playerRef:sendEvent("AdvWMap:playSound", {soundId = "mysticism hit"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellcast"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnleft"})

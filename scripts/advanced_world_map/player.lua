@@ -349,15 +349,22 @@ local function fastTravelMessageCallback(data)
 
     local cost = configLib.data.fastTravel.baseMagickaCost
 
+    local capacity = types.Actor.getCapacity(self)
+    local encumbrance = types.Actor.getEncumbrance(self)
+
     cost = cost + data.worldDistance / 16384 * configLib.data.fastTravel.additionalCost
     cost = cost + 2 * math.min(10, data.depthToPoint) * configLib.data.fastTravel.additionalCost
-    cost = cost + math.max(0, (types.Actor.getEncumbrance(self) - types.Actor.getCapacity(self)) / 10) *
+    cost = cost + math.max(0, (encumbrance - capacity) / 10) *
         configLib.data.fastTravel.additionalCost
     cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
     cost = cost * (1 + 0.5 * #followers)
     if data.isInSameInteriorBlock then
         cost = cost * 0.66
     end
+
+    local plSpeed = types.Actor.stats.attributes.speed(self).modified
+    local travelTime = configLib.data.fastTravel.passTime and
+        math.ceil((data.worldDistance + data.depthToPoint * 4096) / 24576 * 100 / plSpeed * (encumbrance / capacity + 0.5)) or 0
 
     local eventData = {
         cost = cost,
@@ -366,6 +373,7 @@ local function fastTravelMessageCallback(data)
         rotation = pDoor.destRotation(data.targetDoor),
         message = data.message,
         followers = followers,
+        travelTime = travelTime,
     }
 
     if not eventData.cell then return end
@@ -397,6 +405,7 @@ local function fastTravelMessageCallback(data)
             end
 
             eventData.followers = data.followers
+            data.travelTime = eventData.travelTime
             eventSys.triggerEvent(eventSys.EVENT.onFastTravelResolved, eventData)
 
             discoveredLocs.blockDiscovery = true
@@ -443,7 +452,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 9,
+        version = 10,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data

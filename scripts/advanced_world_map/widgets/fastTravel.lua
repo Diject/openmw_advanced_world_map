@@ -81,6 +81,7 @@ local function fastTravel(menu, cellId, relPos)
     end
 
     core.sendGlobalEvent("AdvWMap:fastTravel", {
+        player = playerRef,
         pos = pos,
         cellId = cellId,
         availableCells = config.data.fastTravel.onlyDiscovered and discoveredLocs.discovered or nil,

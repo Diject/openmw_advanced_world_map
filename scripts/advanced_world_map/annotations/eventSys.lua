@@ -191,6 +191,7 @@
 ---@field cell any Target cell
 ---@field rotation Vector3 Target rotation
 ---@field followers GameObject[]? List of follower actors
+---@field travelTime number? Time passed during fast travel (if applicable)
 
 ---Event data for widget opened event
 ---@class AdvancedWorldMap.Event.OnWidgetOpenedEvent
