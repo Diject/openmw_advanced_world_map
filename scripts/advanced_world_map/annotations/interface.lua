@@ -20,4 +20,5 @@
 ---@field isDiscovered fun(cellId: string) : boolean checks if the cell with the given ID is discovered
 ---@field isVisited fun(cellId: string) : number? checks if the cell with the given ID is visited. Returns timestamp or nil
 ---@field getCellNameById fun(cellId: string) : string? gets the cell name by its ID
+---@field getExteriorCellName fun(pos: any) : string? gets the exterior cell name by position
 ---@field uiElements AdvancedWorldMap.Interface.UIElements

@@ -23,6 +23,7 @@ local configLib = require("scripts.advanced_world_map.config.configLib")
 local config = require("scripts.advanced_world_map.config.config")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local dateLib = require("scripts.advanced_world_map.utils.date")
+local cellLib = require("scripts.advanced_world_map.utils.cell")
 
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local playerPos = require("scripts.advanced_world_map.playerPosition")
@@ -472,6 +473,9 @@ return {
         end,
         getCellNameById = function (cellId)
             return mapDataHandler.cellNameById[cellId]
+        end,
+        getExteriorCellName = function (pos)
+            return mapDataHandler.cellNameById[cellLib.getCellIdByPos(pos)]
         end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
