@@ -13,7 +13,7 @@ local commonData = require("scripts.advanced_world_map.common")
 
 local this = {}
 
-this.version = 3
+this.version = 4
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil

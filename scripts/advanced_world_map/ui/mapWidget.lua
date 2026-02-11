@@ -682,6 +682,7 @@ local function createMarker(self, params, onlyInitialize)
 
             if params.visible == false then
                 self.hiddenElements[params.layerId][id] = cachedLayout
+                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
                 return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
             end
 

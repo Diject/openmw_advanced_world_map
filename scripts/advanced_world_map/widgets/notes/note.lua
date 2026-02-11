@@ -338,7 +338,7 @@ local function init()
             },
             content = flexContent,
         }
-    end)
+    end, 100)
 end
 
 

@@ -160,7 +160,7 @@ function this.doorHash(doorRef, destCellId)
     local doorPos = doorRef.position
     local destCellIdHash = destCellId:sub(-10)
     local cellIdHash = doorRef.cell.id:sub(-10)
-    return string.format("%s_%d_%d_%s", cellIdHash, math.floor(doorPos.x / 512), math.floor(doorPos.y / 512), destCellIdHash)
+    return string.format("%s_%d_%d_%s", cellIdHash, math.floor(doorPos.x / 256), math.floor(doorPos.y / 256), destCellIdHash)
 end
 
 return this

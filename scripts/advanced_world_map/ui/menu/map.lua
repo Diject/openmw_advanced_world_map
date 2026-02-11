@@ -199,7 +199,7 @@ function menuMeta:addWidget(params)
             end
         end
 
-        content:insert(index, interval(self.params.fontSize, 0))
+        content:insert(index, interval(self.params.fontSize * 0.75, 0))
         content:insert(index, params.layout)
     end
 
