@@ -947,13 +947,12 @@ function this.create(params)
 
                 if hasAxisInput then
                     local centerPos = meta.mapWidget:getWorldPositionOfVisibleCenter()
+                    local moveVector = util.vector2(rAxisX * 16384 / zoom, -rAxisY * 16384 / zoom)
 
-                    if math.abs(rAxisX) > 0.25 then
-                        centerPos = util.vector2(centerPos.x + rAxisX * 16384 / zoom, centerPos.y)
+                    if meta.mapWidget.northDirectionAngle and meta.mapWidget.northDirectionAngle ~= 0 then
+                        moveVector = moveVector:rotate(-meta.mapWidget.northDirectionAngle)
                     end
-                    if math.abs(rAxisY) > 0.25 then
-                        centerPos = util.vector2(centerPos.x, centerPos.y - rAxisY * 16384 / zoom)
-                    end
+                    centerPos = util.vector2(centerPos.x + moveVector.x, centerPos.y + moveVector.y)
 
                     meta.mapWidget:focusOnWorldPosition(centerPos)
                 end
