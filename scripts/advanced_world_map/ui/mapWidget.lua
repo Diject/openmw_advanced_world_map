@@ -694,6 +694,15 @@ local function createMarker(self, params, onlyInitialize)
             if cachedLayout.props.size then
                 cachedLayout.props.size = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.size, self.zoom)
             end
+
+            if self.inActiveMode then
+                cachedLayout.events = cachedLayout._events or cachedLayout.events
+                cachedLayout._events = nil
+            else
+                cachedLayout._events = cachedLayout.events or cachedLayout._events
+                cachedLayout.events = nil
+            end
+
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
                 eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
@@ -717,6 +726,8 @@ local function createMarker(self, params, onlyInitialize)
     params.id = params.id or tostring(self:getUniqueId())
     ---@type string
     local markerName = params.id
+
+    local layoutEvents = isLayerInteractive and self.markerEvents or nil
 
     local marker
     marker = {
@@ -758,7 +769,8 @@ local function createMarker(self, params, onlyInitialize)
                 self:update()
             end or nil,
         },
-        events = isLayerInteractive and self.markerEvents or nil,
+        _events = not self.inActiveMode and layoutEvents or nil,
+        events = self.inActiveMode and layoutEvents or nil,
     }
 
     self._markerLayoutCache[markerName.."_"..tostring(params.layerId)] = marker
@@ -1635,6 +1647,26 @@ function mapWidgetMeta:isInFocus()
 end
 
 
+function mapWidgetMeta:isInActiveMode()
+    return self.inActiveMode
+end
+
+
+function mapWidgetMeta:setInActiveMode(active)
+    self.inActiveMode = active
+
+    for _, mrk in pairs(self:getActiveMarkers()) do
+        if active then
+            mrk._elemLayout.events = mrk._elemLayout._events or mrk._elemLayout.events
+            mrk._elemLayout._events = nil
+        else
+            mrk._elemLayout._events = mrk._elemLayout.events or mrk._elemLayout._events
+            mrk._elemLayout.events = nil
+        end
+    end
+end
+
+
 function mapWidgetMeta:isValid()
     return not self.invalid ---@diagnostic disable-line: undefined-field
 end
@@ -1674,6 +1706,8 @@ function this.new(params)
     meta.zoom = params.zoom or 1
     meta.maxZoom = meta.zoom
     meta.minZoom = meta.zoom
+
+    meta.inActiveMode = true
 
     meta.SCALE_FUNCTION = {
         linear = function(size, zoom)

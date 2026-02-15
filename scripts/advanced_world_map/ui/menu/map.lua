@@ -193,14 +193,16 @@ function menuMeta:addWidget(params)
             local elPriority = el.userData and el.userData[commonData.widgetPriorityField]
             if elPriority then
                 if params.priority > elPriority then
-                    index = i
+                    index = i - 1
                     break
                 end
             end
         end
 
-        content:insert(index, interval(self.params.fontSize * 0.75, 0))
         content:insert(index, params.layout)
+        if index ~= 1 then
+            content:insert(index, interval(self.params.fontSize * 0.75, 0))
+        end
     end
 
     addWidget(self.widgetActiveHeaderLayout.content)
@@ -295,6 +297,8 @@ function menuMeta:updateMapWidgetCell(cellId)
     self.mapWidget:setUpdateFunction(self.update)
     self:updateMapWidgetWidth()
 
+    self.mapWidget:setInActiveMode(menuMode.isMenuInteractive())
+
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
 
     if not isNew then
@@ -363,6 +367,8 @@ function menuMeta:updateInteractiveElements()
         end
     end
     header.content[3].props.visible = isMenuMode
+
+    self.mapWidget:setInActiveMode(isMenuMode)
 
     return true
 end
