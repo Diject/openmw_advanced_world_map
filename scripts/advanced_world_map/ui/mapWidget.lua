@@ -366,16 +366,11 @@ end
 
 
 function mapWidgetMeta:getRelativePositionOfVisibleCenter()
-    local rect = self:getVisibleMapRect()
-    local centerX = (rect.left + rect.right) / 2
-    local centerY = (rect.top + rect.bottom) / 2
+    local widget = self:getMapLayersLayout()
+    local mapPos = widget.props.position
+    local mainSize = self.layout.props.size
 
-    local pos = util.vector2(centerX, centerY)
-
-    if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
-        local pivot = self:getRotationPivot(self.zoom)
-        pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
-    end
+    local pos = util.vector2(mainSize.x / 2 - mapPos.x, mainSize.y / 2 - mapPos.y)
 
     local displaySize = self:getDisplaySize()
     local posBase = pos / self.zoom
