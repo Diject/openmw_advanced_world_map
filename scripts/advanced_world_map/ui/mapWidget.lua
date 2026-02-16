@@ -549,6 +549,11 @@ function mapWidgetMeta:refreshVisibleArea()
 end
 
 
+local function getMarkerCacheId(id, layerId)
+    return id.."_"..tostring(layerId)
+end
+
+
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 ---@field layerId integer,
@@ -658,7 +663,7 @@ local function createMarker(self, params, onlyInitialize)
     if placeOnMap and params.id then
         ---@type string
         local id = params.id
-        local cacheId = id.."_"..tostring(params.layerId)
+        local cacheId = getMarkerCacheId(id, params.layerId)
         local cachedLayout = self._markerLayoutCache[cacheId]
         if cachedLayout then
 
@@ -768,7 +773,9 @@ local function createMarker(self, params, onlyInitialize)
         events = self.inActiveMode and layoutEvents or nil,
     }
 
-    self._markerLayoutCache[markerName.."_"..tostring(params.layerId)] = marker
+    if params.useCache ~= false then
+        self._markerLayoutCache[getMarkerCacheId(markerName, params.layerId)] = marker
+    end
 
     local markerELement = mapElement.new(self, markerName, params.layerId, params, marker)
     marker.userData.markerElement = markerELement
@@ -863,8 +870,10 @@ function mapWidgetMeta:removeMarker(id, layer)
         (self.zoomOutMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
         self.zoomMarkersCellIdById[id] = nil
     end
-    if self._markerLayoutCache[id] then
-        self._markerLayoutCache[id] = nil
+
+    local cacheId = getMarkerCacheId(id, layer)
+    if self._markerLayoutCache[cacheId] then
+        self._markerLayoutCache[cacheId] = nil
     end
 
     return removedFromMap
