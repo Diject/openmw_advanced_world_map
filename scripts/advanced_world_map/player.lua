@@ -60,7 +60,7 @@ local l10n = core.l10n(commonData.l10nKey)
 
 
 if not ui.layers.indexOf(commonData.messageLayer) then
-    ui.layers.insertAfter("Windows", commonData.messageLayer, { interactive = true })
+    ui.layers.insertBefore("DragAndDrop", commonData.messageLayer, { interactive = true })
 end
 
 
