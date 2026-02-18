@@ -27,6 +27,8 @@ local interval = require("scripts.advanced_world_map.ui.interval")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
+local checkBox = require("scripts.advanced_world_map.ui.checkBox")
+local button = require("scripts.advanced_world_map.ui.button")
 
 
 
@@ -155,7 +157,7 @@ function menuMeta:addWidget(params)
     end)
 
     params.layout.events.mouseRelease = async:callback(function(e, layout)
-        if pressed and self.headerMovedDistance <= 15 then
+        if pressed and self.headerMovedDistance <= 20 then
             if params.onClick then
                 params.onClick(self, e)
             end
@@ -266,6 +268,27 @@ function menuMeta:iterateCachedMapWidgets(func)
 end
 
 
+function menuMeta:saveMinimapModeParams()
+    if not self.menu or not self.menu.layout then return false end
+
+    localStorage.data[commonData.minimapModeSizeFieldId] = self.mainSize
+    localStorage.data[commonData.minimapModePosFieldId] = self.menu.layout.props.relativePosition
+
+    return true
+end
+
+
+function menuMeta:setMinimapModeParams()
+    local minimapMode = localStorage.data[commonData.minimapModeStateFieldId]
+    local minimapModeSize = localStorage.data[commonData.minimapModeSizeFieldId]
+    local minimapModePos = localStorage.data[commonData.minimapModePosFieldId]
+    if minimapMode and minimapModeSize and minimapModePos then
+        self:setMapWidgetSize(minimapModeSize)
+        self.menu.layout.props.relativePosition = minimapModePos
+    end
+end
+
+
 local function controllerYCallback()
     local self = this.activeMenuMeta
     if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
@@ -321,11 +344,32 @@ function menuMeta:updateMapWidgetCell(cellId)
 end
 
 
+function menuMeta:setMapWidgetSize(newSize)
+    self.mapWidget:setSize(newSize)
+    self.mainLayout.props.size = util.vector2(self:getWidgetWindowWidth() + newSize.x, newSize.y)
+    self.mainSize = self.mainLayout.props.size
+
+    local hSize = self.headerLayout.props.size
+    self.headerLayout.props.size = util.vector2(self.mainLayout.props.size.x, hSize.y)
+
+    local size = util.vector2(self.mainSize.x, self.mainSize.y + hSize.y)
+    self.menu.layout.props.size = size
+    self.size = size
+
+    return size
+end
+
+
 ---@return boolean
 function menuMeta:updateInteractiveElements()
     local shouldUpdate = false
     local layout = self.menu.layout
     if not layout then return shouldUpdate end
+
+    if self.minimapSetupMode then
+        menuHandler.destroyMenu(commonData.mapMenuId)
+        return false
+    end
 
     local isMenuMode = menuMode.isMenuInteractive()
     if self.lastMenuMode == isMenuMode then
@@ -350,6 +394,15 @@ function menuMeta:updateInteractiveElements()
         header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
         header.content[2] = self.widgetActiveHeaderLayout
         self.mainLayout.content[2].props.visible = true
+
+        if self.mainSize.x ~= self.defaultMainSize.x or self.mainSize.y ~= self.defaultMainSize.y then
+            local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
+            self:setMapWidgetSize(self.defaultMainSize)
+            local pos = config.data.main.relativePosition
+            self.menu.layout.props.relativePosition = util.vector2(pos.x / 100, pos.y / 100)
+            self.mapWidget:focusOnWorldPosition(mapCenter)
+            self.mapWidget:updateMarkers(true)
+        end
     else
         if not localStorage.data[commonData.pinnedStateFieldId] then
             menuHandler.destroyMenu(commonData.mapMenuId)
@@ -365,8 +418,17 @@ function menuMeta:updateInteractiveElements()
         if self.mapWidget then
             self.mapWidget:closeRightMouseMenu()
         end
+
+        if localStorage.data[commonData.minimapModeStateFieldId] then
+            local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
+            self:closeActiveWidget()
+            self:setMinimapModeParams()
+            self.mapWidget:focusOnWorldPosition(mapCenter)
+            self.mapWidget:updateMarkers(true)
+        end
     end
     header.content[3].props.visible = isMenuMode
+    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
 
     self.mapWidget:setInActiveMode(isMenuMode)
 
@@ -431,6 +493,11 @@ function menuMeta:close()
         end
     end
 
+    if self.minimapSetupMode then
+        self.minimapSetupMode = false
+        self:saveMinimapModeParams()
+    end
+
     eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
     this.activeMenuMeta = nil
 
@@ -481,8 +548,11 @@ function this.create(params)
 
     local mainSize = util.vector2(meta.size.x, meta.size.y - headerHeight)
     meta.mainSize = mainSize
+    meta.defaultMainSize = mainSize
 
     meta.centerOnPlayer = config.data.main.centerOnPlayer
+
+    meta.minimapSetupMode = false
 
     ---@type table<string, {layout : table, params : advancedWorldMap.ui.menu.addHeaderElement.params}>
     menuMeta.widgets = {}
@@ -583,22 +653,26 @@ function this.create(params)
         userData = {},
         events = {
             mousePress = async:callback(function(e, layout)
+                meta.headerLayout.events.mousePress(e, meta.headerLayout)
                 if e.button ~= 1 then return end
                 layout.userData.pressed = true
             end),
 
             mouseRelease = async:callback(function(e, layout)
-                if layout.userData.pressed and meta.headerMovedDistance <= 15 then
+                if layout.userData.pressed and meta.headerMovedDistance <= 20 then
                     meta:togglePin()
                     meta:update()
                 end
+                meta.headerLayout.events.mouseRelease(e, meta.headerLayout)
             end),
 
             mouseMove = async:callback(function(e, layout)
+                meta.headerLayout.events.mouseMove(e, meta.headerLayout)
                 tooltip.createOrMove(e, layout, pinBtnTooltipContent)
             end),
 
             focusLoss = async:callback(function(e, layout)
+                meta.headerLayout.events.focusLoss(e, meta.headerLayout)
                 tooltip.destroy(layout)
             end),
         },
@@ -651,8 +725,10 @@ function this.create(params)
 
             mouseRelease = async:callback(function(e, layout)
                 local relativePos = meta.menu.layout.props.relativePosition
-                config.setValue("main.relativePosition.x", relativePos.x * 100)
-                config.setValue("main.relativePosition.y", relativePos.y * 100)
+                if not meta.minimapSetupMode then
+                    config.setValue("main.relativePosition.x", relativePos.x * 100)
+                    config.setValue("main.relativePosition.y", relativePos.y * 100)
+                end
                 layout.userData.lastMousePos = nil
                 meta.headerMovedDistance = 0
 
@@ -667,7 +743,7 @@ function this.create(params)
                 meta.headerMovedDistance = meta.headerMovedDistance +
                     (e.position - layout.userData.lastMousePos):length()
 
-                if meta.headerMovedDistance > 15 then
+                if meta.headerMovedDistance > 20 then
                     props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - e.position):ediv(screenSize)
                     meta.screenPosition = props.relativePosition:emul(screenSize)
                     meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(meta:getWidgetWindowWidth(), meta.headerHeight)
@@ -722,15 +798,24 @@ function this.create(params)
                         userData = {},
                         events = {
                             mousePress = async:callback(function(e, layout)
+                                meta.headerLayout.events.mousePress(e, meta.headerLayout)
                                 if e.button ~= 1 then return end
                                 layout.userData.pressed = true
                             end),
-                            mouseRelease = async:callback(function(_, layout)
-                                if layout.userData.pressed then
+                            mouseRelease = async:callback(function(e, layout)
+                                local movedDist = meta.headerMovedDistance
+                                meta.headerLayout.events.mouseRelease(e, meta.headerLayout)
+                                if layout.userData.pressed and movedDist <= 25 then
                                     menuHandler.destroyMenu(commonData.mapMenuId)
                                 end
                                 layout.userData.pressed = false
                             end),
+                            mouseMove = async:callback(function(e, layout)
+                                meta.headerLayout.events.mouseMove(e, meta.headerLayout)
+                            end),
+                            focusLoss = async:callback(function(e, layout)
+                                meta.headerLayout.events.focusLoss(e, meta.headerLayout)
+                            end)
                         }
                     }
                 },
@@ -815,24 +900,19 @@ function this.create(params)
                         meta:closeActiveWidget()
 
                         local posDif = util.vector2(e.position.x - lastPos.x, e.position.y - lastPos.y)
-                        local minSize = util.vector2(100, 100)
+                        local minSize = util.vector2(50, 50)
 
                         local mapSize = meta.mapWidget:getSize()
                         local newSize = util.vector2(math.max(minSize.x, mapSize.x + posDif.x), math.max(minSize.y, mapSize.y + posDif.y))
 
-                        meta.mapWidget:setSize(newSize)
-                        mainLayout.props.size = util.vector2(meta:getWidgetWindowWidth() + newSize.x, newSize.y)
-                        meta.mainSize = mainLayout.props.size
+                        local size = meta:setMapWidgetSize(newSize)
 
-                        local hSize = headerLayout.props.size
-                        headerLayout.props.size = util.vector2(mainLayout.props.size.x, hSize.y)
+                        if not meta.minimapSetupMode then
+                            config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
+                            config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
 
-                        local size = util.vector2(meta.mainSize.x, meta.mainSize.y + hSize.y)
-                        meta.menu.layout.props.size = size
-                        meta.size = size
-
-                        config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
-                        config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
+                            meta.defaultMainSize = meta.mainLayout.props.size
+                        end
 
                         eventSys.triggerEvent(eventSys.EVENT["onResized"], {
                             menu = meta,
@@ -998,6 +1078,111 @@ function this.create(params)
 
     return meta
 end
+
+
+eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
+    local content = e.content
+    local menu = e.menu
+
+    local function addVPadding(elem, padding)
+        return {
+            type = ui.TYPE.Widget,
+            props = {
+                size = util.vector2(
+                    e.size.x,
+                    (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
+                ),
+            },
+            content = ui.content{
+                elem
+            }
+        }
+    end
+
+
+    local minimapModeCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("MinimapModeCB"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = localStorage.data[commonData.minimapModeStateFieldId],
+        tooltipContent = ui.content{
+            {
+                type = ui.TYPE.TextEdit,
+                props = {
+                    text = l10n("MinimapModeCBTooltip"),
+                    textColor = config.data.ui.defaultColor,
+                    textSize = config.data.ui.fontSize,
+                    anchor = util.vector2(0.5, 0),
+                    size = util.vector2(uiUtils.getScaledScreenSize().x / 5, 0),
+                    multiline = true,
+                    wordWrap = true,
+                    textAlignH = ui.ALIGNMENT.Center,
+                    textAlignV = ui.ALIGNMENT.Center,
+                    readOnly = true,
+                    autoSize = true,
+                },
+            }
+        },
+        event = function (checked, layout)
+            localStorage.data[commonData.minimapModeStateFieldId] = checked
+        end
+    }
+
+    local setupBtn = button{
+        updateFunc = menu.update,
+        textSize = config.data.ui.fontSize * 0.9,
+        text = l10n("MinimapModeSetupBtn"),
+        tooltipContent = ui.content{
+            {
+                type = ui.TYPE.TextEdit,
+                props = {
+                    text = l10n("MinimapModeSetupBtnTooltip"),
+                    textColor = config.data.ui.defaultColor,
+                    textSize = config.data.ui.fontSize,
+                    anchor = util.vector2(0.5, 0),
+                    size = util.vector2(uiUtils.getScaledScreenSize().x / 5, 0),
+                    multiline = true,
+                    wordWrap = true,
+                    textAlignH = ui.ALIGNMENT.Center,
+                    textAlignV = ui.ALIGNMENT.Center,
+                    readOnly = true,
+                    autoSize = true,
+                },
+            }
+        },
+        event = function (layout)
+            menu.minimapSetupMode = true
+            menu:closeActiveWidget()
+            menu:setMinimapModeParams()
+            tooltip.destroyLast()
+            ui.showMessage(l10n("MinimapModeSetupMessage"))
+        end
+    }
+
+
+    content:add{
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = false,
+        },
+        content = ui.content{
+            interval(0, config.data.ui.fontSize),
+            addVPadding(minimapModeCB),
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = true,
+                },
+                content = ui.content{
+                    interval(config.data.ui.fontSize, 0),
+                    setupBtn,
+                }
+            }
+        }
+    }
+end, -10)
 
 
 local togglePinActionFunc

@@ -61,6 +61,11 @@ PersonalNotesCB: "Personal"
 GlobalNotesCB: "Global"
 ListAllCharactersNotes: "All characters' notes"
 MapSizePositionResetMessage: "Advanced World Map size and position have been reset to default values."
+MinimapModeCB: "Minimap mode"
+MinimapModeCBTooltip: "If enabled, the map in noninteractive (pinned) state will use the size and position set for minimap mode."
+MinimapModeSetupBtn: "Setup pos/size"
+MinimapModeSetupBtnTooltip: "Sets the size and position of the map for minimap mode. Click, then adjust the size and position of the map to be used in minimap mode and fully close the map to save these settings."
+MinimapModeSetupMessage: "Set the size and position of the map for minimap mode, then fully close the map to save these settings."
 
 dateFormat: "%d %B 3E %Y"
 

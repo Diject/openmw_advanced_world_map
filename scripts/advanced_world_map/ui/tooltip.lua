@@ -122,7 +122,10 @@ function this.destroy(parent)
     if not parent.userData or not parent.userData.tooltip then return end
     local tooltipHandler = parent.userData.tooltip
     parent.userData.tooltip = nil
-    tooltipHandler:destroy()
+    local co = coroutine.create(function (...)
+        tooltipHandler:destroy()
+    end)
+    coroutine.resume(co)
 end
 
 

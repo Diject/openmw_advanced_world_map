@@ -51,6 +51,9 @@ this.fastTravelRealTimestampFieldId = "fastTravelRealTimestampFieldId"
 this.lastMapPosFieldId = "lastMapPosFieldId"
 this.pinnedStateFieldId = "pinnedStateFieldId"
 this.hideInInterfaceMenuFieldId = "hideInInterfaceMenuFieldId"
+this.minimapModeSizeFieldId = "minimapModeSize"
+this.minimapModePosFieldId = "minimapModePos"
+this.minimapModeStateFieldId = "minimapModeState"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"

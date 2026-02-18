@@ -99,6 +99,9 @@ local function resetSizePos()
     configLib.setValue("main.relativeSize.y", config.default.main.relativeSize.y)
     configLib.setValue("main.relativePosition.x", config.default.main.relativePosition.x)
     configLib.setValue("main.relativePosition.y", config.default.main.relativePosition.y)
+    localStorage.data[commonData.minimapModeSizeFieldId] = nil
+    localStorage.data[commonData.minimapModePosFieldId] = nil
+    localStorage.data[commonData.minimapModeStateFieldId] = nil
     ui.showMessage(l10n("MapSizePositionResetMessage"))
 end
 
