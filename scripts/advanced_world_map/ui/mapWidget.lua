@@ -401,8 +401,10 @@ end
 function mapWidgetMeta:updateOnZoomMarkers(force)
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
 
+    local isInZoomInMode = self:isInZoomInMode()
     local size = self:getSize()
-    local mul = 4096 / (self.mapInfo.pixelsPerCell * self.zoom)
+    local paddingBase = isInZoomInMode and 2048 or 4096
+    local mul = paddingBase / (self.mapInfo.pixelsPerCell * self.zoom)
     local paddingX = math.max(8192, size.x * mul)
     local paddingY = math.max(8192, size.y * mul)
 
@@ -417,7 +419,7 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
 
     local updateOnlyRect = not force and self._lastOnZoomZoom == self.zoom
 
-    if self:isInZoomInMode() then
+    if isInZoomInMode then
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
         self:placeGroundTextures(visibleRect)
         self:createZoomInMarkers(visibleRect, nil, force)
@@ -639,7 +641,6 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedIn = true
             layout.userData.cellId = cellId
-            self.activeZoomMarkers[getActiveMarkerId(params)] = {id, params.layerId, layout.userData.markerElement}
         end
         if params.showWhenZoomedOut then
             self.zoomOutMarkers[cellId] = self.zoomOutMarkers[cellId] or {}
@@ -650,8 +651,8 @@ local function createMarker(self, params, onlyInitialize)
             self.zoomMarkersCellIdById[id] = cellId
             layout.userData.showWhenZoomedOut = true
             layout.userData.cellId = cellId
-            self.activeZoomMarkers[getActiveMarkerId(params)] = {id, params.layerId, layout.userData.markerElement}
         end
+        self.activeZoomMarkers[getActiveMarkerId(params)] = {id, params.layerId, layout.userData.markerElement}
     end
 
     params.pos = params.pos or util.vector3(0, 0, 0)
@@ -773,7 +774,8 @@ local function createMarker(self, params, onlyInitialize)
         events = self.inActiveMode and layoutEvents or nil,
     }
 
-    if params.useCache ~= false then
+    -- Do not cache built-in markers
+    if onlyInitialize ~= nil then
         self._markerLayoutCache[getMarkerCacheId(markerName, params.layerId)] = marker
     end
 
@@ -975,13 +977,13 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly, force)
             return
         end
 
-        local minGridX = math.floor(region.left / 8192)
+        local minGridX = math.ceil(region.left / 8192)
         local maxGridX = math.ceil(region.right / 8192)
-        local minGridY = math.floor(region.bottom / 8192)
+        local minGridY = math.ceil(region.bottom / 8192)
         local maxGridY = math.ceil(region.top / 8192)
 
-        for x = minGridX - 1, maxGridX + 1 do
-            for y = minGridY - 1, maxGridY + 1 do
+        for x = minGridX, maxGridX do
+            for y = minGridY, maxGridY do
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
@@ -1087,6 +1089,86 @@ function mapWidgetMeta:placeGroundTextures(region)
                     position = startingPos,
                 }
             }
+
+            if self.localCellInfo.mBnds then
+                ---@type {min: {[1]: number, [2]: number, [3]: number}, max: {[1]: number, [2]: number, [3]: number}}
+                local bounds = tableLib.deepcopy(self.localCellInfo.mBnds)
+
+                local paddingSize = size * 1.1
+
+                local minX = bounds.min[1]
+                local minY = bounds.min[2]
+                local maxX = bounds.max[1]
+                local maxY = bounds.max[2]
+                local centerX = (minX + maxX) / 2
+                local centerY = (minY + maxY) / 2
+
+                local edgePadding = 256
+                local topPos = util.vector2(centerX, maxY + edgePadding)
+                local bottomPos = util.vector2(centerX, minY - edgePadding)
+                local leftPos = util.vector2(minX - edgePadding, centerY)
+                local rightPos = util.vector2(maxX + edgePadding, centerY)
+
+                local nA = self.northDirectionAngle or 0
+                local function dirToAnchor(worldDirX, worldDirY)
+                    local screenDir = util.vector2(worldDirX, -worldDirY):rotate(-nA)
+                    local ax, ay
+                    if math.abs(screenDir.x) < 0.01 then
+                        ax = 0.5
+                    elseif screenDir.x > 0 then
+                        ax = 0
+                    else
+                        ax = 1
+                    end
+
+                    if math.abs(screenDir.y) < 0.01 then
+                        ay = 0.5
+                    elseif screenDir.y > 0 then
+                        ay = 0
+                    else
+                        ay = 1
+                    end
+
+                    return util.vector2(ax, ay)
+                end
+
+                createMarker(self, {
+                    layerId = this.layerId.map,
+                    texture = uiUtils.whiteTexture,
+                    color = config.data.ui.backgroundColor,
+                    pos = topPos,
+                    size = paddingSize,
+                    scaleFunc = this.scaleFunction.linear,
+                    anchor = dirToAnchor(0, 1)
+                })
+                createMarker(self, {
+                    layerId = this.layerId.map,
+                    texture = uiUtils.whiteTexture,
+                    color = config.data.ui.backgroundColor,
+                    pos = bottomPos,
+                    size = paddingSize,
+                    scaleFunc = this.scaleFunction.linear,
+                    anchor = dirToAnchor(0, -1)
+                })
+                createMarker(self, {
+                    layerId = this.layerId.map,
+                    texture = uiUtils.whiteTexture,
+                    color = config.data.ui.backgroundColor,
+                    pos = leftPos,
+                    size = paddingSize,
+                    scaleFunc = this.scaleFunction.linear,
+                    anchor = dirToAnchor(-1, 0)
+                })
+                createMarker(self, {
+                    layerId = this.layerId.map,
+                    texture = uiUtils.whiteTexture,
+                    color = config.data.ui.backgroundColor,
+                    pos = rightPos,
+                    size = paddingSize,
+                    scaleFunc = this.scaleFunction.linear,
+                    anchor = dirToAnchor(1, 0)
+                })
+            end
 
         -- Version 1 uses multiple textures for the cell
         elseif self.localCellInfo.height then
@@ -1756,17 +1838,19 @@ function this.new(params)
         local width = wT * 32
         local height = hT * 32
 
+        local v2TileSize = localCellInfo.tS or 256
+
         local mapInfo = {
             width = width,
             height = height,
             pixelsPerCell = 32,
             gridX = {
-                min = localCellInfo.oX and -localCellInfo.oX / 256 or -localCellInfo.mX / 512,
-                max = (localCellInfo.oX and -localCellInfo.oX / 256 or -localCellInfo.mX / 512) + wT - 1,
+                min = localCellInfo.oX and -localCellInfo.oX / v2TileSize or -localCellInfo.mX / 512,
+                max = (localCellInfo.oX and -localCellInfo.oX / v2TileSize or -localCellInfo.mX / 512) + wT - 1,
             },
             gridY = {
-                min = localCellInfo.oY and -localCellInfo.oY / 256 or (-hT - localCellInfo.mY / 512),
-                max = (localCellInfo.oY and -localCellInfo.oY / 256 or (-hT - localCellInfo.mY / 512)) + hT - 1
+                min = localCellInfo.oY and -localCellInfo.oY / v2TileSize or (-hT - localCellInfo.mY / 512),
+                max = (localCellInfo.oY and -localCellInfo.oY / v2TileSize or (-hT - localCellInfo.mY / 512)) + hT - 1
             },
         }
 
