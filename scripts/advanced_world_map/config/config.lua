@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 8,
+    version = 9,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -18,6 +18,18 @@ this.default = {
         relativePosition = {
             x = 15,
             y = 15,
+        },
+        minimap = {
+            enabled = false,
+            cellLabel = true,
+            relativeSize = {
+                x = 0.7,
+                y = 0.7,
+            },
+            relativePosition = {
+                x = 0.15,
+                y = 0.15,
+            },
         },
         centerOnPlayer = true,
         discoveryRadius = 1500,

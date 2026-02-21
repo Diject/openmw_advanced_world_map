@@ -55,7 +55,7 @@ local function create(menu)
         id = "AdvancedWorldMap:CellName",
         layout = nameLayout,
         priority = -100,
-        showWhenMenuInactive = true,
+        showWhenMenuInactive = not config.data.main.minimap.enabled or config.data.main.minimap.cellLabel,
         onClick = function (m, e)
             local mapWidget = menu.mapWidget
             local plCell = playerRef.cell

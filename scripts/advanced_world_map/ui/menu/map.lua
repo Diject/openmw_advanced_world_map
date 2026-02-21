@@ -271,20 +271,27 @@ end
 function menuMeta:saveMinimapModeParams()
     if not self.menu or not self.menu.layout then return false end
 
-    localStorage.data[commonData.minimapModeSizeFieldId] = self.mainSize
-    localStorage.data[commonData.minimapModePosFieldId] = self.menu.layout.props.relativePosition
+    local screenSize = uiUtils.getScaledScreenSize()
+    local size = self.mainSize
+    local relPos = self.menu.layout.props.relativePosition
+    config.setValue("main.minimap.relativeSize.x", size.x / screenSize.x)
+    config.setValue("main.minimap.relativeSize.y", size.y / screenSize.y)
+    config.setValue("main.minimap.relativePosition.x", relPos.x)
+    config.setValue("main.minimap.relativePosition.y", relPos.y)
 
     return true
 end
 
 
 function menuMeta:setMinimapModeParams()
-    local minimapMode = localStorage.data[commonData.minimapModeStateFieldId]
-    local minimapModeSize = localStorage.data[commonData.minimapModeSizeFieldId]
-    local minimapModePos = localStorage.data[commonData.minimapModePosFieldId]
-    if minimapMode and minimapModeSize and minimapModePos then
+    if config.data.main.minimap.enabled then
+        local screenSize = uiUtils.getScaledScreenSize()
+        local sizeV = config.data.main.minimap.relativeSize
+        local minimapModeSize = util.vector2(sizeV.x, sizeV.y):emul(screenSize)
         self:setMapWidgetSize(minimapModeSize)
-        self.menu.layout.props.relativePosition = minimapModePos
+
+        local posV = config.data.main.minimap.relativePosition
+        self.menu.layout.props.relativePosition = util.vector2(posV.x, posV.y)
     end
 end
 
@@ -419,11 +426,17 @@ function menuMeta:updateInteractiveElements()
             self.mapWidget:closeRightMouseMenu()
         end
 
-        if localStorage.data[commonData.minimapModeStateFieldId] then
+        if config.data.main.minimap.enabled then
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
             self:closeActiveWidget()
             self:setMinimapModeParams()
-            self.mapWidget:focusOnWorldPosition(mapCenter)
+            if self.centerOnPlayer and not (not self.mapWidget.cellId and playerRef.cell.isExterior or
+                    self.mapWidget.cellId == playerRef.cell.id) then
+                self:updateMapWidgetCell(playerRef.cell.id)
+                self.mapWidget:focusOnWorldPosition(playerRef.position)
+            else
+                self.mapWidget:focusOnWorldPosition(mapCenter)
+            end
             self.mapWidget:updateMarkers(true)
         end
     end
@@ -1106,7 +1119,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         textSize = config.data.ui.fontSize * 0.9,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
-        checked = localStorage.data[commonData.minimapModeStateFieldId],
+        checked = config.data.main.minimap.enabled,
         tooltipContent = ui.content{
             {
                 type = ui.TYPE.TextEdit,
@@ -1126,7 +1139,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
             }
         },
         event = function (checked, layout)
-            localStorage.data[commonData.minimapModeStateFieldId] = checked
+            config.setValue("main.minimap.enabled", checked)
         end
     }
 
@@ -1161,6 +1174,18 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         end
     }
 
+    local cellLabelCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("CellLabelVisibilityCB"),
+        textSize = config.data.ui.fontSize * 0.9,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.main.minimap.cellLabel,
+        event = function (checked, layout)
+            config.setValue("main.minimap.cellLabel", checked)
+        end
+    }
+
 
     content:add{
         type = ui.TYPE.Flex,
@@ -1179,7 +1204,8 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
                     interval(config.data.ui.fontSize, 0),
                     setupBtn,
                 }
-            }
+            },
+            addVPadding(cellLabelCB),
         }
     }
 end, -10)
