@@ -146,40 +146,117 @@ local function createMarkers(widget, cellId)
     end
     local entrances = mapDataHandler.entrances or {}
 
-    ---@type table<integer, {dt : advancedWorldMap.dynamicDataHandler.entranceData, startPos : number?, endPos : number?}[]>
-    local entranceByLine = {}
-    local lineHeight = 10 * config.data.legend.markerSize * uiUtils.getUIScale()
-    local charWidth = 10 * config.data.legend.markerSize * uiUtils.getUIScale()
-    local maxLine
-    local minLine
+    local lineHeight = 10 * config.data.legend.markerSize
+    local charHeight = 30 * config.data.legend.markerSize
+    local mergeDist = 384 * 384
+
+    local entrancesData = {}
 
     if cellId == nil then
-        for cellId, list in pairs(entrances) do
-            if not cellId:find(commonData.exteriorCellLabel) then
-                goto continue
+        for cId, list in pairs(entrances) do
+            if cId:find(commonData.exteriorCellLabel) then
+                for _, dt in pairs(list) do
+                    table.insert(entrancesData, dt)
+                end
             end
-
-            for _, dt in pairs(list) do
-                local line = math.floor(dt.pos.y / lineHeight)
-                entranceByLine[line] = entranceByLine[line] or {}
-                table.insert(entranceByLine[line], {dt = dt})
-                maxLine = math.max(maxLine or line, line)
-                minLine = math.min(minLine or line, line)
-            end
-
-            ::continue::
         end
     else
         local entranceData = entrances[cellId]
         if not entranceData then return end
 
         for _, dt in pairs(entranceData) do
-            local line = math.floor(dt.pos.y / lineHeight)
-            entranceByLine[line] = entranceByLine[line] or {}
-            table.insert(entranceByLine[line], {dt = dt})
-            maxLine = math.max(maxLine or line, line)
-            minLine = math.min(minLine or line, line)
+            table.insert(entrancesData, dt)
         end
+    end
+
+    local nameGroups = {}
+    for _, dt in ipairs(entrancesData) do
+        nameGroups[dt.name] = nameGroups[dt.name] or {}
+        table.insert(nameGroups[dt.name], dt)
+    end
+
+    ---@type table<any, {dt: any, entries: any[], textMarker: advancedWorldMap.ui.mapElementMeta?}>
+    local dataForTextMarkers = {}
+    local allData = {}
+
+    for _, entries in pairs(nameGroups) do
+        local used = {}
+        local entryCount = #entries
+        for i = 1, entryCount do
+            if not used[i] then
+                used[i] = true
+
+                local cluster = { entries[i] }
+                local expanded = true
+                for k = 1, 10 do
+                    expanded = false
+                    for j = 1, entryCount do
+                        if not used[j] then
+                            local ej = entries[j]
+                            for _, cm in ipairs(cluster) do
+                                local dx = cm.pos.x - ej.pos.x
+                                local dy = cm.pos.y - ej.pos.y
+                                if dx * dx + dy * dy <= mergeDist then
+                                    used[j] = true
+                                    table.insert(cluster, ej)
+                                    expanded = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+
+                    if not expanded then break end
+                end
+
+                local cx, cy = 0, 0
+                for _, e in ipairs(cluster) do
+                    cx = cx + e.pos.x
+                    cy = cy + e.pos.y
+                end
+                local clusterSize = #cluster
+                cx = cx / clusterSize
+                cy = cy / clusterSize
+
+                local bestEntry = cluster[1]
+                local bestDist = math.huge
+                for _, e in ipairs(cluster) do
+                    local dx = e.pos.x - cx
+                    local dy = e.pos.y - cy
+                    local dsq = dx * dx + dy * dy
+                    if dsq < bestDist then
+                        bestDist = dsq
+                        bestEntry = e
+                    end
+                end
+
+                local repDt = bestEntry
+
+                local dt = {
+                    dt = repDt,
+                    entries = cluster,
+                    textMarker = nil,
+                }
+                table.insert(allData, dt)
+
+                for _, e in ipairs(cluster) do
+                    dataForTextMarkers[e] = dt
+                end
+            end
+        end
+    end
+
+    ---@type table<integer, {dt: any, mInfo: any}[]>
+    local entranceByLine = {}
+    local maxLine, minLine
+
+    for _, mInfo in ipairs(allData) do
+        local dt = mInfo.dt
+        local line = math.floor(dt.pos.y / lineHeight)
+        entranceByLine[line] = entranceByLine[line] or {}
+        table.insert(entranceByLine[line], { dt = dt, mInfo = mInfo })
+        maxLine = math.max(maxLine or line, line)
+        minLine = math.min(minLine or line, line)
     end
 
     for _, line in pairs(entranceByLine) do
@@ -188,366 +265,406 @@ local function createMarkers(widget, cellId)
         end)
     end
 
+    if minLine and maxLine then
 
-    ---@type {[1] : number, [2] : number}[][]
-    local textLines = {}
-    for i = minLine - 1, maxLine + 1 do
-        textLines[i] = {}
-    end
+        ---@type {[1] : number, [2] : number}[][]
+        local textLines = {}
+        for i = minLine - 1, maxLine + 1 do
+            textLines[i] = {}
+        end
 
-    local anchors = {
-        util.vector2(0, 0.5),
-        util.vector2(1, 0.5),
-        util.vector2(0.5, 1.5),
-        util.vector2(0.5, -0.5),
-        util.vector2(0.25, 1.5),
-        util.vector2(0.75, 1.5),
-        util.vector2(0.25, -0.5),
-        util.vector2(0.75, -0.5),
-    }
+        local anchors = {
+            util.vector2(0, 0.5),
+            util.vector2(1, 0.5),
+            util.vector2(0.5, 1.5),
+            util.vector2(0.5, -0.5),
+            util.vector2(0.25, 1.5),
+            util.vector2(0.75, 1.5),
+            util.vector2(0.25, -0.5),
+            util.vector2(0.75, -0.5),
+        }
 
-    local function isOverlap(s, e, intervals)
-        for _, interv in ipairs(intervals) do
-            local is, ie = interv[1], interv[2]
-            if s <= ie and e >= is then
-                return true
+        for _, dt in ipairs(entrancesData) do
+            local imgLine = math.floor(dt.pos.y / lineHeight)
+            local imgS = dt.pos.x - charHeight / 2
+            local imgE = dt.pos.x + charHeight / 2
+            for k = -1, 1 do
+                local lin = textLines[imgLine + k]
+                if lin then
+                    table.insert(lin, {imgS, imgE})
+                end
             end
         end
-        return false
+
+        local function calcOverlap(s, e, intervals)
+            local total = 0
+            for _, interv in ipairs(intervals) do
+                local os = math.max(s, interv[1])
+                local oe = math.min(e, interv[2])
+                if os < oe then
+                    total = total + (oe - os)
+                end
+            end
+            return total
+        end
+
+        for j, line in pairs(entranceByLine) do
+            for i = #line, 1, -1 do
+                local data = line[i]
+                local dt = data.dt
+                local mInfo = data.mInfo
+
+                local textAnchor = anchors[4]
+                local text = "  "..dt.name.."  "
+                local textWidth = charHeight * stringLib.length(dt.name) * 0.5
+
+                local currentLines = {}
+                for k = -1, 1 do
+                    if textLines[j + k] then
+                        table.insert(currentLines, textLines[j + k])
+                    end
+                end
+                local currentLine = textLines[j]
+
+                do
+                    local upperLine = textLines[j + 1]
+                    local upperLines = {}
+                    for k = 2, 4 do
+                        if textLines[j + k] then
+                            table.insert(upperLines, textLines[j + k])
+                        end
+                    end
+
+                    local lowerLine = textLines[j - 1]
+                    local lowerLines = {}
+                    for k = -4, -2 do
+                        if textLines[j + k] then
+                            table.insert(lowerLines, textLines[j + k])
+                        end
+                    end
+
+                    local funcs = {}
+
+                    local function tryAnchor(arr, s, e, anchor)
+                        local totalOverlap = 0
+                        for _, lin in pairs(arr) do
+                            totalOverlap = totalOverlap + calcOverlap(s, e, lin)
+                        end
+
+                        local func = function()
+                            textAnchor = anchor
+                            for _, lin in pairs(arr) do
+                                table.insert(lin, {s, e})
+                            end
+                        end
+
+                        if totalOverlap == 0 then
+                            func()
+                            return true
+                        else
+                            table.insert(funcs, { totalOverlap, func })
+                        end
+                    end
+
+                    if lowerLine then
+                        local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
+                        if tryAnchor(lowerLines, s, e, anchors[4]) then
+                            goto next
+                        end
+                    end
+
+                    if currentLine then
+                        local s, e = dt.pos.x + charHeight, dt.pos.x + textWidth
+                        if tryAnchor(currentLines, s, e, anchors[1]) then
+                            goto next
+                        end
+
+                        s, e = dt.pos.x - textWidth, dt.pos.x - charHeight
+                        if tryAnchor(currentLines, s, e, anchors[2]) then
+                            goto next
+                        end
+                    end
+
+                    if lowerLine then
+                        local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
+                        if tryAnchor(lowerLines, s, e, anchors[7]) then
+                            goto next
+                        end
+                        s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
+                        if tryAnchor(lowerLines, s, e, anchors[8]) then
+                            goto next
+                        end
+                    end
+
+                    if upperLine then
+                        local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
+                        if tryAnchor(upperLines, s, e, anchors[3]) then
+                            goto next
+                        end
+                    end
+
+                    if upperLine then
+                        local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
+                        if tryAnchor(upperLines, s, e, anchors[5]) then
+                            goto next
+                        end
+                        s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
+                        if tryAnchor(upperLines, s, e, anchors[6]) then
+                            goto next
+                        end
+                    end
+
+                    table.sort(funcs, function(a, b)
+                        return a[1] < b[1]
+                    end)
+
+                    if #funcs > 0 then
+                        funcs[1][2]()
+                    end
+
+                end
+
+                ::next::
+
+                local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
+
+                local cId = dt.dCId
+                this.markersByName[dt.name] = this.markersByName[dt.name] or {}
+
+                local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
+
+                local color
+                if discoveredLocs.isDiscovered(dt.dCId) then
+                    if discoveredLocs.isVisited(dt.dCId) then
+                        color = config.data.ui.defaultLightColor
+                    else
+                        color = config.data.ui.markerDefaultColor
+                    end
+                else
+                    color = config.data.ui.defaultDarkColor
+                end
+
+                local textMarkerHandler = widget:createTextMarker{
+                    id = textId,
+                    useCache = true,
+                    layerId = widget.LAYER.nonInteractive,
+                    text = text,
+                    alpha = config.data.legend.alpha.entrance * 0.01,
+                    anchor = textAnchor,
+                    fontSize = config.data.legend.markerSize,
+                    pos = dt.pos,
+                    color = color,
+                    showWhenZoomedIn = true,
+                    visible = isCellDiscovered,
+                    userData = {
+                        type = commonData.doorDescrMarkerType,
+                        cellId = dt.dCId,
+                        hash = dt.dHash,
+                        searchText = stringLib.utf8_lower(dt.name),
+                        fullName = dt.fName,
+                        allowSearchFilter = true,
+                        imageMarker = nil,
+                        anchor = textAnchor,
+                    },
+                }
+
+                if textMarkerHandler then
+                    local registeredCIds = {}
+                    for _, clusterEntry in ipairs(mInfo.entries) do
+                        local entryCId = clusterEntry.dCId
+                        if not registeredCIds[entryCId] then
+                            registeredCIds[entryCId] = true
+                            this.entranceMarkersByDestCellId[entryCId] = this.entranceMarkersByDestCellId[entryCId] or {}
+                            table.insert(this.entranceMarkersByDestCellId[entryCId], textMarkerHandler)
+                        end
+                    end
+
+                    table.insert(this.markersByName[dt.name], textMarkerHandler)
+                    this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
+                    table.insert(this.markersByDoorHash[dt.dHash], textMarkerHandler)
+                    if disabledDoors.contains(dt.dHash) then
+                        updateDoorMarkerVisibility(textMarkerHandler, false)
+                    end
+                    this.markerById[textId] = textMarkerHandler
+                    mInfo.textMarker = textMarkerHandler
+                end
+            end
+        end
+
     end
 
-    for j, line in pairs(entranceByLine) do
-        for i = #line, 1, -1 do
-            local data = line[i]
-            local dt = data.dt
+    for _, dt in ipairs(entrancesData) do
+        local mInfo = dataForTextMarkers[dt]
+        local textMarkerHandler = mInfo and mInfo.textMarker or nil
 
-            local textAnchor = anchors[1]
-            local text = "  "..dt.name.."  "
-            local textWidth = (charWidth + 2) * stringLib.length(dt.name)
+        local imId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "marker")
 
-            local currentLines = {}
-            for k = -1, 1 do
-                if textLines[j + k] then
-                    table.insert(currentLines, textLines[j + k])
-                end
-            end
-            local currentLine = textLines[j]
+        local cId = dt.dCId
+        this.entranceMarkersByDestCellId[cId] = this.entranceMarkersByDestCellId[cId] or {}
+        this.markersByName[dt.name] = this.markersByName[dt.name] or {}
+        this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
 
-            do
-                local upperLine = textLines[j + 1]
-                local upperLines = {}
-                for k = 2, 4 do
-                    if textLines[j + k] then
-                        table.insert(upperLines, textLines[j + k])
-                    end
-                end
+        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
 
-                local lowerLine = textLines[j - 1]
-                local lowerLines = {}
-                for k = -4, -2 do
-                    if textLines[j + k] then
-                        table.insert(lowerLines, textLines[j + k])
-                    end
-                end
-
-                local funcs = {}
-
-                local function calcTextAnchor(arr, s, e, anchor)
-                    local valid = true
-                    local cnt = 0
-                    for _, lin in pairs(arr) do
-                        if isOverlap(s, e, lin) then
-                            valid = false
-                        else
-                            cnt = cnt + 1
-                        end
-                    end
-
-                    local func = function ()
-                        textAnchor = anchor
-                        for _, lin in pairs(arr) do
-                            table.insert(lin, {s, e})
-                        end
-                    end
-
-                    if valid then
-                        func()
-                        return true
-                    else
-                        table.insert(funcs, {cnt, func})
-                    end
-                end
-
-                if currentLine then
-                    local s, e = dt.pos.x, dt.pos.x + textWidth
-                    if calcTextAnchor(currentLines, s, e, anchors[1]) then
-                        goto next
-                    end
-
-                    s, e = dt.pos.x - textWidth, dt.pos.x
-                    if calcTextAnchor(currentLines, s, e, anchors[2]) then
-                        goto next
-                    end
-                end
-
-                if upperLine then
-                    local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
-                    if calcTextAnchor(upperLines, s, e, anchors[3]) then
-                        goto next
-                    end
-                end
-
-                if lowerLine then
-                    local s, e = dt.pos.x - textWidth / 2, dt.pos.x + textWidth / 2
-                    if calcTextAnchor(lowerLines, s, e, anchors[4]) then
-                        goto next
-                    end
-                end
-
-                if upperLine then
-                    local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
-                    if calcTextAnchor(upperLines, s, e, anchors[5]) then
-                        goto next
-                    end
-                    s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
-                    if calcTextAnchor(upperLines, s, e, anchors[6]) then
-                        goto next
-                    end
-                end
-
-                if lowerLine then
-                    local s, e = dt.pos.x - textWidth * 0.25, dt.pos.x + textWidth * 0.75
-                    if calcTextAnchor(lowerLines, s, e, anchors[7]) then
-                        goto next
-                    end
-                    s, e = dt.pos.x - textWidth * 0.75, dt.pos.x + textWidth * 0.25
-                    if calcTextAnchor(lowerLines, s, e, anchors[8]) then
-                        goto next
-                    end
-                end
-
-                table.sort(funcs, function (a, b)
-                    return a[1] > b[1]
-                end)
-
-                if funcs[1][1] ~= 0 then
-                    funcs[1][2]()
-                else
-                    tableLib.shuffle(funcs)
-                    funcs[1][2]()
-                end
-
-            end
-
-            ::next::
-
-            for _, ln in pairs(currentLines) do
-                table.insert(ln, {dt.pos.x - charWidth / 2, dt.pos.x + charWidth / 2})
-            end
-
-            local imId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "marker")
-            local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
-
-            local cId = dt.dCId
-            this.entranceMarkersByDestCellId[cId] = this.entranceMarkersByDestCellId[cId] or {}
-            this.markersByName[dt.name] = this.markersByName[dt.name] or {}
-            this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
-
-            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
-
-            local color
-            if discoveredLocs.isDiscovered(dt.dCId) then
-                if discoveredLocs.isVisited(dt.dCId) then
-                    color = config.data.ui.defaultLightColor
-                else
-                    color = config.data.ui.markerDefaultColor
-                end
+        local color
+        if discoveredLocs.isDiscovered(dt.dCId) then
+            if discoveredLocs.isVisited(dt.dCId) then
+                color = config.data.ui.defaultLightColor
             else
-                color = config.data.ui.defaultDarkColor
+                color = config.data.ui.markerDefaultColor
             end
+        else
+            color = config.data.ui.defaultDarkColor
+        end
 
-            local textMarkerHandler = widget:createTextMarker{
-                id = textId,
-                useCache = true,
-                layerId = widget.LAYER.nonInteractive,
-                text = text,
-                alpha = config.data.legend.alpha.entrance * 0.01,
-                anchor = textAnchor,
-                fontSize = config.data.legend.markerSize,
-                pos = dt.pos,
-                color = color,
-                showWhenZoomedIn = true,
-                visible = isCellDiscovered,
-                userData = {
-                    type = commonData.doorDescrMarkerType,
-                    cellId = dt.dCId,
-                    hash = dt.dHash,
-                    searchText = stringLib.utf8_lower(dt.name),
-                    fullName = dt.fName,
-                    allowSearchFilter = true,
-                    imageMarker = nil,
-                    anchor = textAnchor,
-                },
-            }
-            if textMarkerHandler then
-                table.insert(this.entranceMarkersByDestCellId[cId], textMarkerHandler)
-                table.insert(this.markersByName[dt.name], textMarkerHandler)
-                table.insert(this.markersByDoorHash[dt.dHash], textMarkerHandler)
-                if disabledDoors.contains(dt.dHash) then
-                    updateDoorMarkerVisibility(textMarkerHandler, false)
-                end
-                this.markerById[textId] = textMarkerHandler
-            end
+        local imageMarkerHandler
+        imageMarkerHandler = widget:createImageMarker{
+            id = imId,
+            texture = dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
+            color = color,
+            useCache = true,
+            layerId = widget.LAYER.marker,
+            alpha = config.data.legend.alpha.entrance * 0.01,
+            anchor = util.vector2(0.5, 0.5),
+            size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize),
+            pos = dt.pos,
+            showWhenZoomedIn = true,
+            visible = isCellDiscovered,
+            userData = {
+                type = commonData.doorMarkerType,
+                cellId = dt.dCId,
+                hash = dt.dHash,
+                searchText = stringLib.utf8_lower(dt.name),
+                allowSearchFilter = true,
+                textMarker = textMarkerHandler,
+                name = dt.name,
+                fullName = dt.fName,
+            },
+            events = {
+                mouseRelease = function (e, layout, pressed)
+                    if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
+                    if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
+                        return
+                    end
 
+                    this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
+                    if this.activeMenuMeta.mapWidget and dt.dPos then
+                        this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
+                        this.activeMenuMeta.mapWidget:updateMarkers()
+                    end
 
-            local imageMarkerHandler
-            imageMarkerHandler = widget:createImageMarker{
-                id = imId,
-                texture = dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
-                color = color,
-                useCache = true,
-                layerId = widget.LAYER.marker,
-                alpha = config.data.legend.alpha.entrance * 0.01,
-                anchor = util.vector2(0.5, 0.5),
-                size = util.vector2(config.data.legend.markerSize, config.data.legend.markerSize),
-                pos = dt.pos,
-                showWhenZoomedIn = true,
-                visible = isCellDiscovered,
-                userData = {
-                    type = commonData.doorMarkerType,
-                    cellId = dt.dCId,
-                    hash = dt.dHash,
-                    searchText = stringLib.utf8_lower(dt.name),
-                    allowSearchFilter = true,
-                    textMarker = textMarkerHandler,
-                    name = dt.name,
-                    fullName = dt.fName,
-                },
-                events = {
-                    mouseRelease = function (e, layout, pressed)
-                        if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
-                        if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
+                    eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
+                    this.activeMenuMeta:update()
+                end,
+
+                mouseMove = function(e, layout)
+                    if not tooltip.isExists(layout) then
+                        local tooltipContent = ui.content{}
+                        if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
                             return
                         end
 
-                        this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
-                        if this.activeMenuMeta.mapWidget and dt.dPos then
-                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
-                            this.activeMenuMeta.mapWidget:updateMarkers()
-                        end
-
-                        eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
-                        this.activeMenuMeta:update()
-                    end,
-
-                    mouseMove = function(e, layout)
-                        if not tooltip.isExists(layout) then
-                            local tooltipContent = ui.content{}
-                            if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
-                                return
+                        if #tooltipContent > 0 then
+                            local newTooltipContent = ui.content{}
+                            for i = 1, #tooltipContent - 1 do
+                                local item = tooltipContent[i]
+                                newTooltipContent:add(item)
+                                newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
                             end
+                            newTooltipContent:add(tooltipContent[#tooltipContent])
 
-                            if #tooltipContent > 0 then
-                                local newTooltipContent = ui.content{}
-                                for i = 1, #tooltipContent - 1 do
-                                    local item = tooltipContent[i]
-                                    newTooltipContent:add(item)
-                                    newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
-                                end
-                                newTooltipContent:add(tooltipContent[#tooltipContent])
-
-                                layout.userData.tooltipContent = newTooltipContent
-                                tooltip.createOrMove(e, layout, newTooltipContent)
-                            else
-                                layout.userData.tooltipContent = nil
-                            end
-                        elseif tooltip.createOrMove(e, layout) then
-                            eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
-                                marker = imageMarkerHandler,
-                                content = layout.userData.tooltipContent,
-                                tooltip = tooltip.get(layout)
-                            })
+                            layout.userData.tooltipContent = newTooltipContent
+                            tooltip.createOrMove(e, layout, newTooltipContent)
+                        else
+                            layout.userData.tooltipContent = nil
                         end
-                    end,
-                },
-            }
-            if imageMarkerHandler then
-                table.insert(this.entranceMarkersByDestCellId[cId], imageMarkerHandler)
-                table.insert(this.markersByName[dt.name], imageMarkerHandler)
-                table.insert(this.markersByDoorHash[dt.dHash], imageMarkerHandler)
-                if disabledDoors.contains(dt.dHash) then
-                    updateDoorMarkerVisibility(imageMarkerHandler, false)
-                end
-                this.markerById[imId] = imageMarkerHandler
-
-                if textMarkerHandler then
-                    local userData = textMarkerHandler:getUserData()
-                    if userData then
-                        userData.imageMarker = imageMarkerHandler
+                    elseif tooltip.createOrMove(e, layout) then
+                        eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
+                            marker = imageMarkerHandler,
+                            content = layout.userData.tooltipContent,
+                            tooltip = tooltip.get(layout)
+                        })
                     end
-                end
-            end
-
-        end
-    end
-
-
-    for _, dt in pairs(mapDataHandler.cellNameData or {}) do
-        local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
-
-        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name) or
-            types.Player.journal and types.Player.journal(playerRef).topics[dt.name] and true or false
-
-        this.markersByName[dt.name] = this.markersByName[dt.name] or {}
-
-        local textMarkerHandler = widget:createTextMarker{
-            id = id,
-            layerId = widget.LAYER.name,
-            text = dt.name,
-            anchor = util.vector2(0.5, 0.5),
-            pos = util.vector2(dt.posX, dt.posY),
-            color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
-            fontSize = 10 + math.min(8, dt.count) * 2,
-            scaleFunc = widget.SCALE_FUNCTION.linear,
-            alpha = config.data.legend.alpha.city * 0.01,
-            useCache = true,
-            showWhenZoomedOut = true,
-            visible = isCellDiscovered,
-            userData = {
-                type = commonData.cityRegionMarkerType,
-                searchText = stringLib.utf8_lower(dt.name),
-                allowSearchFilter = true,
+                end,
             },
         }
-        if textMarkerHandler then
-            table.insert(this.markersByName[dt.name], textMarkerHandler)
-            this.markerById[id] = textMarkerHandler
+        if imageMarkerHandler then
+            table.insert(this.entranceMarkersByDestCellId[cId], imageMarkerHandler)
+            table.insert(this.markersByName[dt.name], imageMarkerHandler)
+            table.insert(this.markersByDoorHash[dt.dHash], imageMarkerHandler)
+            if disabledDoors.contains(dt.dHash) then
+                updateDoorMarkerVisibility(imageMarkerHandler, false)
+            end
+            this.markerById[imId] = imageMarkerHandler
+
+            if textMarkerHandler then
+                local userData = textMarkerHandler:getUserData()
+                if userData then
+                    userData.imageMarker = imageMarkerHandler
+                end
+            end
         end
     end
 
 
-    for _, info in pairs(mapDataHandler.regionNameData or {}) do
-        local fontSize = 14 + math.min(8, info.count) * 3
-        widget:createTextMarker{
-            layerId = widget.LAYER.region,
-            text = info.name,
-            anchor = util.vector2(0.5, 0.5),
-            pos = util.vector2(info.posX, info.posY),
-            color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
-            fontSize = fontSize,
-            scaleFunc = widget.SCALE_FUNCTION.linear,
-            alpha = config.data.legend.alpha.region * 0.01,
-            showWhenZoomedOut = true,
-            useCache = true,
-            searchText = stringLib.utf8_lower(info.name),
-            searchLabel = l10n("Region")..": "..info.name,
-            userData = {
-                type = commonData.cityRegionMarkerType,
+    if cellId == nil then
+        for _, dt in pairs(mapDataHandler.cellNameData or {}) do
+            local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
+
+            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name) or
+                types.Player.journal and types.Player.journal(playerRef).topics[dt.name] and true or false
+
+            this.markersByName[dt.name] = this.markersByName[dt.name] or {}
+
+            local textMarkerHandler = widget:createTextMarker{
+                id = id,
+                layerId = widget.LAYER.name,
+                text = dt.name,
+                anchor = util.vector2(0.5, 0.5),
+                pos = util.vector2(dt.posX, dt.posY),
+                color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
+                fontSize = 10 + math.min(8, dt.count) * 2,
+                scaleFunc = widget.SCALE_FUNCTION.linear,
+                alpha = config.data.legend.alpha.city * 0.01,
+                useCache = true,
+                showWhenZoomedOut = true,
+                visible = isCellDiscovered,
+                userData = {
+                    type = commonData.cityRegionMarkerType,
+                    searchText = stringLib.utf8_lower(dt.name),
+                    allowSearchFilter = true,
+                },
             }
-        }
+            if textMarkerHandler then
+                table.insert(this.markersByName[dt.name], textMarkerHandler)
+                this.markerById[id] = textMarkerHandler
+            end
+        end
+
+
+        for _, info in pairs(mapDataHandler.regionNameData or {}) do
+            local fontSize = 14 + math.min(8, info.count) * 3
+            widget:createTextMarker{
+                layerId = widget.LAYER.region,
+                text = info.name,
+                anchor = util.vector2(0.5, 0.5),
+                pos = util.vector2(info.posX, info.posY),
+                color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
+                fontSize = fontSize,
+                scaleFunc = widget.SCALE_FUNCTION.linear,
+                alpha = config.data.legend.alpha.region * 0.01,
+                showWhenZoomedOut = true,
+                useCache = true,
+                searchText = stringLib.utf8_lower(info.name),
+                searchLabel = l10n("Region")..": "..info.name,
+                userData = {
+                    type = commonData.cityRegionMarkerType,
+                }
+            }
+        end
     end
 
-    widget:updateMarkers()
+    widget:update()
 end
 
 
@@ -577,6 +694,32 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
         },
     }
 end, 10000)
+
+
+eventSys.registerHandler(eventSys.EVENT.onMapDestroyed, function (e)
+    for _, marker in pairs(e.mapWidget:getRegisteredMarkers()) do
+        if not marker.id or not this.markerById[marker.id] then goto continue end
+
+        this.markerById[marker.id] = nil
+
+        if marker.text then
+            this.markersByName[marker.text] = nil
+        end
+
+        if not marker.userData then goto continue end
+
+        if marker.userData.hash then
+            this.markersByDoorHash[marker.userData.hash] = nil
+        end
+
+        if marker.userData.cellId then
+            this.entranceMarkersByDestCellId[marker.userData.cellId] = nil
+        end
+
+        ::continue::
+    end
+end)
+
 
 eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
     local screenSize = uiUtils.getScaledScreenSize()

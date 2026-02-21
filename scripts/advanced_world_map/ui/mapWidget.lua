@@ -1737,6 +1737,27 @@ function mapWidgetMeta:getActiveMarkers()
 end
 
 
+---@return table<integer, advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params|advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params>
+function mapWidgetMeta:getRegisteredMarkers()
+    local markers = {}
+    for _, dt in pairs(self.zoomInMarkers) do
+        for _, m in pairs(dt) do
+            if m.params then
+                table.insert(markers, m.params)
+            end
+        end
+    end
+    for _, dt in pairs(self.zoomOutMarkers) do
+        for _, m in pairs(dt) do
+            if m.params then
+                table.insert(markers, m.params)
+            end
+        end
+    end
+    return markers
+end
+
+
 function mapWidgetMeta:isInFocus()
     return self.layout.userData.inFocus == true
 end
