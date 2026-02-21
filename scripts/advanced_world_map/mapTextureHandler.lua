@@ -59,6 +59,7 @@ this.mapInfo = nil
 ---@type string?
 this.mapDir = nil
 
+---@type table<string, boolean|any>
 this.localMapTextureCache = {}
 
 this.localCellTextureCache = {}
@@ -196,7 +197,7 @@ end
 function this.getLocalMapTexture(gridX, gridY)
     local id = string.format("(%d,%d)", gridX, gridY)
 
-    if this.localMapTextureCache[id] then return this.localMapTextureCache[id], true end
+    if this.localMapTextureCache[id] then return this.localMapTextureCache[id] ~= true and this.localMapTextureCache[id] or nil, true end
 
     local path = string.format("%s%s", commonData.localMapTexturesDir, id)
     local pathPng = path..".png"
@@ -208,6 +209,7 @@ function this.getLocalMapTexture(gridX, gridY)
     elseif vfs.fileExists(pathTga) then
         foundPath = pathTga
     else
+        this.localMapTextureCache[id] = true
         return
     end
 

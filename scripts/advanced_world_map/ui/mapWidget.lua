@@ -1293,15 +1293,18 @@ function mapWidgetMeta:placeGroundTextures(region)
                 if not isValid then goto continue end
 
                 if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) then
-                    mapLayout.content:add{
-                        type = ui.TYPE.Image,
-                        props = {
-                            resource = mapTextureHandler.getLocalMapTexture(grx, gry),
-                            size = sz,
-                            position = pos,
-                            anchor = util.vector2(0, 1)
+                    local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
+                    if texture then
+                        mapLayout.content:add{
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = texture,
+                                size = sz,
+                                position = pos,
+                                anchor = util.vector2(0, 1)
+                            }
                         }
-                    }
+                    end
                 else
                     table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz})
                 end
@@ -1311,19 +1314,25 @@ function mapWidgetMeta:placeGroundTextures(region)
         end
 
         local function updateTiles()
+            local cnt = 0
             for i, dt in pairs(queue) do
+                local texture = mapTextureHandler.getLocalMapTexture(dt.grx, dt.gry)
+                if not texture then goto continue end
+
                 mapLayout.content:add{
                     type = ui.TYPE.Image,
                     props = {
-                        resource = mapTextureHandler.getLocalMapTexture(dt.grx, dt.gry),
+                        resource = texture,
                         size = dt.sz,
                         position = dt.pos,
                         anchor = util.vector2(0, 1)
                     }
                 }
-                if i % 4 == 0 then
+                cnt = cnt + 1
+                if cnt % 6 == 0 then
                     coroutine.yield()
                 end
+                ::continue::
             end
         end
 
