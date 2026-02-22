@@ -37,7 +37,7 @@ function this.new(params)
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
     params.size = params.size or util.vector2(800, params.fontSize * 20)
-    params.relativePosition = util.vector2((screenSize.x - params.size.x) / 2 / screenSize.x, (screenSize.y - params.size.y) / 2 / screenSize.y)
+    params.relativePosition = util.vector2(0.5, 0.5)
 
 
     ---@class advancedWorldMap.ui.menu.firstInit
@@ -179,6 +179,7 @@ function this.new(params)
         layer = commonData.messageLayer,
         props = {
             size = params.size,
+            anchor = util.vector2(0.5, 0.5),
             relativePosition = params.relativePosition,
         },
         userData = {
