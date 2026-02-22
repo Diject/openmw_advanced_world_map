@@ -403,6 +403,7 @@ end
 local function create(menu)
 
     local textFilter = ""
+    local userInputText = ""
 
     local showUnrevealed
     if localStorage.data[commonData.showUnrevealedFieldId] ~= nil then
@@ -730,19 +731,20 @@ local function create(menu)
                     },
                     events = {
                         textChanged = async:callback(function(text, layout)
-                            textFilter = stringLib.utf8_lower(text)
-                            searchBarLayout.content[1].props.text = text
+                            userInputText = text
+                            textFilter = stringLib.sanitize(stringLib.utf8_lower(text))
+                            searchBarLayout.content[1].props.text = userInputText
                         end),
                         keyRelease = async:callback(function(e, layout)
                             if e.code == input.KEY.Enter then
-                                searchBarLayout.content[1].props.text = textFilter
+                                searchBarLayout.content[1].props.text = userInputText
                                 fill(showUnrevealed, searchAllLocations)
                                 menu.mapWidget:updateMarkers()
                                 menu:update()
                             end
                         end),
                         focusLoss = async:callback(function(layout)
-                            searchBarLayout.content[1].props.text = textFilter
+                            searchBarLayout.content[1].props.text = userInputText
                         end),
                     }
                 },

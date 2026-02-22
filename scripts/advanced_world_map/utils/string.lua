@@ -204,4 +204,9 @@ function this.isEndsWith(str, suf)
 end
 
 
+function this.sanitize(str)
+    return str:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
+end
+
+
 return this
