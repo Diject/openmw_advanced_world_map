@@ -408,12 +408,14 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
     local paddingX = math.max(8192, size.x * mul)
     local paddingY = math.max(8192, size.y * mul)
 
-    visibleRect.bottom = visibleRect.bottom - paddingY
-    visibleRect.top = visibleRect.top + paddingY
-    visibleRect.left = visibleRect.left - paddingX
-    visibleRect.right = visibleRect.right + paddingX
+    visibleRect.bottom = math.floor((visibleRect.bottom - paddingY) / 8192) * 8192
+    visibleRect.top = math.floor((visibleRect.top + paddingY) / 8192) * 8192 + 8191
+    visibleRect.left = math.floor((visibleRect.left - paddingX) / 8192) * 8192
+    visibleRect.right = math.floor((visibleRect.right + paddingX) / 8192) * 8192 + 8191
 
-    if self.initialized and eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdate, {mapWidget = self, region = visibleRect}) then
+    self._markerRect = visibleRect
+
+    if eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdate, {mapWidget = self, region = visibleRect}) then
         return
     end
 
@@ -422,15 +424,13 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
     if isInZoomInMode then
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
         self:placeGroundTextures(visibleRect)
-        self:createZoomInMarkers(visibleRect, nil, force)
+        self:createZoomInMarkers(visibleRect, nil, not updateOnlyRect or force)
     else
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
         self:placeGroundTextures(visibleRect)
         self:createZoomOutMarkers(visibleRect, nil, force)
     end
     self._lastOnZoomZoom = self.zoom
-
-    self._markerRect = visibleRect
 end
 
 
@@ -952,9 +952,7 @@ function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly, force)
 
     if preloadOnly then return end
 
-    if self.initialized then
-        eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
-    end
+    eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
 
     self.onZoomMarkersRect = region
 end
@@ -969,18 +967,16 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly, force)
             tryCreateActiveMarker(self, dt.params, preloadOnly)
         end
 
-        if self.initialized then
-            eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
-        end
+        eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
     else
         if not force and self.onZoomMarkersRect and this.compareRegions(self.onZoomMarkersRect, region) then
             return
         end
 
-        local minGridX = math.ceil(region.left / 8192)
-        local maxGridX = math.ceil(region.right / 8192)
-        local minGridY = math.ceil(region.bottom / 8192)
-        local maxGridY = math.ceil(region.top / 8192)
+        local minGridX = math.floor(region.left / 8192)
+        local maxGridX = math.floor(region.right / 8192)
+        local minGridY = math.floor(region.bottom / 8192)
+        local maxGridY = math.floor(region.top / 8192)
 
         for x = minGridX, maxGridX do
             for y = minGridY, maxGridY do
@@ -995,9 +991,7 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly, force)
 
         if preloadOnly then return end
 
-        if self.initialized then
-            eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
-        end
+        eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdated, {mapWidget = self, region = region})
 
         self.onZoomMarkersRect = region
     end
@@ -1353,57 +1347,6 @@ function mapWidgetMeta:placeGroundTextures(region)
         end
         runCo()
     end
-end
-
-
--- This is no longer needed because of the coroutine-based ground texture loading
-function mapWidgetMeta:preloadLocalMap()
-    if self.cellId or self._isLocalMapPreloaded then return end
-
-    local visibleRect = self:getVisibleMapRectInWorldCoordinates()
-
-    local size = self:getSize()
-    local mul = 8192 / (self.mapInfo.pixelsPerCell * config.data.tileset.zoomToShow)
-    local paddingX = math.max(8192, size.x * mul)
-    local paddingY = math.max(8192, size.y * mul)
-
-    visibleRect.bottom = visibleRect.bottom - paddingY
-    visibleRect.top = visibleRect.top + paddingY
-    visibleRect.left = visibleRect.left - paddingX
-    visibleRect.right = visibleRect.right + paddingX
-
-    local minGridX = math.floor(visibleRect.left / 8192)
-    local maxGridX = math.ceil(visibleRect.right / 8192)
-    local minGridY = math.floor(visibleRect.bottom / 8192)
-    local maxGridY = math.ceil(visibleRect.top / 8192)
-
-    for x = minGridX - 1, maxGridX + 1 do
-        for y = minGridY - 1, maxGridY + 1 do
-            mapTextureHandler.getLocalMapTexture(x, y + 1)
-        end
-    end
-
-    if self.mapInfo then
-        if self.mapInfo.version == 2 then
-            local gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / 16 - 1 or minGridX / 16)
-            local gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / 16 - 1 or maxGridX / 16)
-            local gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / 16 - 1 or minGridY / 16)
-            local gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / 16 - 1 or maxGridY / 16)
-
-            for x = gridTileMinX - 1, gridTileMaxX + 1 do
-                for y = gridTileMinY - 1, gridTileMaxY + 1 do
-                    mapTextureHandler.getWorldMapTextureV2(x, y)
-                end
-            end
-        else
-            mapDataHandler.getWorldMapTexture()
-        end
-    end
-
-    self:createZoomInMarkers(visibleRect, true)
-    self:createZoomOutMarkers(visibleRect, true)
-
-    self._isLocalMapPreloaded = true
 end
 
 
