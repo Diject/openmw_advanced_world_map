@@ -59,9 +59,11 @@ local cellNameWidget = require("scripts.advanced_world_map.widgets.cellName")
 local l10n = core.l10n(commonData.l10nKey)
 
 
-if not ui.layers.indexOf(commonData.messageLayer) then
-    ui.layers.insertBefore("DragAndDrop", commonData.messageLayer, { interactive = true })
-end
+pcall(function ()
+    if not ui.layers.indexOf(commonData.messageLayer) then
+        ui.layers.insertBefore("DragAndDrop", commonData.messageLayer, { interactive = true })
+    end
+end)
 
 
 local fightingActors = {}
@@ -368,7 +370,7 @@ local function fastTravelMessageCallback(data)
     end
 
     local plSpeed = types.Actor.stats.attributes.speed(self).modified
-    local travelTime = configLib.data.fastTravel.passTime and
+    local travelTime = configLib.data.fastTravel.passTime and core.API_REVISION >= 111 and
         math.ceil((data.worldDistance + data.depthToPoint * 4096) / 24576 * 100 / plSpeed * (encumbrance / capacity + 0.5)) or 0
 
     local eventData = {
@@ -388,8 +390,12 @@ local function fastTravelMessageCallback(data)
     end
 
     local message = eventData.message or ""
-    if cost > 0 then
-        message = message.."\n"..l10n("fastTraveMagickaCost"):format(eventData.cost)
+    if cost > 0 or travelTime > 0 then
+        message = message.."\n"..l10n("fastTravelCostMessage"):format(
+            cost > 0 and l10n("fastTravelMagickaCost", {count = cost}):format(cost) or "",
+            cost > 0 and travelTime > 0 and l10n("fastTravelAnd") or "",
+            travelTime > 0 and l10n("fastTravelTimeCost", {count = travelTime}):format(travelTime) or ""
+        )
     end
 
     menuHandler.registerMenu(commonData.messageBoxMenuId, messageBox.newSimple{

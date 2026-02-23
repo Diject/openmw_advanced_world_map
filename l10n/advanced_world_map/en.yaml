@@ -20,7 +20,18 @@ FastTravel: "Fast travel"
 NoLocationsForFastTravel: "No available locations for fast travel."
 NoLocationsOrBlockedForFastTravel: "No available locations for fast travel or all paths to them are currently unavailable."
 fastTravelMessageBoxMessage: "Do you want to fast travel to \"%s\"?"
-fastTraveMagickaCost: "This will cost %d magicka."
+fastTravelCostMessage: "This will %s%s%s."
+fastTravelAnd: " and "
+fastTravelMagickaCost: |-
+  cost %d {count, plural,
+    one {magicka}
+    other {magicka}
+  }
+fastTravelTimeCost: |-
+  take %d {count, plural,
+    one {hour}
+    other {hours}
+  }
 fastTravelWhileInCombat: "You cannot fast travel while in combat."
 fastTravelNotAllowedToInterior: "You cannot fast travel to interiors."
 fastTravelTooltip: "Fast travel.\n\nClick 3 times or use right mouse menu at any point on the map to fast travel there. Fast travel is only possible if a valid position exists near the destination."
