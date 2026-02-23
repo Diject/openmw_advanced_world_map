@@ -53,20 +53,6 @@ local function create(menu)
             mapWidgetSize.y
         )
 
-        local evContent = ui.content{}
-
-        eventSys.triggerEvent(eventSys.EVENT.onLegendWidgetCreate, {
-            menu = menu,
-            content = evContent,
-            size = size
-        })
-
-        local sbContent = ui.content{interval(0, config.data.ui.fontSize / 2)}
-        for _, elem in ipairs(evContent) do
-            sbContent:add(elem)
-            sbContent:add(interval(0, config.data.ui.fontSize / 2))
-        end
-
         local sb = scrollBox{
             updateFunc = menu.update,
             contentHeight = 0,
@@ -74,8 +60,26 @@ local function create(menu)
             size = size,
             scrollAmount = config.data.ui.fontSize * 2,
             hideScrollBtns = true,
-            content = sbContent,
+            content = ui.content{},
         }
+
+        local sbMeta = sb.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
+
+        local sbContentNew = ui.content{}
+        eventSys.triggerEvent(eventSys.EVENT.onLegendWidgetCreate, {
+            menu = menu,
+            scrollBox = sbMeta,
+            content = sbContentNew,
+            size = size
+        })
+
+        local sbContent = sbMeta:getContent()
+        sbContent:add(interval(0, config.data.ui.fontSize / 2))
+        for _, elem in ipairs(sbContentNew) do
+            sbContent:add(elem)
+            sbContent:add(interval(0, config.data.ui.fontSize / 2))
+        end
+
         sb.userData.scrollBoxMeta:calcContentHeight() ---@diagnostic disable-line: need-check-nil
 
 
@@ -143,10 +147,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local focusOnPlayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("FollowPlayer"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(4, config.data.ui.fontSize),
         checked = config.data.main.centerOnPlayer,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("main.centerOnPlayer", checked)
             menu.centerOnPlayer = checked
@@ -179,10 +186,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local regionsLayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("Regions"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.legend.visibility.regions,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("legend.visibility.regions", checked)
             menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.region, checked)
@@ -193,10 +203,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local citiesLayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("Cities"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.legend.visibility.cities,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("legend.visibility.cities", checked)
             menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.name, checked)
@@ -207,10 +220,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local playerLayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("PlayerMarker"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.legend.visibility.playerMarker,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("legend.visibility.playerMarker", checked)
             menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.player, checked)
@@ -224,10 +240,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local labelLayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("Labels"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.legend.visibility.labels,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("legend.visibility.labels", checked)
             menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.nonInteractive, checked)
@@ -238,10 +257,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local markerLayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("Markers"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.legend.visibility.markers,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("legend.visibility.markers", checked)
             menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.marker, checked)

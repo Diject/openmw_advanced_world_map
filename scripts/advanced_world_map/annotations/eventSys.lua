@@ -207,6 +207,7 @@
 ---Event data for legend widget create event
 ---@class AdvancedWorldMap.Event.OnLegendWidgetCreateEvent
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+---@field scrollBox any Legend widget scroll box instance metatable
 ---@field content Content Legend widget content
 ---@field size Vector2 Legend widget size
 
