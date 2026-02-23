@@ -58,7 +58,7 @@ local function fill(menu, sb, filter)
 
         if filter and filter ~= "" then
             local textLower = (filterTags or "")..stringLib.utf8_lower(text)
-            if not textLower:find(filter) then return end
+            if not textLower:find(filter, 1, true) then return end
         end
 
         local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, sbSize.x, config.data.ui.textHeightMul, 1)
@@ -349,6 +349,7 @@ function  this.create(menu, content)
     local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
 
     local textFilter = ":here:"
+    local inputText = ":here:"
 
     fill(menu, scrollBoxMeta, textFilter)
 
@@ -375,7 +376,7 @@ function  this.create(menu, content)
             {
                 type = ui.TYPE.TextEdit,
                 props = {
-                    text = textFilter,
+                    text = inputText,
                     anchor = util.vector2(0, 0.5),
                     size = util.vector2(size.x - 114, searchBarFontSize),
                     textAlignV = ui.ALIGNMENT.Center,
@@ -385,18 +386,19 @@ function  this.create(menu, content)
                 },
                 events = {
                     textChanged = async:callback(function(text, layout)
+                        inputText = text
                         textFilter = stringLib.utf8_lower(text)
                         layout.props.text = text
                     end),
                     keyRelease = async:callback(function(e, layout)
                         if e.code == input.KEY.Enter then
-                            layout.props.text = textFilter
+                            layout.props.text = inputText
                             fill(menu, scrollBoxMeta, textFilter)
                             menu:update()
                         end
                     end),
                     focusLoss = async:callback(function(_, layout)
-                        layout.props.text = textFilter
+                        layout.props.text = inputText
                     end),
                 }
             },

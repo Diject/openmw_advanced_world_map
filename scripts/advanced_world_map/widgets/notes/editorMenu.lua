@@ -619,7 +619,7 @@ function this.create(params)
 
     local function resetCheckBoxes()
         for _, cb in pairs(checkBoxes) do
-            ---@type questGuider.ui.checkBox
+            ---@type advancedWorldMap.ui.checkBox
             local cbMeta = cb.userData.meta
 
             cbMeta:setChecked(false)
@@ -633,7 +633,7 @@ function this.create(params)
             size = util.vector2(1, 1) * params.fontSize * 1.25,
             checked = params.data.namePosId == 0,
             event = function (checked, layout)
-                ---@type questGuider.ui.checkBox
+                ---@type advancedWorldMap.ui.checkBox
                 local cbMeta = layout.userData.meta
                 resetCheckBoxes()
                 cbMeta:setChecked(checked)
@@ -646,7 +646,7 @@ function this.create(params)
             size = util.vector2(1, 1) * params.fontSize * 1.25,
             checked = params.data.namePosId == 1,
             event = function (checked, layout)
-                ---@type questGuider.ui.checkBox
+                ---@type advancedWorldMap.ui.checkBox
                 local cbMeta = layout.userData.meta
                 resetCheckBoxes()
                 cbMeta:setChecked(checked)
@@ -659,7 +659,7 @@ function this.create(params)
             size = util.vector2(1, 1) * params.fontSize * 1.25,
             checked = params.data.namePosId == 2,
             event = function (checked, layout)
-                ---@type questGuider.ui.checkBox
+                ---@type advancedWorldMap.ui.checkBox
                 local cbMeta = layout.userData.meta
                 resetCheckBoxes()
                 cbMeta:setChecked(checked)
@@ -672,7 +672,7 @@ function this.create(params)
             size = util.vector2(1, 1) * params.fontSize * 1.25,
             checked = params.data.namePosId == 3,
             event = function (checked, layout)
-                ---@type questGuider.ui.checkBox
+                ---@type advancedWorldMap.ui.checkBox
                 local cbMeta = layout.userData.meta
                 resetCheckBoxes()
                 cbMeta:setChecked(checked)

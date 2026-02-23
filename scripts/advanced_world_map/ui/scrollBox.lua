@@ -20,6 +20,8 @@ local whiteTexture = ui.texture { path = "white" }
 local scrollBoxMeta = {}
 scrollBoxMeta.__index = scrollBoxMeta
 
+scrollBoxMeta._ignoreEvents = false
+
 scrollBoxMeta.getMainFlex = function (self)
     return self:getLayout().content[1]
 end
@@ -34,7 +36,7 @@ scrollBoxMeta.scrollUp = function(self, val)
     self:updateScrollPosition()
 
     if self.params.autoOptimize then
-        self:updateContent()
+        self:updateContent(true)
     end
 
     self:update()
@@ -50,7 +52,7 @@ scrollBoxMeta.scrollDown = function(self, val)
     self:updateScrollPosition()
 
     if self.params.autoOptimize then
-        self:updateContent()
+        self:updateContent(true)
     end
 
     self:update()
@@ -85,7 +87,7 @@ scrollBoxMeta.moveScrollPanel = function(self, height)
     fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift, -height))
 
     if self.params.autoOptimize then
-        self:updateContent()
+        self:updateContent(true)
     end
 end
 
@@ -101,7 +103,7 @@ scrollBoxMeta.moveScrollPanelPercent = function(self, value)
     fl.props.position = util.vector2(self.params.leftOffset, math.min(self.params.maxNegativeShift, -heightPersent))
 
     if self.params.autoOptimize then
-        self:updateContent()
+        self:updateContent(true)
     end
 end
 
@@ -155,21 +157,22 @@ end
 
 scrollBoxMeta.calcContentHeight = function (self)
     local mainFlex = self:getMainFlex()
-    local height = uiUtils.getContentHeight(mainFlex.content)
+    local height = uiUtils.getContentHeight(self.params.content)
     self.params.contentHeight = height
     self:updateScrollBarVisibility()
     self:updateScrollPosition()
 end
 
 
-scrollBoxMeta.updateContent = function (self, force)
+scrollBoxMeta.updateContent = function (self, strict)
     local mainFlex = self:getMainFlex()
 
+    local padding = self.innnerSize.y * 0.15
     local startPos = -mainFlex.props.position.y
     local endPos = startPos + self.innnerSize.y
 
-    if not force and (self.loadedContentTop or 0) < startPos and
-        (self.loadedContentBottom or 0) > endPos then
+    if strict and (self.loadedContentTop or 0) < startPos and
+            (self.loadedContentBottom or 0) > endPos then
         return
     end
 
@@ -184,16 +187,19 @@ scrollBoxMeta.updateContent = function (self, force)
     local topFreeHeight = 0
     local bottomFreeHeight = 0
     local height = 0
-    startPos = startPos - self.innnerSize.y * 0.25
-    endPos = endPos + self.innnerSize.y * 0.25
+    startPos = startPos - padding
+    endPos = endPos + padding
     for i, elem in ipairs(content) do
-        local h = uiUtils.getElementHeight(elem) + height
+        local eh = uiUtils.getElementHeight(elem)
+        local h = eh + height
 
-        if startPos < h then
+        if startPos <= h then
             if endPos >= height then
                 mainFlex.content:add(elem)
                 if elem.events and elem.events.focusLoss then
+                    self._ignoreEvents = true
                     elem.events.focusLoss(nil, elem)
+                    self._ignoreEvents = false
                 end
                 bottomFreeHeight = h
             else
@@ -234,6 +240,7 @@ scrollBoxMeta.mouseRelease = function (self, e)
 end
 
 scrollBoxMeta.focusLoss = function (self, e)
+    if self._ignoreEvents then return end
     local layout = self:getLayout()
     layout.userData.lastMousePos = nil
     layout.userData.inFocus = false

@@ -14,19 +14,23 @@ local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 ---@field text string?
 ---@field checked boolean?
 ---@field textSize integer?
+---@field boxSize any?
 ---@field textElementSize any?
 ---@field visible boolean?
 ---@field position any? util.vector2
 ---@field relativePosition any? util.vector2
 ---@field anchor any? util.vector2
+---@field textAlignH any?
+---@field textAlignV any?
 ---@field tooltipContent any?
+---@field getScrollBoxMeta (fun() : advancedWorldMap.ui.scrollBox)?
 ---@field event fun(checked : boolean, layout : any)?
 ---@field updateFunc fun()
 
 
 ---@param params advancedWorldMap.ui.checkBox.params
 return function(params)
-    local boxSize = util.vector2((params.textSize or 18) - 2, (params.textSize or 18) - 2)
+    local boxSize = params.boxSize or util.vector2((params.textSize or 18) - 6, (params.textSize or 18) - 6)
     local texture = ui.texture { path = "white" }
 
     local visible
@@ -36,7 +40,7 @@ return function(params)
         visible = true
     end
 
-    ---@class questGuider.ui.checkBox
+    ---@class advancedWorldMap.ui.checkBox
     local meta = setmetatable({}, {})
 
     local contentData = {
@@ -56,29 +60,46 @@ return function(params)
             meta = meta,
         },
         events = {
+            mousePress = async:callback(function(e, layout)
+                if params.getScrollBoxMeta then
+                    params.getScrollBoxMeta():mousePress(e)
+                end
+            end),
+
             mouseRelease = async:callback(function(e, layout)
-                if e.button ~= 1 then return end
+                if e.button == 1 and (not params.getScrollBoxMeta or
+                        params.getScrollBoxMeta().lastMovedDistance < 30) then
+                    layout.userData.checked = not layout.userData.checked
 
-                layout.userData.checked = not layout.userData.checked
+                    if layout.userData.checked then
+                        layout.content[1].content[1].props.alpha = 1
+                    else
+                        layout.content[1].content[1].props.alpha = 0
+                    end
 
-                if layout.userData.checked then
-                    layout.content[1].content[1].props.alpha = 1
-                else
-                    layout.content[1].content[1].props.alpha = 0
+                    if params.event then
+                        params.event(layout.userData.checked, layout)
+                    end
+
+                    params.updateFunc()
                 end
 
-                if params.event then
-                    params.event(layout.userData.checked, layout)
+                if params.getScrollBoxMeta then
+                    params.getScrollBoxMeta():mouseRelease(e)
                 end
-
-                params.updateFunc()
             end),
 
             focusLoss = async:callback(function(e, layout)
+                if params.getScrollBoxMeta then
+                    params.getScrollBoxMeta():focusLoss(e)
+                end
                 tooltip.destroy(layout)
             end),
 
             mouseMove = async:callback(function(e, layout)
+                if params.getScrollBoxMeta then
+                    params.getScrollBoxMeta():mouseMove(e)
+                end
                 if not params.tooltipContent then return end
                 tooltip.createOrMove(e, layout, params.tooltipContent)
             end),
@@ -120,7 +141,8 @@ return function(params)
                 anchor = util.vector2(0, 0.5),
                 multiline = params.textElementSize and true or false,
                 wordWrap = params.textElementSize and true or false,
-                textAlignH = ui.ALIGNMENT.Start,
+                textAlignH = params.textAlignH or ui.ALIGNMENT.Start,
+                textAlignV = params.textAlignV or ui.ALIGNMENT.Start,
             },
         })
     end

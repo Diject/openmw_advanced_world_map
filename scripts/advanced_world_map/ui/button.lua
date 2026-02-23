@@ -178,7 +178,7 @@ return function (params)
         userData = {
             params = params,
             pressed = false,
-            height = params.size and params.size.y or params.textSize or 18 + 6,
+            height = params.size and (params.size.y + 8) or params.textSize and (params.textSize + 8) or 18 + 8,
             parentScrollBoxUserData = params.parentScrollBoxUserData,
             meta = meta,
         },

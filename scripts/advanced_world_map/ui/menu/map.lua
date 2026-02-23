@@ -1116,10 +1116,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local minimapModeCB = checkBox{
         updateFunc = menu.update,
         text = l10n("MinimapModeCB"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.main.minimap.enabled,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         tooltipContent = ui.content{
             {
                 type = ui.TYPE.TextEdit,
@@ -1147,6 +1150,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         updateFunc = menu.update,
         textSize = config.data.ui.fontSize * 0.9,
         text = l10n("MinimapModeSetupBtn"),
+        parentScrollBoxUserData = e.scrollBox:getLayout().userData,
         tooltipContent = ui.content{
             {
                 type = ui.TYPE.TextEdit,
@@ -1177,10 +1181,13 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local cellLabelCB = checkBox{
         updateFunc = menu.update,
         text = l10n("CellLabelVisibilityCB"),
-        textSize = config.data.ui.fontSize * 0.9,
+        textSize = config.data.ui.fontSize,
         anchor = util.vector2(0, 0.5),
         position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         checked = config.data.main.minimap.cellLabel,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
         event = function (checked, layout)
             config.setValue("main.minimap.cellLabel", checked)
         end
@@ -1195,6 +1202,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         content = ui.content{
             interval(0, config.data.ui.fontSize),
             addVPadding(minimapModeCB),
+            interval(0, config.data.ui.fontSize / 3),
             {
                 type = ui.TYPE.Flex,
                 props = {
@@ -1205,6 +1213,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
                     setupBtn,
                 }
             },
+            interval(0, config.data.ui.fontSize / 3),
             addVPadding(cellLabelCB),
         }
     }

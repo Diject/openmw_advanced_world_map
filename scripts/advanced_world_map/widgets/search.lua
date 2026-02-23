@@ -189,7 +189,7 @@ local function updateLayoutForMarker(handler, textFilter, color)
         if data and next(data) then
             local params = data[1]
             setMarkerColor(handler, params.color)
-        elseif userData.searchText and userData.searchText:find(textFilter) then
+        elseif userData.searchText and userData.searchText:find(textFilter, 1, true) then
             setMarkerColor(handler, color or config.data.ui.foundMarkerColor)
         end
     end
@@ -286,7 +286,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
         local name = mapDataHandler.cellNameById[cellId] or string.format("%s: \"%s\"", l10n("CellId"), cellId)
         local nameLower = stringLib.utf8_lower(name)
 
-        if not isExterior and nameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(cellId)) then
+        if not isExterior and nameLower:find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(cellId)) then
             local doors = mapDataHandler.entrances[cellId]
             local pos = {x = 0, y = 0}
             if doors then
@@ -315,7 +315,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
                     checked[dt.dCId] = true
 
                     local destNameLower = stringLib.utf8_lower(dt.name)
-                    if destNameLower:find(str) and (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
+                    if destNameLower:find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
                         table.insert(res, {
                             text = dt.fName,
                             cellId = not dt.isEx and dt.cId or nil,
@@ -353,7 +353,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
             local names = mapDataHandler.cellNameData
             for name, dt in pairs(names) do
-                if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
+                if stringLib.utf8_lower(name):find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                     table.insert(res, {
                         text = dt.name,
                         cellId = nil,
@@ -383,7 +383,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
         local names = mapDataHandler.cellNameData
         for name, dt in pairs(names) do
-            if stringLib.utf8_lower(name):find(str) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
+            if stringLib.utf8_lower(name):find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                 table.insert(res, {
                     text = dt.name,
                     cellId = nil,
@@ -732,7 +732,7 @@ local function create(menu)
                     events = {
                         textChanged = async:callback(function(text, layout)
                             userInputText = text
-                            textFilter = stringLib.sanitize(stringLib.utf8_lower(text))
+                            textFilter = stringLib.utf8_lower(text)
                             searchBarLayout.content[1].props.text = userInputText
                         end),
                         keyRelease = async:callback(function(e, layout)

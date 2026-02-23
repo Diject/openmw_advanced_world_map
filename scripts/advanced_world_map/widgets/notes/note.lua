@@ -298,10 +298,13 @@ local function init()
         local personalCB = AdvancedWorldMap.uiElements.checkbox{
             updateFunc = e.menu.update,
             text = l10n("PersonalNotesCB"),
-            textSize = config.data.ui.fontSize * 0.9,
+            textSize = config.data.ui.fontSize,
             anchor = util.vector2(0, 0.5),
             position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.notes.markerVisibility.personal,
+            getScrollBoxMeta = function ()
+                return e.scrollBox
+            end,
             event = function (checked, layout)
                 config.setValue("notes.markerVisibility.personal", checked)
                 widgetMarker.recreate(e.menu)
@@ -311,10 +314,13 @@ local function init()
         local globalCB = AdvancedWorldMap.uiElements.checkbox{
             updateFunc = e.menu.update,
             text = l10n("GlobalNotesCB"),
-            textSize = config.data.ui.fontSize * 0.9,
+            textSize = config.data.ui.fontSize,
             anchor = util.vector2(0, 0.5),
             position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
             checked = config.data.notes.markerVisibility.global,
+            getScrollBoxMeta = function ()
+                return e.scrollBox
+            end,
             event = function (checked, layout)
                 config.setValue("notes.markerVisibility.global", checked)
                 widgetMarker.recreate(e.menu)
