@@ -766,7 +766,7 @@ local function createMarker(self, params, onlyInitialize)
             movedDistance = 0,
             onMouseWheel = isLayerInteractive and function(value)
                 if not marker.userData.inFocus then return end
-                setZoom(self, value > 0 and self.zoom * 1.25 or self.zoom * 0.75)
+                setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul or self.zoom / config.data.main.zoomingMul)
                 self:update()
             end or nil,
         },
@@ -2030,7 +2030,7 @@ function this.new(params)
             meta = meta,
             onMouseWheel = function(value)
                 if not meta.layout.userData.inFocus then return end
-                setZoom(meta, value > 0 and meta.zoom * 1.25 or meta.zoom * 0.75)
+                setZoom(meta, value > 0 and meta.zoom * config.data.main.zoomingMul or meta.zoom / config.data.main.zoomingMul)
                 meta:update()
             end,
 

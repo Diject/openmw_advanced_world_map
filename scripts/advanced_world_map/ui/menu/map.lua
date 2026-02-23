@@ -1052,10 +1052,10 @@ function this.create(params)
 
                 if hasTriggerInput then
                     if lTrigger > 0.25 then
-                        zoom = zoom * (1 - 0.25 * lTrigger)
+                        zoom = zoom / (1 + (config.data.main.zoomingMul - 1) * lTrigger)
                         meta.mapWidget:setZoom(zoom)
                     elseif rTrigger > 0.25 then
-                        zoom = zoom * (1 + 0.25 * rTrigger)
+                        zoom = zoom * (1 + (config.data.main.zoomingMul - 1) * rTrigger)
                         meta.mapWidget:setZoom(zoom)
                     end
                 end

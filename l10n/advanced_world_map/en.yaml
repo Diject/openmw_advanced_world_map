@@ -89,6 +89,8 @@ SettingMainMenuKeyDescription: |
   To reset, right-click the field, or press the gamepad 'B' button while assigning.
 SettingDiscoveryRadius: "Discovery Radius"
 SettingDiscoveryRadiusDescription: "The radius (in game units) around the player within which locations will be automatically discovered on the map."
+SettingZoomingMul: "Zoom speed"
+SettingZoomingMulDescription: "Higher values will result in faster zooming. [1.1 - 3, default: 1.4]"
 SettingUpdateFrequency: "Update Frequency"
 SettingUpdateFrequencyDescription: "How often (in times per second) the map updates when in non menu mode."
 # SettingFastClose: "Fast close"

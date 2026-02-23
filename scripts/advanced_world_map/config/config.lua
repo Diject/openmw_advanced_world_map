@@ -40,6 +40,7 @@ this.default = {
         overrideDefault = false,
         saveVisibilityStateInInterfaceMenu = false,
         resetSizePos = false,
+        zoomingMul = 1.4,
     },
     legend = {
         markerSize = 6,
