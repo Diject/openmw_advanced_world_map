@@ -324,6 +324,7 @@ local function buildData()
     end
 
     for _, cell in pairs(world.cells) do
+        if not cell.id then goto continue end
 
         this.cellNameById[cell.id] = getCellName(cell)
 
@@ -348,7 +349,7 @@ local function buildData()
                 end
             end
 
-            local doorHash = commonData.doorHash(door, dest.id)
+            local doorHash = commonData.doorHash(door, dest.id or "")
 
             entrances[cell.id] = entrances[cell.id] or {}
             ---@type advancedWorldMap.dynamicDataHandler.entranceData
@@ -356,7 +357,7 @@ local function buildData()
                 pos = door.position,
                 cId = cell.id,
                 isEx = cell.isExterior,
-                dCId = dest.id,
+                dCId = dest.id or "",
                 dPos = destPos,
                 isDEx = dest.isExterior,
                 name = name,
