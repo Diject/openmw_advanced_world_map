@@ -119,7 +119,7 @@ local function create(menu)
     local iconLayout = {
         type = ui.TYPE.Text,
         props = {
-            text = "Ft",
+            text = l10n("Ft"),
             textSize = config.data.ui.fontSize,
             textColor = config.data.ui.defaultColor,
             anchor = util.vector2(0.5, 0.5),
