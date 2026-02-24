@@ -511,7 +511,8 @@ return {
         onMouseWheel = onMouseWheel,
         onKeyPress = function (key)
             if key.code == input.KEY.Escape and menuHandler.hasActiveMenus() then
-                if localStorage.data[commonData.pinnedStateFieldId] and menuMode.isMenuInteractive() then
+                local pinned = localStorage.data[commonData.pinnedStateFieldId]
+                if pinned and menuMode.isMenuInteractive() then
                     local menu = menuHandler.getMenu(commonData.mapMenuId)
                     if menu then
                         menuMode.deactivate()
@@ -519,12 +520,15 @@ return {
                     end
                 end
 
-                closeMenu()
+                if not pinned then
+                    closeMenu()
+                end
             end
         end,
         onControllerButtonPress = function (buttonId)
             if buttonId == input.CONTROLLER_BUTTON.B and menuHandler.hasActiveMenus() then
-                if localStorage.data[commonData.pinnedStateFieldId] and menuMode.isMenuInteractive() then
+                local pinned = localStorage.data[commonData.pinnedStateFieldId]
+                if pinned and menuMode.isMenuInteractive() then
                     local menu = menuHandler.getMenu(commonData.mapMenuId)
                     if menu then
                         menuMode.deactivate()
@@ -532,7 +536,9 @@ return {
                     end
                 end
 
-                closeMenu()
+                if not pinned then
+                    closeMenu()
+                end
             end
         end,
         onMouseButtonRelease = function (buttonId)
