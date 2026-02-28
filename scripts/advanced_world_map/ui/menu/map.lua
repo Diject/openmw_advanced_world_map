@@ -354,7 +354,7 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
         eventSys.triggerEvent(eventSys.EVENT.onMapInitialized, {menu = self, mapWidget = meta, cellId = cellId})
     end
 
-    eventSys.triggerEvent(eventSys.EVENT.onMapShown, {menu = self, mapWidget = meta, cellId = cellId})
+    eventSys.triggerEvent(eventSys.EVENT.onMapShown, {menu = self, mapWidget = meta, cellId = cellId, isNew = isNew and true or false})
 
     return true
 end

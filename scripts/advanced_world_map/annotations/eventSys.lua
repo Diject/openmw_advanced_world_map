@@ -34,6 +34,7 @@
 ---@field menu AdvancedWorldMap.Menu.Map Map menu instance
 ---@field mapWidget AdvancedWorldMap.MapWidget Map widget instance
 ---@field cellId string? Cell identifier (nil for exterior/world map)
+---@field isNew boolean True if the map widget was newly created (not from cache)
 
 ---Event data for map closed event
 ---@class AdvancedWorldMap.Event.OnMapClosedEvent

@@ -52,7 +52,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onUpdate", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onWorldMapTextureInitialize", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, mapInfo : advancedWorldMap.mapImageInfo?, texture : string|any?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapInitialized", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
----@overload fun(eventId : "onMapShown", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onMapShown", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?, isNew : boolean}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onMapDestroyed", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onCellMarkersCreate", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, cellId : string?}) : (boolean?, boolean?), priority : number?)
