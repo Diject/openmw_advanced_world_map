@@ -109,6 +109,8 @@
 ---@field zoom number Current zoom level
 ---@field minZoom number Minimum allowed zoom level
 ---@field maxZoom number Maximum allowed zoom level
+---@field eScale number Scale factor for markers. Calculated from mapInfo.pixelsPerCell to ensure consistent marker sizes across different maps
+---@field onZoomMarkersRect AdvancedWorldMap.MapWidget.Region? Current rectangle (in world coordinates) for markers. Only for world map
 ---@field layout Layout Root UI layout structure
 local AdvancedWorldMapMapWidget = {}
 
@@ -197,6 +199,10 @@ function AdvancedWorldMapMapWidget:setZoom(zoom, relativePos) end
 ---Checks if the map is currently in zoomed-in mode
 ---@return boolean isInZoomInMode True if in zoomed-in mode
 function AdvancedWorldMapMapWidget:isInZoomInMode() end
+
+---Gets the zoom mode threshold (zoom level at which the map switches between zoomed-in and zoomed-out modes)
+---@return number threshold Zoom mode threshold
+function AdvancedWorldMapMapWidget:getZoomModeThreshold() end
 
 ---Centers the map view on a specific world position
 ---@param worldPos Vector2|Vector3 World coordinates to focus on (vector2 or vector3)

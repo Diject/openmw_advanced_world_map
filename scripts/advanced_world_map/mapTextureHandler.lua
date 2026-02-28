@@ -39,6 +39,7 @@ local mapData = require("scripts.advanced_world_map.mapDataHandler")
 ---@field wT integer
 ---@field hT integer
 ---@field tS integer?
+---@field tSc number?
 ---@field mBnds {min : number[], max : number[]}
 
 local this = {}

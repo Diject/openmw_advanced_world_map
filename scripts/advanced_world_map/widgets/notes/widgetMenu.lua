@@ -230,9 +230,9 @@ local function fill(menu, sb, filter)
                                     end
 
                                     if menu.mapWidget:isInZoomInMode() and dt.onWorldMap then
-                                        menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 0.9)
+                                        menu.mapWidget:setZoom(menu.mapWidget:getZoomModeThreshold() * 0.9)
                                     elseif not menu.mapWidget:isInZoomInMode() and not dt.onWorldMap then
-                                        menu.mapWidget:setZoom(config.data.tileset.zoomToShow * 3)
+                                        menu.mapWidget:setZoom(menu.mapWidget:getZoomModeThreshold() * 3)
                                     end
 
                                     menu.mapWidget:focusOnWorldPosition(dt.pos)

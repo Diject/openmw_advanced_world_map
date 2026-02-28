@@ -45,7 +45,7 @@ local function toggleMap(menu)
             local mapWidget = menu.mapWidget
 
             local center = mapWidget:getRelativePositionOfVisibleCenter()
-            local normalizedZoom = config.data.tileset.zoomToShow * 32 / menu.mapWidget.mapInfo.pixelsPerCell
+            local normalizedZoom = menu.mapWidget:getZoomModeThreshold()
             local zoom = mapWidget:isInZoomInMode() and normalizedZoom * 0.5 or normalizedZoom * 2
 
             menu.mapWidget:setZoom(zoom, center)

@@ -187,8 +187,9 @@ end
 
 function mapWidgetMeta:getRelativePositionByWorldPosition(worldPos)
     local center = self:getRelativeCenter()
-    local x = worldPos.x / 8192
-    local y = worldPos.y / 8192
+    local cellSize = self.mapInfo.cellSize or 8192
+    local x = worldPos.x / cellSize
+    local y = worldPos.y / cellSize
 
     local relX = center.x + x * self.mapInfo.pixelsPerCell / self.mapInfo.width
     local relY = 1 - center.y - y * self.mapInfo.pixelsPerCell / self.mapInfo.height
@@ -210,8 +211,9 @@ end
 
 
 function mapWidgetMeta:getAbsolutePositionByWorldPosition(worldPos, ignoreNorthAngle)
-    local cellX = worldPos.x / 8192
-    local cellY = worldPos.y / 8192
+    local cellSize = self.mapInfo.cellSize or 8192
+    local cellX = worldPos.x / cellSize
+    local cellY = worldPos.y / cellSize
     local x = (cellX - self.mapInfo.gridX.min) * self.mapInfo.pixelsPerCell
     local y = (self.mapInfo.gridY.max - cellY) * self.mapInfo.pixelsPerCell
 
@@ -255,8 +257,9 @@ function mapWidgetMeta:getWorldPositionByRelativePosition(relPos)
 
     local mapPos = util.vector2(containerPos.x - paddingScaled.x, containerPos.y - paddingScaled.y)
 
+    local cellSize = self.mapInfo.cellSize or 8192
     local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
-    local zoomedPixelSize = 8192 / zoomedPixPerCell
+    local zoomedPixelSize = cellSize / zoomedPixPerCell
     local zoomedXOffset = self.mapInfo.gridX.min * zoomedPixPerCell
     local zoomedYOffset = (self.mapInfo.gridY.max + 1) * zoomedPixPerCell
 
@@ -312,8 +315,9 @@ end
 function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
     local rect = self:getVisibleMapRect()
 
+    local cellSize = self.mapInfo.cellSize or 8192
     local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
-    local pixelSize = 8192 / zoomedPixPerCell
+    local pixelSize = cellSize / zoomedPixPerCell
     local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
     local yOffset = (self.mapInfo.gridY.max + 1) * zoomedPixPerCell
     local paddingScaled = self:getPadding(self.zoom)
@@ -343,8 +347,9 @@ end
 function mapWidgetMeta:getWorldPositionOfVisibleCenter()
     local rect = self:getVisibleMapRect()
 
+    local cellSize = self.mapInfo.cellSize or 8192
     local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
-    local pixelSize = 8192 / zoomedPixPerCell
+    local pixelSize = cellSize / zoomedPixPerCell
     local xOffset = self.mapInfo.gridX.min * zoomedPixPerCell
     local yOffset = (self.mapInfo.gridY.max + 1) * zoomedPixPerCell
     local paddingScaled = self:getPadding(self.zoom)
@@ -386,15 +391,21 @@ function mapWidgetMeta:getSize()
 end
 
 function mapWidgetMeta:setSize(newSize)
-    self.maxZoom = math.min(newSize.x / self.mapInfo.pixelsPerCell, newSize.y / self.mapInfo.pixelsPerCell) * 3
-    local displaySize = self:getDisplaySize()
-    self.minZoom = math.min(newSize.x / displaySize.x, newSize.y / displaySize.y) / 2
+    local screenSize = uiUtils.getScaledScreenSize()
+    self.maxZoom = math.min(screenSize.x / (self.mapInfo.pixelsPerCell * self.eScale),
+    screenSize.y / (self.mapInfo.pixelsPerCell * self.eScale)) * 3
+    self.minZoom = math.min(screenSize.x / self.mapInfo.width, screenSize.y / self.mapInfo.height) / 4
     self.layout.props.size = newSize
 end
 
 
 function mapWidgetMeta:isInZoomInMode()
-    return self.cellId ~= nil or self.zoom >= (config.data.tileset.zoomToShow * 32 / self.mapInfo.pixelsPerCell)
+    return self.cellId ~= nil or self.zoom >= self:getZoomModeThreshold()
+end
+
+
+function mapWidgetMeta:getZoomModeThreshold()
+    return config.data.tileset.zoomToShow * self.eScale / self.uiScale
 end
 
 
@@ -473,9 +484,9 @@ local function setZoom(self, zoom, relativePos, force)
     self:updateMarkersScale()
 
     if self.cellId then
-        localStorage.data[commonData.localMapZoomFieldId] = zoom
+        localStorage.data[commonData.localMapZoomFieldId] = zoom * self.eScale
     else
-        localStorage.data[commonData.worldMapZoomFieldId] = zoom
+        localStorage.data[commonData.worldMapZoomFieldId] = zoom * self.eScale
     end
 
     if oldZoom ~= zoom then
@@ -485,7 +496,10 @@ local function setZoom(self, zoom, relativePos, force)
 end
 
 ---@param zoom number
-function mapWidgetMeta:setZoom(zoom, relativePos)
+function mapWidgetMeta:setZoom(zoom, relativePos, useScale)
+    if useScale then
+        zoom = zoom / self.eScale
+    end
     setZoom(self, zoom, relativePos or self:getRelativePositionOfVisibleCenter())
 end
 
@@ -517,15 +531,16 @@ function mapWidgetMeta:updateMarkersScale()
 
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region)}) do
-        for i, elem in pairs(layout.content) do
+        for i, elem in ipairs(layout.content) do
             if elem.userData and elem.userData.autoScale then
-                if elem.userData.text then
+                if elem.props.text then
                     elem.props = tableLib.copy(elem.props)
-                    elem.props.textSize = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
+                    local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
+                    elem.props.textSize = math.max(1, tSizeVal)
                     if elem.props.size then
                         elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                     end
-                elseif elem.userData.texture then
+                elseif elem.props.texture then
                     elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
             end
@@ -868,15 +883,24 @@ function mapWidgetMeta:removeMarker(id, layer)
     if not id then return false end
     local removedFromMap = removeMarker(self, id, layer)
 
-    if self.zoomMarkersCellIdById[id] then
-        (self.zoomInMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
-        (self.zoomOutMarkers[self.zoomMarkersCellIdById[id]] or {})[id] = nil
+    local cellId = self.zoomMarkersCellIdById[id]
+    if cellId then
+        if self.zoomInMarkers[cellId] then
+             self.zoomInMarkers[cellId][id] = nil
+        end
+        if self.zoomOutMarkers[cellId] then
+            self.zoomOutMarkers[cellId][id] = nil
+        end
         self.zoomMarkersCellIdById[id] = nil
     end
 
     local cacheId = getMarkerCacheId(id, layer)
     if self._markerLayoutCache[cacheId] then
         self._markerLayoutCache[cacheId] = nil
+    end
+
+    if self.hiddenElements[layer][id] then
+        self.hiddenElements[layer][id] = nil
     end
 
     return removedFromMap
@@ -1044,13 +1068,14 @@ function mapWidgetMeta:placeGroundTextures(region)
 
     if self.localCellInfo then
         if self.cellStatics then
+            local cellSize = self.mapInfo.cellSize or 8192
             for _, dt in pairs(self.cellStatics) do
                 createMarker(self, {
                     layerId = this.layerId.map,
                     texture = uiUtils.whiteTexture,
                     color = config.data.ui.defaultTextureColor,
                     pos = util.vector2(dt[1], dt[2]),
-                    size = util.vector2(dt[3] / 8192 * self.mapInfo.pixelsPerCell + 1, dt[4] / 8192 * self.mapInfo.pixelsPerCell + 1),
+                    size = util.vector2(dt[3] / cellSize * self.mapInfo.pixelsPerCell + 1, dt[4] / cellSize * self.mapInfo.pixelsPerCell + 1),
                     scaleFunc = this.scaleFunction.linear,
                     anchor = util.vector2(0.5, 0.5)
                 })
@@ -1066,10 +1091,11 @@ function mapWidgetMeta:placeGroundTextures(region)
             local texture = (self.mapTexture[1] or {})[1]
             if not texture then return end
 
+            local cellSize = self.mapInfo.cellSize or 8192
             local startingPos = self:getAbsolutePositionByWorldPosition(
                 util.vector2(
-                    self.mapInfo.gridX.min * 8192,
-                    self.mapInfo.gridY.max * 8192
+                    self.mapInfo.gridX.min * cellSize,
+                    self.mapInfo.gridY.max * cellSize
                 ),
                 true
             )
@@ -1085,92 +1111,14 @@ function mapWidgetMeta:placeGroundTextures(region)
                 }
             }
 
-            if self.localCellInfo.mBnds then
-                ---@type {min: {[1]: number, [2]: number, [3]: number}, max: {[1]: number, [2]: number, [3]: number}}
-                local bounds = tableLib.deepcopy(self.localCellInfo.mBnds)
-
-                local paddingSize = size * 1.1
-
-                local minX = bounds.min[1]
-                local minY = bounds.min[2]
-                local maxX = bounds.max[1]
-                local maxY = bounds.max[2]
-                local centerX = (minX + maxX) / 2
-                local centerY = (minY + maxY) / 2
-
-                local edgePadding = 256
-                local topPos = util.vector2(centerX, maxY + edgePadding)
-                local bottomPos = util.vector2(centerX, minY - edgePadding)
-                local leftPos = util.vector2(minX - edgePadding, centerY)
-                local rightPos = util.vector2(maxX + edgePadding, centerY)
-
-                local nA = self.northDirectionAngle or 0
-                local function dirToAnchor(worldDirX, worldDirY)
-                    local screenDir = util.vector2(worldDirX, -worldDirY):rotate(-nA)
-                    local ax, ay
-                    if math.abs(screenDir.x) < 0.01 then
-                        ax = 0.5
-                    elseif screenDir.x > 0 then
-                        ax = 0
-                    else
-                        ax = 1
-                    end
-
-                    if math.abs(screenDir.y) < 0.01 then
-                        ay = 0.5
-                    elseif screenDir.y > 0 then
-                        ay = 0
-                    else
-                        ay = 1
-                    end
-
-                    return util.vector2(ax, ay)
-                end
-
-                createMarker(self, {
-                    layerId = this.layerId.map,
-                    texture = uiUtils.whiteTexture,
-                    color = config.data.ui.backgroundColor,
-                    pos = topPos,
-                    size = paddingSize,
-                    scaleFunc = this.scaleFunction.linear,
-                    anchor = dirToAnchor(0, 1)
-                })
-                createMarker(self, {
-                    layerId = this.layerId.map,
-                    texture = uiUtils.whiteTexture,
-                    color = config.data.ui.backgroundColor,
-                    pos = bottomPos,
-                    size = paddingSize,
-                    scaleFunc = this.scaleFunction.linear,
-                    anchor = dirToAnchor(0, -1)
-                })
-                createMarker(self, {
-                    layerId = this.layerId.map,
-                    texture = uiUtils.whiteTexture,
-                    color = config.data.ui.backgroundColor,
-                    pos = leftPos,
-                    size = paddingSize,
-                    scaleFunc = this.scaleFunction.linear,
-                    anchor = dirToAnchor(-1, 0)
-                })
-                createMarker(self, {
-                    layerId = this.layerId.map,
-                    texture = uiUtils.whiteTexture,
-                    color = config.data.ui.backgroundColor,
-                    pos = rightPos,
-                    size = paddingSize,
-                    scaleFunc = this.scaleFunction.linear,
-                    anchor = dirToAnchor(1, 0)
-                })
-            end
 
         -- Version 1 uses multiple textures for the cell
         elseif self.localCellInfo.height then
+            local cellSize = self.mapInfo.cellSize or 8192
             local startingPos = self:getAbsolutePositionByWorldPosition(
                 util.vector2(
-                    self.mapInfo.gridX.min * 8192,
-                    self.mapInfo.gridY.min * 8192
+                    self.mapInfo.gridX.min * cellSize,
+                    self.mapInfo.gridY.min * cellSize
                 ),
                 true
             )
@@ -1370,6 +1318,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
 
     self.mapTexture = texture
     self.mapInfo = mapInfo
+    self.eScale = 32 / mapInfo.pixelsPerCell
 
     local padding = 1
 
@@ -1763,6 +1712,8 @@ function this.new(params)
 
     meta.screenPosition = params.screenPosition or util.vector2(0, 0)
 
+    meta.uiScale = uiUtils.getUIScale()
+
     meta.zoom = params.zoom or 1
     meta.maxZoom = meta.zoom
     meta.minZoom = meta.zoom
@@ -1771,17 +1722,16 @@ function this.new(params)
 
     meta.SCALE_FUNCTION = {
         linear = function(size, zoom)
-            return size * (zoom * meta.mapInfo.pixelsPerCell / 32)
+            return size * (zoom * meta.eScale)
         end,
 
         marker = function(size, zoom)
-            zoom = zoom * (meta.mapInfo.pixelsPerCell / 32)
+            zoom = zoom * (meta.eScale)
             return size * math.sqrt(math.sqrt(zoom))
         end,
 
         playerMarker = function(size, zoom)
             if zoom < 1 then
-                zoom = zoom * (meta.mapInfo.pixelsPerCell / 32)
                 return size * math.sqrt(zoom)
             end
             return size
@@ -1806,15 +1756,17 @@ function this.new(params)
         local mapTextures = mapTextureHandler.getLocalCellMapTextures(params.cellId)
         if not mapTextures then mapTextures = {} end
 
+        local tScale = localCellInfo.tSc or 1
         local wT = localCellInfo.wT or localCellInfo.width
         local hT = localCellInfo.hT or localCellInfo.height
 
         local width = wT * 32
         local height = hT * 32
 
-        local v2TileSize = localCellInfo.tS or 256
+        local v2TileSize = (localCellInfo.tS or 256)
 
         local mapInfo = {
+            cellSize = 8192 / tScale,
             width = width,
             height = height,
             pixelsPerCell = 32,
@@ -1832,6 +1784,8 @@ function this.new(params)
         meta.mapTexture = mapTextures
         meta.mapInfo = mapInfo
         meta.northDirectionAngle = localCellInfo.nA or 0
+        meta.eScale = tScale
+        meta.zoom = meta.zoom / tScale
 
         local padding = mapInfo.pixelsPerCell
         meta.borderPadding = util.vector2(padding, padding)
@@ -1879,9 +1833,10 @@ function this.new(params)
         meta.hiddenElements[layerId] = {}
     end
 
-    meta.maxZoom = math.min(params.size.x / meta.mapInfo.pixelsPerCell, params.size.y / meta.mapInfo.pixelsPerCell) * 3
-    local displaySize = meta:getDisplaySize()
-    meta.minZoom = math.min(params.size.x / displaySize.x, params.size.y / displaySize.y) / 2
+    local screenSize = uiUtils.getScaledScreenSize()
+    meta.maxZoom = math.min(screenSize.x / (meta.mapInfo.pixelsPerCell * meta.eScale),
+        screenSize.y / (meta.mapInfo.pixelsPerCell * meta.eScale)) * 3
+    meta.minZoom = math.min(screenSize.x / meta.mapInfo.width, screenSize.y / meta.mapInfo.height) / 4
 
     meta._lastOnZoomZoom = -1
 
