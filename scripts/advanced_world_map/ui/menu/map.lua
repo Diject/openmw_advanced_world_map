@@ -329,7 +329,7 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
 
     self.mapWidget:setInActiveMode(menuMode.isMenuInteractive())
 
-    self.mapWidget:updatePlayerMarker(self.centerOnPlayer, true)
+    self.mapWidget:updatePlayerMarker(not skipHistory and self.centerOnPlayer, true)
 
     if not isNew then
         if cellId then
@@ -1020,6 +1020,7 @@ function this.create(params)
         self.history.index = newIndex
         local cellId = self.history.list[self.history.index]
         self:updateMapWidgetCell(cellId, true)
+        self:update()
     end
 
 
