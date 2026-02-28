@@ -664,6 +664,10 @@ local function createMarkers(widget, cellId)
         end
     end
 
+    if not widget.cellId and widget.onZoomMarkersRect then
+        this.onZoomMarkersUpdatedCallback{mapWidget = widget, region = widget.onZoomMarkersRect}
+    end
+
     widget:update()
 end
 
@@ -820,7 +824,7 @@ local function gridClustering(markers, cellSize)
 end
 
 
-eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, function (e)
+function this.onZoomMarkersUpdatedCallback(e)
     local mapWidget = e.mapWidget
     if mapWidget.cellId then return end
 
@@ -928,7 +932,8 @@ eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, function (e)
         ::continue::
     end
 
-end)
+end
+eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, this.onZoomMarkersUpdatedCallback)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
