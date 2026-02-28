@@ -92,6 +92,8 @@ this.default = {
         togglePinHotkey = nil,
         toggleMapTypeHotkey = nil,
         contextMenuHotkey = "C_Y",
+        moveHistoryBackHotkey = "MB4",
+        moveHistoryForwardHotkey = "MB5",
     },
     ui = {
         fontSize = 18,

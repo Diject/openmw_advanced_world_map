@@ -307,7 +307,7 @@ end
 
 ---@param cellId string?
 ---@return boolean changed
-function menuMeta:updateMapWidgetCell(cellId)
+function menuMeta:updateMapWidgetCell(cellId, skipHistory)
     if cellId == commonData.exteriorMapId or cellId and cellId:find(commonData.exteriorCellLabel) then cellId = nil end
     if self.mapWidget and self.mapWidget.cellId == cellId then return false end
 
@@ -333,12 +333,21 @@ function menuMeta:updateMapWidgetCell(cellId)
 
     if not isNew then
         if cellId then
-            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5)
+            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5, nil, true)
         else
-            meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1)
+            meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1, nil , true)
         end
     else
         self.mapWidget:updateMarkers()
+    end
+
+    local currentHistoryCellId = self.history.list[self.history.index]
+    if not skipHistory and (not currentHistoryCellId or currentHistoryCellId ~= cellId) then
+        self.history.index = self.history.index + 1
+        self.history.list[self.history.index] = cellId
+        for i = #self.history.list, self.history.index + 1, -1 do
+            self.history.list[i] = nil
+        end
     end
 
     if isNew then
@@ -566,6 +575,8 @@ function this.create(params)
     meta.centerOnPlayer = config.data.main.centerOnPlayer
 
     meta.minimapSetupMode = false
+
+    meta.history = {index = 0, list = {}}
 
     ---@type table<string, {layout : table, params : advancedWorldMap.ui.menu.addHeaderElement.params}>
     menuMeta.widgets = {}
@@ -999,6 +1010,16 @@ function this.create(params)
                 (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
             meta.onMouseWheel(self, vertical)
         end
+    end
+
+
+    meta.moveHistory = function (self, direction)
+        local newIndex = self.history.index + direction
+        if newIndex < 1 or newIndex > #self.history.list then return end
+
+        self.history.index = newIndex
+        local cellId = self.history.list[self.history.index]
+        self:updateMapWidgetCell(cellId, true)
     end
 
 

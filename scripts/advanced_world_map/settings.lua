@@ -147,7 +147,13 @@ if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.conte
     I.DijectKeyBindings.registerKey(commonData.contextMenuKeyId, config.default.input.contextMenuHotkey)
 end
 
+if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.moveHistoryBackKeyId) then
+    I.DijectKeyBindings.registerKey(commonData.moveHistoryBackKeyId, config.default.input.moveHistoryBackHotkey)
+end
 
+if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.moveHistoryForwardKeyId) then
+    I.DijectKeyBindings.registerKey(commonData.moveHistoryForwardKeyId, config.default.input.moveHistoryForwardHotkey)
+end
 
 
 I.Settings.registerGroup{
@@ -194,7 +200,7 @@ I.Settings.registerGroup{
     order = 2,
     settings = {
         boolSetting{key = "tileset.onlyDiscovered", name = "SettingTilesetOnlyDiscovered", description = "SettingTilesetOnlyDiscoveredDescription", default = config.default.tileset.onlyDiscovered},
-        numberSetting{key = "tileset.zoomToShow", name = "SettingTilesetZoomToShow", description = "SettingTilesetZoomToShowDescription", default = config.default.tileset.zoomToShow, min = 1, max = 12, integer = true},
+        numberSetting{key = "tileset.zoomToShow", name = "SettingTilesetZoomToShow", description = "SettingTilesetZoomToShowDescription", default = config.default.tileset.zoomToShow, min = 0.1, max = 12, integer = true},
     },
 }
 
@@ -264,6 +270,8 @@ I.Settings.registerGroup{
         boolSetting{key = "input.gamepadControls", name = "SettingInputGamepadControls", description = "SettingInputGamepadControlsDescription", default = config.default.input.gamepadControls},
         boolSetting{key = "input.gamepadControlsBumperMode", name = "SettingInputGamepadControlsBumperMode", description = "SettingInputGamepadControlsBumperModeDescription", default = config.default.input.gamepadControlsBumperMode},
         inputKey{key = "input.contextMenuHotkey", name = "SettingInputContextMenuKey", description = "SettingInputContextMenuKeyDescription", action = commonData.contextMenuKeyId, default = config.default.input.contextMenuHotkey},
+        inputKey{key = "input.moveHistoryBackHotkey", name = "SettingInputMoveHistoryBackKey", description = "SettingInputMoveHistoryBackKeyDescription", action = commonData.moveHistoryBackKeyId, default = config.default.input.moveHistoryBackHotkey},
+        inputKey{key = "input.moveHistoryForwardHotkey", name = "SettingInputMoveHistoryForwardKey", description = "SettingInputMoveHistoryForwardKeyDescription", action = commonData.moveHistoryForwardKeyId, default = config.default.input.moveHistoryForwardHotkey},
         inputKey{key = "input.toggleMapTypeHotkey", name = "SettingInputToggleMapTypeKey", description = "SettingInputToggleMapTypeKeyDescription", action = commonData.toggleMapTypeKeyId, default = config.default.input.toggleMapTypeHotkey},
         inputKey{key = "input.togglePinHotkey", name = "SettingInputTogglePinKey", description = "SettingInputTogglePinKeyDescription", action = commonData.togglePinKeyId, default = config.default.input.togglePinHotkey},
     }

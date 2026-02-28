@@ -23,6 +23,8 @@ this.menuKeyId = "AdvWMap:menuKey"
 this.toggleMapTypeKeyId = "AdvWMap:toggleMapTypeKey"
 this.togglePinKeyId = "AdvWMap:togglePinKey"
 this.contextMenuKeyId = "AdvWMap:contextMenuKey"
+this.moveHistoryBackKeyId = "AdvWMap:moveHistoryBackKey"
+this.moveHistoryForwardKeyId = "AdvWMap:moveHistoryForwardKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 
