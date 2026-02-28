@@ -39,6 +39,7 @@ this.EVENT = {
     onWidgetOpened = "onWidgetOpened",
     onWidgetClosed = "onWidgetClosed",
     onLegendWidgetCreate = "onLegendWidgetCreate",
+    onDiscover = "onDiscover",
 }
 
 
@@ -80,6 +81,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onWidgetOpened", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, widgetId : string, content : any}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onWidgetClosed", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, widgetId : string}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onLegendWidgetCreate", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, scrollBox : any, content : any, size : any}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onDiscover", handlerFunc: fun(e : {discoveredMap : table<string, boolean>}) : (boolean?), priority : number?)
 function this.registerHandler(eventId, handlerFunc, priority)
     if type(handlerFunc) ~= "function" then return end
     this.handlers[eventId] = this.handlers[eventId] or {}

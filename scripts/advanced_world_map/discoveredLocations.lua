@@ -1,8 +1,8 @@
-local core = require("openmw.core")
-
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local dateLib = require("scripts.advanced_world_map.utils.date")
+
+local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local commonData = require("scripts.advanced_world_map.common")
 
@@ -81,6 +81,7 @@ function this.addDiscoveredCell(cell, addNearbyExteriors)
     end
 
     if next(newDiscovered) then
+        eventSys.triggerEvent(eventSys.EVENT.onDiscover, {discoveredMap = newDiscovered})
         return tableLib.keys(newDiscovered)
     end
 end

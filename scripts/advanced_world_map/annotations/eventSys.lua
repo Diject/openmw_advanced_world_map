@@ -211,6 +211,10 @@
 ---@field content Content Legend widget content
 ---@field size Vector2 Legend widget size
 
+---Event data for new location discovery event
+---@class AdvancedWorldMap.Event.OnDiscoverEvent
+---@field discoveredMap table<string, boolean> Table of newly discovered location ids
+
 ---Advanced World Map event system
 ---@class AdvancedWorldMap.Event
 ---@field EVENT AdvancedWorldMap.Event.EVENT Table containing event identifiers
@@ -253,6 +257,7 @@ AdvancedWorldMapEvent.EVENT = {
     onWidgetOpened = "onWidgetOpened", -- Event triggered when a map widget is opened
     onWidgetClosed = "onWidgetClosed", -- Event triggered when a map widget is closed
     onLegendWidgetCreate = "onLegendWidgetCreate", -- Event triggered when the legend widget is created. You can use this event to add custom content to the legend.
+    onDiscover = "onDiscover", -- Event triggered when new locations are discovered. Contains a table of newly discovered location ids.
 }
 
 ---Registers an event handler in the event system.
@@ -295,6 +300,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onWidgetOpened", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetOpenedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWidgetClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetClosedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onLegendWidgetCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnLegendWidgetCreateEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onDiscover", handlerFunc: fun(e: AdvancedWorldMap.Event.OnDiscoverEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system
