@@ -1,4 +1,5 @@
 local core = require("openmw.core")
+local playerRef = require("openmw.self").object
 
 local this = {}
 
@@ -23,12 +24,21 @@ function this.newTimer(duration, callback, ...)
 end
 
 
+function this.executeTimer(id)
+    local timer = this.timers[id]
+    if not timer then return end
+
+    timer.callback(table.unpack(timer.args))
+    this.timers[id] = nil
+end
+
+
 function this.updateTimers()
     this.time = core.getRealTime()
     for i, timer in pairs(this.timers) do
         if this.time > timer.endTime then
-            timer.callback(table.unpack(timer.args))
-            this.timers[i] = nil
+            playerRef:sendEvent("AdvWMap:tmCall", i)
+            timer.endTime = math.huge
         end
     end
 end

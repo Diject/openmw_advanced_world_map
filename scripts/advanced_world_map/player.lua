@@ -683,5 +683,9 @@ return {
         ["AdvWMap:requestTimeUpdate"] = function (data)
             dateLib.setGlobalTime(data.day, data.month, data.year)
         end,
+
+        ["AdvWMap:tmCall"] = function (id)
+            realTimer.executeTimer(id)
+        end,
     },
 }
