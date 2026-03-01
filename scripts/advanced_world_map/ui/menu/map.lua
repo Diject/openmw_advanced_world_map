@@ -388,13 +388,15 @@ function menuMeta:updateInteractiveElements()
     end
 
     local isMenuMode = menuMode.isMenuInteractive()
-    if self.lastMenuMode == isMenuMode then
+    local lastUIMode = UI.getMode()
+
+    if self.lastMenuMode == isMenuMode and self.lastUiMode == lastUIMode then
         return shouldUpdate
     else
         self.lastMenuMode = isMenuMode
+        self.lastUiMode = lastUIMode
     end
 
-    local lastUIMode = UI.getMode()
     if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated())) then
         shouldUpdate = layout.props.visible ~= false or shouldUpdate
         layout.props.visible = false
