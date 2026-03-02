@@ -392,9 +392,9 @@ end
 
 function mapWidgetMeta:setSize(newSize)
     local screenSize = uiUtils.getScaledScreenSize()
-    self.maxZoom = math.min(screenSize.x / (self.mapInfo.pixelsPerCell * self.eScale),
-    screenSize.y / (self.mapInfo.pixelsPerCell * self.eScale)) * 3
-    self.minZoom = math.min(screenSize.x / self.mapInfo.width, screenSize.y / self.mapInfo.height) / 4
+    local uiScale = uiUtils.getUIScale()
+    self.maxZoom = screenSize.x / (self.mapInfo.pixelsPerCell * self.eScale) * 5
+    self.minZoom = math.min(screenSize.x / self.mapInfo.width / 4, self.mapInfo.pixelsPerCell / (4 * self.eScale * uiScale))
     self.layout.props.size = newSize
 end
 
@@ -430,7 +430,7 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
         return
     end
 
-    local updateOnlyRect = not force and self._lastOnZoomZoom == self.zoom
+    local updateOnlyRect = not force and self._lastOnZoomZoomInMode == isInZoomInMode
 
     if isInZoomInMode then
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
@@ -442,6 +442,7 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
         self:createZoomOutMarkers(visibleRect, nil, force)
     end
     self._lastOnZoomZoom = self.zoom
+    self._lastOnZoomZoomInMode = isInZoomInMode
 end
 
 
@@ -534,13 +535,12 @@ function mapWidgetMeta:updateMarkersScale()
         for i, elem in ipairs(layout.content) do
             if elem.userData and elem.userData.autoScale then
                 if elem.props.text then
-                    elem.props = tableLib.copy(elem.props)
                     local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
                     elem.props.textSize = math.max(1, tSizeVal)
                     if elem.props.size then
                         elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                     end
-                elseif elem.props.texture then
+                elseif elem.props.resource then
                     elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
             end
@@ -1834,9 +1834,9 @@ function this.new(params)
     end
 
     local screenSize = uiUtils.getScaledScreenSize()
-    meta.maxZoom = math.min(screenSize.x / (meta.mapInfo.pixelsPerCell * meta.eScale),
-        screenSize.y / (meta.mapInfo.pixelsPerCell * meta.eScale)) * 3
-    meta.minZoom = math.min(screenSize.x / meta.mapInfo.width, screenSize.y / meta.mapInfo.height) / 4
+    local uiScale = uiUtils.getUIScale()
+    meta.maxZoom = screenSize.x / (meta.mapInfo.pixelsPerCell * meta.eScale) * 5
+    meta.minZoom = math.min(screenSize.x / meta.mapInfo.width / 4, meta.mapInfo.pixelsPerCell / (4 * meta.eScale * uiScale))
 
     meta._lastOnZoomZoom = -1
 
