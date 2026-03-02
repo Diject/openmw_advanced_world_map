@@ -146,9 +146,9 @@ local function createMarkers(widget, cellId)
     end
     local entrances = mapDataHandler.entrances or {}
 
-    local lineHeight = 10 * config.data.legend.markerSize
-    local charHeight = 30 * config.data.legend.markerSize
-    local mergeDist = 384 * 384
+    local lineHeight = 10 * config.data.legend.markerSize * (widget.cellId and 0.5 or 1)
+    local charHeight = 30 * config.data.legend.markerSize * (widget.cellId and 0.5 or 1)
+    local mergeDist = 512 * 512
 
     local entrancesData = {}
 
@@ -824,13 +824,15 @@ local function gridClustering(markers, cellSize)
 end
 
 
+local lastGroupState = nil
 function this.onZoomMarkersUpdatedCallback(e)
+    ---@type advancedWorldMap.ui.mapWidgetMeta
     local mapWidget = e.mapWidget
-    if mapWidget.cellId then return end
+    if mapWidget.cellId or not mapWidget:isInZoomInMode() then return end
 
-    if mapWidget.zoom * 32 / mapWidget.mapInfo.pixelsPerCell > config.data.legend.zoomToGroup then return end
-
-    local fsize = mapWidget.SCALE_FUNCTION.marker(config.data.legend.markerSize, mapWidget.zoom)
+    local doGroup = mapWidget.zoom * 32 / mapWidget.mapInfo.pixelsPerCell <= config.data.legend.zoomToGroup
+    local groupStateChanged = lastGroupState ~= doGroup
+    lastGroupState = doGroup
 
     local markerList = {}
 
@@ -840,10 +842,20 @@ function this.onZoomMarkersUpdatedCallback(e)
         if not userData then goto continue end
         if userData.type ~= commonData.doorDescrMarkerType then goto continue end
 
-        table.insert(markerList, marker)
+        if groupStateChanged then
+            marker:restoreLayout()
+        end
+
+        if doGroup then
+            table.insert(markerList, marker)
+        end
 
         ::continue::
     end
+
+    if not doGroup then return end
+
+    local fsize = mapWidget.SCALE_FUNCTION.marker(config.data.legend.markerSize, mapWidget.zoom)
 
     local fontInWorldCoords = fsize * 8192 / (mapWidget.mapInfo.pixelsPerCell * mapWidget.zoom)
 
@@ -933,7 +945,7 @@ function this.onZoomMarkersUpdatedCallback(e)
     end
 
 end
-eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, this.onZoomMarkersUpdatedCallback)
+eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, this.onZoomMarkersUpdatedCallback, 99999)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
