@@ -200,7 +200,7 @@ I.Settings.registerGroup{
     order = 2,
     settings = {
         boolSetting{key = "tileset.onlyDiscovered", name = "SettingTilesetOnlyDiscovered", description = "SettingTilesetOnlyDiscoveredDescription", default = config.default.tileset.onlyDiscovered},
-        numberSetting{key = "tileset.zoomToShow", name = "SettingTilesetZoomToShow", description = "SettingTilesetZoomToShowDescription", default = config.default.tileset.zoomToShow, min = 0.1, max = 12, integer = true},
+        numberSetting{key = "tileset.zoomToShow", name = "SettingTilesetZoomToShow", description = "SettingTilesetZoomToShowDescription", default = config.default.tileset.zoomToShow, min = 0.1, max = 12},
     },
 }
 

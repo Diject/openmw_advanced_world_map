@@ -910,12 +910,14 @@ function this.create(params)
                 },
                 events = {
                     mousePress = async:callback(function(e, layout)
+                        if e.button ~= 1 then return end
                         layout.userData.lastMousePos = e.position
                     end),
 
-                    mouseRelease = async:callback(function(_, layout)
+                    mouseRelease = async:callback(function(e, layout)
+                        if e.button ~= 1 then return end
                         layout.userData.lastMousePos = nil
-                        meta.mapWidget:setZoom(meta.mapWidget.zoom)
+                        meta.mapWidget:updateMarkers(true)
                         meta:update()
                     end),
 

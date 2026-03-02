@@ -62,7 +62,7 @@ this.default = {
     },
     tileset = {
         onlyDiscovered = true,
-        zoomToShow = 4,
+        zoomToShow = 3.5,
     },
     fastTravel = {
         enabled = false,

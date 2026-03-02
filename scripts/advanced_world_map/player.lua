@@ -336,7 +336,9 @@ local function addNearbyDoors()
     end
 end
 
-addNearbyDoors()
+async:newUnsavableSimulationTimer(0.25, function ()
+    addNearbyDoors()
+end)
 
 
 local function discoverNearby()
