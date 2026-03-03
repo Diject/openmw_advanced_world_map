@@ -1451,7 +1451,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local lastYaw = playerMarkerLayout.userData.lastYaw
 
     if not forceUpdate
-            and dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom))
+            and dist < (8192 / (self.mapInfo.pixelsPerCell * self.zoom * self.eScale * 2))
             and (math.abs(yaw - lastYaw) < 0.1) then
         return false
     end
