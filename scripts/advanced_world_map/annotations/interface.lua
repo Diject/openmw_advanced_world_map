@@ -1,5 +1,18 @@
 ---@meta AdvancedWorldMap.Interface
 
+---@class AdvancedWorldMap.DataHandler.EntranceData
+---@field pos any position
+---@field cId string cell id
+---@field isEx boolean is in exterior cell
+---@field isLEx boolean is destination in like exterior cell
+---@field dCId string destination cell id
+---@field dPos any destination position
+---@field isDEx boolean is destination cell exterior
+---@field isDLEx boolean is destination cell like exterior
+---@field name string destination cell name
+---@field fName string destination cell full name
+---@field dHash string door hash
+
 ---@class AdvancedWorldMap.Interface.UIElements
 ---@field scrollBox fun(params: any): Layout creates a scroll box
 ---@field button fun(params: any): Layout creates a button
@@ -21,4 +34,5 @@
 ---@field isVisited fun(cellId: string) : number? checks if the cell with the given ID is visited. Returns timestamp or nil
 ---@field getCellNameById fun(cellId: string) : string? gets the cell name by its ID
 ---@field getExteriorCellName fun(pos: any) : string? gets the exterior cell name by position
+---@field getEntranceMarkerData fun(cellId: string) : table<string, AdvancedWorldMap.DataHandler.EntranceData>? gets the entrance marker data for the given cell ID. Returns a table where keys are door hashes and values are EntranceData
 ---@field uiElements AdvancedWorldMap.Interface.UIElements

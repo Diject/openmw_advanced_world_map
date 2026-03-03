@@ -505,6 +505,9 @@ return {
         getExteriorCellName = function (pos)
             return mapDataHandler.cellNameById[cellLib.getCellIdByPos(pos)]
         end,
+        getEntranceMarkerData = function (cellId)
+            return mapDataHandler.entrances[cellId]
+        end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
             borders = require("scripts.advanced_world_map.ui.borders"),
