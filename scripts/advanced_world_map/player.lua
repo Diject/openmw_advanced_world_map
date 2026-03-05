@@ -221,17 +221,21 @@ end
 if configLib.data.main.overrideDefault then
     I.UI.registerWindow("Map",
         function()
-            if configLib.data.main.saveVisibilityStateInInterfaceMenu and I.UI.getMode() == "Interface" and
-                    localStorage.data[commonData.hideInInterfaceMenuFieldId] then
-                return
-            end
-            openMenu()
+            realTimer.newTimer(0.1, function ()
+                if configLib.data.main.saveVisibilityStateInInterfaceMenu and I.UI.getMode() == "Interface" and
+                        localStorage.data[commonData.hideInInterfaceMenuFieldId] then
+                    return
+                end
+                openMenu()
+            end)
         end,
         function ()
             if localStorage.data[commonData.pinnedStateFieldId] then
                 local menu = menuHandler.getMenu(commonData.mapMenuId)
                 if menu then
-                    menu:updateInteractiveElements()
+                    if menu:updateInteractiveElements() then
+                        menu:update()
+                    end
                     return
                 end
             end

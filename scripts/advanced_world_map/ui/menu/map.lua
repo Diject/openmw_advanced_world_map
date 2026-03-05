@@ -397,7 +397,8 @@ function menuMeta:updateInteractiveElements()
         self.lastUiMode = lastUIMode
     end
 
-    if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated())) then
+    if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated()) or
+            (config.data.main.minimap.enabled and not config.data.main.overrideDefault and not menuMode.isActivated())) then
         shouldUpdate = layout.props.visible ~= false or shouldUpdate
         layout.props.visible = false
         return shouldUpdate
