@@ -550,7 +550,7 @@ local function createMarkers(widget, cellId)
                     this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
                     if this.activeMenuMeta.mapWidget and dt.dPos then
                         this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
-                        this.activeMenuMeta.mapWidget:updateMarkers()
+                        this.activeMenuMeta.mapWidget:updateMarkers(true)
                     end
 
                     eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
@@ -840,7 +840,16 @@ function this.onZoomMarkersUpdatedCallback(e)
     for _, marker in pairs(activeMarkers) do
         local userData = marker:getUserData()
         if not userData then goto continue end
-        if userData.type ~= commonData.doorDescrMarkerType then goto continue end
+        if userData.type == commonData.doorMarkerType then
+            local defaultAlpha = marker:getAlpha()
+            marker._elemLayout.props.alpha = defaultAlpha
+            if doGroup then
+                marker._elemLayout.props.alpha = defaultAlpha / 2
+            end
+            goto continue
+        elseif userData.type ~= commonData.doorDescrMarkerType then
+            goto continue
+        end
 
         if groupStateChanged then
             marker:restoreLayout()
@@ -943,7 +952,6 @@ function this.onZoomMarkersUpdatedCallback(e)
 
         ::continue::
     end
-
 end
 eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, this.onZoomMarkersUpdatedCallback, 99999)
 
