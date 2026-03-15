@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 9,
+    version = 10,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -85,6 +85,8 @@ this.default = {
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],
+        safeInit = true,
+        hasSafeInitMessageBeenShown = false,
     },
     input = {
         gamepadControls = true,

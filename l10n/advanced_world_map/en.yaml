@@ -114,11 +114,13 @@ SettingDataInitializerDescription: |
   "Tamriel Rebuilt+" - built-in texture for TR + Project Cyrodiil + Skyrim: Home of the Nords.
   "Base game" - built-in texture for the original Morrowind + Bloodmoon.
   "None" - no texture (map cells will be filled with a solid color).
+SettingSafeInit: "Safe initialization"
+SettingSafeInitDescription: "Warning! Initializing map data writes some location data into the save and can increase its size (TR can add about 20 MB). Most of this data would be saved anyway as you visit locations, so the overhead shrinks over time. If enabled, the mod uses a temporary save during initialization, but initialization will take longer. Initialization repeats when the active mod list changes."
 
 TilesetSettings: "Local map tiles"
 TilesetSettingsDescription: "Configure local tilesets of world map."
 SettingTilesetOnlyDiscovered: "Show only discovered tiles"
-SettingTilesetOnlyDiscoveredDescription: "When enabled, only tiles for cells that have been discovered by the player will be shown on the local part of the world map."
+SettingTilesetOnlyDiscoveredDescription: "When enabled, the local part of the world map will show tiles only for cells the player has already discovered."
 SettingTilesetZoomToShow: "Zoom to show tiles"
 SettingTilesetZoomToShowDescription: "The zoom level at which local tiles will start to be shown on the world map."
 
@@ -127,7 +129,7 @@ LegendSettingsDescription: "Configure the legend displayed on the map."
 SettingLegendOnlyDiscovered: "Show only discovered markers"
 SettingLegendZoomToGroup: "Zoom to group markers"
 SettingLegendZoomToGroupDescription: "The zoom level below which nearby markers are grouped together."
-SettingLegendOnlyDiscoveredDescription: "When enabled, only entrance markers and city markers that have been discovered by the player will be shown on the map."
+SettingLegendOnlyDiscoveredDescription: "When enabled, entrance and city markers are shown on the map only after the player has discovered them."
 SettingLegendVisitedCellsOnWorldMap: "Show visited cells on world map"
 SettingLegendVisitedCellsOnWorldMapDescription: "When enabled, cells that have been visited by the player will be shown like local map tiles on the world map. Important: may highly impact performance."
 SettingLegendMarkerSize: "Marker size"
@@ -145,7 +147,7 @@ SettingNotesMapFontSizeDescription: "The size of the note markers on the map."
 
 FastTravelSettings: "Fast Travel"
 SettingFastTravelEnabled: "Enable fast travel"
-SettingFastTravelEnabledDescription: "When enabled, allows fast travel to the entrance nearest to the selected point on the map."
+SettingFastTravelEnabledDescription: "When enabled, you can fast travel to the entrance closest to the point you select on the map."
 SettingFastTravelOnlyDiscovered: "Fast travel to discovered locations only"
 SettingFastTravelOnlyDiscoveredDescription: "When enabled, fast travel will only be possible to locations that have been discovered by the player."
 SettingFastTravelOnlyReachable: "Fast travel to reachable locations only"

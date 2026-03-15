@@ -58,6 +58,9 @@ local cellNameWidget = require("scripts.advanced_world_map.widgets.cellName")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+local hasAttemptedToGetData = false
+
+
 
 pcall(function ()
     if not ui.layers.indexOf(commonData.messageLayer) then
@@ -145,6 +148,10 @@ local function onLoad(data)
     playerPos.init()
     discoveredLocs.init()
     disabledDoors.init()
+    if config.data.data.hasSafeInitMessageBeenShown then
+        hasAttemptedToGetData = true
+        core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object})
+    end
     -- must be after localStorage init
     notesWidgetData.loadData()
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
@@ -182,11 +189,29 @@ local function getMenu()
 end
 
 
-local function openMenu(inMenuMode)
-    if not mapDataHandler.isInitialized() then
-        ui.showMessage(l10n("mapDataNotInitialized"))
-        return
+local function initDataForMenu(options)
+    local initialized = mapDataHandler.isInitialized()
+
+    if not initialized then
+        if not hasAttemptedToGetData then
+            hasAttemptedToGetData = true
+            if menuMode.isMenuInteractive() then
+                menuMode.deactivate()
+            end
+            core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = options})
+            return false
+        else
+            ui.showMessage(l10n("mapDataNotInitialized"))
+            return false
+        end
     end
+    hasAttemptedToGetData = true
+    return true
+end
+
+
+local function openMenu(inMenuMode)
+    if not initDataForMenu({openMenu = true, openInMenuMode = inMenuMode}) then return end
 
     if inMenuMode and not menuMode.isMenuInteractive() then
         menuMode.activate()
@@ -247,11 +272,6 @@ end
 
 
 local function toggleMenu()
-    if not mapDataHandler.isInitialized() then
-        ui.showMessage(l10n("mapDataNotInitialized"))
-        return
-    end
-
     if menuHandler.getMenu(commonData.mapMenuId) then
         if menuMode.isActive() then
             if localStorage.data[commonData.pinnedStateFieldId] then
@@ -263,11 +283,13 @@ local function toggleMenu()
             menuHandler.destroyMenu(commonData.mapMenuId)
         end
     else
-        if not menuMode.isMenuInteractive() then
-            menuMode.activate()
-        end
-
         local function registerMenu()
+            if not initDataForMenu({toggleMenu = true}) then return end
+
+            if not menuMode.isMenuInteractive() then
+                menuMode.activate()
+            end
+
             menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
                 onClose = function ()
                     menuMode.deactivate()
@@ -275,9 +297,16 @@ local function toggleMenu()
             })
         end
 
-        if configLib.data.main.firstInitMenu then
+        if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown then
+            if not menuMode.isMenuInteractive() then
+                menuMode.activate()
+            end
+
             menuHandler.registerMenu(commonData.firstInitMenuId, firstInitMenu.new{
                 yesCallback = function ()
+                    if not configLib.data.data.hasSafeInitMessageBeenShown then
+                        configLib.setValue("data.hasSafeInitMessageBeenShown", true)
+                    end
                     configLib.setValue("main.firstInitMenu", false)
                     registerMenu()
                 end
@@ -635,14 +664,26 @@ return {
         end,
 
         ["AdvWMap:initMapData"] = function (data)
-            if mapDataHandler.playerInit(data and data.cellCount) then
+            if mapDataHandler.playerInit(self, data and data.cellCount, data and data.options) then
                 mapTextureHandler.init()
             end
         end,
 
         ["AdvWMap:updateMapData"] = function (data)
-            mapDataHandler.updateData(data)
+            mapDataHandler.updateData(self, data)
             mapTextureHandler.init()
+        end,
+
+        ["AdvWMap:processMapDataOptions"] = function (options)
+            if not options then return end
+
+            if options.toggleMenu then
+                toggleMenu()
+            end
+
+            if options.openMenu then
+                openMenu(options.openInMenuMode)
+            end
         end,
 
         ["AdvWMap:showMessage"] = function (str)

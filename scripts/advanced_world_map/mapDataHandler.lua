@@ -469,9 +469,9 @@ local function buildData()
 end
 
 
-function this.globalBuildData()
+function this.globalBuildData(playerRef, options)
     buildData()
-    require("openmw.world").players[1]:sendEvent("AdvWMap:updateMapData", {
+    playerRef:sendEvent("AdvWMap:updateMapData", {
         cellNameData = this.cellNameData,
         regionNameData = this.regionNameData,
         entrances = this.entrances,
@@ -479,24 +479,31 @@ function this.globalBuildData()
         grid = this.grid,
         worldMapTileRectangles = this.worldMapTileRectangles,
         cellCount = this.cellCount,
+        options = options,
+        plId = playerRef.id,
     })
 end
 
 
-function this.globalInit()
+function this.globalInit(playerRef, options)
+    if not playerRef then return end
     local cells = require("openmw.world").cells
-    require("openmw.world").players[1]:sendEvent("AdvWMap:initMapData", {cellCount = #cells})
+    playerRef:sendEvent("AdvWMap:initMapData", {cellCount = #cells, options = options})
 end
 
 
-function this.playerInit(cellCount)
+function this.playerInit(playerRef, cellCount, options)
     local stor = storage.playerSection(commonData.mapDataStorageName)
 
     local shouldRebuild = stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
-        stor:get("apiVersion") ~= core.API_REVISION or stor:get("contentFileCount") ~= #core.contentFiles.list
+        stor:get("contentFileCount") ~= #core.contentFiles.list
 
     if shouldRebuild then
-        core.sendGlobalEvent("AdvWMap:rebuildMapData")
+        if require("scripts.advanced_world_map.config.config").data.data.safeInit then
+            types.Player.sendMenuEvent(playerRef, "AdvWMap:startDataRebuilding", {plId = playerRef.id, options = options})
+        else
+            core.sendGlobalEvent("AdvWMap:rebuildMapData", {plId = playerRef.id, options = options})
+        end
         return false
     else
         this.cellNameData = stor:get("cellNameData") or {}
@@ -508,13 +515,17 @@ function this.playerInit(cellCount)
         this.cellCount = stor:get("cellCount") or 0
         this.contentFileCount = stor:get("contentFileCount") or 0
 
+        if options then
+            playerRef:sendEvent("AdvWMap:processMapDataOptions", options)
+        end
+
         return true
     end
 end
 
 
 
-function this.updateData(data)
+function this.updateData(playerRef, data)
     this.cellNameData = data.cellNameData or {}
     this.regionNameData = data.regionNameData or {}
     this.entrances = data.entrances or {}
@@ -537,6 +548,11 @@ function this.updateData(data)
     stor:set("apiVersion", core.API_REVISION)
 
     log("Map data updated and saved to storage")
+    if require("scripts.advanced_world_map.config.config").data.data.safeInit then
+        types.Player.sendMenuEvent(playerRef, "AdvWMap:finishDataRebuilding", {plId = data.plId, options = data.options})
+    else
+        core.sendGlobalEvent("AdvWMap:processMapDataOptions", {plId = data.plId, options = data.options})
+    end
 end
 
 

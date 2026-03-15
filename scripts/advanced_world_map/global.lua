@@ -26,7 +26,19 @@ local l10n = core.l10n(common.l10nKey)
 
 saveStorage.initPlayerStorage()
 
-mapDataHandler.globalInit()
+
+
+local function getPlayer(id)
+    local plRef
+    for _, pl in pairs(world.players) do
+        if pl.id == id then
+            plRef = pl
+            break
+        end
+    end
+    return plRef
+end
+
 
 
 local function onObjectActive(ref)
@@ -109,8 +121,20 @@ return {
             })
         end,
 
-        ["AdvWMap:rebuildMapData"] = function ()
-            mapDataHandler.globalBuildData()
+        ["AdvWMap:rebuildMapData"] = function (data)
+            local plRef = getPlayer(data.plId)
+
+            if plRef then
+                mapDataHandler.globalBuildData(plRef, data.options)
+            end
+        end,
+
+        ["AdvWMap:processMapDataOptions"] = function (data)
+            local plRef = getPlayer(data.plId)
+
+            if plRef then
+                plRef:sendEvent("AdvWMap:processMapDataOptions", data.options)
+            end
         end,
 
         ["AdvWMap:fastTravel"] = function (data)
@@ -356,6 +380,10 @@ return {
                 ::continue::
             end
             data.player:sendEvent("AdvWMap:getMapStatics", {res = res})
-        end
+        end,
+
+        ["AdvWMap:initMapData"] = function (dt)
+            mapDataHandler.globalInit(dt.plRef, dt.options)
+        end,
     },
 }

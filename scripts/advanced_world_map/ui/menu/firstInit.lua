@@ -36,7 +36,7 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * 20)
+    params.size = params.size or util.vector2(800, params.fontSize * 24)
     params.relativePosition = util.vector2(0.5, 0.5)
 
 
@@ -96,40 +96,55 @@ function this.new(params)
                             textAlignV = ui.ALIGNMENT.Center,
                         },
                     },
-                    interval(0, params.fontSize),
+                    interval(0, params.fontSize / 2),
+                    checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingSafeInitDescription"),
+                        textSize = config.data.ui.fontSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 6),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        checked = config.data.data.safeInit,
+                        event = function (checked, layout)
+                            config.setValue("data.safeInit", checked)
+                        end
+                    },
+                    interval(0, params.fontSize / 2),
                     checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingLegendOnlyDiscoveredDescription"),
                         textSize = config.data.ui.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.legend.onlyDiscovered,
                         event = function (checked, layout)
                             config.setValue("legend.onlyDiscovered", checked)
                         end
                     },
-                    interval(0, params.fontSize),
+                    interval(0, params.fontSize / 2),
                     checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingTilesetOnlyDiscoveredDescription"),
                         textSize = config.data.ui.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.tileset.onlyDiscovered,
                         event = function (checked, layout)
                             config.setValue("tileset.onlyDiscovered", checked)
                         end
                     },
-                    interval(0, params.fontSize),
+                    interval(0, params.fontSize / 2),
                     checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingFastTravelEnabledDescription"),
                         textSize = config.data.ui.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.fastTravel.enabled,
                         event = function (checked, layout)
                             config.setValue("fastTravel.enabled", checked)
                         end
                     },
-                    interval(0, params.fontSize),
+                    interval(0, params.fontSize / 2),
                     {
                         type = ui.TYPE.Text,
                         props = {
@@ -144,7 +159,7 @@ function this.new(params)
                             textAlignV = ui.ALIGNMENT.Center,
                         },
                     },
-                    interval(0, params.fontSize * 2),
+                    interval(0, params.fontSize),
                     {
                         type = ui.TYPE.Flex,
                         props = {
