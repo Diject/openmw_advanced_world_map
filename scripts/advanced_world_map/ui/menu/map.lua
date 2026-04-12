@@ -342,9 +342,9 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
     end
 
     local currentHistoryCellId = self.history.list[self.history.index]
-    if not skipHistory and (not currentHistoryCellId or currentHistoryCellId ~= cellId) then
+    if not skipHistory and (not currentHistoryCellId or currentHistoryCellId ~= (cellId or commonData.exteriorMapId)) then
         self.history.index = self.history.index + 1
-        self.history.list[self.history.index] = cellId
+        self.history.list[self.history.index] = cellId or commonData.exteriorMapId
         for i = #self.history.list, self.history.index + 1, -1 do
             self.history.list[i] = nil
         end
