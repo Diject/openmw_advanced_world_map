@@ -1318,7 +1318,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
 
     self.mapTexture = texture
     self.mapInfo = mapInfo
-    self.eScale = 32 / mapInfo.pixelsPerCell
+    self.eScale = mapInfo.pixelsPerCell / 32
 
     local padding = 1
 
