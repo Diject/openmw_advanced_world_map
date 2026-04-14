@@ -19,6 +19,7 @@ local mapData = require("scripts.advanced_world_map.mapDataHandler")
 ---@field file string
 ---@field width integer
 ---@field height integer
+---@field tileSize integer?
 ---@field pixelsPerCell integer
 ---@field gridX {min : integer, max : integer}
 ---@field gridY {min : integer, max : integer}

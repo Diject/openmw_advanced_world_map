@@ -453,6 +453,12 @@ local function setZoom(self, zoom, relativePos, force)
     local oldZoom = self.zoom
     local oldSize = self:getDisplaySize(oldZoom)
 
+    if zoom >= 0.5 then
+        local tileSize = 64
+        local targetPixels = math.floor(tileSize * zoom + 0.5)
+        zoom = targetPixels / tileSize
+    end
+
     zoom = util.clamp(zoom, self.minZoom, self.maxZoom)
 
     local newSize = self:getDisplaySize(zoom)
@@ -1152,15 +1158,20 @@ function mapWidgetMeta:placeGroundTextures(region)
         local maxGridY = math.ceil(region.top / 8192)
 
 
-        if self.mapInfo and self.mapInfo.version == 2 then
-            local gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / 16 - 1 or minGridX / 16)
-            local gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / 16 - 1 or maxGridX / 16)
-            local gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / 16 - 1 or minGridY / 16)
-            local gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / 16 - 1 or maxGridY / 16)
+        if self.mapInfo and (self.mapInfo.version == 2 or self.mapInfo.version == 3) then
+            local tileSize = self.mapInfo.tileSize or (self.mapInfo.pixelsPerCell * 16)
+            local tileGridSize = tileSize / self.mapInfo.pixelsPerCell
+            local tileCoordSize = tileGridSize * 8192
+            local gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / tileGridSize - 1 or minGridX / tileGridSize)
+            local gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / tileGridSize - 1 or maxGridX / tileGridSize)
+            local gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / tileGridSize - 1 or minGridY / tileGridSize)
+            local gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / tileGridSize - 1 or maxGridY / tileGridSize)
 
-            local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(131072 * gridTileMinX, 131072 * gridTileMinY - 8192))
+            local startPos = self:getAbsolutePositionByWorldPosition(
+                util.vector2(tileCoordSize * gridTileMinX, tileCoordSize * gridTileMinY - 8192)
+            )
             startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
-            local tileFullHeight = self.mapInfo.pixelsPerCell * 16 * self.zoom
+            local tileFullHeight = tileSize * self.zoom
 
             local mapLayout = self:getMapLayout()
 
@@ -1169,7 +1180,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local lxP = xP
                 xP = startPos.x + tileFullHeight * x
                 local xPr = math.floor(xP)
-                local xS = xPr - math.floor(lxP) + 1
+                local xS = math.ceil(xP) - math.floor(lxP)
 
                 local yP = startPos.y - tileFullHeight * -2
                 for y = -1, gridTileMaxY - gridTileMinY do
@@ -1178,7 +1189,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                     local lyP = yP
                     yP = startPos.y - tileFullHeight * y
                     local yPr = math.floor(yP)
-                    local yS = math.floor(lyP) - yPr + 1
+                    local yS = math.ceil(lyP) - math.floor(yP)
                     local pos = util.vector2(xPr, yPr)
                     local sz = util.vector2(xS, yS)
 
@@ -1357,7 +1368,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
             }
         }
 
-    elseif mapInfo.version == 2 then
+    elseif mapInfo.version == 2 or mapInfo.version == 3 then
         mapLayout.content:add{
             type = ui.TYPE.Image,
             props = {
@@ -1807,7 +1818,7 @@ function this.new(params)
 
     else
         local texture
-        if not mapTextureHandler.mapInfo or mapTextureHandler.mapInfo.version ~= 2 then
+        if not mapTextureHandler.mapInfo or (mapTextureHandler.mapInfo.version < 2 or mapTextureHandler.mapInfo.version > 3) then
             texture = mapTextureHandler.getWorldMapTexture()
         end
         local eventParams = {mapWidget = meta, mapInfo = mapTextureHandler.mapInfo, texture = texture}
