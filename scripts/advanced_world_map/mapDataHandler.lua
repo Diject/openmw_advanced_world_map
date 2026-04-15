@@ -235,6 +235,10 @@ local function buildData()
     for _, cell in pairs(world.cells) do
         if not cell.isExterior then goto continue end
 
+        if cell.gridX > 1000 or cell.gridX < -1000 or cell.gridY > 1000 or cell.gridY < -1000 then
+            goto continue
+        end
+
         minGridX = math.min(minGridX, cell.gridX)
         maxGridX = math.max(maxGridX, cell.gridX)
         minGridY = math.min(minGridY, cell.gridY)
