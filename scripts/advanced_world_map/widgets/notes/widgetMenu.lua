@@ -422,7 +422,6 @@ function  this.create(menu, content)
         type = ui.TYPE.Widget,
         props = {
             size = size,
-            color = config.data.ui.defaultColor,
         },
         userData = {
 

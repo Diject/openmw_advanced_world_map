@@ -93,7 +93,7 @@ function mapElementMeta:getPosition()
 end
 
 function mapElementMeta:setTexture(texture)
-    if self._elemLayout.props.type ~= ui.TYPE.Image then
+    if self._elemLayout.type ~= ui.TYPE.Image then
         return false
     end
     self._params.texture = texture
@@ -102,7 +102,7 @@ function mapElementMeta:setTexture(texture)
 end
 
 function mapElementMeta:setText(text)
-    if self._elemLayout.props.type == ui.TYPE.Image then
+    if self._elemLayout.type == ui.TYPE.Image then
         return false
     end
     self._params.text = text
@@ -119,7 +119,6 @@ function mapElementMeta:updateLayout(data)
     props.size = data.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.size, self._parent.zoom) or props.size
     props.textSize = data.fontSize and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.fontSize, self._parent.zoom)
         or props.textSize
-    props.autoSize = props.size == nil
     props.anchor = data.anchor or props.anchor
     if data.pos then
         props.relativePosition = self._parent:getRelativePositionByWorldPosition(data.pos)
@@ -140,7 +139,9 @@ function mapElementMeta:updateLayout(data)
     props.textAlignH = data.textAlignH or props.textAlignH
     props.textAlignV = data.textAlignV or props.textAlignV
 
-    props.type = data.text and (data.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image
+    self._elemLayout.type = props.text and (data.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image
+    props.autoSize = self._elemLayout.type ~= ui.TYPE.Image and props.size == nil or nil
+
     props.autoSize = data.autoHeight and true or props.autoSize
     props.multiline = data.autoHeight and true or props.multiline
     props.wordWrap = data.autoHeight and true or props.wordWrap
@@ -177,7 +178,6 @@ end
 function mapElementMeta:restoreLayout()
     local isVisibleChanged = self._elemLayout.props.visible ~= self._params.visible
     self._elemLayout.props = {
-        type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         text = self._params.text,
         textSize = self._params.text and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
         anchor = self._params.anchor or util.vector2(0.5, 0.5),
@@ -194,8 +194,9 @@ function mapElementMeta:restoreLayout()
         multiline = self._params.autoHeight and true or nil,
         wordWrap = self._params.autoHeight and true or nil,
         readOnly = self._params.autoHeight and true or nil,
-        autoSize = self._params.autoHeight and true or self._params.size == nil,
+        autoSize = self._params.autoHeight and true or nil,
     }
+    self._elemLayout.type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image
     self._elemLayout.userData.scaleFunc = self._params.scaleFunc
     self._elemLayout.userData.autoScale = true
     self._elemLayout.userData.fontSize = self._params.text and (self._params.fontSize or 18) or nil

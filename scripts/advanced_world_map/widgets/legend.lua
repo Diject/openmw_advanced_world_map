@@ -87,7 +87,6 @@ local function create(menu)
             type = ui.TYPE.Widget,
             props = {
                 size = size,
-                color = config.data.ui.defaultColor,
             },
             userData = {
 

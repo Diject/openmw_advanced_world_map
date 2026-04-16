@@ -718,10 +718,10 @@ local function createMarker(self, params, onlyInitialize)
             end
 
             if self.inActiveMode then
-                cachedLayout.events = cachedLayout._events or cachedLayout.events
-                cachedLayout._events = nil
+                cachedLayout.events = cachedLayout.userData._events or cachedLayout.events
+                cachedLayout.userData._events = nil
             else
-                cachedLayout._events = cachedLayout.events or cachedLayout._events
+                cachedLayout.userData._events = cachedLayout.events or cachedLayout.userData._events
                 cachedLayout.events = nil
             end
 
@@ -758,7 +758,7 @@ local function createMarker(self, params, onlyInitialize)
         props = {
             text = params.text,
             textSize = params.text and fontSize and (params.scaleFunc or self.SCALE_FUNCTION.marker)(fontSize, self.zoom),
-            autoSize = params.autoHeight and true or size == nil,
+            autoSize = params.autoHeight and true or nil,
             anchor = anchor,
             relativePosition = relPos,
             textColor = params.text and color or nil,
@@ -790,8 +790,8 @@ local function createMarker(self, params, onlyInitialize)
                 setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul or self.zoom / config.data.main.zoomingMul)
                 self:update()
             end or nil,
+            _events = not self.inActiveMode and layoutEvents or nil,
         },
-        _events = not self.inActiveMode and layoutEvents or nil,
         events = self.inActiveMode and layoutEvents or nil,
     }
 
@@ -1676,13 +1676,18 @@ function mapWidgetMeta:setInActiveMode(active)
     self.inActiveMode = active
 
     for _, mrk in pairs(self:getActiveMarkers()) do
+        local userData = mrk._elemLayout.userData
+        if not userData then goto continue end
+
         if active then
-            mrk._elemLayout.events = mrk._elemLayout._events or mrk._elemLayout.events
-            mrk._elemLayout._events = nil
+            mrk._elemLayout.events = mrk._elemLayout.userData._events or mrk._elemLayout.events
+            mrk._elemLayout.userData._events = nil
         else
-            mrk._elemLayout._events = mrk._elemLayout.events or mrk._elemLayout._events
+            mrk._elemLayout.userData._events = mrk._elemLayout.events or mrk._elemLayout.userData._events
             mrk._elemLayout.events = nil
         end
+
+        ::continue::
     end
 end
 

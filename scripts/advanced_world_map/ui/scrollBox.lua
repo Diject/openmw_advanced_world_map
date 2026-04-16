@@ -410,7 +410,6 @@ return function(params)
     contentData = {
         type = ui.TYPE.Widget,
         props = {
-            autoSize = false,
             size = params.size,
             position = params.position,
         },
