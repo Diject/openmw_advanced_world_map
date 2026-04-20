@@ -31,6 +31,8 @@ this.worldMapTileRectangles = {}
 this.cellCount = 0
 this.contentFileCount = 0
 
+local initialized = false
+
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
 ---@field posX number
@@ -486,6 +488,7 @@ function this.globalBuildData(playerRef, options)
         options = options,
         plId = playerRef.id,
     })
+    initialized = true
 end
 
 
@@ -510,18 +513,31 @@ function this.playerInit(playerRef, cellCount, options)
         end
         return false
     else
-        this.cellNameData = stor:get("cellNameData") or {}
-        this.regionNameData = stor:get("regionNameData") or {}
-        this.entrances = stor:get("entrances") or {}
-        this.cellNameById = stor:get("cellNameById") or {}
-        this.grid = stor:get("grid") or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
-        this.worldMapTileRectangles = stor:get("worldMapTileRectangles") or {}
-        this.cellCount = stor:get("cellCount") or 0
-        this.contentFileCount = stor:get("contentFileCount") or 0
+        local data = stor:asTable()
+
+        this.cellNameData = data.cellNameData or {}
+        this.regionNameData = data.regionNameData or {}
+        this.entrances = data.entrances or {}
+        this.cellNameById = data.cellNameById or {}
+        this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
+        this.worldMapTileRectangles = data.worldMapTileRectangles or {}
+        this.cellCount = data.cellCount or 0
+        this.contentFileCount = data.contentFileCount or 0
+
+        core.sendGlobalEvent("AdvWMap:updateMapData", {
+            cellNameData = this.cellNameData,
+            regionNameData = this.regionNameData,
+            entrances = this.entrances,
+            cellNameById = this.cellNameById,
+            grid = this.grid,
+            worldMapTileRectangles = this.worldMapTileRectangles,
+        })
 
         if options then
             playerRef:sendEvent("AdvWMap:processMapDataOptions", options)
         end
+
+        initialized = true
 
         return true
     end
@@ -557,12 +573,25 @@ function this.updateData(playerRef, data)
     else
         core.sendGlobalEvent("AdvWMap:processMapDataOptions", {plId = data.plId, options = data.options})
     end
+
+    initialized = true
+end
+
+
+function this.loadMapData(data)
+    this.cellNameData = data.cellNameData or {}
+    this.regionNameData = data.regionNameData or {}
+    this.entrances = data.entrances or {}
+    this.cellNameById = data.cellNameById or {}
+    this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
+    this.worldMapTileRectangles = data.worldMapTileRectangles or {}
+
+    initialized = true
 end
 
 
 function this.isInitialized()
-    return this.cellNameData ~= nil and this.regionNameData ~= nil and this.entrances ~= nil and
-        this.cellNameById ~= nil and this.grid ~= nil and this.worldMapTileRectangles ~= nil
+    return initialized
 end
 
 

@@ -6,8 +6,6 @@ local core = require("openmw.core")
 local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
 local Door = types.Door
 
-local config = require("scripts.advanced_world_map.config.config")
-
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local cellLib = require("scripts.advanced_world_map.utils.cell")
@@ -96,21 +94,41 @@ end
 
 
 return {
+    interfaceName = "AdvancedWorldMap",
+    interface = {
+        version = 11,
+        isMapDataInitialized = function ()
+            return mapDataHandler.isInitialized()
+        end,
+        getCellNameById = function (cellId)
+            return mapDataHandler.cellNameById[cellId]
+        end,
+        getExteriorCellName = function (pos)
+            return mapDataHandler.cellNameById[cellLib.getCellIdByPos(pos)]
+        end,
+        getEntranceMarkerData = function (cellId)
+            return mapDataHandler.entrances[cellId]
+        end,
+        getDoorHash = function (doorRef, destCellId)
+            return common.doorHash(doorRef, destCellId)
+        end,
+    },
     engineHandlers = {
         onObjectActive = onObjectActive,
         onLoad = function (data)
             saveStorage.initPlayerStorage(data)
             disabledDoors.init()
+        end,
+        onSave = function ()
+            local data = {}
+            saveStorage.save(data)
+            return data
         end
     },
     eventHandlers = {
         ["AdvWMap:objectInactive"] = objectInactive,
 
         ["AdvWMap:requestTimeUpdate"] = updateTime,
-
-        ["AdvWMap:updateConfigData"] = function (data)
-            tableLib.applyChanges(config.data, data)
-        end,
 
         -- for compatibility with mods that change player chargen state
         ["AdvWMap:toggleMenuCheck"] = function (player)
@@ -385,5 +403,9 @@ return {
         ["AdvWMap:initMapData"] = function (dt)
             mapDataHandler.globalInit(dt.plRef, dt.options)
         end,
+
+        ["AdvWMap:updateMapData"] = function (dt)
+            mapDataHandler.loadMapData(dt)
+        end
     },
 }

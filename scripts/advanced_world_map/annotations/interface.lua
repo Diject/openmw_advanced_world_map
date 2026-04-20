@@ -32,7 +32,9 @@
 ---@field setConfigValue fun(path: string, value: any) sets a configuration value at the given path. Like setConfigValue("main.updateFrequency", 25)
 ---@field isDiscovered fun(cellId: string) : boolean checks if the cell with the given ID is discovered
 ---@field isVisited fun(cellId: string) : number? checks if the cell with the given ID is visited. Returns timestamp or nil
+---@field isMapDataInitialized fun() : boolean checks if the map data is initialized
 ---@field getCellNameById fun(cellId: string) : string? gets the cell name by its ID
 ---@field getExteriorCellName fun(pos: any) : string? gets the exterior cell name by position
 ---@field getEntranceMarkerData fun(cellId: string) : table<string, AdvancedWorldMap.DataHandler.EntranceData>? gets the entrance marker data for the given cell ID. Returns a table where keys are door hashes and values are EntranceData
+---@field getDoorHash fun(doorRef: GameObject, destCellId: string) : string gets the door hash for the given door reference and destination cell ID
 ---@field uiElements AdvancedWorldMap.Interface.UIElements

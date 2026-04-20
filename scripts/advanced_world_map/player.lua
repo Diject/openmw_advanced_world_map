@@ -514,7 +514,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 10,
+        version = 11,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -532,6 +532,9 @@ return {
         isVisited = function (cellId)
             return discoveredLocs.isVisited(cellId)
         end,
+        isMapDataInitialized = function ()
+            return mapDataHandler.isInitialized()
+        end,
         getCellNameById = function (cellId)
             return mapDataHandler.cellNameById[cellId]
         end,
@@ -540,6 +543,9 @@ return {
         end,
         getEntranceMarkerData = function (cellId)
             return mapDataHandler.entrances[cellId]
+        end,
+        getDoorHash = function (doorRef, destCellId)
+            return commonData.doorHash(doorRef, destCellId)
         end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
