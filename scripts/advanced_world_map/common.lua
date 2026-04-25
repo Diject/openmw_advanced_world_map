@@ -129,6 +129,8 @@ this.defaultTRMapDir = "textures/advanced_world_map/default/TRmap/"
 this.defaultBaseMapDir = "textures/advanced_world_map/default/basemap/"
 this.questDataMapDir = "questData/"
 
+this.TotSPFixMapDir = "textures/advanced_world_map/default/TotSP/"
+
 this.exteriorMapId = "__Esm3ExteriorMap__"
 this.exteriorCellLabel = "Esm3ExteriorCell:"
 this.exteriorCellIdFormat = "Esm3ExteriorCell:%d:%d"
@@ -142,6 +144,8 @@ this.dataInitializerTypes = {
     "Base game",
     "None",
 }
+
+this.TotSPFileName = "solstheim tomb of the snow prince.esm"
 
 
 function this.colorToArray(color)

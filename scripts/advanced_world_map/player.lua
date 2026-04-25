@@ -13,6 +13,8 @@ local ambient = require('openmw.ambient')
 local animation = require("openmw.animation")
 local nearby = require("openmw.nearby")
 
+local include = require("scripts.advanced_world_map.utils.include")
+
 local pDoor = require("scripts.advanced_world_map.helpers.protectedDoor")
 
 local log = require("scripts.advanced_world_map.utils.log")
@@ -55,6 +57,8 @@ require("scripts.advanced_world_map.widgets.search")
 local fastTravel = require("scripts.advanced_world_map.widgets.fastTravel")
 require("scripts.advanced_world_map.widgets.notes.note")
 local cellNameWidget = require("scripts.advanced_world_map.widgets.cellName")
+
+include("scripts.advanced_world_map.fixes.TotSP")
 
 local l10n = core.l10n(commonData.l10nKey)
 
