@@ -1,9 +1,9 @@
 local storage = require('openmw.storage')
 local async = require('openmw.async')
-local core = require("openmw.core")
 
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local commonData = require("scripts.advanced_world_map.common")
+local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local config = require("scripts.advanced_world_map.config.config")
 
@@ -31,22 +31,31 @@ this.storageSections = {
 function this.loadFromStorage(section)
     local data = section:asTable() or {}
     for path, value in pairs(data) do
-        tableLib.setValueByPath(this.data, path, value)
+        local event = {
+            key = path,
+            value = value,
+        }
+        tableLib.setValueByPath(this.data, path, event.value)
+        eventSys.triggerEvent(eventSys.EVENT.onConfigChanged, event)
     end
 end
 
 for _, section in pairs(this.storageSections) do
     section:subscribe(async:callback(function(s, key)
         if key then
-            tableLib.setValueByPath(this.data, key, section:get(key))
+            local value = section:get(key)
+            local event = {
+                key = key,
+                value = value,
+            }
+            tableLib.setValueByPath(this.data, key, event.value)
+            eventSys.triggerEvent(eventSys.EVENT.onConfigChanged, event)
         else
             this.loadFromStorage(section)
         end
-        core.sendGlobalEvent("AdvWMap:updateConfigData", this.data)
     end))
 
     this.loadFromStorage(section)
-    core.sendGlobalEvent("AdvWMap:updateConfigData", this.data)
 end
 
 
@@ -61,7 +70,7 @@ function this.setValue(str, val)
     if not wasSet then
         defaultStorage:set(str, val)
     end
-    return tableLib.setValueByPath(this.data, str, val)
+    return true
 end
 
 function this.getValue(str)

@@ -547,6 +547,9 @@ return {
         getDoorHash = function (doorRef, destCellId)
             return commonData.doorHash(doorRef, destCellId)
         end,
+        setWorldMapInfo = function (mapInfo, dirPath, mapImagePath)
+            return mapTextureHandler.setWorldMapInfo(mapInfo, dirPath, mapImagePath)
+        end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
             borders = require("scripts.advanced_world_map.ui.borders"),

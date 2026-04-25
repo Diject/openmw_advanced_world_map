@@ -7,6 +7,7 @@ local util = require("openmw.util")
 local log = require("scripts.advanced_world_map.utils.log")
 
 local commonData = require("scripts.advanced_world_map.common")
+local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local config = require("scripts.advanced_world_map.config.config")
 
@@ -164,11 +165,29 @@ local function initMapImage(initializerType)
 
     ::next::
 
-    if mapInfo and dirPath then
-        this.mapImagePath = imagePath
-        this.mapInfo = mapInfo
-        this.mapDir = dirPath
-        log("World map image initialized from: "..dirPath)
+    local eventData = {imagePath = imagePath, mapInfo = mapInfo, dirPath = dirPath, internal = true}
+    eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInit, eventData)
+
+    if eventData.mapInfo and eventData.dirPath then
+        this.mapImagePath = eventData.imagePath
+        this.mapInfo = eventData.mapInfo
+        this.mapDir = eventData.dirPath
+        log("World map image initialized from: "..eventData.dirPath)
+        return true
+    end
+    return false
+end
+
+
+function this.setWorldMapInfo(mapInfo, dirPath, mapImagePath)
+    local eventData = {imagePath = mapImagePath, mapInfo = mapInfo, dirPath = dirPath, internal = false}
+    eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInit, eventData)
+
+    if eventData.mapInfo and eventData.dirPath then
+        this.mapImagePath = eventData.imagePath
+        this.mapInfo = eventData.mapInfo
+        this.mapDir = eventData.dirPath
+        log("World map image initialized from: "..eventData.dirPath)
         return true
     end
     return false
@@ -201,7 +220,10 @@ function this.getLocalMapTexture(gridX, gridY)
 
     if this.localMapTextureCache[id] then return this.localMapTextureCache[id] ~= true and this.localMapTextureCache[id] or nil, true end
 
-    local path = string.format("%s%s", commonData.localMapTexturesDir, id)
+    local eventData = {gridX = gridX, gridY = gridY, path = string.format("%s%s", commonData.localMapTexturesDir, id)}
+    eventSys.triggerEvent(eventSys.EVENT.onWorldMapLocalTextureGet, eventData)
+
+    local path = eventData.path
     local pathPng = path..".png"
     local pathTga = path..".tga"
 
@@ -328,13 +350,17 @@ end
 function this.getWorldMapTextureV2(x, y)
     if not this.mapDir then return end
     local path = this.mapDir..string.format("(%d,%d).png", x, y)
-    if not vfs.fileExists(path) then return end
 
     if this.worldTextureCache[path] then
         return this.worldTextureCache[path]
     end
 
-    local texture = ui.texture{ path = path }
+    local eventData = {x = x, y = y, path = path, mapInfo = this.mapInfo}
+    eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureGet, eventData)
+
+    if not vfs.fileExists(eventData.path) then return end
+
+    local texture = ui.texture{ path = eventData.path }
     this.worldTextureCache[path] = texture
     return texture
 end

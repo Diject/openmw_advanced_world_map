@@ -212,6 +212,31 @@
 ---@field content Content Legend widget content
 ---@field size Vector2 Legend widget size
 
+---Event data for config changed event
+---@class AdvancedWorldMap.Event.OnConfigChangedEvent
+---@field key string Configuration key that is being changed
+---@field value any New value for the configuration key
+
+---Event data for world map texture initialize event
+---@class AdvancedWorldMap.Event.OnWorldMapTextureInitEvent
+---@field imagePath string? Version 1 world map image path (nil if no texture)
+---@field mapInfo AdvancedWorldMap.MapImageInfo? Map image information
+---@field dirPath string? Directory path of the map image/images
+---@field internal boolean True if the initialization is triggered by the mod itself during map initialization, false if triggered by external call to setWorldMapInfo
+
+---Event data for world map local texture get event
+---@class AdvancedWorldMap.Event.OnWorldMapLocalTextureGetEvent
+---@field gridX integer Grid X coordinate
+---@field gridY integer Grid Y coordinate
+---@field path string Local map texture path without extension
+
+---Event data for world map texture get event
+---@class AdvancedWorldMap.Event.OnWorldMapTextureGetEvent
+---@field x integer x texture coordinate
+---@field y integer y texture coordinate
+---@field path string World map texture path
+---@field mapInfo AdvancedWorldMap.MapImageInfo? Map image information. nil if something went wrong with map image initialization
+
 ---Event data for new location discovery event
 ---@class AdvancedWorldMap.Event.OnDiscoverEvent
 ---@field discoveredMap table<string, boolean> Table of newly discovered location ids
@@ -227,7 +252,7 @@ AdvancedWorldMapEvent.EVENT = {
     onMenuOpened = "onMenuOpened", -- Event triggered when the map menu is opened
     onMenuClosed = "onMenuClosed", -- Event triggered when the map menu is closed
     onUpdate = "onUpdate", -- Event triggered before the map menu render is updated
-    onWorldMapTextureInitialize = "onWorldMapTextureInitialize", -- Event triggered when the world map texture is initializing. You can replace the map texture here
+    onWorldMapTextureInitialize = "onWorldMapTextureInitialize", -- Deprecated. Event triggered when the world map texture is initializing. You can replace the map texture here.
     onMapInitialized = "onMapInitialized", -- Event triggered when a map widget is initialized
     onMapShown = "onMapShown", -- Event triggered when the map is shown
     onMapClosed = "onMapClosed", -- Event triggered when the map is closed
@@ -259,6 +284,10 @@ AdvancedWorldMapEvent.EVENT = {
     onWidgetClosed = "onWidgetClosed", -- Event triggered when a map widget is closed
     onLegendWidgetCreate = "onLegendWidgetCreate", -- Event triggered when the legend widget is created. You can use this event to add custom content to the legend.
     onDiscover = "onDiscover", -- Event triggered when new locations are discovered. Contains a table of newly discovered location ids.
+    onConfigChanged = "onConfigChanged", -- Event triggered after a configuration value has changed
+    onWorldMapTextureInit = "onWorldMapTextureInit", -- Event triggered when the world map texture is initializing. You can replace the map texture here
+    onWorldMapLocalTextureGet = "onWorldMapLocalTextureGet", -- Event triggered when the map widget is trying to get a local map texture path. You can change the path to load custom local map textures.
+    onWorldMapTextureGet = "onWorldMapTextureGet", -- Event triggered when the map widget is trying to get a world map version 2 texture path. You can change the path to load a custom world map texture for specific coordinates.
 }
 
 ---Registers an event handler in the event system.
@@ -302,6 +331,10 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onWidgetClosed", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWidgetClosedEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onLegendWidgetCreate", handlerFunc: fun(e: AdvancedWorldMap.Event.OnLegendWidgetCreateEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onDiscover", handlerFunc: fun(e: AdvancedWorldMap.Event.OnDiscoverEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onConfigChanged", handlerFunc: fun(e: AdvancedWorldMap.Event.OnConfigChangedEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWorldMapTextureInit", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureInitEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWorldMapLocalTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapLocalTextureGetEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWorldMapTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureGetEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system

@@ -13,6 +13,18 @@
 ---@field fName string destination cell full name
 ---@field dHash string door hash
 
+---@class AdvancedWorldMap.MapImageInfo
+---@field version integer
+---@field time integer
+---@field file string
+---@field width integer
+---@field height integer
+---@field tileSize integer?
+---@field pixelsPerCell integer
+---@field gridX {min : integer, max : integer}
+---@field gridY {min : integer, max : integer}
+---@field bColor number[]?
+
 ---@class AdvancedWorldMap.Interface.UIElements
 ---@field scrollBox fun(params: any): Layout creates a scroll box
 ---@field button fun(params: any): Layout creates a button
@@ -37,4 +49,5 @@
 ---@field getExteriorCellName fun(pos: any) : string? gets the exterior cell name by position
 ---@field getEntranceMarkerData fun(cellId: string) : table<string, AdvancedWorldMap.DataHandler.EntranceData>? gets the entrance marker data for the given cell ID. Returns a table where keys are door hashes and values are EntranceData
 ---@field getDoorHash fun(doorRef: GameObject, destCellId: string) : string gets the door hash for the given door reference and destination cell ID
+---@field setWorldMapInfo fun(mapInfo: AdvancedWorldMap.MapImageInfo, dirPath: string, mapV1ImagePath: string?): boolean sets the world map info for the map. Used to inject custom map info when the map is initialized.
 ---@field uiElements AdvancedWorldMap.Interface.UIElements
