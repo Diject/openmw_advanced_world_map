@@ -956,7 +956,13 @@ end
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
 local function tryCreateActiveMarker(self, params, preloadOnly)
     local id = getActiveMarkerId(params)
-    if not self.activeZoomMarkers[id] then
+
+    local isCreated = self.activeZoomMarkers[id] ~= nil
+    local pos = params.pos or util.vector2(0, 0)
+    local placeOnMap = not isCreated or self.cellId ~= nil or
+        (self._markerRect and this.isPointInRegion(self._markerRect, pos.x, pos.y)) or false
+
+    if placeOnMap then
         local mDt = {createMarker(self, params, preloadOnly)}
         if mDt[1] then
             self.activeZoomMarkers[id] = mDt
