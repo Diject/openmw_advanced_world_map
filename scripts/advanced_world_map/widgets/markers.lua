@@ -71,9 +71,17 @@ function this.updateDiscovered(newDiscovered)
             local userData = handler:getUserData()
             if userData and userData.cellId then
                 if discoveredLocs.isVisited(userData.cellId) then
-                    handler:setColor(config.data.ui.defaultLightColor)
+                    if userData.type == commonData.cityMarkerType then
+                        handler:setColor(config.data.ui.worldDefaultLightColor)
+                    else
+                        handler:setColor(config.data.ui.defaultLightColor)
+                    end
                 elseif discoveredLocs.isDiscovered(userData.cellId) then
-                    handler:setColor(config.data.ui.markerDefaultColor)
+                    if userData.type == commonData.cityMarkerType then
+                        handler:setColor(config.data.ui.worldDefaultColor)
+                    else
+                        handler:setColor(config.data.ui.markerDefaultColor)
+                    end
                 end
             end
         end
@@ -82,7 +90,7 @@ function this.updateDiscovered(newDiscovered)
             local userData = handler:getUserData()
             if userData and userData.type == commonData.cityRegionMarkerType then
                 updateVisibility(handler)
-                handler:setColor(config.data.ui.defaultLightColor)
+                handler:setColor(config.data.ui.worldDefaultLightColor)
             end
         end
     end
@@ -622,7 +630,9 @@ local function createMarkers(widget, cellId)
                 text = dt.name,
                 anchor = util.vector2(0.5, 0.5),
                 pos = util.vector2(dt.posX, dt.posY),
-                color = discoveredLocs.isVisited(dt.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
+                color = discoveredLocs.isVisited(dt.name) and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
+                textShadow = config.data.ui.worldMarkerShadow and true or nil,
+                shadowColor = config.data.ui.worldMarkerShadow and config.data.ui.worldMarkerShadowColor or nil,
                 fontSize = 10 + math.min(8, dt.count) * 2,
                 scaleFunc = widget.SCALE_FUNCTION.linear,
                 alpha = config.data.legend.alpha.city * 0.01,
@@ -649,7 +659,7 @@ local function createMarkers(widget, cellId)
                 text = info.name,
                 anchor = util.vector2(0.5, 0.5),
                 pos = util.vector2(info.posX, info.posY),
-                color = discoveredLocs.isVisited(info.name) and config.data.ui.defaultLightColor or config.data.ui.markerDefaultColor,
+                color = discoveredLocs.isVisited(info.name) and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
                 fontSize = fontSize,
                 scaleFunc = widget.SCALE_FUNCTION.linear,
                 alpha = config.data.legend.alpha.region * 0.01,
@@ -685,7 +695,7 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
         type = ui.TYPE.TextEdit,
         props = {
             text = text,
-            textColor = config.data.ui.markerDefaultColor,
+            textColor = config.data.ui.defaultColor,
             textSize = config.data.ui.fontSize * 1.1,
             anchor = util.vector2(0.5, 0),
             size = util.vector2(tooltipWidth, 0),

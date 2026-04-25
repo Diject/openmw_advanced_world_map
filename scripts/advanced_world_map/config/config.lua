@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 10,
+    version = 11,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -103,6 +103,9 @@ this.default = {
         markerDefaultColor = commonData.markerDefaultColor,
         defaultLightColor = commonData.defaultLightColor,
         defaultDarkColor = commonData.defaultDarkColor,
+        worldDefaultColor = commonData.markerDefaultColor,
+        worldDefaultLightColor = commonData.defaultLightColor,
+        worldMarkerShadowColor = commonData.defaultColor,
         whiteColor = commonData.whiteColor,
         backgroundColor = commonData.backgroundColor,
         -- disabledColor = commonData.disabledColor,
@@ -115,6 +118,7 @@ this.default = {
         scrollArrowSize = 16,
         resizerSize = 16,
         textHeightMul = 0.7,
+        worldMarkerShadow = false,
     },
 }
 
