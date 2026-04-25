@@ -609,6 +609,8 @@ end
 ---@field size any util.vector2
 ---@field autoHeight boolean?
 ---@field color any util.color.rgb
+---@field textShadow boolean?
+---@field shadowColor any util.color.rgb
 ---@field anchor any util.vector2
 ---@field textAlignH any ui.ALIGNMENT
 ---@field textAlignV any ui.ALIGNMENT
@@ -762,6 +764,8 @@ local function createMarker(self, params, onlyInitialize)
             anchor = anchor,
             relativePosition = relPos,
             textColor = params.text and color or nil,
+            textShadow = params.text and params.textShadow or nil,
+            textShadowColor = params.text and params.shadowColor or nil,
             visible = params.visible,
             alpha = alpha,
             resource = texture,

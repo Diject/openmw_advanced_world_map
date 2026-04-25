@@ -80,6 +80,8 @@
 ---@field size Vector2? Marker size (vector2, auto if not provided)
 ---@field autoHeight boolean? Automatically adjust height based on text content. size.y must be 0. Not allowed on 'marker' layer.
 ---@field color Color? RGB color (vector3 or array)
+---@field textShadow boolean? Whether to show text shadow (default false)
+---@field shadowColor Color? RGB color for text shadow
 ---@field anchor Vector2? Anchor point (vector2, default 0.5, 0.5)
 ---@field textAlignH ALIGNMENT? Horizontal text alignment
 ---@field textAlignV ALIGNMENT? Vertical text alignment

@@ -127,6 +127,10 @@ function mapElementMeta:updateLayout(data)
         props.textColor = props.text and data.color or nil
         props.color = props.resource and data.color or nil
     end
+    if data.textShadow ~= nil then
+        props.textShadow = data.textShadow
+    end
+    props.textShadowColor = data.shadowColor or props.shadowColor
     if data.visible ~= nil then
         local last = props.visible
         props.visible = data.visible
@@ -161,6 +165,10 @@ function mapElementMeta:updateParams(data)
     self._params.anchor = data.anchor or self._params.anchor
     self._params.pos = data.pos or self._params.pos
     self._params.color = data.color or self._params.color
+    if data.textShadow ~= nil then
+        self._params.textShadow = data.textShadow
+    end
+    self._params.shadowColor = data.shadowColor or self._params.shadowColor
     if data.visible ~= nil then
         self._params.visible = data.visible
     end
@@ -183,6 +191,8 @@ function mapElementMeta:restoreLayout()
         anchor = self._params.anchor or util.vector2(0.5, 0.5),
         relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos),
         textColor = self._params.text and (self._params.color or config.data.ui.defaultColor) or nil,
+        textShadow = self._params.text and self._params.textShadow or nil,
+        textShadowColor = self._params.text and self._params.shadowColor or nil,
         visible = self._params.visible,
         alpha = self._params.alpha or 1,
         resource = self._params.texture,
