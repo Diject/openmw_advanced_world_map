@@ -862,7 +862,14 @@ function this.onZoomMarkersUpdatedCallback(e)
         end
 
         if groupStateChanged then
-            marker:restoreLayout()
+            ---@diagnostic disable-next-line: missing-fields
+            marker:updateLayout{
+                anchor = marker._params.anchor,
+                pos = marker._params.pos,
+                fontSize = marker._params.fontSize,
+                alpha = marker._params.alpha,
+                text = marker._params.text,
+            }
         end
 
         if doGroup then

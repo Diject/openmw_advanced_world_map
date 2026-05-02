@@ -155,13 +155,11 @@ local function setMarkerColor(handler, color, reset)
     if reset then
         handler:updateLayout{ ---@diagnostic disable-line: missing-fields
             color = handler._params.color or defaultColor,
-            alpha = handler._params.alpha or 1,
         }
         modifiedMarkers[getMarkerId(handler)] = nil
     else
         handler:updateLayout{ ---@diagnostic disable-line: missing-fields
             color = color,
-            alpha = 1,
         }
         modifiedMarkers[getMarkerId(handler)] = handler
     end
@@ -464,6 +462,7 @@ local function create(menu)
         }
     }
 
+    ---@param menu advancedWorldMap.ui.menu.map
     local function onOpen(menu, content)
         local mapWidgetSize = menu.mapWidget:getSize()
 
@@ -795,9 +794,25 @@ local function create(menu)
         iconLayout.props.color = config.data.ui.whiteColor
 
         content:add(windowLayout)
+
+        menu.userData.advWMapSearch = function (text, params)
+            params = params or {}
+            if params.showUnrevealed ~= nil then
+                showUnrevealedCBLayout.userData.meta:setChecked(params.showUnrevealed)
+            end
+            if params.searchAllLocations ~= nil then
+                searchAllLocationsCBLayout.userData.meta:setChecked(params.showUnrevealed)
+            end
+            searchBarLayout.content[1].events.textChanged(text)
+
+            fill(showUnrevealed, searchAllLocations)
+        end
     end
 
-    local function onClose()
+    local function onClose(menu)
+        textFilter = ""
+        userInputText = ""
+        menu.userData.advWMapSearch = nil
         iconLayout.props.color = config.data.ui.defaultColor
         resetMarkersVisibility()
         resetMarkersColor()
