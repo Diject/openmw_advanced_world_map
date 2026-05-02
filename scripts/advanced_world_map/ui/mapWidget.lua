@@ -1739,6 +1739,7 @@ function this.new(params)
     meta.screenPosition = params.screenPosition or util.vector2(0, 0)
 
     meta.uiScale = uiUtils.getUIScale()
+    meta.uiScaleMul = math.sqrt(1 / meta.uiScale)
 
     meta.zoom = params.zoom or 1
     meta.maxZoom = meta.zoom
@@ -1752,13 +1753,13 @@ function this.new(params)
         end,
 
         marker = function(size, zoom)
-            zoom = zoom * (meta.eScale)
-            return size * math.sqrt(math.sqrt(zoom))
+            zoom = zoom * meta.eScale
+            return size * math.sqrt(math.sqrt(zoom)) * meta.uiScaleMul
         end,
 
         playerMarker = function(size, zoom)
             if zoom < 1 then
-                return size * math.sqrt(zoom)
+                return size * math.sqrt(zoom) * meta.uiScaleMul
             end
             return size
         end
