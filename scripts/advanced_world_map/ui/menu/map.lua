@@ -292,6 +292,8 @@ function menuMeta:setMinimapModeParams()
 
         local posV = config.data.main.minimap.relativePosition
         self.menu.layout.props.relativePosition = util.vector2(posV.x, posV.y)
+
+        self.isInMinimapMode = true
     end
 end
 
@@ -376,11 +378,17 @@ function menuMeta:setMapWidgetSize(newSize)
 end
 
 
+---@param params {visible : boolean?, fullMode : boolean?, skipStateUpdate : boolean?}?
 ---@return boolean
-function menuMeta:updateInteractiveElements()
+function menuMeta:updateInteractiveElements(params)
+    params = params or {}
     local shouldUpdate = false
     local layout = self.menu.layout
     if not layout then return shouldUpdate end
+
+    if params.visible == nil then
+        self:externalDeactivate()
+    end
 
     if self.minimapSetupMode then
         menuHandler.destroyMenu(commonData.mapMenuId)
@@ -390,29 +398,41 @@ function menuMeta:updateInteractiveElements()
     local isMenuMode = menuMode.isMenuInteractive()
     local lastUIMode = UI.getMode()
 
-    if self.lastMenuMode == isMenuMode and self.lastUiMode == lastUIMode then
-        return shouldUpdate
-    else
-        self.lastMenuMode = isMenuMode
-        self.lastUiMode = lastUIMode
+    if not isMenuMode and self.isCreatedExternally then
+        menuHandler.destroyMenu(commonData.mapMenuId)
+        return false
     end
 
-    if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated()) or
-            (config.data.main.minimap.enabled and not config.data.main.overrideDefault and not menuMode.isActivated())) then
-        shouldUpdate = layout.props.visible ~= false or shouldUpdate
-        layout.props.visible = false
-        return shouldUpdate
+    if not params.skipStateUpdate then
+        if self.lastMenuMode == isMenuMode and self.lastUiMode == lastUIMode then
+            return shouldUpdate
+        else
+            self.lastMenuMode = isMenuMode
+            self.lastUiMode = lastUIMode
+        end
+    end
+
+    if params.visible == nil then
+        if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated()) or
+                (config.data.main.minimap.enabled and not config.data.main.overrideDefault and not menuMode.isActivated())) then
+            shouldUpdate = layout.props.visible ~= false or shouldUpdate
+            layout.props.visible = false
+            return shouldUpdate
+        else
+            layout.props.visible = true
+        end
     else
-        layout.props.visible = true
+        layout.props.visible = params.visible
     end
 
     local header = self.headerLayout
 
-    if isMenuMode then
+    if params.fullMode == true or isMenuMode and params.fullMode == nil then
         header.props.visible = true
         header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
         header.content[2] = self.widgetActiveHeaderLayout
         self.mainLayout.content[2].props.visible = true
+        self.isInMinimapMode = false
 
         if self.mainSize.x ~= self.defaultMainSize.x or self.mainSize.y ~= self.defaultMainSize.y then
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
@@ -461,6 +481,44 @@ function menuMeta:updateInteractiveElements()
 end
 
 
+function menuMeta:externalActivate()
+    if self.isActivatedExternally then return end
+
+    local layout = self.menu.layout
+    if not layout then return end
+
+    self.isActivatedExternally = true
+    self.internal = {
+        visibility = layout.props.visible,
+        isInMinimapMode = self.isInMinimapMode,
+    }
+
+    self:updateInteractiveElements{
+        fullMode = true,
+        skipStateUpdate = true,
+        visible = true,
+    }
+    self:update()
+end
+
+
+function menuMeta:externalDeactivate()
+    if not self.isActivatedExternally or not self.internal then return end
+
+    self.isActivatedExternally = false
+    local visible = self.internal.visibility
+    local isInMinimapMode = self.internal.isInMinimapMode
+    self:updateInteractiveElements{
+        visible = visible,
+        skipStateUpdate = true,
+    }
+    self.internal = nil
+    self:update()
+
+    return isInMinimapMode
+end
+
+
 function menuMeta:requestUpdate()
     self._requestedUpdate = true
 end
@@ -473,6 +531,10 @@ end
 
 function menuMeta:close()
     if not self.menu then return end
+
+    if self:externalDeactivate() == true then
+        return true
+    end
 
     if self.params.onClose then self.params.onClose() end
 
@@ -537,6 +599,7 @@ end
 ---@field relativePosition any?
 ---@field relativeSize any?
 ---@field fontSize number?
+---@field isCreatedExternally boolean?
 ---@field onClose function?
 
 
@@ -553,6 +616,13 @@ function this.create(params)
     local meta = setmetatable({}, menuMeta)
 
     meta.params = params
+
+    meta.userData = {}
+
+    meta.isActivatedExternally = false
+    meta.isCreatedExternally = params.isCreatedExternally or false
+
+    meta.isInMinimapMode = false
 
     if not params.fontSize then params.fontSize = config.data.ui.fontSize end
     if not params.relativeSize then

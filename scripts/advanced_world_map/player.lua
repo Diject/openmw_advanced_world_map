@@ -214,7 +214,7 @@ local function initDataForMenu(options)
 end
 
 
-local function openMenu(inMenuMode)
+local function openMenu(inMenuMode, internal)
     if not initDataForMenu({openMenu = true, openInMenuMode = inMenuMode}) then return end
 
     if inMenuMode and not menuMode.isMenuInteractive() then
@@ -223,10 +223,14 @@ local function openMenu(inMenuMode)
 
     local menu = menuHandler.getMenu(commonData.mapMenuId)
     if menu then
+        if not internal then
+            menu:externalActivate()
+        end
         return menu
     end
 
     menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
+        isCreatedExternally = not internal,
         onClose = function ()
             if inMenuMode then
                 menuMode.deactivate()
@@ -235,7 +239,7 @@ local function openMenu(inMenuMode)
     })
 
     local menu = menuHandler.getMenu(commonData.mapMenuId)
-    if menu and menu:updateInteractiveElements() then
+    if menu and menu:updateInteractiveElements{visible = not internal and true or nil} then
         menu:update()
     end
     return menu
@@ -255,7 +259,7 @@ if configLib.data.main.overrideDefault then
                         localStorage.data[commonData.hideInInterfaceMenuFieldId] then
                     return
                 end
-                openMenu()
+                openMenu(nil, true)
             end)
         end,
         function ()
@@ -518,7 +522,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 11,
+        version = 12,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -700,7 +704,7 @@ return {
             end
 
             if options.openMenu then
-                openMenu(options.openInMenuMode)
+                openMenu(options.openInMenuMode, true)
             end
         end,
 

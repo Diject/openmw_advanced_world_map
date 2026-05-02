@@ -51,3 +51,4 @@
 ---@field getDoorHash fun(doorRef: GameObject, destCellId: string) : string gets the door hash for the given door reference and destination cell ID
 ---@field setWorldMapInfo fun(mapInfo: AdvancedWorldMap.MapImageInfo, dirPath: string, mapV1ImagePath: string?): boolean sets the world map info for the map. Used to inject custom map info when the map is initialized.
 ---@field uiElements AdvancedWorldMap.Interface.UIElements
+---@field realTimer fun(time: number, callback: fun()) sets a real time timer
