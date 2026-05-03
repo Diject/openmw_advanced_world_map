@@ -299,6 +299,7 @@ I.Settings.registerGroup{
         color{key = "ui.defaultDarkColor", name = "SettingUIDefaultDarkColor", description = "SettingUIDefaultDarkColorDescription", default = config.default.ui.defaultDarkColor},
         color{key = "ui.defaultLightColor", name = "SettingUIDefaultLightColor", description = "SettingUIDefaultLightColorDescription", default = config.default.ui.defaultLightColor},
         color{key = "ui.worldDefaultColor", name = "SettingUIWorldDefaultColor", description = "SettingUIWorldDefaultColorDescription", default = config.default.ui.worldDefaultColor},
+        color{key = "ui.worldDefaultDarkColor", name = "SettingUIWorldDefaultDarkColor", description = "SettingUIWorldDefaultDarkColorDescription", default = config.default.ui.worldDefaultDarkColor},
         color{key = "ui.worldDefaultLightColor", name = "SettingUIWorldDefaultLightColor", description = "SettingUIWorldDefaultLightColorDescription", default = config.default.ui.worldDefaultLightColor},
         color{key = "ui.worldMarkerShadowColor", name = "SettingUIWorldMarkerShadowColor", description = "SettingUIWorldMarkerShadowColorDescription", default = config.default.ui.worldMarkerShadowColor},
         color{key = "ui.foundMarkerColor", name = "SettingUIFoundMarkerColor", description = "SettingUIFoundMarkerColorDescription", default = config.default.ui.foundMarkerColor},
