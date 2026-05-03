@@ -151,13 +151,17 @@ return function(params)
         return contentData.userData.checked
     end
 
-    meta.setChecked = function(self, checked)
+    meta.setChecked = function(self, checked, executeEvent)
         contentData.userData.checked = checked
 
         if contentData.userData.checked then
             contentData.content[1].content[1].props.alpha = 1
         else
             contentData.content[1].content[1].props.alpha = 0
+        end
+
+        if params.event and executeEvent then
+            params.event(checked, contentData)
         end
 
         params.updateFunc()
