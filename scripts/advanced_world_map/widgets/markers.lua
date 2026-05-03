@@ -16,6 +16,7 @@ local dateLib = require("scripts.advanced_world_map.utils.date")
 
 local commonData = require("scripts.advanced_world_map.common")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 
@@ -74,13 +75,15 @@ function this.updateDiscovered(newDiscovered)
                     if userData.type == commonData.cityMarkerType then
                         handler:setColor(config.data.ui.worldDefaultLightColor)
                     else
-                        handler:setColor(config.data.ui.defaultLightColor)
+                        handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultLightColor or
+                            config.data.ui.defaultLightColor)
                     end
                 elseif discoveredLocs.isDiscovered(userData.cellId) then
                     if userData.type == commonData.cityMarkerType then
                         handler:setColor(config.data.ui.worldDefaultColor)
                     else
-                        handler:setColor(config.data.ui.markerDefaultColor)
+                        handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultColor or
+                            config.data.ui.markerDefaultColor)
                     end
                 end
             end
@@ -971,6 +974,31 @@ function this.onZoomMarkersUpdatedCallback(e)
     end
 end
 eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, this.onZoomMarkersUpdatedCallback, 99999)
+
+
+eventSys.registerHandler(eventSys.EVENT.onMapElementCreated, function (e)
+    if e.mapWidget.cellId then return end
+
+    local userData = e.marker:getUserData()
+    if not userData or userData.type ~= commonData.doorMarkerType and userData.type ~= commonData.doorDescrMarkerType then
+        return
+    end
+    if userData.useWorldColor ~= nil then return end
+
+    local hasTexture = mapTextureHandler.isWorldLocalMapTextureExists(cellLib.getGridCoordinates(e.marker._params.pos))
+    local color
+    if discoveredLocs.isDiscovered(userData.cellId) then
+        if discoveredLocs.isVisited(userData.cellId) then
+            color = hasTexture and config.data.ui.defaultLightColor or config.data.ui.worldDefaultLightColor
+        else
+            color = hasTexture and config.data.ui.markerDefaultColor or config.data.ui.worldDefaultColor
+        end
+    else
+        color = hasTexture and config.data.ui.defaultDarkColor or config.data.ui.worldDefaultDarkColor
+    end
+    userData.useWorldColor = not hasTexture
+    e.marker:setColor(color)
+end, 99999)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)

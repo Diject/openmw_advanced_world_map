@@ -244,6 +244,21 @@ function this.getLocalMapTexture(gridX, gridY)
 end
 
 
+function this.isWorldLocalMapTextureExists(gridX, gridY)
+    local id = string.format("(%d,%d)", gridX, gridY)
+    local cacheVal = this.localMapTextureCache[id]
+    if cacheVal == true then
+        return false
+    elseif cacheVal then
+        return true
+    end
+
+    local texture = this.getLocalMapTexture(gridX, gridY)
+
+    return texture ~= nil
+end
+
+
 function this.isLocalWorldMapTextureInCache(gridX, gridY)
     return this.localMapTextureCache[string.format("(%d,%d)", gridX, gridY)] ~= nil
 end
