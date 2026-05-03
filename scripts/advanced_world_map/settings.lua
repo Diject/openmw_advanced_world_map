@@ -3,6 +3,7 @@ local ui = require('openmw.ui')
 local util = require('openmw.util')
 local input = require('openmw.input')
 local storage = require('openmw.storage')
+local async = require('openmw.async')
 
 local config = require("scripts.advanced_world_map.config.config")
 local commonData = require("scripts.advanced_world_map.common")
@@ -154,6 +155,21 @@ end
 if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.moveHistoryForwardKeyId) then
     I.DijectKeyBindings.registerKey(commonData.moveHistoryForwardKeyId, config.default.input.moveHistoryForwardHotkey)
 end
+
+
+local inputSettingsSection = storage.playerSection(commonData.configInputSectionName)
+local function registerHotkeyListener()
+    if not I.DijectKeyBindings then return end
+
+    inputSettingsSection:subscribe(async:callback(function(s, key)
+        local trigger = config.keyToTrigger[key]
+        if key and config.keyToTrigger[key] then
+            local value = inputSettingsSection:get(key)
+            I.DijectKeyBindings.registerKey(trigger, value)
+        end
+    end))
+end
+registerHotkeyListener()
 
 
 I.Settings.registerGroup{

@@ -1,5 +1,6 @@
 local storage = require('openmw.storage')
 local async = require('openmw.async')
+local I = require('openmw.interfaces')
 
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local commonData = require("scripts.advanced_world_map.common")
@@ -50,6 +51,10 @@ for _, section in pairs(this.storageSections) do
             }
             tableLib.setValueByPath(this.data, key, event.value)
             eventSys.triggerEvent(eventSys.EVENT.onConfigChanged, event)
+
+            if key == "main.menuKey" then
+                I.DijectKeyBindings.registerKey(commonData.menuKeyId, value)
+            end
         else
             this.loadFromStorage(section)
         end

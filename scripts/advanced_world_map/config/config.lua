@@ -43,7 +43,7 @@ this.default = {
         zoomingMul = 1.4,
     },
     legend = {
-        markerSize = 6,
+        markerSize = 7,
         zoomToGroup = 7,
         onlyDiscovered = true,
         visitedCellsOnWorldMap = false,
@@ -121,6 +121,14 @@ this.default = {
         textHeightMul = 0.7,
         worldMarkerShadow = false,
     },
+}
+
+this.keyToTrigger = {
+    ["input.contextMenuHotkey"] = commonData.contextMenuKeyId,
+    ["input.togglePinHotkey"] = commonData.togglePinKeyId,
+    ["input.toggleMapTypeHotkey"] = commonData.toggleMapTypeKeyId,
+    ["input.moveHistoryBackHotkey"] = commonData.moveHistoryBackKeyId,
+    ["input.moveHistoryForwardHotkey"] = commonData.moveHistoryForwardKeyId,
 }
 
 
