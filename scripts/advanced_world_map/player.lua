@@ -573,13 +573,14 @@ return {
         onLoad = onLoad,
         onInit = onInit,
         onTeleported = function ()
-            addNearbyDoors()
-            discoverNearby()
-            if not self.cell.isExterior then
-                async:newUnsavableSimulationTimer(0.1, function ()
+            async:newUnsavableSimulationTimer(0.01, function ()
+                if not self.cell then return end
+                addNearbyDoors()
+                discoverNearby()
+                if not self.cell.isExterior then
                     playerPos.updateExteriorPos()
-                end)
-            end
+                end
+            end)
         end,
         onFrame = function(dt)
             realTimer.updateTimers()

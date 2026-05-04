@@ -113,7 +113,7 @@ local function updateDoorMarkerVisibility(marker, visible)
         end
         userData.disabled = not visible
     elseif userData.type == commonData.doorMarkerType then
-        marker:setAlpha(visible and (config.data.legend.alpha.entrance * 0.01) or (config.data.legend.alpha.entrance * 0.01 / 8))
+        marker:setAlpha(visible and (config.data.legend.alpha.entrance * 0.01) or (config.data.legend.alpha.entrance * 0.01 / 3))
     end
 end
 
@@ -998,6 +998,9 @@ eventSys.registerHandler(eventSys.EVENT.onMapElementCreated, function (e)
     end
     userData.useWorldColor = not hasTexture
     e.marker:setColor(color)
+    if disabledDoors.contains(userData.hash) then
+        updateDoorMarkerVisibility(e.marker, false)
+    end
 end, 99999)
 
 

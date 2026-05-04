@@ -39,6 +39,7 @@ end
 
 function this.init()
     this.doorHashTable = storage.data[commonData.disabledDoorsFieldId] or {}
+    storage.data[commonData.disabledDoorsFieldId] = this.doorHashTable
 end
 
 
