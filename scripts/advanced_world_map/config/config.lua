@@ -120,6 +120,8 @@ this.default = {
         resizerSize = 16,
         textHeightMul = 0.7,
         worldMarkerShadow = false,
+        alpha = 100,
+        minimapAlpha = 100,
     },
 }
 
