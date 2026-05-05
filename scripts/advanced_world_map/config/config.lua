@@ -44,6 +44,7 @@ this.default = {
     },
     legend = {
         markerSize = 7,
+        worldMarkerSize = 12,
         zoomToGroup = 7,
         onlyDiscovered = true,
         visitedCellsOnWorldMap = false,

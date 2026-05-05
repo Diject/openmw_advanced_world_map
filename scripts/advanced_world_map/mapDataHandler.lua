@@ -13,7 +13,7 @@ local commonData = require("scripts.advanced_world_map.common")
 
 local this = {}
 
-this.version = 4
+this.version = 5
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -431,7 +431,7 @@ local function buildData()
         end
     end
 
-    processLines(cellNameLines, 8192 * 6, 4096)
+    processLines(cellNameLines, 8192 * 6, 3072)
 
     this.cellNameData = cellNames
 

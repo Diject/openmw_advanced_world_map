@@ -636,7 +636,7 @@ local function createMarkers(widget, cellId)
                 color = discoveredLocs.isVisited(dt.name) and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
                 textShadow = config.data.ui.worldMarkerShadow and true or nil,
                 shadowColor = config.data.ui.worldMarkerShadow and config.data.ui.worldMarkerShadowColor or nil,
-                fontSize = 10 + math.min(8, dt.count) * 2,
+                fontSize = util.round(config.data.legend.worldMarkerSize + math.min(8, dt.count) * 2),
                 scaleFunc = widget.SCALE_FUNCTION.linear,
                 alpha = config.data.legend.alpha.city * 0.01,
                 useCache = true,
@@ -656,7 +656,7 @@ local function createMarkers(widget, cellId)
 
 
         for _, info in pairs(mapDataHandler.regionNameData or {}) do
-            local fontSize = 14 + math.min(8, info.count) * 3
+            local fontSize = math.floor(config.data.legend.worldMarkerSize * 1.2 + math.min(8, info.count) * 3)
             widget:createTextMarker{
                 layerId = widget.LAYER.region,
                 text = info.name,
