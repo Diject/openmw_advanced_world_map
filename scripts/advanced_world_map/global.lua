@@ -96,7 +96,7 @@ end
 return {
     interfaceName = "AdvancedWorldMap",
     interface = {
-        version = 11,
+        version = 12,
         isMapDataInitialized = function ()
             return mapDataHandler.isInitialized()
         end,
