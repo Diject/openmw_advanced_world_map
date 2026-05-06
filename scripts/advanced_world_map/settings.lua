@@ -304,6 +304,8 @@ I.Settings.registerGroup{
     order = 7,
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
+        boolSetting{key = "ui.thickBorders", name = "SettingUIThickBorders", description = "SettingUIThickBordersDescription", default = config.default.ui.thickBorders},
+        boolSetting{key = "ui.coverHeader", name = "SettingUICoverHeader", description = "SettingUICoverHeaderDescription", default = config.default.ui.coverHeader},
         numberSetting{key = "ui.alpha", name = "SettingUIAlpha", description = "SettingUIAlphaDescription", default = config.default.ui.alpha, min = 0, max = 100},
         numberSetting{key = "ui.minimapAlpha", name = "SettingUIMinimapAlpha", description = "SettingUIMinimapAlphaDescription", default = config.default.ui.minimapAlpha, min = 0, max = 100},
         numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},

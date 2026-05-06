@@ -123,6 +123,8 @@ this.default = {
         worldMarkerShadow = false,
         alpha = 100,
         minimapAlpha = 100,
+        thickBorders = false,
+        coverHeader = false,
     },
 }
 

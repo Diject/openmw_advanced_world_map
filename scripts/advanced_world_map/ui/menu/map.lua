@@ -26,6 +26,7 @@ local l10n = core.l10n(commonData.l10nKey)
 local interval = require("scripts.advanced_world_map.ui.interval")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local borders = require("scripts.advanced_world_map.ui.borders")
+local thickBorders = require("scripts.advanced_world_map.ui.bordersThick")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local button = require("scripts.advanced_world_map.ui.button")
@@ -236,10 +237,10 @@ function menuMeta:getMapWidgetForCell(cellId)
     if not this.cachedMapWidgetLayout[cellKeyId] then
         this.cachedMapWidgetLayout[cellKeyId], this.cachedMapWidgetMetatable[cellKeyId] = mapWidget.new{
             updateFunc = self.update,
-            size = self.mainSize,
+            size = util.vector2(self.mainSize.x - self.borderSize * 2, self.mainSize.y - self.borderSize * 2),
             position = localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0),
             cellId = cellId,
-            screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerHeight),
+            screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerFullHeight),
             zoom = cellId and (localStorage.data[commonData.localMapZoomFieldId] or 0.5) or (localStorage.data[commonData.worldMapZoomFieldId] or 1),
         }
         isNew = true
@@ -247,7 +248,7 @@ function menuMeta:getMapWidgetForCell(cellId)
 
     local meta = this.cachedMapWidgetMetatable[cellKeyId]
     if meta then
-        meta.screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerHeight)
+        meta.screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerFullHeight)
     end
 
     return this.cachedMapWidgetLayout[cellKeyId], meta, isNew
@@ -288,7 +289,7 @@ function menuMeta:setMinimapModeParams()
         local screenSize = uiUtils.getScaledScreenSize()
         local sizeV = config.data.main.minimap.relativeSize
         local minimapModeSize = util.vector2(sizeV.x, sizeV.y):emul(screenSize)
-        self:setMapWidgetSize(minimapModeSize)
+        self:setMapWidgetSize(minimapModeSize - util.vector2(self.borderSize * 2, self.borderSize * 2))
 
         local posV = config.data.main.minimap.relativePosition
         self.menu.layout.props.relativePosition = util.vector2(posV.x, posV.y)
@@ -323,7 +324,20 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
         self.mapWidget:closeRightMouseMenu()
     end
 
-    self.mainLayout.content[1].content[2] = lay
+    -- TODO: make a proper method in mapWidget to update its position
+    -- wrapper to set position in Flex
+    lay.props.position = util.vector2(self.borderSize, self.borderSize)
+    self.mainLayout.content[1].content[2] = {
+        type = ui.TYPE.Widget,
+        props = {
+            size = util.vector2(self.mainSize.x - self:getWidgetWindowWidth(), self.mainSize.y),
+        },
+        content = ui.content{lay}
+    }
+    self.mainLayout.content[1].content[2].userData = {
+        isMapWrapper = true
+    }
+
     self.mapWidget = meta
 
     self.mapWidget:setUpdateFunction(self.update)
@@ -364,7 +378,8 @@ end
 
 function menuMeta:setMapWidgetSize(newSize)
     self.mapWidget:setSize(newSize)
-    self.mainLayout.props.size = util.vector2(self:getWidgetWindowWidth() + newSize.x, newSize.y)
+    self.mainLayout.props.size = util.vector2(self:getWidgetWindowWidth() + newSize.x + self.borderSize * 2,
+        newSize.y + self.borderSize * 2)
     self.mainSize = self.mainLayout.props.size
 
     local hSize = self.headerLayout.props.size
@@ -374,7 +389,55 @@ function menuMeta:setMapWidgetSize(newSize)
     self.menu.layout.props.size = size
     self.size = size
 
+    -- wrapper to set position in Flex
+    local wrapper = self.mainLayout and self.mainLayout.content[1].content[2]
+    if wrapper and wrapper.userData and wrapper.userData.isMapWrapper then
+        wrapper.props.size = util.vector2(self.mainSize.x - self:getWidgetWindowWidth(), self.mainSize.y)
+    end
+
     return size
+end
+
+
+function menuMeta:setBorders(thick, coverHeader)
+    local content = self.mainLayout.content
+    local contentCount = #content
+    for i = contentCount, contentCount - 7, -1 do
+        uiUtils.removeFromContent(content, i)
+    end
+
+    self.borderSize = thick and 4 or 2
+    self.headerOffset = coverHeader and self.borderSize or 0
+    self.headerFullHeight = self.headerHeight + 2 + self.headerOffset
+    self.mainSize = util.vector2(self.size.x, self.size.y - self.headerFullHeight)
+
+    self.headerLayout.content[3].props.position = util.vector2(-self.borderSize - 2, (self.headerOffset * 0.5) + 1)
+    self.widgetActiveHeaderLayout.props.position = util.vector2(self.borderSize + 2, self.headerOffset * 0.5 + 1)
+    self.mainLayout.props.position = util.vector2(0, self.headerFullHeight)
+
+    local bords = thick and {thickBorders.borders()} or {borders()}
+
+    local headerContent = self.headerLayout.content
+    local headerContentCount = #headerContent
+    if headerContentCount == 8 then
+        for i = headerContentCount, headerContentCount - 4, -1 do
+            uiUtils.removeFromContent(headerContent, i)
+        end
+    end
+
+    if coverHeader then
+        for i = 1, 3 do
+            self.headerLayout.content:add(bords[i])
+        end
+        self.headerLayout.content:add(bords[5])
+        self.headerLayout.content:add(bords[6])
+    end
+
+    self.updateMapWidgetWidth()
+
+    for _, b in ipairs(bords) do
+        content:add(b)
+    end
 end
 
 
@@ -433,11 +496,13 @@ function menuMeta:updateInteractiveElements(params)
         header.content[2] = self.widgetActiveHeaderLayout
         self.mainLayout.content[2].props.visible = true
         self.mainLayout.props.alpha = config.data.ui.alpha * 0.01
+        self:setBorders(config.data.ui.thickBorders, config.data.ui.coverHeader)
+
         self.isInMinimapMode = false
 
         if self.mainSize.x ~= self.defaultMainSize.x or self.mainSize.y ~= self.defaultMainSize.y then
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
-            self:setMapWidgetSize(self.defaultMainSize)
+            self:setMapWidgetSize(self.defaultMainSize - util.vector2(self.borderSize * 2, self.borderSize * 2))
             local pos = config.data.main.relativePosition
             self.menu.layout.props.relativePosition = util.vector2(pos.x / 100, pos.y / 100)
             self.mapWidget:focusOnWorldPosition(mapCenter)
@@ -453,6 +518,8 @@ function menuMeta:updateInteractiveElements(params)
         header.content[2] = self.widgetInactiveHeaderLayout
         self.mainLayout.content[2].props.visible = false
         self.mainLayout.props.alpha = config.data.ui.minimapAlpha * 0.01
+        self:setBorders(false, false)
+
         if #self.widgetInactiveHeaderLayout.content == 0 then
             header.props.visible = false
         end
@@ -641,9 +708,12 @@ function this.create(params)
 
     local headerHeight = params.fontSize * 1.25
     meta.headerHeight = headerHeight
-    local headerSize = util.vector2(meta.size.x, headerHeight)
+    meta.borderSize = config.data.ui.thickBorders and 4 or 2
+    meta.headerOffset = config.data.ui.coverHeader and meta.borderSize or 0
+    meta.headerFullHeight = headerHeight + 2 + meta.headerOffset
+    local headerSize = util.vector2(meta.size.x, meta.headerFullHeight)
 
-    local mainSize = util.vector2(meta.size.x, meta.size.y - headerHeight)
+    local mainSize = util.vector2(meta.size.x, meta.size.y - meta.headerFullHeight)
     meta.mainSize = mainSize
     meta.defaultMainSize = mainSize
 
@@ -665,6 +735,7 @@ function this.create(params)
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
             arrange = ui.ALIGNMENT.Center,
+            position = util.vector2(meta.borderSize + 2, meta.headerOffset * 0.5 + 1)
         },
         userData = {
 
@@ -682,6 +753,7 @@ function this.create(params)
             autoSize = false,
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
+            position = util.vector2(0, meta.headerOffset * 0.5 + 1),
             arrange = ui.ALIGNMENT.Center,
             align = ui.ALIGNMENT.Center,
         },
@@ -845,7 +917,8 @@ function this.create(params)
                 if meta.headerMovedDistance > 20 then
                     props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - e.position):ediv(screenSize)
                     meta.screenPosition = props.relativePosition:emul(screenSize)
-                    meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(meta:getWidgetWindowWidth(), meta.headerHeight)
+                    meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
+                        util.vector2(meta.borderSize, meta.borderSize)
                     meta:update()
                 end
 
@@ -874,7 +947,8 @@ function this.create(params)
                     horizontal = true,
                     arrange = ui.ALIGNMENT.Center,
                     relativePosition = util.vector2(1, 0.5),
-                    anchor = util.vector2(1, 0.5)
+                    anchor = util.vector2(1, 0.5),
+                    position = util.vector2(-meta.borderSize - 2, (meta.headerOffset * 0.5) + 1)
                 },
                 userData = {},
                 content = ui.content{
@@ -922,6 +996,15 @@ function this.create(params)
         }
     }
 
+    if config.data.ui.coverHeader then
+        local bords = config.data.ui.thickBorders and {thickBorders.borders()} or {borders()}
+        for i = 1, 3 do
+            headerLayout.content:add(bords[i])
+        end
+        headerLayout.content:add(bords[5])
+        headerLayout.content:add(bords[6])
+    end
+
     meta.headerLayout = headerLayout
     meta.headerMovedDistance = 0
 
@@ -937,9 +1020,19 @@ function this.create(params)
 
     meta.updateMapWidgetWidth = function (self)
         local widgetWindowWidth = meta:getWidgetWindowWidth()
-        local mapWidgetSize = util.vector2(math.max(1, self.mainSize.x - widgetWindowWidth), self.mainSize.y)
-        self.mapWidget:setSize(mapWidgetSize)
-        self.mapWidget.screenPosition = self.screenPosition + util.vector2(widgetWindowWidth, headerHeight)
+        local mapWidgetSize = util.vector2(math.max(1, meta.mainSize.x - widgetWindowWidth - meta.borderSize * 2),
+            meta.mainSize.y - meta.borderSize * 2)
+        meta.mapWidget:setSize(mapWidgetSize)
+        meta.mapWidget.layout.props.position = util.vector2(meta.borderSize, meta.borderSize)
+
+        -- wrapper to set position in Flex
+        local wrapper = meta.mainLayout and meta.mainLayout.content[1].content[2]
+        if wrapper and wrapper.userData and wrapper.userData.isMapWrapper then
+            wrapper.props.size = util.vector2(meta.mainSize.x - widgetWindowWidth, meta.mainSize.y)
+        end
+
+        meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(widgetWindowWidth, meta.headerFullHeight) +
+            util.vector2(meta.borderSize, meta.borderSize)
     end
 
     local mainLayout
@@ -947,7 +1040,7 @@ function this.create(params)
         type = ui.TYPE.Widget,
         props = {
             size = mainSize,
-            position = util.vector2(0, headerHeight),
+            position = util.vector2(0, meta.headerFullHeight),
         },
         userData = {
 
