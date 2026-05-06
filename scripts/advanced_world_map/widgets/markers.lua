@@ -72,23 +72,11 @@ function this.updateDiscovered(newDiscovered)
             local userData = handler:getUserData()
             if userData and userData.cellId then
                 if discoveredLocs.isVisited(userData.cellId) then
-                    if userData.type == commonData.cityMarkerType then
-                        handler:setColor(config.data.ui.worldDefaultLightColor)
-                        if config.data.ui.worldMarkerShadow then
-                            handler._params.shadowColor = config.data.ui.worldMarkerShadowColor
-                            handler._elemLayout.props.textShadowColor = config.data.ui.worldMarkerShadowColor
-                        end
-                    else
-                        handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultLightColor or
-                            config.data.ui.defaultLightColor)
-                    end
+                    handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultLightColor or
+                        config.data.ui.defaultLightColor)
                 elseif discoveredLocs.isDiscovered(userData.cellId) then
-                    if userData.type == commonData.cityMarkerType then
-                        handler:setColor(config.data.ui.worldDefaultColor)
-                    else
-                        handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultColor or
-                            config.data.ui.markerDefaultColor)
-                    end
+                    handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultColor or
+                        config.data.ui.markerDefaultColor)
                 end
             end
         end
@@ -98,6 +86,10 @@ function this.updateDiscovered(newDiscovered)
             if userData and userData.type == commonData.cityRegionMarkerType then
                 updateVisibility(handler)
                 handler:setColor(config.data.ui.worldDefaultLightColor)
+                if config.data.ui.worldMarkerShadow then
+                    handler._params.shadowColor = config.data.ui.worldMarkerShadowColor
+                    handler._elemLayout.props.textShadowColor = config.data.ui.worldMarkerShadowColor
+                end
             end
         end
     end
