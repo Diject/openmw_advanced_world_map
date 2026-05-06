@@ -122,8 +122,8 @@ this.default = {
         resizerSize = 16,
         textHeightMul = 0.7,
         worldMarkerShadow = false,
-        alpha = 100,
-        minimapAlpha = 100,
+        alpha = 100, -- deprecated
+        minimapAlpha = 100, -- deprecated
         thickBorders = false,
         coverHeader = false,
     },

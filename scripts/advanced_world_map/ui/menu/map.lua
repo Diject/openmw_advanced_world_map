@@ -495,7 +495,7 @@ function menuMeta:updateInteractiveElements(params)
         header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
         header.content[2] = self.widgetActiveHeaderLayout
         self.mainLayout.content[2].props.visible = true
-        self.mainLayout.props.alpha = config.data.ui.alpha * 0.01
+        -- self.mainLayout.props.alpha = config.data.ui.alpha * 0.01
         self:setBorders(config.data.ui.thickBorders, config.data.ui.coverHeader)
 
         self.isInMinimapMode = false
@@ -1140,7 +1140,7 @@ function this.create(params)
         props = {
             size = meta.size,
             relativePosition = params.relativePosition,
-            alpha = config.data.ui.alpha * 0.01,
+            -- alpha = config.data.ui.alpha * 0.01,
         },
         userData = {
             meta = meta,
