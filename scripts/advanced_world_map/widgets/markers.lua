@@ -74,6 +74,10 @@ function this.updateDiscovered(newDiscovered)
                 if discoveredLocs.isVisited(userData.cellId) then
                     if userData.type == commonData.cityMarkerType then
                         handler:setColor(config.data.ui.worldDefaultLightColor)
+                        if config.data.ui.worldMarkerShadow then
+                            handler._params.shadowColor = config.data.ui.worldMarkerShadowColor
+                            handler._elemLayout.props.textShadowColor = config.data.ui.worldMarkerShadowColor
+                        end
                     else
                         handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultLightColor or
                             config.data.ui.defaultLightColor)
@@ -627,15 +631,17 @@ local function createMarkers(widget, cellId)
 
             this.markersByName[dt.name] = this.markersByName[dt.name] or {}
 
+            local isVisited = discoveredLocs.isVisited(dt.name)
             local textMarkerHandler = widget:createTextMarker{
                 id = id,
                 layerId = widget.LAYER.name,
                 text = dt.name,
                 anchor = util.vector2(0.5, 0.5),
                 pos = util.vector2(dt.posX, dt.posY),
-                color = discoveredLocs.isVisited(dt.name) and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
+                color = isVisited and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
                 textShadow = config.data.ui.worldMarkerShadow and true or nil,
-                shadowColor = config.data.ui.worldMarkerShadow and config.data.ui.worldMarkerShadowColor or nil,
+                shadowColor = config.data.ui.worldMarkerShadow and
+                    (isVisited and config.data.ui.worldMarkerShadowColor or config.data.ui.worldMarkerShadowLightColor) or nil,
                 fontSize = util.round(config.data.legend.worldMarkerSize + math.min(8, dt.count) * 2),
                 scaleFunc = widget.SCALE_FUNCTION.linear,
                 alpha = config.data.legend.alpha.city * 0.01,

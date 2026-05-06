@@ -108,6 +108,7 @@ this.default = {
         worldDefaultLightColor = commonData.defaultLightColor,
         worldDefaultDarkColor = commonData.defaultDarkColor,
         worldMarkerShadowColor = commonData.defaultColor,
+        worldMarkerShadowLightColor = commonData.defaultLightColor,
         whiteColor = commonData.whiteColor,
         backgroundColor = commonData.backgroundColor,
         -- disabledColor = commonData.disabledColor,
