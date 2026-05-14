@@ -25,6 +25,8 @@ this.togglePinKeyId = "AdvWMap:togglePinKey"
 this.contextMenuKeyId = "AdvWMap:contextMenuKey"
 this.moveHistoryBackKeyId = "AdvWMap:moveHistoryBackKey"
 this.moveHistoryForwardKeyId = "AdvWMap:moveHistoryForwardKey"
+this.toggleTransportKeyId = "AdvWMap:toggleTransportKey"
+this.cycleTransportKeyId = "AdvWMap:cycleTransportKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 
@@ -53,6 +55,11 @@ this.fastTravelRealTimestampFieldId = "fastTravelRealTimestampFieldId"
 this.lastMapPosFieldId = "lastMapPosFieldId"
 this.pinnedStateFieldId = "pinnedStateFieldId"
 this.hideInInterfaceMenuFieldId = "hideInInterfaceMenuFieldId"
+this.transportCaravanersFieldId = "transportCaravaners"
+this.transportShipmastersFieldId = "transportShipmasters"
+this.transportGuildGuidesFieldId = "transportGuildGuides"
+this.transportOtherFieldId = "transportOther"
+this.transportLocalFieldId = "transportLocal"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
@@ -64,6 +71,8 @@ this.doorDescrMarkerType = "AdvWMap:DoorDescrMarker"
 this.cityRegionMarkerType = "AdvWMap:CityRegionMarker"
 this.noteMarkerType = "AdvWMap:NoteMarker"
 this.noteNameMarkerType = "AdvWMap:NoteNameMarker"
+this.travelDirectionMarkerType = "AdvWMap:TravelDirectionMarker"
+this.travelLineMarkerType = "AdvWMap:TravelLineMarker"
 
 this.widgetPriorityField = "AdvWMap:widgetPriority"
 
@@ -102,6 +111,18 @@ this.backgroundColor = util.color.rgb(this.backgroundColorData[1], this.backgrou
 
 this.missedTextureColorData = {0.15, 0.15, 0.10}
 this.defaultTextureColor = util.color.rgb(this.missedTextureColorData[1], this.missedTextureColorData[2], this.missedTextureColorData[3])
+
+this.travelCaravanerColorData = {0.9, 0.9, 0.65}
+this.travelCaravanerColor = util.color.rgb(this.travelCaravanerColorData[1], this.travelCaravanerColorData[2], this.travelCaravanerColorData[3])
+
+this.travelShipmasterColorData = {0.3, 0.3, 1}
+this.travelShipmasterColor = util.color.rgb(this.travelShipmasterColorData[1], this.travelShipmasterColorData[2], this.travelShipmasterColorData[3])
+
+this.travelGuildGuideColorData = {0.83, 0.2, 0.83}
+this.travelGuildGuideColor = util.color.rgb(this.travelGuildGuideColorData[1], this.travelGuildGuideColorData[2], this.travelGuildGuideColorData[3])
+
+this.travelOtherColorData = {0.4, 0.4, 0.8}
+this.travelOtherColor = util.color.rgb(this.travelOtherColorData[1], this.travelOtherColorData[2], this.travelOtherColorData[3])
 
 this.mapWaterColor = util.color.rgb(36 / 255, 53 / 255, 48 / 255)
 this.mapInteriorBackgroundColor = util.color.rgb(0, 0, 0)

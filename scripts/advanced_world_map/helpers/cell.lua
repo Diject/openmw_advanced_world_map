@@ -1,4 +1,3 @@
-local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local maxDepth = 10
@@ -6,16 +5,15 @@ local maxDepth = 10
 local this = {}
 
 
+---@param dataTable table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
 ---@return any[]?
-function this.findExitPoss(cellId, checked, res, depth)
-    if not dataHandler.isInitialized() then return end
-
+function this.findExitPoss(cellId, dataTable, checked, res, depth)
+    if not dataTable or not cellId then return end
     if not checked then checked = {} end
     if not res then res = {} end
     if not depth then depth = 1 end
 
-    ---@type table<string, AdvancedWorldMap.DataHandler.EntranceData>
-    local doors = dataHandler.entrances[cellId]
+    local doors = dataTable[cellId]
 
     if (checked[cellId] and checked[cellId] < depth) or depth > maxDepth then
         return
@@ -28,7 +26,7 @@ function this.findExitPoss(cellId, checked, res, depth)
         if door.isDEx then
             res[door] = depth
         else
-            this.findExitPoss(door.dCId, checked, res, depth + 1)
+            this.findExitPoss(door.dCId, dataTable, checked, res, depth + 1)
         end
 
         ::continue::

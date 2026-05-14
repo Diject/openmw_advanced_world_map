@@ -238,6 +238,7 @@ I.Settings.registerGroup{
         numberSetting{key = "legend.alpha.region", name = "SettingLegendRegionAlpha", description = "SettingLegendRegionAlphaDescription", default = config.default.legend.alpha.region, min = 0, max = 100},
         numberSetting{key = "legend.alpha.city", name = "SettingLegendCityAlpha", description = "SettingLegendCityAlphaDescription", default = config.default.legend.alpha.city, min = 0, max = 100},
         numberSetting{key = "legend.alpha.entrance", name = "SettingLegendEntranceAlpha", description = "SettingLegendEntranceAlphaDescription", default = config.default.legend.alpha.entrance, min = 0, max = 100},
+        numberSetting{key = "legend.alpha.transport", name = "SettingLegendTransportAlpha", description = "SettingLegendTransportAlphaDescription", default = config.default.legend.alpha.transport, min = 0, max = 100},
     },
 }
 
@@ -291,6 +292,8 @@ I.Settings.registerGroup{
         inputKey{key = "input.moveHistoryForwardHotkey", name = "SettingInputMoveHistoryForwardKey", description = "SettingInputMoveHistoryForwardKeyDescription", action = commonData.moveHistoryForwardKeyId, default = config.default.input.moveHistoryForwardHotkey},
         inputKey{key = "input.toggleMapTypeHotkey", name = "SettingInputToggleMapTypeKey", description = "SettingInputToggleMapTypeKeyDescription", action = commonData.toggleMapTypeKeyId, default = config.default.input.toggleMapTypeHotkey},
         inputKey{key = "input.togglePinHotkey", name = "SettingInputTogglePinKey", description = "SettingInputTogglePinKeyDescription", action = commonData.togglePinKeyId, default = config.default.input.togglePinHotkey},
+        inputKey{key = "input.toggleTransportHotkey", name = "SettingInputToggleTransportKey", description = "SettingInputToggleTransportKeyDescription", action = commonData.toggleTransportKeyId, default = config.default.input.toggleTransportHotkey},
+        inputKey{key = "input.cycleTransportHotkey", name = "SettingInputCycleTransportKey", description = "SettingInputCycleTransportKeyDescription", action = commonData.cycleTransportKeyId, default = config.default.input.cycleTransportHotkey},
     }
 }
 
@@ -327,5 +330,9 @@ I.Settings.registerGroup{
         color{key = "ui.foundMarkerLightColor", name = "SettingUIFoundMarkerLightColor", description = "SettingUIFoundMarkerLightColorDescription", default = config.default.ui.foundMarkerLightColor},
         color{key = "ui.textShadowColor", name = "SettingUITextShadowColor", description = "SettingUITextShadowColorDescription", default = config.default.ui.textShadowColor},
         color{key = "ui.defaultTextureColor", name = "SettingUIDefaultTextureColor", description = "SettingUIDefaultTextureColorDescription", default = config.default.ui.defaultTextureColor},
+        color{key = "ui.travelCaravanerColor", name = "SettingUITravelCaravanerColor", description = "SettingUITravelCaravanerColorDescription", default = config.default.ui.travelCaravanerColor},
+        color{key = "ui.travelShipmasterColor", name = "SettingUITravelShipmasterColor", description = "SettingUITravelShipmasterColorDescription", default = config.default.ui.travelShipmasterColor},
+        color{key = "ui.travelGuildGuideColor", name = "SettingUITravelGuildGuideColor", description = "SettingUITravelGuildGuideColorDescription", default = config.default.ui.travelGuildGuideColor},
+        color{key = "ui.travelOtherColor", name = "SettingUITravelOtherColor", description = "SettingUITravelOtherColorDescription", default = config.default.ui.travelOtherColor},
     },
 }

@@ -10,10 +10,11 @@ local log = require("scripts.advanced_world_map.utils.log")
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local commonData = require("scripts.advanced_world_map.common")
+local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 local this = {}
 
-this.version = 5
+this.version = 6
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -27,6 +28,8 @@ this.cellNameById = nil
 this.grid = nil
 ---@type {[1] : number, [2] : number, [3] : number, [4] : number}[]
 this.worldMapTileRectangles = {}
+---@type advancedWorldMap.dynamicDataHandler.transport
+this.transport = nil
 
 this.cellCount = 0
 this.contentFileCount = 0
@@ -52,6 +55,17 @@ local initialized = false
 ---@field name string destination cell name
 ---@field fName string destination cell full name
 ---@field dHash string door hash
+
+---@class advancedWorldMap.dynamicDataHandler.transport
+---@field nodes advancedWorldMap.dynamicDataHandler.transport.node[] list of transport nodes
+---@field actors table<string, {tp: integer, ns: integer[]}> by npc record id
+---@field data table<integer, integer[]> list of node ids by transport type (1 - caravaner, 2 - shipmaster, 3 - guild guide, 4 - gondolier)
+
+---@class advancedWorldMap.dynamicDataHandler.transport.node
+---@field tp integer type (1 - caravaner, 2 - shipmaster, 3 - guild guide, 4 - gondolier)
+---@field p Vector2 position
+---@field ls integer[] list of node ids that have this node in their list of destinations
+---@field ars string[]? list of actor record ids that are on this node
 
 local function isContentFile(name)
     name = name:lower()
@@ -207,6 +221,171 @@ local function worldCoverWithRectanglesFast(occupied)
     return res
 end
 
+
+---@param entrances table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
+local function buildTransportData(entrances)
+    local world = require("openmw.world")
+
+    local transportNpcs = {}
+    local nodes = {}
+    local exitNodes = {}
+    local transportClass = {
+        ["caravaner"] = 1,
+        ["shipmaster"] = 2,
+        ["t_mw_riverstriderservice"] = 2,
+        ["guild guide"] = 3,
+        ["gondolier"] = 4,
+    }
+    local transport = {nodes = nodes, actors = transportNpcs, data = {}}
+    for _, id in pairs(transportClass) do
+        transport.data[id] = {}
+    end
+    transport.data[-1] = {}
+
+    local function getNodeId(pos, tp)
+        local unknownTypeNode
+        local unknownTypeNodeId
+        local unknownTypeNodeDist = math.huge
+        local node
+        local nodeId
+        local dist = math.huge
+        for i, nodeDt in pairs(nodes) do
+            local d = commonData.distance2D(nodeDt.p, pos)
+            if d < dist then
+                dist = d
+                if nodeDt.tp == tp or tp == -1 and nodeDt.tp ~= -1 then
+                    node = nodeDt
+                    nodeId = i
+                end
+            end
+            if d < unknownTypeNodeDist then
+                unknownTypeNodeDist = d
+                if nodeDt.tp == -1 and tp ~= -1 then
+                    unknownTypeNode = nodeDt
+                    unknownTypeNodeId = i
+                end
+            end
+        end
+
+        if node and dist < 2048 then
+            return nodeId, node
+        end
+
+        if unknownTypeNode and unknownTypeNodeDist < 2048 then
+            unknownTypeNode.tp = tp
+            return unknownTypeNodeId, unknownTypeNode
+        end
+
+        local ind = #nodes + 1
+        nodes[ind] = {tp = tp, p = pos, ls = {}}
+        return ind, nodes[ind]
+    end
+
+    for _, rec in pairs(types.NPC.records) do
+        if not rec.travelDestinations then
+            goto continue
+        end
+
+        local data = {tp = transportClass[rec.class or ""] or -1, ns = {}}
+
+        for _, destDt in pairs(rec.travelDestinations) do
+            if not destDt.cellId then goto continue end
+            if destDt.cellId:find(commonData.exteriorCellLabel) then
+                local pos = destDt.position
+                local nodeId = getNodeId(pos, data.tp)
+
+                data.ns[nodeId] = true
+            else
+                local cachedExitNode = exitNodes[destDt.cellId]
+                if cachedExitNode then
+                    data.ns[cachedExitNode] = true
+                else
+                    local exits = cellHelper.findExitPoss(destDt.cellId, entrances)
+                    if not exits or not exits[1] then goto continue end
+
+                    local exit = exits[1]
+                    local nodeId = getNodeId(exit, data.tp)
+                    data.ns[nodeId] = true
+
+                    exitNodes[destDt.cellId] = nodeId
+                end
+            end
+
+            ::continue::
+        end
+
+        if next(data.ns) then
+            data.ns = tableLib.keys(data.ns)
+            transportNpcs[rec.id] = data
+        end
+
+        ::continue::
+    end
+
+    for _, cell in pairs(world.cells) do
+        if not cell.id then goto continue end
+
+        local actors = cell:getAll(types.NPC)
+        for _, actor in pairs(actors) do
+            local transporterData = transportNpcs[actor.recordId]
+            if not transporterData then goto continue end
+
+            local actorNodeId
+            if cell.isExterior then
+                actorNodeId = getNodeId(actor.position, transporterData.tp)
+            else
+                local cachedExitNode = exitNodes[cell.id]
+                if cachedExitNode then
+                    actorNodeId = cachedExitNode
+                else
+                    local exits = cellHelper.findExitPoss(cell.id, entrances)
+                    if not exits or not exits[1] then goto continue end
+
+                    local exit = exits[1]
+                    local nodeId = getNodeId(exit, transporterData.tp)
+                    actorNodeId = nodeId
+
+                    exitNodes[cell.id] = nodeId
+                end
+            end
+
+            if actorNodeId then
+                local actorNode = nodes[actorNodeId]
+                if actorNode then
+                    actorNode.ars = actorNode.ars or {}
+                    table.insert(actorNode.ars, actor.recordId)
+
+                    for _, nodeId in pairs(transporterData.ns) do
+                        if nodeId ~= actorNodeId then
+                            local nDt = nodes[nodeId]
+                            if not nDt then goto continue end
+
+                            if nDt.tp == -1 then
+                                nDt.tp = actorNode.tp
+                            end
+
+                            actorNode.ls[nodeId] = true
+                        end
+
+                        ::continue::
+                    end
+
+                end
+            end
+
+            ::continue::
+        end
+
+        ::continue::
+    end
+
+    for i, nodeDt in pairs(nodes) do
+        nodeDt.ls = tableLib.keys(nodeDt.ls)
+        table.insert(transport.data[nodeDt.tp], i)
+    end
+
+    return transport
+end
 
 
 local function buildData()
@@ -472,6 +651,7 @@ local function buildData()
     end
     this.entrances = entrances
 
+    this.transport = buildTransportData(entrances)
 end
 
 
@@ -484,6 +664,7 @@ function this.globalBuildData(playerRef, options)
         cellNameById = this.cellNameById,
         grid = this.grid,
         worldMapTileRectangles = this.worldMapTileRectangles,
+        transport = this.transport,
         cellCount = this.cellCount,
         options = options,
         plId = playerRef.id,
@@ -521,6 +702,7 @@ function this.playerInit(playerRef, cellCount, options)
         this.cellNameById = data.cellNameById or {}
         this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
         this.worldMapTileRectangles = data.worldMapTileRectangles or {}
+        this.transport = data.transport or {}
         this.cellCount = data.cellCount or 0
         this.contentFileCount = data.contentFileCount or 0
 
@@ -531,6 +713,7 @@ function this.playerInit(playerRef, cellCount, options)
             cellNameById = this.cellNameById,
             grid = this.grid,
             worldMapTileRectangles = this.worldMapTileRectangles,
+            transport = this.transport,
         })
 
         if options then
@@ -552,6 +735,7 @@ function this.updateData(playerRef, data)
     this.cellNameById = data.cellNameById or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
+    this.transport = data.transport or {}
     this.cellCount = data.cellCount or 0
     this.contentFileCount = data.contentFileCount or 0
 
@@ -562,6 +746,7 @@ function this.updateData(playerRef, data)
     stor:set("cellNameById", this.cellNameById)
     stor:set("grid", this.grid)
     stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
+    stor:set("transport", this.transport)
     stor:set("cellCount", this.cellCount)
     stor:set("contentFileCount", #core.contentFiles.list)
     stor:set("version", this.version)
@@ -585,6 +770,7 @@ function this.loadMapData(data)
     this.cellNameById = data.cellNameById or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
+    this.transport = data.transport or {}
 
     initialized = true
 end

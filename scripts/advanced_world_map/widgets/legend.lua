@@ -7,10 +7,12 @@ local playerRef = require("openmw.self")
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
+local keys = require("scripts.advanced_world_map.input.keys")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local borders = require("scripts.advanced_world_map.ui.borders")
@@ -25,6 +27,25 @@ local widgetIcon = ui.texture{ path = commonData.mapMarkerPath }
 ---@param menu advancedWorldMap.ui.menu.map
 local function create(menu)
 
+    local tooltipContent = ui.content{
+        {
+            type = ui.TYPE.TextEdit,
+            props = {
+                text = l10n("LegendWidgetTooltip"),
+                textColor = config.data.ui.defaultColor,
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0.5, 0),
+                size = util.vector2(uiUtils.getScaledScreenSize().x / 5, 0),
+                multiline = true,
+                wordWrap = true,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+                readOnly = true,
+                autoSize = true,
+            }
+        }
+    }
+
     local iconLayout = {
         type = ui.TYPE.Image,
         props = {
@@ -32,6 +53,34 @@ local function create(menu)
             anchor = util.vector2(0.5, 0.5),
             size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
             color = config.data.ui.defaultColor,
+        },
+        events = {
+            mousePress = async:callback(function(e, layout)
+                if e.button ~= 3 then return end
+
+                if config.data.message.transportFeatureInfoShown == 0 then
+                    config.setValue("message.transportFeatureInfoShown", 1)
+                end
+
+                local val = not config.data.legend.visibility.transport
+                config.setValue("legend.visibility.transport", val)
+                menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.transport, val)
+
+                if menu:isWidgetActive("AdvancedWorldMap:Legend") then
+                    menu:closeActiveWidget()
+                    menu:openWidget("AdvancedWorldMap:Legend")
+                end
+
+                menu:update()
+            end),
+
+            mouseMove = async:callback(function(e, layout)
+                tooltip.createOrMove(e, layout, tooltipContent, 1)
+            end),
+
+            focusLoss = async:callback(function(e, layout)
+                tooltip.destroy(layout)
+            end),
         }
     }
 
@@ -182,6 +231,161 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         },
     }
 
+    local transportLabelText = {l10n("Transport")}
+    if config.data.input.toggleTransportHotkey then
+        table.insert(transportLabelText, string.format(
+            "[%s]",
+            keys.keyCombinationToString(config.data.input.toggleTransportHotkey)
+        ))
+    end
+    if config.data.input.cycleTransportHotkey then
+        table.insert(transportLabelText, string.format(
+            "[%s]",
+            keys.keyCombinationToString(config.data.input.cycleTransportHotkey)
+        ))
+    end
+    transportLabelText = table.concat(transportLabelText, " ") ---@diagnostic disable-line: cast-local-type, param-type-mismatch
+
+    local transportLayerCB = checkBox{
+        updateFunc = menu.update,
+        text = transportLabelText,
+        textSize = config.data.ui.fontSize,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.legend.visibility.transport,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
+        event = function (checked, layout)
+            config.setValue("legend.visibility.transport", checked)
+            menu.mapWidget:setLayerVisibility(menu.mapWidget.LAYER.transport, checked)
+            menu:update()
+        end,
+    }
+
+    local transportFlex = {
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = false,
+            position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        },
+        content = ui.content{
+            checkBox{
+                updateFunc = menu.update,
+                text = l10n("TransportCaravanersCB"),
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0, 0.5),
+                checked = localStorage.data[commonData.transportCaravanersFieldId] ~= false,
+                getScrollBoxMeta = function ()
+                    return e.scrollBox
+                end,
+                event = function (checked, layout)
+                    localStorage.data[commonData.transportCaravanersFieldId] = checked
+                    local cachedMapWidget = e.menu:getCachedMapWidget()
+                    if cachedMapWidget and cachedMapWidget.userData.updateTravelMarkers then
+                        cachedMapWidget.userData.updateTravelMarkers(1)
+                    end
+                    menu:update()
+                end
+            },
+            interval(0, config.data.ui.fontSize / 4),
+            checkBox{
+                updateFunc = menu.update,
+                text = l10n("TransportShipmastersCB"),
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0, 0.5),
+                checked = localStorage.data[commonData.transportShipmastersFieldId] ~= false,
+                getScrollBoxMeta = function ()
+                    return e.scrollBox
+                end,
+                event = function (checked, layout)
+                    localStorage.data[commonData.transportShipmastersFieldId] = checked
+                    local cachedMapWidget = e.menu:getCachedMapWidget()
+                    if cachedMapWidget and cachedMapWidget.userData.updateTravelMarkers then
+                        cachedMapWidget.userData.updateTravelMarkers(2)
+                    end
+                    menu:update()
+                end
+            },
+            interval(0, config.data.ui.fontSize / 4),
+            checkBox{
+                updateFunc = menu.update,
+                text = l10n("TransportGuildGuidesCB"),
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0, 0.5),
+                checked = localStorage.data[commonData.transportGuildGuidesFieldId] ~= false,
+                getScrollBoxMeta = function ()
+                    return e.scrollBox
+                end,
+                event = function (checked, layout)
+                    localStorage.data[commonData.transportGuildGuidesFieldId] = checked
+                    local cachedMapWidget = e.menu:getCachedMapWidget()
+                    if cachedMapWidget and cachedMapWidget.userData.updateTravelMarkers then
+                        cachedMapWidget.userData.updateTravelMarkers(3)
+                    end
+                    menu:update()
+                end
+            },
+            interval(0, config.data.ui.fontSize / 4),
+            checkBox{
+                updateFunc = menu.update,
+                text = l10n("TransportOtherCB"),
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0, 0.5),
+                checked = localStorage.data[commonData.transportOtherFieldId] == true,
+                getScrollBoxMeta = function ()
+                    return e.scrollBox
+                end,
+                event = function (checked, layout)
+                    localStorage.data[commonData.transportOtherFieldId] = checked
+                    local cachedMapWidget = e.menu:getCachedMapWidget()
+                    if cachedMapWidget and cachedMapWidget.userData.updateTravelMarkers then
+                        cachedMapWidget.userData.updateTravelMarkers(4)
+                    end
+                    menu:update()
+                end
+            },
+            interval(0, config.data.ui.fontSize / 4),
+            checkBox{
+                updateFunc = menu.update,
+                text = l10n("TransportLocalCB"),
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0, 0.5),
+                checked = localStorage.data[commonData.transportLocalFieldId] ~= false,
+                getScrollBoxMeta = function ()
+                    return e.scrollBox
+                end,
+                event = function (checked, layout)
+                    localStorage.data[commonData.transportLocalFieldId] = checked
+                    local cachedMapWidget = e.menu:getCachedMapWidget()
+                    if cachedMapWidget and cachedMapWidget.userData.updateTravelMarkers then
+                        cachedMapWidget.userData.updateTravelMarkers()
+                    end
+                    menu:update()
+                end
+            },
+            interval(0, config.data.ui.fontSize / 4),
+            checkBox{
+                updateFunc = menu.update,
+                text = l10n("TransportOnlyDiscoveredCB"),
+                textSize = config.data.ui.fontSize,
+                anchor = util.vector2(0, 0.5),
+                checked = config.data.legend.transportOnlyDiscovered,
+                getScrollBoxMeta = function ()
+                    return e.scrollBox
+                end,
+                event = function (checked, layout)
+                    config.setValue("legend.transportOnlyDiscovered", checked)
+                    local cachedMapWidget = e.menu:getCachedMapWidget()
+                    if cachedMapWidget and cachedMapWidget.userData.updateTravelMarkers then
+                        cachedMapWidget.userData.updateTravelMarkers()
+                    end
+                    menu:update()
+                end
+            },
+        }
+    }
+
     local regionsLayerCB = checkBox{
         updateFunc = menu.update,
         text = l10n("Regions"),
@@ -279,17 +483,29 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         content = ui.content{
             addVPadding(focusOnPlayerCB, 2),
             addVPadding(layerVisibilityLabel),
-            addVPadding(regionsLayerCB),
-            addVPadding(citiesLayerCB),
-            addVPadding(playerLayerCB),
-            addVPadding(labelLayerCB),
             addVPadding(markerLayerCB),
+            addVPadding(labelLayerCB),
+            addVPadding(playerLayerCB),
+            addVPadding(citiesLayerCB),
+            addVPadding(regionsLayerCB),
+            addVPadding(transportLayerCB),
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = true,
+                },
+                content = ui.content{
+                    interval(config.data.ui.fontSize * 2, 0),
+                    transportFlex,
+                }
+            },
         }
     }
 end, 9900)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMapShown, function (e)
+    e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.transport, config.data.legend.visibility.transport)
     e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.region, config.data.legend.visibility.regions)
     e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.name, config.data.legend.visibility.cities)
     e.mapWidget:setLayerVisibility(e.mapWidget.LAYER.player, config.data.legend.visibility.playerMarker)

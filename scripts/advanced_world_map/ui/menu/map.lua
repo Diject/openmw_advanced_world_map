@@ -1151,6 +1151,7 @@ function this.create(params)
         }
     }
 
+    meta.layout = layout
     meta.menu = ui.create(layout)
     this.activeMenuMeta = meta
 

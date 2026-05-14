@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 11,
+    version = 12,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -48,10 +48,12 @@ this.default = {
         zoomToGroup = 7,
         onlyDiscovered = true,
         visitedCellsOnWorldMap = false,
+        transportOnlyDiscovered = false,
         alpha = {
             region = 8,
             entrance = 80,
             city = 60,
+            transport = 80,
         },
         visibility = {
             regions = true,
@@ -59,6 +61,7 @@ this.default = {
             playerMarker = true,
             labels = true,
             markers = true,
+            transport = false,
         }
     },
     tileset = {
@@ -97,6 +100,8 @@ this.default = {
         contextMenuHotkey = "C_Y",
         moveHistoryBackHotkey = "MB4",
         moveHistoryForwardHotkey = "MB5",
+        toggleTransportHotkey = "C_DPadUp",
+        cycleTransportHotkey = "C_DPadRight",
     },
     ui = {
         fontSize = 18,
@@ -116,6 +121,10 @@ this.default = {
         foundMarkerLightColor = commonData.foundMarkerLightColor,
         textShadowColor = commonData.textShadowColor,
         defaultTextureColor = commonData.defaultTextureColor,
+        travelCaravanerColor = commonData.travelCaravanerColor,
+        travelShipmasterColor = commonData.travelShipmasterColor,
+        travelGuildGuideColor = commonData.travelGuildGuideColor,
+        travelOtherColor = commonData.travelOtherColor,
         mouseScrollAmount = 36,
         headerBackgroundAlpha = 100,
         scrollArrowSize = 16,
@@ -127,6 +136,9 @@ this.default = {
         thickBorders = false,
         coverHeader = false,
     },
+    message = {
+        transportFeatureInfoShown = 0,
+    }
 }
 
 this.keyToTrigger = {
@@ -135,6 +147,8 @@ this.keyToTrigger = {
     ["input.toggleMapTypeHotkey"] = commonData.toggleMapTypeKeyId,
     ["input.moveHistoryBackHotkey"] = commonData.moveHistoryBackKeyId,
     ["input.moveHistoryForwardHotkey"] = commonData.moveHistoryForwardKeyId,
+    ["input.toggleTransportHotkey"] = commonData.toggleTransportKeyId,
+    ["input.cycleTransportHotkey"] = commonData.cycleTransportKeyId,
 }
 
 

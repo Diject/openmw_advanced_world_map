@@ -51,11 +51,12 @@ end
 ---@class advancedWorldMap.ui.mapWidget.layerId
 this.layerId = {
     map = 1,
-    region = 2,
-    name = 3,
-    player = 4,
-    nonInteractive = 5,
-    marker = 6,
+    transport = 2,
+    region = 3,
+    name = 4,
+    player = 5,
+    nonInteractive = 6,
+    marker = 7,
 }
 
 
@@ -537,7 +538,7 @@ function mapWidgetMeta:updateMarkersScale()
     playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
 
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
-            self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region)}) do
+            self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
         for i, elem in ipairs(layout.content) do
             if elem.userData and elem.userData.autoScale then
                 if elem.props.text then
@@ -1729,6 +1730,7 @@ function this.new(params)
     local meta = setmetatable({}, mapWidgetMeta)
 
     meta.params = params
+    meta.userData = {}
     meta.cellId = params.cellId
     ---@type number[][] {x, y, width, height}
     meta.cellStatics = nil
@@ -1886,6 +1888,18 @@ function this.new(params)
             },
         },
         -- for city names
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+        -- for transport markers
         {
             type = ui.TYPE.Widget,
             props = {
