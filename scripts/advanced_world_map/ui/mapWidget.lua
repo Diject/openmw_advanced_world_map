@@ -400,6 +400,11 @@ function mapWidgetMeta:setSize(newSize)
 end
 
 
+function mapWidgetMeta:setLayoutPosition(pos)
+    self.layout.props.position = pos
+end
+
+
 function mapWidgetMeta:isInZoomInMode()
     return self.cellId ~= nil or self.zoom >= self:getZoomModeThreshold()
 end

@@ -240,7 +240,8 @@ function menuMeta:getMapWidgetForCell(cellId)
             size = util.vector2(self.mainSize.x - self.borderSize * 2, self.mainSize.y - self.borderSize * 2),
             position = localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0),
             cellId = cellId,
-            screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerFullHeight),
+            screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth() + self.borderSize,
+                self.headerFullHeight + self.borderSize),
             zoom = cellId and (localStorage.data[commonData.localMapZoomFieldId] or 0.5) or (localStorage.data[commonData.worldMapZoomFieldId] or 1),
         }
         isNew = true
@@ -324,19 +325,9 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
         self.mapWidget:closeRightMouseMenu()
     end
 
-    -- TODO: make a proper method in mapWidget to update its position
-    -- wrapper to set position in Flex
-    lay.props.position = util.vector2(self.borderSize, self.borderSize)
-    self.mainLayout.content[1].content[2] = {
-        type = ui.TYPE.Widget,
-        props = {
-            size = util.vector2(self.mainSize.x - self:getWidgetWindowWidth(), self.mainSize.y),
-        },
-        content = ui.content{lay}
-    }
-    self.mainLayout.content[1].content[2].userData = {
-        isMapWrapper = true
-    }
+    lay.props.position = util.vector2(self.borderSize + self:getWidgetWindowWidth(), self.borderSize)
+    self.mainLayout.content[1].content[2] = lay
+    meta:setLayoutPosition(util.vector2(self:getWidgetWindowWidth() + self.borderSize, self.borderSize))
 
     self.mapWidget = meta
 
@@ -389,11 +380,8 @@ function menuMeta:setMapWidgetSize(newSize)
     self.menu.layout.props.size = size
     self.size = size
 
-    -- wrapper to set position in Flex
-    local wrapper = self.mainLayout and self.mainLayout.content[1].content[2]
-    if wrapper and wrapper.userData and wrapper.userData.isMapWrapper then
-        wrapper.props.size = util.vector2(self.mainSize.x - self:getWidgetWindowWidth(), self.mainSize.y)
-    end
+    self.mainLayout.content[1].props.size = self.mainSize
+    self.mapWidget:setLayoutPosition(util.vector2(self:getWidgetWindowWidth() + self.borderSize, self.borderSize))
 
     return size
 end
@@ -433,7 +421,7 @@ function menuMeta:setBorders(thick, coverHeader)
         self.headerLayout.content:add(bords[6])
     end
 
-    self.updateMapWidgetWidth()
+    self:updateMapWidgetWidth()
 
     for _, b in ipairs(bords) do
         content:add(b)
@@ -769,7 +757,7 @@ function this.create(params)
         type = ui.TYPE.Flex,
         props = {
             horizontal = true,
-            position = util.vector2(2, 2),
+            position = util.vector2(meta.borderSize, meta.borderSize),
             align = ui.ALIGNMENT.Center,
             arrange = ui.ALIGNMENT.Center,
         },
@@ -1023,13 +1011,9 @@ function this.create(params)
         local mapWidgetSize = util.vector2(math.max(1, meta.mainSize.x - widgetWindowWidth - meta.borderSize * 2),
             meta.mainSize.y - meta.borderSize * 2)
         meta.mapWidget:setSize(mapWidgetSize)
-        meta.mapWidget.layout.props.position = util.vector2(meta.borderSize, meta.borderSize)
+        meta.mapWidget:setLayoutPosition(util.vector2(meta:getWidgetWindowWidth() + meta.borderSize, meta.borderSize))
 
-        -- wrapper to set position in Flex
-        local wrapper = meta.mainLayout and meta.mainLayout.content[1].content[2]
-        if wrapper and wrapper.userData and wrapper.userData.isMapWrapper then
-            wrapper.props.size = util.vector2(meta.mainSize.x - widgetWindowWidth, meta.mainSize.y)
-        end
+        meta.mainLayout.content[1].props.size = meta.mainSize
 
         meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(widgetWindowWidth, meta.headerFullHeight) +
             util.vector2(meta.borderSize, meta.borderSize)
@@ -1047,10 +1031,9 @@ function this.create(params)
         },
         content = ui.content {
             {
-                type = ui.TYPE.Flex,
+                type = ui.TYPE.Widget,
                 props = {
                     size = mainSize,
-                    horizontal = true
                 },
                 userData = {
 
