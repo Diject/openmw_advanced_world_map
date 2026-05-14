@@ -6,10 +6,12 @@ local time = require('openmw_aux.time')
 local UI = require('openmw.interfaces').UI
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
+local realTimer = require("scripts.advanced_world_map.realTimer")
 
 local this = {}
 
 this.lastTooltip = nil
+this.suppress = false
 
 function this.calcTooltipPosAnchor(cursorPos)
     local screenSize = uiUtils.getScaledScreenSize()
@@ -31,7 +33,8 @@ function this.calcTooltipPosAnchor(cursorPos)
 end
 
 
-function this.create(coord, parent, layoutContent)
+function this.create(coord, parent, layoutContent, delay, suppressNew)
+    if this.suppress then return end
     local position, anchor = this.calcTooltipPosAnchor(coord.position)
 
     this.destroyLast()
@@ -44,6 +47,7 @@ function this.create(coord, parent, layoutContent)
         props = {
             position = position,
             anchor = anchor,
+            visible = delay == nil and true or false,
         },
         content = ui.content {
             {
@@ -60,7 +64,18 @@ function this.create(coord, parent, layoutContent)
 
     local tooltip = ui.create(tooltipLayout)
     parent.userData["tooltip"] = tooltip
+    parent.userData["suppressNewTooltips"] = suppressNew
+    this.suppress = suppressNew or false
     this.lastTooltip = tooltip
+
+    if delay then
+        realTimer.newTimer(delay, function ()
+            if tooltip.layout then
+                tooltip.layout.props.visible = true
+                tooltip:update()
+            end
+        end)
+    end
 
     if core.isWorldPaused() then
         local timer = async:newUnsavableSimulationTimer(0.1, function ()
@@ -68,7 +83,8 @@ function this.create(coord, parent, layoutContent)
             local tooltipHandler = parent.userData.tooltip
             parent.userData.tooltip = nil
             this.lastTooltip = nil
-            tooltipHandler:destroy()
+            this.suppress = false
+            tooltipHandler:destroy(true)
         end)
     else
         local timer
@@ -79,7 +95,8 @@ function this.create(coord, parent, layoutContent)
                 local tooltipHandler = parent.userData.tooltip
                 parent.userData.tooltip = nil
                 this.lastTooltip = nil
-                tooltipHandler:destroy()
+                this.suppress = false
+                tooltipHandler:destroy(true)
             end
         end, 0.2)
     end
@@ -107,10 +124,10 @@ end
 
 
 ---@return boolean? new
-function this.createOrMove(coord, parent, layoutContent)
+function this.createOrMove(coord, parent, layoutContent, delay)
     if not parent.userData then parent.userData = {} end
 
-    if not parent.userData.tooltip and this.create(coord, parent, layoutContent) then
+    if not parent.userData.tooltip and this.create(coord, parent, layoutContent, delay) then
         return true
     end
 
@@ -118,10 +135,14 @@ function this.createOrMove(coord, parent, layoutContent)
 end
 
 
-function this.destroy(parent)
+function this.destroy(parent, force)
     if not parent.userData or not parent.userData.tooltip then return end
+    if not force and parent.userData.suppressNewTooltips then return end
     local tooltipHandler = parent.userData.tooltip
     parent.userData.tooltip = nil
+    parent.userData.suppressNewTooltips = nil
+    this.suppress = false
+    this.lastTooltip = nil
     local co = coroutine.create(function (...)
         tooltipHandler:destroy()
     end)
@@ -139,11 +160,14 @@ function this.get(parent)
 end
 
 
-function this.destroyLast()
+function this.destroyLast(force)
     if this.lastTooltip and this.lastTooltip.layout then
-        this.lastTooltip:destroy()
+        if not this.suppress or force then
+            this.lastTooltip:destroy()
+        end
+    else
+        this.lastTooltip = nil
     end
-    this.lastTooltip = nil
 end
 
 
