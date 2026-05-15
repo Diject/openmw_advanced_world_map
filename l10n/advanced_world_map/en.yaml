@@ -2,6 +2,7 @@ empty: ""
 modName: "Advanced World Map"
 modDescription: "Interactive world map with search, fast travel, and more."
 
+YesB: "Yes [B]"
 You: "You"
 Map: "Map"
 Search: "Search"
@@ -130,7 +131,8 @@ SettingDataInitializerDescription: |
   "Base game" - built-in texture for the original Morrowind + Bloodmoon.
   "None" - no texture (map cells will be filled with a solid color).
 SettingSafeInit: "Safe initialization"
-SettingSafeInitDescription: "Warning! Initializing map data writes some location data into the save and can increase its size (TR can add about 20 MB). Most of this data would be saved anyway as you visit locations, so the overhead decreases over time. If enabled, the mod uses a temporary save during initialization, but initialization will take longer. Initialization repeats when the active mods change."
+SettingSafeInitDescription: "Warning! Due to an OpenMW issue, map initialization increases the size of all subsequent saves for the current character (TR adds ~20 MB). This overhead decreases as you explore. Enabling this option uses a temporary save to bypass the issue, but the initialization takes longer because the game needs to save and reload. This initialization process repeats whenever active mods change. [Fixed in OpenMW 0.52; your version is older.]"
+SettingSafeInitDescriptionFixed: "Only affects OpenMW versions before 0.52. Due to an OpenMW issue, map initialization increases the size of all subsequent saves for the current character (TR adds ~20 MB). Enabling this option uses a temporary save to bypass the issue, but the initialization takes longer because the game needs to save and reload. This initialization process repeats whenever active mods change."
 
 TilesetSettings: "Local map tiles"
 TilesetSettingsDescription: "Configure local tilesets of world map."

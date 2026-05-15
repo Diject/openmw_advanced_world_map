@@ -212,7 +212,7 @@ I.Settings.registerGroup{
     order = 1,
     settings = {
         selectSetting{key = "data.initializer", name = "SettingDataInitializer", description = "SettingDataInitializerDescription", default = config.default.data.initializer, l10n = commonData.l10nKey, items = commonData.dataInitializerTypes},
-        boolSetting{key = "data.safeInit", name = "SettingSafeInit", description = "SettingSafeInitDescription", default = config.default.data.safeInit},
+        boolSetting{key = "data.safeInit", name = "SettingSafeInit", description = commonData.isSaveBloatFixed() and "SettingSafeInitDescriptionFixed" or "SettingSafeInitDescription", default = config.default.data.safeInit},
     },
 }
 

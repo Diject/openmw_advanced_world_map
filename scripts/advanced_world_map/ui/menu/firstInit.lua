@@ -2,12 +2,15 @@ local async = require("openmw.async")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
+local I = require("openmw.interfaces")
 
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
+local realTimer = require("scripts.advanced_world_map.realTimer")
+local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
@@ -51,6 +54,8 @@ function this.new(params)
     function meta:close()
         if not self.menu then return end
         self.menu:destroy()
+        I.DijectKeyBindings.keybind.unregister("C_B", meta.controllerBCallback, 100)
+        I.DijectKeyBindings.keybind.unregister("B", meta.controllerBCallback, 100)
     end
 
 
@@ -95,18 +100,6 @@ function this.new(params)
                             textAlignH = ui.ALIGNMENT.Center,
                             textAlignV = ui.ALIGNMENT.Center,
                         },
-                    },
-                    interval(0, params.fontSize / 2),
-                    checkBox{
-                        updateFunc = meta.update,
-                        text = l10n("SettingSafeInitDescription"),
-                        textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 6),
-                        textAlignV = ui.ALIGNMENT.Center,
-                        checked = config.data.data.safeInit,
-                        event = function (checked, layout)
-                            config.setValue("data.safeInit", checked)
-                        end
                     },
                     interval(0, params.fontSize / 2),
                     checkBox{
@@ -174,7 +167,7 @@ function this.new(params)
                             button{
                                 updateFunc = meta.update,
                                 textSize = params.fontSize,
-                                text = core.getGMST("sYes"),
+                                text = l10n("YesB"),
                                 event = function (layout)
                                     meta:close()
                                     if params.yesCallback then params.yesCallback() end
@@ -187,6 +180,21 @@ function this.new(params)
             borders(),
         },
     }
+
+    if not commonData.isSaveBloatFixed() then
+        mainLayout.content[2].content:insert(3, checkBox{
+            updateFunc = meta.update,
+            text = l10n("SettingSafeInitDescription"),
+            textSize = config.data.ui.fontSize,
+            textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 6),
+            textAlignV = ui.ALIGNMENT.Center,
+            checked = config.data.data.safeInit,
+            event = function (checked, layout)
+                config.setValue("data.safeInit", checked)
+            end
+        })
+        mainLayout.content[2].content:insert(4, interval(0, params.fontSize / 2))
+    end
 
 
     local layout = {
@@ -226,8 +234,25 @@ function this.new(params)
         }
     }
 
+    meta.controllerBCallback = function ()
+        meta:close()
+        if params.yesCallback then params.yesCallback() end
+    end
+
+    I.DijectKeyBindings.keybind.register("C_B", meta.controllerBCallback, 100)
+    I.DijectKeyBindings.keybind.register("B", meta.controllerBCallback, 100)
 
     meta.menu = ui.create(layout)
+
+    local function timerCallback()
+        if not meta.menu.layout then return end
+        if not menuMode.isMenuInteractive() then
+            meta:close()
+        else
+            realTimer.newTimer(0.25, timerCallback)
+        end
+    end
+    realTimer.newTimer(0.25, timerCallback)
 
     return meta
 end

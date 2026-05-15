@@ -687,7 +687,7 @@ function this.playerInit(playerRef, cellCount, options)
         stor:get("contentFileCount") ~= #core.contentFiles.list
 
     if shouldRebuild then
-        if require("scripts.advanced_world_map.config.config").data.data.safeInit then
+        if not commonData.isSaveBloatFixed() and require("scripts.advanced_world_map.config.config").data.data.safeInit then
             types.Player.sendMenuEvent(playerRef, "AdvWMap:startDataRebuilding", {plId = playerRef.id, options = options})
         else
             core.sendGlobalEvent("AdvWMap:rebuildMapData", {plId = playerRef.id, options = options})
@@ -753,7 +753,7 @@ function this.updateData(playerRef, data)
     stor:set("apiVersion", core.API_REVISION)
 
     log("Map data updated and saved to storage")
-    if require("scripts.advanced_world_map.config.config").data.data.safeInit then
+    if not commonData.isSaveBloatFixed() and require("scripts.advanced_world_map.config.config").data.data.safeInit then
         types.Player.sendMenuEvent(playerRef, "AdvWMap:finishDataRebuilding", {plId = data.plId, options = data.options})
     else
         core.sendGlobalEvent("AdvWMap:processMapDataOptions", {plId = data.plId, options = data.options})

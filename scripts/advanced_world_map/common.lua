@@ -1,4 +1,5 @@
-local util = require('openmw.util')
+local util = require("openmw.util")
+local core = require("openmw.core")
 
 local this = {}
 
@@ -189,5 +190,11 @@ function this.doorHash(doorRef, destCellId)
     local cellIdHash = doorRef.cell.id:sub(-10)
     return string.format("%s_%d_%d_%s", cellIdHash, math.floor(doorPos.x / 256), math.floor(doorPos.y / 256), destCellIdHash)
 end
+
+
+function this.isSaveBloatFixed()
+    return core.API_REVISION > 130
+end
+
 
 return this
