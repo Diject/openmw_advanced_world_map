@@ -139,22 +139,32 @@ if not res then
     print(isKeyAvailable)
 end
 
-local sections = storage:allPlayerSections()
-if sections and not sections[commonData.configMainSectionName] and I.DijectKeyBindings and isKeyAvailable then
-    I.DijectKeyBindings.registerKey(commonData.menuKeyId, config.default.main.menuKey)
-end
 
-if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) then
-    I.DijectKeyBindings.registerKey(commonData.contextMenuKeyId, config.default.input.contextMenuHotkey)
-end
+local defaultStorage = storage.playerSection(commonData.configMiscSectionName)
+local inputModuleVersion = defaultStorage:get("input.version") or 0
+if inputModuleVersion == 0 and I.DijectKeyBindings then
+    local sections = storage:allPlayerSections()
+    if sections and not sections[commonData.configMainSectionName] and isKeyAvailable then
+        I.DijectKeyBindings.registerKey(commonData.menuKeyId, config.default.main.menuKey)
+    end
 
-if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.moveHistoryBackKeyId) then
-    I.DijectKeyBindings.registerKey(commonData.moveHistoryBackKeyId, config.default.input.moveHistoryBackHotkey)
-end
+    if not I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) then
+        I.DijectKeyBindings.registerKey(commonData.contextMenuKeyId, config.default.input.contextMenuHotkey)
+    end
 
-if I.DijectKeyBindings and not I.DijectKeyBindings.getActionKey(commonData.moveHistoryForwardKeyId) then
-    I.DijectKeyBindings.registerKey(commonData.moveHistoryForwardKeyId, config.default.input.moveHistoryForwardHotkey)
+    if not I.DijectKeyBindings.getActionKey(commonData.moveHistoryBackKeyId) then
+        I.DijectKeyBindings.registerKey(commonData.moveHistoryBackKeyId, config.default.input.moveHistoryBackHotkey)
+    end
+
+    if not I.DijectKeyBindings.getActionKey(commonData.moveHistoryForwardKeyId) then
+        I.DijectKeyBindings.registerKey(commonData.moveHistoryForwardKeyId, config.default.input.moveHistoryForwardHotkey)
+    end
 end
+if inputModuleVersion < 2 and I.DijectKeyBindings then
+    I.DijectKeyBindings.registerKey(commonData.toggleTransportKeyId, config.default.input.toggleTransportHotkey)
+    I.DijectKeyBindings.registerKey(commonData.cycleTransportKeyId, config.default.input.cycleTransportHotkey)
+end
+defaultStorage:set("input.version", config.data.input.version)
 
 
 local inputSettingsSection = storage.playerSection(commonData.configInputSectionName)

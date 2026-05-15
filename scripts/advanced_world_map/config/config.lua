@@ -93,6 +93,7 @@ this.default = {
         hasSafeInitMessageBeenShown = false,
     },
     input = {
+        version = 2,
         gamepadControls = true,
         gamepadControlsBumperMode = false,
         togglePinHotkey = nil,
