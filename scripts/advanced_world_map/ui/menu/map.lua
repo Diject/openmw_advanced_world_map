@@ -1103,7 +1103,7 @@ function this.create(params)
                     end),
                 },
             },
-            borders(),
+            table.unpack(config.data.ui.thickBorders and {thickBorders.borders()} or {borders()}),
         },
     }
 
