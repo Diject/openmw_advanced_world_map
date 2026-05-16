@@ -1109,14 +1109,6 @@ function this.create(params)
 
     meta.mainLayout = mainLayout
 
-    if meta.centerOnPlayer then
-        meta:updateMapWidgetCell(not playerRef.cell.isExterior and playerRef.cell.id or nil)
-    else
-        meta:updateMapWidgetCell(localStorage.data[commonData.lastCellIdFieldId])
-        meta.mapWidget:focusOnWorldPosition(localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0))
-        meta.mapWidget:updateMarkers()
-    end
-
     local layout = {
         type = ui.TYPE.Widget,
         layer = "Windows",
@@ -1135,6 +1127,15 @@ function this.create(params)
     }
 
     meta.layout = layout
+
+    if meta.centerOnPlayer then
+        meta:updateMapWidgetCell(not playerRef.cell.isExterior and playerRef.cell.id or nil)
+    else
+        meta:updateMapWidgetCell(localStorage.data[commonData.lastCellIdFieldId])
+        meta.mapWidget:focusOnWorldPosition(localStorage.data[commonData.lastMapPosFieldId] or util.vector2(0, 0))
+        meta.mapWidget:updateMarkers()
+    end
+
     meta.menu = ui.create(layout)
     this.activeMenuMeta = meta
 
