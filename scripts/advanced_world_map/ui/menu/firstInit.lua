@@ -39,7 +39,7 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * 24)
+    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 19 or 25))
     params.relativePosition = util.vector2(0.5, 0.5)
 
 
@@ -130,7 +130,7 @@ function this.new(params)
                         updateFunc = meta.update,
                         text = l10n("SettingFastTravelEnabledDescription"),
                         textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 3),
                         textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.fastTravel.enabled,
                         event = function (checked, layout)
