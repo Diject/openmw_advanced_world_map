@@ -54,8 +54,8 @@ function this.new(params)
     function meta:close()
         if not self.menu then return end
         self.menu:destroy()
-        I.DijectKeyBindings.keybind.unregister("C_B", meta.controllerBCallback, 100)
-        I.DijectKeyBindings.keybind.unregister("B", meta.controllerBCallback, 100)
+        I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerBCallback, 100)
+        I.DijectKeyBindings.keybind.unregister("Y", meta.controllerBCallback, 100)
     end
 
 
@@ -167,7 +167,7 @@ function this.new(params)
                             button{
                                 updateFunc = meta.update,
                                 textSize = params.fontSize,
-                                text = l10n("YesB"),
+                                text = l10n("YesY"),
                                 event = function (layout)
                                     meta:close()
                                     if params.yesCallback then params.yesCallback() end
@@ -239,8 +239,8 @@ function this.new(params)
         if params.yesCallback then params.yesCallback() end
     end
 
-    I.DijectKeyBindings.keybind.register("C_B", meta.controllerBCallback, 100)
-    I.DijectKeyBindings.keybind.register("B", meta.controllerBCallback, 100)
+    I.DijectKeyBindings.keybind.register("C_Y", meta.controllerBCallback, 100)
+    I.DijectKeyBindings.keybind.register("Y", meta.controllerBCallback, 100)
 
     meta.menu = ui.create(layout)
 

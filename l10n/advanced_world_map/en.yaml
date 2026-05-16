@@ -2,7 +2,7 @@ empty: ""
 modName: "Advanced World Map"
 modDescription: "Interactive world map with search, fast travel, and more."
 
-YesB: "Yes [B]"
+YesY: "Yes [Y]"
 You: "You"
 Map: "Map"
 Search: "Search"
