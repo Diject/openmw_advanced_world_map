@@ -3,6 +3,7 @@ modName: "Advanced World Map"
 modDescription: "Interactive world map with search, fast travel, and more."
 
 YesY: "Yes [Y]"
+NoX: "No [X]"
 You: "You"
 Map: "Map"
 Search: "Search"

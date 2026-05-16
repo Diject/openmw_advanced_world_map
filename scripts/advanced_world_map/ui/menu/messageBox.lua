@@ -2,6 +2,7 @@ local async = require("openmw.async")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
+local I = require("openmw.interfaces")
 
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
@@ -13,6 +14,7 @@ local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
 
+local l10n = core.l10n(commonData.l10nKey)
 
 
 local this = {}
@@ -58,6 +60,8 @@ function this.newSimple(params)
     function meta:close()
         if not self.menu then return end
         self.menu:destroy()
+        I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerYCallback, 100)
+        I.DijectKeyBindings.keybind.unregister("C_X", meta.controllerXCallback, 100)
     end
 
     local headerSize = util.vector2(params.size.x, params.fontSize)
@@ -135,7 +139,7 @@ function this.newSimple(params)
                     button{
                         updateFunc = meta.update,
                         textSize = params.fontSize,
-                        text = core.getGMST("sYes"),
+                        text = l10n("YesY"),
                         event = function (layout)
                             meta:close()
                             if params.yesCallback then params.yesCallback() end
@@ -145,7 +149,7 @@ function this.newSimple(params)
                     button{
                         updateFunc = meta.update,
                         textSize = params.fontSize,
-                        text = core.getGMST("sNo"),
+                        text = l10n("NoX"),
                         event = function (layout)
                             meta:close()
                             if params.noCallback then params.noCallback() end
@@ -175,6 +179,18 @@ function this.newSimple(params)
 
 
     meta.menu = ui.create(layout)
+
+    meta.controllerYCallback = function ()
+        meta:close()
+        if params.yesCallback then params.yesCallback() end
+    end
+    meta.controllerXCallback = function ()
+        meta:close()
+        if params.noCallback then params.noCallback() end
+    end
+    I.DijectKeyBindings.keybind.register("C_Y", meta.controllerYCallback, 100)
+    I.DijectKeyBindings.keybind.register("C_X", meta.controllerXCallback, 100)
+
 
     return meta
 end
