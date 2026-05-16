@@ -114,6 +114,7 @@
 ---@field eScale number Scale factor for markers. Calculated from mapInfo.pixelsPerCell to ensure consistent marker sizes across different maps
 ---@field onZoomMarkersRect AdvancedWorldMap.MapWidget.Region? Current rectangle (in world coordinates) for markers. Only for world map
 ---@field layout Layout Root UI layout structure
+---@field userData table Custom user data storage
 local AdvancedWorldMapMapWidget = {}
 
 ---Generates a unique ID for map elements

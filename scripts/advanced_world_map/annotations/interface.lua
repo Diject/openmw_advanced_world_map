@@ -13,6 +13,17 @@
 ---@field fName string destination cell full name
 ---@field dHash string door hash
 
+---@class AdvancedWorldMap.DataHandler.TransportData
+---@field nodes AdvancedWorldMap.DataHandler.TransportNode[] list of transport nodes
+---@field actors table<string, {tp: integer, ns: integer[]}> by npc record id
+---@field data table<integer, integer[]> list of node ids by transport type (1 - caravaner, 2 - shipmaster, 3 - guild guide, 4 - gondolier)
+
+---@class AdvancedWorldMap.DataHandler.TransportNode
+---@field tp integer type (1 - caravaner, 2 - shipmaster, 3 - guild guide, 4 - gondolier)
+---@field p Vector2 position
+---@field ls integer[] list of node ids that have this node in their list of destinations
+---@field ars string[]? list of actor record ids that are on this node
+
 ---@class AdvancedWorldMap.MapImageInfo
 ---@field version integer
 ---@field time integer
@@ -48,6 +59,7 @@
 ---@field getCellNameById fun(cellId: string) : string? gets the cell name by its ID
 ---@field getExteriorCellName fun(pos: any) : string? gets the exterior cell name by position
 ---@field getEntranceMarkerData fun(cellId: string) : table<string, AdvancedWorldMap.DataHandler.EntranceData>? gets the entrance marker data for the given cell ID. Returns a table where keys are door hashes and values are EntranceData
+---@field getTransportData fun() : AdvancedWorldMap.DataHandler.TransportData? gets the transport route data
 ---@field getDoorHash fun(doorRef: GameObject, destCellId: string) : string gets the door hash for the given door reference and destination cell ID
 ---@field setWorldMapInfo fun(mapInfo: AdvancedWorldMap.MapImageInfo, dirPath: string, mapV1ImagePath: string?): boolean sets the world map info for the map. Used to inject custom map info when the map is initialized.
 ---@field uiElements AdvancedWorldMap.Interface.UIElements

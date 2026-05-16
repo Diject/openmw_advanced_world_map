@@ -96,7 +96,7 @@ end
 return {
     interfaceName = "AdvancedWorldMap",
     interface = {
-        version = 12,
+        version = 13,
         isMapDataInitialized = function ()
             return mapDataHandler.isInitialized()
         end,
@@ -108,6 +108,9 @@ return {
         end,
         getEntranceMarkerData = function (cellId)
             return mapDataHandler.entrances[cellId]
+        end,
+        getTransportData = function ()
+            return mapDataHandler.transport
         end,
         getDoorHash = function (doorRef, destCellId)
             return common.doorHash(doorRef, destCellId)

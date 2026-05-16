@@ -523,7 +523,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 12,
+        version = 13,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -552,6 +552,9 @@ return {
         end,
         getEntranceMarkerData = function (cellId)
             return mapDataHandler.entrances[cellId]
+        end,
+        getTransportData = function ()
+            return mapDataHandler.transport ---@diagnostic disable-line: return-type-mismatch
         end,
         getDoorHash = function (doorRef, destCellId)
             return commonData.doorHash(doorRef, destCellId)
