@@ -9,6 +9,7 @@ local playerRef = require("openmw.self")
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
 
@@ -34,6 +35,18 @@ local function menuOpened(menu)
     -- Get the height of the map menu header
     local headerHeight = menu.headerHeight
 
+    local tooltipContent = ui.content{
+        {
+            type = ui.TYPE.Text,
+            props = {
+                text = l10n("NotesWidgetTooltip"),
+                textColor = config.data.ui.defaultColor,
+                textSize = config.data.ui.fontSize,
+                autoSize = true,
+            }
+        }
+    }
+
     local iconLayout = {
         type = ui.TYPE.Image,
         props = {
@@ -41,6 +54,15 @@ local function menuOpened(menu)
                 anchor = util.vector2(0.5, 0.5), -- All elements in the header should be centered
             size = util.vector2(headerHeight - 3, headerHeight - 3),
             color = config.data.ui.defaultColor,
+        },
+        events = {
+            mouseMove = async:callback(function(e, layout)
+                tooltip.createOrMove(e, layout, tooltipContent, 1)
+            end),
+
+            focusLoss = async:callback(function(e, layout)
+                tooltip.destroy(layout)
+            end),
         }
     }
 

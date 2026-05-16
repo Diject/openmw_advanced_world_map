@@ -88,6 +88,8 @@ MinimapModeSetupMessage: "Set the size and position of the map for minimap mode,
 CellLabelVisibilityCB: "Location name"
 TransportFeatureInfo: "The map can display transport routes. To toggle them, right-click the legend widget or press [{toggleTransportKey}]. To switch between transport types, press [{cycleTransportKey}].\nUse any of these controls to dismiss this message."
 LegendWidgetTooltip: "Map legend.\nRight-click to toggle transport routes.\nLeft-click to open."
+SearchWidgetTooltip: "Search"
+NotesWidgetTooltip: "Notes"
 
 dateFormat: "%d %B 3E %Y"
 
@@ -166,7 +168,7 @@ SettingNotesMapFontSizeDescription: "The size of the note markers on the map."
 
 FastTravelSettings: "Fast Travel"
 SettingFastTravelEnabled: "Enable fast travel"
-SettingFastTravelEnabledDescription: "When enabled, you can fast travel to the entrance closest to the point you select on the map."
+SettingFastTravelEnabledDescription: "When enabled, you can fast travel to the entrance closest to the point you select on the map by triple-clicking or using the context menu at any point (by default, only to discovered locations)."
 SettingFastTravelOnlyDiscovered: "Fast travel to discovered locations only"
 SettingFastTravelOnlyDiscoveredDescription: "When enabled, fast travel will only be possible to locations that have been discovered by the player."
 SettingFastTravelOnlyReachable: "Fast travel to reachable locations only"

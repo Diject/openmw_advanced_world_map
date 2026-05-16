@@ -20,6 +20,7 @@ local discoveredLocations = require("scripts.advanced_world_map.discoveredLocati
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
@@ -451,6 +452,17 @@ local function create(menu)
         resetMarkersVisibility()
     end
 
+    local tooltipContent = ui.content{
+        {
+            type = ui.TYPE.Text,
+            props = {
+                text = l10n("SearchWidgetTooltip"),
+                textColor = config.data.ui.defaultColor,
+                textSize = config.data.ui.fontSize,
+                autoSize = true,
+            }
+        }
+    }
 
     local iconLayout = {
         type = ui.TYPE.Image,
@@ -459,6 +471,15 @@ local function create(menu)
             anchor = util.vector2(0.5, 0.5),
             size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
             color = config.data.ui.defaultColor,
+        },
+        events = {
+            mouseMove = async:callback(function(e, layout)
+                tooltip.createOrMove(e, layout, tooltipContent, 1)
+            end),
+
+            focusLoss = async:callback(function(e, layout)
+                tooltip.destroy(layout)
+            end),
         }
     }
 
