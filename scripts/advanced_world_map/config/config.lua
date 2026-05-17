@@ -45,6 +45,7 @@ this.default = {
     legend = {
         markerSize = 7,
         worldMarkerSize = 14,
+        playerMarkerSize = 48,
         zoomToGroup = 7,
         onlyDiscovered = true,
         visitedCellsOnWorldMap = false,

@@ -1918,14 +1918,14 @@ function this.new(params)
                     props = {
                         relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
                         resource = playerMarker.getTexture(meta.northDirectionAngle) or playerMarkerTexture,
-                        size = util.vector2(48, 48),
+                        size = util.vector2(1, 1) * config.data.legend.playerMarkerSize,
                         anchor = util.vector2(0.5, 0.5),
                         color = config.data.ui.defaultColor,
                         visible = true,
-                        alpha = 0.8,
+                        alpha = 0.9,
                     },
                     userData = {
-                        size = util.vector2(48, 48),
+                        size = util.vector2(1, 1) * config.data.legend.playerMarkerSize,
                         lastPos = playerPos.gexExteriorPos(),
                         lastYaw = playerRef.rotation:getYaw(),
                         lastLayPos = util.vector2(0, 0),
