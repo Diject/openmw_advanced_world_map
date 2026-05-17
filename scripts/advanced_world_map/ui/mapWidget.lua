@@ -51,11 +51,11 @@ end
 ---@class advancedWorldMap.ui.mapWidget.layerId
 this.layerId = {
     map = 1,
-    transport = 2,
-    region = 3,
-    name = 4,
-    player = 5,
-    nonInteractive = 6,
+    region = 2,
+    name = 3,
+    player = 4,
+    nonInteractive = 5,
+    transport = 6,
     marker = 7,
 }
 
@@ -1904,18 +1904,6 @@ function this.new(params)
 
             },
         },
-        -- for transport markers
-        {
-            type = ui.TYPE.Widget,
-            props = {
-                position = util.vector2(0, 0),
-                relativeSize = util.vector2(1, 1),
-            },
-            userData = {},
-            content = ui.content {
-
-            },
-        },
         -- player marker
         {
             type = ui.TYPE.Widget,
@@ -1947,6 +1935,18 @@ function this.new(params)
             },
         },
         -- for noninteractive markers
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+        -- for transport markers
         {
             type = ui.TYPE.Widget,
             props = {
