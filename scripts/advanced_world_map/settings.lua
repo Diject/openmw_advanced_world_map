@@ -340,9 +340,9 @@ I.Settings.registerGroup{
         color{key = "ui.foundMarkerLightColor", name = "SettingUIFoundMarkerLightColor", description = "SettingUIFoundMarkerLightColorDescription", default = config.default.ui.foundMarkerLightColor},
         color{key = "ui.textShadowColor", name = "SettingUITextShadowColor", description = "SettingUITextShadowColorDescription", default = config.default.ui.textShadowColor},
         color{key = "ui.defaultTextureColor", name = "SettingUIDefaultTextureColor", description = "SettingUIDefaultTextureColorDescription", default = config.default.ui.defaultTextureColor},
-        color{key = "ui.travelCaravanerColor", name = "SettingUITravelCaravanerColor", description = "SettingUITravelCaravanerColorDescription", default = config.default.ui.travelCaravanerColor},
-        color{key = "ui.travelShipmasterColor", name = "SettingUITravelShipmasterColor", description = "SettingUITravelShipmasterColorDescription", default = config.default.ui.travelShipmasterColor},
-        color{key = "ui.travelGuildGuideColor", name = "SettingUITravelGuildGuideColor", description = "SettingUITravelGuildGuideColorDescription", default = config.default.ui.travelGuildGuideColor},
-        color{key = "ui.travelOtherColor", name = "SettingUITravelOtherColor", description = "SettingUITravelOtherColorDescription", default = config.default.ui.travelOtherColor},
+        color{key = "ui.travelCaravanerColor", name = "SettingTravelCaravanerColor", description = "SettingTravelCaravanerColorDescription", default = config.default.ui.travelCaravanerColor},
+        color{key = "ui.travelShipmasterColor", name = "SettingTravelShipmasterColor", description = "SettingTravelShipmasterColorDescription", default = config.default.ui.travelShipmasterColor},
+        color{key = "ui.travelGuildGuideColor", name = "SettingTravelGuildGuideColor", description = "SettingTravelGuildGuideColorDescription", default = config.default.ui.travelGuildGuideColor},
+        color{key = "ui.travelOtherColor", name = "SettingTravelOtherColor", description = "SettingTravelOtherColorDescription", default = config.default.ui.travelOtherColor},
     },
 }
