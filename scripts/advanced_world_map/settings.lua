@@ -167,6 +167,21 @@ end
 defaultStorage:set("input.version", config.data.input.version)
 
 
+local configVersion = defaultStorage:get("version") or 0
+if configVersion < config.default.version then
+    defaultStorage:set("version", config.default.version)
+
+    if configVersion < 13 then
+        local legendSettingStorage = storage.playerSection(commonData.configLegendSectionName)
+        local entranceAlpha = legendSettingStorage:get("legend.alpha.entrance")
+        if entranceAlpha ~= nil and entranceAlpha <= 80 then
+            legendSettingStorage:set("legend.alpha.entrance", 95)
+        end
+    end
+end
+
+
+
 local inputSettingsSection = storage.playerSection(commonData.configInputSectionName)
 local function registerHotkeyListener()
     if not I.DijectKeyBindings then return end
