@@ -123,7 +123,7 @@ function this.create(data, mapWidget, update)
         -- Anchor point of the marker. Here the center will be at pos
         anchor = util.vector2(0.5, 0.5),
         -- Marker color. If not specified, default from config is used
-        color = data.colorId and widgetData.colors[data.colorId] or nil,
+        color = data.colorId and widgetData.colors[data.colorId] or config.data.ui.defaultColor,
         -- Tooltip content when hovering over the marker
         tooltipContent = tooltipContent,
         -- The world map has two zoom levels: near (zoomIn) and far (zoomOut).
@@ -205,7 +205,7 @@ function this.create(data, mapWidget, update)
             -- The 'size' parameter must have y == 0 for autoHeight to work correctly.
             autoHeight = true,
             -- Text color of the marker. If not specified, default from config is used
-            color = data.nameColorId and widgetData.colors[data.nameColorId] or nil,
+            color = data.nameColorId and widgetData.colors[data.nameColorId] or config.data.ui.defaultColor,
             -- Function to scale the marker depending on map zoom.
             scaleFunc = mapWidget.SCALE_FUNCTION.linear,
             -- Marker font size. If not specified, default from config is used.

@@ -277,7 +277,8 @@ function this.create(params)
                                     params.data.nameColorId = params.data.nameColorId + 1
                                     if params.data.nameColorId > #widgetData.colors then params.data.nameColorId = 1 end
 
-                                    nameEditLayout.content[1].content[1].props.color = widgetData.colors[params.data.nameColorId]
+                                    nameEditLayout.content[1].content[1].props.color = widgetData.colors[params.data.nameColorId] or
+                                        config.data.ui.defaultColor
 
                                     meta:update()
                                 end
@@ -486,7 +487,7 @@ function this.create(params)
                                 layout.content:add(border)
                             end
 
-                            layout.content[1].props.color = widgetData.colors[params.data.colorId or 1]
+                            layout.content[1].props.color = widgetData.colors[params.data.colorId or 1] or config.data.ui.defaultColor
 
                             lastIcon = layout
                         else
@@ -494,7 +495,7 @@ function this.create(params)
                             params.data.colorId = params.data.colorId + 1
                             if params.data.colorId > #widgetData.colors then params.data.colorId = 1 end
 
-                            layout.content[1].props.color = widgetData.colors[params.data.colorId]
+                            layout.content[1].props.color = widgetData.colors[params.data.colorId] or config.data.ui.defaultColor
                         end
 
                         meta:update()
@@ -508,7 +509,7 @@ function this.create(params)
         if isSelected then
             clearLastIconParams()
             lastIcon = horizontalFlex.content[#horizontalFlex.content]
-            lastIcon.content[1].props.color = widgetData.colors[params.data.colorId or 1]
+            lastIcon.content[1].props.color = widgetData.colors[params.data.colorId or 1] or config.data.ui.defaultColor
             for _, border in pairs({borders()}) do
                 lastIcon.content:add(border)
             end

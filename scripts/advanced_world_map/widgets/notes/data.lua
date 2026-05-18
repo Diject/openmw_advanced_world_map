@@ -260,7 +260,7 @@ end
 function this.getDataText(dt, includeCellPos, insertLineBreaks)
     local text = ""
     if dt.name and dt.name ~= "" then
-        text = text.."#"..this.colors[dt.nameColorId or 1]:asHex()..dt.name.."#"..config.data.ui.defaultColor:asHex()
+        text = text.."#"..(this.colors[dt.nameColorId or 1] or config.data.ui.defaultColor):asHex()..dt.name.."#"..config.data.ui.defaultColor:asHex()
     end
     if dt.descr and dt.descr ~= "" then
         text = text ~= "" and text..(insertLineBreaks ~= false and "\n\n" or "\n") or text
