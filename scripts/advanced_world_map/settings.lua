@@ -178,6 +178,13 @@ if configVersion < config.default.version then
             legendSettingStorage:set("legend.alpha.entrance", 95)
         end
     end
+    if configVersion < 14 then
+        local legendSettingStorage = storage.playerSection(commonData.configLegendSectionName)
+        local markerSize = legendSettingStorage:get("legend.markerSize")
+        if markerSize ~= nil and markerSize < config.default.legend.markerSize then
+            legendSettingStorage:set("legend.markerSize", config.default.legend.markerSize)
+        end
+    end
 end
 
 
