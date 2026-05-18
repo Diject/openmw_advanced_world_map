@@ -130,7 +130,7 @@ function mapElementMeta:updateLayout(data)
     if data.textShadow ~= nil then
         props.textShadow = data.textShadow
     end
-    props.textShadowColor = data.shadowColor or props.shadowColor
+    props.textShadowColor = data.shadowColor or props.textShadowColor
     if data.visible ~= nil then
         local last = props.visible
         props.visible = data.visible
