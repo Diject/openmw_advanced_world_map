@@ -195,7 +195,7 @@ SettingInputGamepadControlsDescription: "When enabled, allows using gamepad to p
 SettingInputGamepadControlsBumperMode: "Gamepad bumper mode"
 SettingInputGamepadControlsBumperModeDescription: "Remaps gamepad controls to use right and left bumper buttons for zooming instead of triggers."
 SettingInputContextMenuKey: "Context menu key"
-SettingInputContextMenuKeyDescription: "The key used to open the context menu on the map."
+SettingInputContextMenuKeyDescription: "The key used to open the context menu on the map. If set to 'C_Y' (Y on gamepad), it can also be opened with a right mouse click."
 SettingInputMoveHistoryBackKey: "Move history back key"
 SettingInputMoveHistoryBackKeyDescription: "The key used to move back in the map history."
 SettingInputMoveHistoryForwardKey: "Move history forward key"
