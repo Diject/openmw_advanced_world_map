@@ -841,7 +841,7 @@ function this.onZoomMarkersUpdatedCallback(e)
     local mapWidget = e.mapWidget
     if mapWidget.cellId or not mapWidget:isInZoomInMode() then return end
 
-    local doGroup = mapWidget.zoom * 32 / mapWidget.mapInfo.pixelsPerCell <= config.data.legend.zoomToGroup
+    local doGroup = mapWidget.zoom * 32 / mapWidget.mapInfo.pixelsPerCell <= (config.data.legend.zoomToGroup / uiUtils.getUIScale())
     local groupStateChanged = lastGroupState ~= doGroup
     lastGroupState = doGroup
 
