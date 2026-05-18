@@ -78,27 +78,29 @@ function this.create(coord, parent, layoutContent, delay, suppressNew)
     end
 
     if core.isWorldPaused() then
-        local timer = async:newUnsavableSimulationTimer(0.1, function ()
-            if not parent.userData.tooltip then return end
-            local tooltipHandler = parent.userData.tooltip
-            parent.userData.tooltip = nil
+        local timer = async:newUnsavableSimulationTimer(0.01, function ()
+            if parent and parent.userData then
+                parent.userData.tooltip = nil
+            end
+            if not tooltip.layout then return end
             this.lastTooltip = nil
             this.suppress = false
-            tooltipHandler:destroy(true)
+            tooltip:destroy(true)
         end)
     else
         local timer
         timer = time.runRepeatedly(function ()
             if UI.getMode() == nil then
                 timer()
-                if not parent.userData.tooltip then return end
-                local tooltipHandler = parent.userData.tooltip
-                parent.userData.tooltip = nil
+                if parent and parent.userData then
+                    parent.userData.tooltip = nil
+                end
+                if not tooltip.layout then return end
                 this.lastTooltip = nil
                 this.suppress = false
-                tooltipHandler:destroy(true)
+                tooltip:destroy(true)
             end
-        end, 0.2)
+        end, 0.1)
     end
 
     return true

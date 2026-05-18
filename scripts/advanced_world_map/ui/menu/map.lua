@@ -432,6 +432,7 @@ end
 ---@param params {visible : boolean?, fullMode : boolean?, skipStateUpdate : boolean?}?
 ---@return boolean
 function menuMeta:updateInteractiveElements(params)
+    tooltip.destroyLast()
     params = params or {}
     local shouldUpdate = false
     local layout = self.menu.layout
@@ -587,6 +588,7 @@ end
 
 
 function menuMeta:close()
+    tooltip.destroyLast()
     if not self.menu then return end
 
     if self:externalDeactivate() == true then
