@@ -696,7 +696,7 @@ function this.create(params)
 
     meta.screenPosition = params.relativePosition:emul(screenSize)
 
-    local headerHeight = params.fontSize * 1.25
+    local headerHeight = math.floor(params.fontSize * 1.25 / 2) * 2
     meta.headerHeight = headerHeight
     meta.borderSize = config.data.ui.thickBorders and 4 or 2
     meta.headerOffset = config.data.ui.coverHeader and meta.borderSize or 0
