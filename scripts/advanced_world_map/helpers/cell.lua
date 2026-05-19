@@ -14,6 +14,7 @@ function this.findExitPoss(cellId, dataTable, checked, res, depth)
     if not depth then depth = 1 end
 
     local doors = dataTable[cellId]
+    if not doors then return end
 
     if (checked[cellId] and checked[cellId] < depth) or depth > maxDepth then
         return
