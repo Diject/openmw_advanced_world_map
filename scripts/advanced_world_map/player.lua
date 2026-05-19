@@ -40,6 +40,7 @@ local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
+local disabledActors = require("scripts.advanced_world_map.disabledActors")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
@@ -142,6 +143,7 @@ local function onInit()
     playerPos.init()
     discoveredLocs.init()
     disabledDoors.init()
+    disabledActors.init()
     -- must be after localStorage init
     notesWidgetData.loadData()
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
@@ -153,6 +155,7 @@ local function onLoad(data)
     playerPos.init()
     discoveredLocs.init()
     disabledDoors.init()
+    disabledActors.init()
     if config.data.data.hasSafeInitMessageBeenShown then
         hasAttemptedToGetData = true
         core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object})
@@ -746,6 +749,28 @@ return {
         ["AdvWMap:unregisterDisabledDoor"] = function(ref)
             disabledDoors.unregister(ref)
             markers.updateDoorMarkerVisibility(ref)
+        end,
+
+        ["AdvWMap:registerDisabledActor"] = function(recordId)
+            local wasDisabled = disabledActors.contains(recordId)
+            disabledActors.register(recordId)
+            if not wasDisabled and mapDataHandler.transport and mapDataHandler.transport.actors[recordId] then
+                local mapWidget = mapMenu.cachedMapWidgetMetatable[commonData.exteriorMapId]
+                if mapWidget and mapWidget.userData.updateTravelMarkers then
+                    mapWidget.userData.updateTravelMarkers(mapDataHandler.transport.actors[recordId].tp)
+                end
+            end
+        end,
+
+        ["AdvWMap:unregisterDisabledActor"] = function(recordId)
+            local wasDisabled = disabledActors.contains(recordId)
+            disabledActors.unregister(recordId)
+            if wasDisabled and mapDataHandler.transport and mapDataHandler.transport.actors[recordId] then
+                local mapWidget = mapMenu.cachedMapWidgetMetatable[commonData.exteriorMapId]
+                if mapWidget and mapWidget.userData.updateTravelMarkers then
+                    mapWidget.userData.updateTravelMarkers(mapDataHandler.transport.actors[recordId].tp)
+                end
+            end
         end,
 
         ["AdvWMap:getMapStatics"] = function (data)

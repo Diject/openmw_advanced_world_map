@@ -15,6 +15,8 @@ local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local keys = require("scripts.advanced_world_map.input.keys")
+local disabledActors = require("scripts.advanced_world_map.disabledActors")
+local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
@@ -111,12 +113,45 @@ local function drawMarkers(mapWidget, markerType, color, skipWorld, skipLocal)
         local nodeData = mapDataHandler.transport.nodes[nodeId]
         if not nodeData then goto continue end
 
+        local linkedNodes
+        if nodeData.ars then
+            local shouldRebuild = false
+            for _, recId in pairs(nodeData.ars) do
+                if disabledActors.contains(recId) then
+                    shouldRebuild = true
+                    break
+                end
+            end
+
+            if shouldRebuild then
+                linkedNodes = {}
+                for _, recId in pairs(nodeData.ars) do
+                    if disabledActors.contains(recId) then goto continue end
+                    local actorData = mapDataHandler.transport.actors[recId]
+                    if not actorData then goto continue end
+
+                    for _, nId in pairs(actorData.ns or {}) do
+                        linkedNodes[nId] = true
+                    end
+
+                    ::continue::
+                end
+
+                if not next(linkedNodes) then goto continue end
+                linkedNodes = tableLib.keys(linkedNodes)
+            else
+                linkedNodes = nodeData.ls
+            end
+        else
+            linkedNodes = nodeData.ls
+        end
+
         local pos = nodeData.p
         local posHash = getPosHash(pos)
         local nodeCellId = cellLib.getCellIdByPos(pos)
         local isNodeDiscovered = not config.data.legend.transportOnlyDiscovered or discoveredLocs.isDiscovered(nodeCellId)
 
-        for _, linkedNodeId in pairs(nodeData.ls) do
+        for _, linkedNodeId in pairs(linkedNodes) do
             local linkedNodeData = mapDataHandler.transport.nodes[linkedNodeId]
             if not linkedNodeData then goto continue end
 

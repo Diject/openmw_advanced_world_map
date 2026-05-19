@@ -18,6 +18,7 @@ local saveStorage = require("scripts.advanced_world_map.storage.localStorage")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
+local disabledActors = require("scripts.advanced_world_map.disabledActors")
 
 local l10n = core.l10n(common.l10nKey)
 
@@ -70,6 +71,23 @@ local function checkDoor(ref, player)
             player:sendEvent("AdvWMap:unregisterDisabledDoor", ref)
         end
 
+    end
+end
+
+
+local function checkActor(ref, player)
+    local recordId = ref.recordId
+    local wasDisabled = disabledActors.contains(recordId)
+
+    if not ref.enabled then
+        disabledActors.register(recordId)
+        if not wasDisabled then
+            player:sendEvent("AdvWMap:registerDisabledActor", recordId)
+        end
+
+    elseif wasDisabled then
+        disabledActors.unregister(recordId)
+        player:sendEvent("AdvWMap:unregisterDisabledActor", recordId)
     end
 end
 
@@ -374,12 +392,18 @@ return {
                             for _, ref in pairs(c:getAll(Door)) do
                                 checkDoor(ref, player)
                             end
+                            for _, ref in pairs(c:getAll(types.NPC)) do
+                                checkActor(ref, player)
+                            end
                         end
                     end
                 end
             else
                 for _, ref in pairs(cell:getAll(Door)) do
                     checkDoor(ref, player)
+                end
+                for _, ref in pairs(cell:getAll(types.NPC)) do
+                    checkActor(ref, player)
                 end
             end
         end,
