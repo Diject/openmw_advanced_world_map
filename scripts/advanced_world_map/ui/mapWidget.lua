@@ -53,9 +53,9 @@ this.layerId = {
     map = 1,
     region = 2,
     name = 3,
-    player = 4,
-    nonInteractive = 5,
-    transport = 6,
+    nonInteractive = 4,
+    transport = 5,
+    player = 6,
     marker = 7,
 }
 
@@ -1904,6 +1904,30 @@ function this.new(params)
 
             },
         },
+        -- for noninteractive markers
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
+        -- for transport markers
+        {
+            type = ui.TYPE.Widget,
+            props = {
+                position = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+            },
+            userData = {},
+            content = ui.content {
+
+            },
+        },
         -- player marker
         {
             type = ui.TYPE.Widget,
@@ -1932,30 +1956,6 @@ function this.new(params)
                         lastNorthAngle = meta.northDirectionAngle or 0,
                     },
                 },
-            },
-        },
-        -- for noninteractive markers
-        {
-            type = ui.TYPE.Widget,
-            props = {
-                position = util.vector2(0, 0),
-                relativeSize = util.vector2(1, 1),
-            },
-            userData = {},
-            content = ui.content {
-
-            },
-        },
-        -- for transport markers
-        {
-            type = ui.TYPE.Widget,
-            props = {
-                position = util.vector2(0, 0),
-                relativeSize = util.vector2(1, 1),
-            },
-            userData = {},
-            content = ui.content {
-
             },
         },
         -- for interactive markers
