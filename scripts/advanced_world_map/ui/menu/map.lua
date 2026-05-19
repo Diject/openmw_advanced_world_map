@@ -399,8 +399,8 @@ function menuMeta:setBorders(thick, coverHeader)
     self.headerFullHeight = self.headerHeight + 2 + self.headerOffset
     self.mainSize = util.vector2(self.size.x, self.size.y - self.headerFullHeight)
 
-    self.headerLayout.content[3].props.position = util.vector2(-self.borderSize - 2, (self.headerOffset * 0.5) + 1)
-    self.widgetActiveHeaderLayout.props.position = util.vector2(self.borderSize + 2, self.headerOffset * 0.5 + 1)
+    self.headerLayout.content[3].props.position = util.vector2(-self.borderSize - 2, self.headerOffset * 0.5 + self.headerYOffsetPos)
+    self.widgetActiveHeaderLayout.props.position = util.vector2(self.borderSize + 2, self.headerOffset * 0.5 + self.headerYOffsetPos)
     self.mainLayout.props.position = util.vector2(0, self.headerFullHeight)
 
     local bords = thick and {thickBorders.borders()} or {borders()}
@@ -700,6 +700,7 @@ function this.create(params)
     meta.headerHeight = headerHeight
     meta.borderSize = config.data.ui.thickBorders and 4 or 2
     meta.headerOffset = config.data.ui.coverHeader and meta.borderSize or 0
+    meta.headerYOffsetPos = config.data.ui.coverHeader and 0 or 1
     meta.headerFullHeight = headerHeight + 2 + meta.headerOffset
     local headerSize = util.vector2(meta.size.x, meta.headerFullHeight)
 
@@ -725,7 +726,7 @@ function this.create(params)
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
             arrange = ui.ALIGNMENT.Center,
-            position = util.vector2(meta.borderSize + 2, meta.headerOffset * 0.5 + 1)
+            position = util.vector2(meta.borderSize + 2, meta.headerOffset * 0.5 + meta.headerYOffsetPos)
         },
         userData = {
 
@@ -743,7 +744,7 @@ function this.create(params)
             autoSize = false,
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
-            position = util.vector2(0, meta.headerOffset * 0.5 + 1),
+            position = util.vector2(0, meta.headerOffset * 0.5 + meta.headerYOffsetPos),
             arrange = ui.ALIGNMENT.Center,
             align = ui.ALIGNMENT.Center,
         },
@@ -938,7 +939,7 @@ function this.create(params)
                     arrange = ui.ALIGNMENT.Center,
                     relativePosition = util.vector2(1, 0.5),
                     anchor = util.vector2(1, 0.5),
-                    position = util.vector2(-meta.borderSize - 2, (meta.headerOffset * 0.5) + 1)
+                    position = util.vector2(-meta.borderSize - 2, (meta.headerOffset * 0.5) + meta.headerYOffsetPos)
                 },
                 userData = {},
                 content = ui.content{
