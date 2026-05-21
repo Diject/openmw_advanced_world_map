@@ -14,7 +14,7 @@ local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 local this = {}
 
-this.version = 6
+this.version = 7
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -251,16 +251,18 @@ local function buildTransportData(entrances)
         local dist = math.huge
         for i, nodeDt in pairs(nodes) do
             local d = commonData.distance2D(nodeDt.p, pos)
-            if d < dist then
-                dist = d
-                if nodeDt.tp == tp or tp == -1 and nodeDt.tp ~= -1 then
+
+            if nodeDt.tp == tp or (tp == -1 and nodeDt.tp ~= -1) then
+                if d < dist then
+                    dist = d
                     node = nodeDt
                     nodeId = i
                 end
             end
-            if d < unknownTypeNodeDist then
-                unknownTypeNodeDist = d
-                if nodeDt.tp == -1 and tp ~= -1 then
+
+            if nodeDt.tp == -1 and tp ~= -1 then
+                if d < unknownTypeNodeDist then
+                    unknownTypeNodeDist = d
                     unknownTypeNode = nodeDt
                     unknownTypeNodeId = i
                 end
