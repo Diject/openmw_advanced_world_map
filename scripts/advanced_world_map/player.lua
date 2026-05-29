@@ -375,7 +375,8 @@ local nearbyDoors = {}
 local function addNearbyDoors()
     nearbyDoors = {}
     for _, ref in pairs(nearby.doors) do
-        if types.Door.isTeleport(ref) then
+        -- additional check for isTeleport, since nearby.doors may sometimes include non-doors
+        if types.Door.objectIsInstance(ref) and types.Door.isTeleport(ref) then
             table.insert(nearbyDoors, ref)
         end
     end
