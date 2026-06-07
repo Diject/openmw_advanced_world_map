@@ -161,6 +161,7 @@
 
 ---Search event parameters
 ---@class AdvancedWorldMap.Event.OnSearchEvent.Params
+---@field mode string Search mode ("locations", "actors", "items")
 ---@field showUnrevealed boolean Value indicating whether to include unrevealed locations in the search
 ---@field searchAllLocations boolean Value indicating whether to search in all locations or only the current one
 

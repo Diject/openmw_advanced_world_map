@@ -83,7 +83,7 @@ local mouseMove = async:callback(function(coord, layout)
     end
 
     if not layout.userData.params.tooltipContent then return end
-    tooltip.createOrMove(coord, layout, layout.userData.params.tooltipContent)
+    tooltip.createOrMove(coord, layout, layout.userData.params.tooltipContent, layout.userData.params.tooltipDelay)
 end)
 
 
@@ -103,6 +103,7 @@ end)
 ---@field mousePress fun(layout : any)?
 ---@field mouseRelease fun(layout : any)?
 ---@field tooltipContent any?
+---@field tooltipDelay number?
 ---@field relativePosition any? util.vector2
 ---@field position any? util.vector2
 ---@field anchor any? util.vector2

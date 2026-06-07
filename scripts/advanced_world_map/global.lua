@@ -16,6 +16,7 @@ local common = require("scripts.advanced_world_map.common")
 
 local saveStorage = require("scripts.advanced_world_map.storage.localStorage")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local searchLib = require("scripts.advanced_world_map.helpers.search")
 
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 local disabledActors = require("scripts.advanced_world_map.disabledActors")
@@ -427,12 +428,20 @@ return {
             data.player:sendEvent("AdvWMap:getMapStatics", {res = res})
         end,
 
+        ["AdvWMap:searchObjects"] = function (dt)
+            if not dt.params or not dt.player then return end
+            local res = searchLib.objectPositions(dt.params)
+            if res then
+                dt.player:sendEvent("AdvWMap:updateSearchResults", {results = res, mode = dt.mode})
+            end
+        end,
+
         ["AdvWMap:initMapData"] = function (dt)
             mapDataHandler.globalInit(dt.plRef, dt.options)
         end,
 
         ["AdvWMap:updateMapData"] = function (dt)
             mapDataHandler.loadMapData(dt)
-        end
+        end,
     },
 }

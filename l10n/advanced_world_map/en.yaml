@@ -7,7 +7,7 @@ NoX: "No [X]"
 You: "You"
 Map: "Map"
 Search: "Search"
-searchShowUnrevealed: "show unrevealed"
+searchShowUnrevealed: "Undiscovered"
 SearchShowUnrevealedTooltip: "Enable to show in search locations that have not yet been revealed on the map."
 from: "from"
 Region: "Region"
@@ -62,8 +62,10 @@ fastTravelRealTimeSecCooldownMessage: |-
 NotEnoughMagicka: "Not enough magicka."
 Local: "Local"
 World: "World"
-searchAllLocationsCheckbox: "all locations"
+searchAllLocationsCheckbox: "All locations"
 SearchAllLocationsTooltip: "Enable to search across all locations. When disabled, search will only include locations accessible from the current map area."
+searchNearbyCheckbox: "Nearby"
+searchNearbyTooltip: "Enable to search only in locations that are nearby the player."
 CellId: "Cell ID"
 Name: "Name"
 Description: "Description"
@@ -91,8 +93,51 @@ TransportFeatureInfo: "The map can display transport routes. To toggle them, rig
 LegendWidgetTooltip: "Map legend.\nRight-click to toggle transport routes.\nLeft-click to open."
 SearchWidgetTooltip: "Search"
 NotesWidgetTooltip: "Notes"
+SearchSelectorLocations: "Locations"
+SearchSelectorActors: "NPCs"
+SearchSelectorItems: "Items"
+SearchFilterLengthWarning: "Please enter at least 2 characters to search."
+SearchMarkerInContainerPattern: "{item} (in {container})"
+SearchMarkerOnActorPattern: "{item} (on {actor})"
+ObjectIdTooltipPattern: "ID: \"{id}\""
+Loading: "Loading..."
+SearchBtnPatternMatchingInfo: |
+  Search supports plain text and Lua pattern matching.
+  Pattern search is activated if these characters are present: ^$().[]*+-?%
+
+  Useful patterns:
+  .   any character
+  %d   digit, %a   letter, %s   space
+  %w   alphanumeric, %p   punctuation
+  *   0+ times, +   1+ times, -   lazy 0+
+  ^   start of text, $   end of text
+  [set]   characters in set (e.g. [aeiou])
+  %%   escape character (e.g. %. for a literal dot)
+
+  Examples:
+    balmora — simple search
+    ^vivec — names starting with Vivec
+    %d+ — names containing digits
+    v.*fell — matches 'Vvardenfell'
+    ald%- — matches 'Ald-' using escape character
 
 dateFormat: "%d %B 3E %Y"
+
+"types.NPC": "NPC"
+"types.Creature": "Creature"
+"types.Apparatus": "Apparatus"
+"types.Armor": "Armor"
+"types.Book": "Book"
+"types.Clothing": "Clothing"
+"types.Container": "Container"
+"types.Ingredient": "Ingredient"
+"types.Light": "Light"
+"types.Lockpick": "Lockpick"
+"types.Miscellaneous": "Miscellaneous"
+"types.Potion": "Potion"
+"types.Probe": "Probe"
+"types.Repair": "Repair item"
+"types.Weapon": "Weapon"
 
 leftMouseButton: "LMB"
 middleMouseButton: "MMB"
@@ -188,6 +233,12 @@ SettingFastTravelBaseMagickaCost: "Base magicka cost"
 SettingFastTravelBaseMagickaCostDescription: "The base magicka cost for fast traveling."
 SettingFastTravelAdditionalCost: "Magicka cost per unit distance"
 SettingFastTravelAdditionalCostDescription: "The additional magicka cost per unit distance traveled when fast traveling."
+
+SearchSettings: "Search"
+SettingSearchMaxObjectResults: "Max locations per object"
+SettingSearchMaxObjectResultsDescription: "Limits how many individual instances or locations are found for each unique NPC or item."
+SettingSearchInInventory: "Search in inventories"
+SettingSearchInInventoryDescription: "Include items stored inside containers, NPCs, and creatures in the search results."
 
 InputSettings: "Input"
 SettingInputGamepadControls: "Improved gamepad controls"

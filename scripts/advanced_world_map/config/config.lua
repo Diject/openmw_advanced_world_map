@@ -88,6 +88,10 @@ this.default = {
         },
         listForAllCharacters = false,
     },
+    search = {
+        maxObjectResults = 20,
+        inInventory = true,
+    },
     data = {
         initializer = commonData.dataInitializerTypes[1],
         safeInit = true,

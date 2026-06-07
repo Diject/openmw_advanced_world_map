@@ -24,8 +24,9 @@ local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
-local interval = require('scripts.advanced_world_map.ui.interval')
+local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
+local selector = require("scripts.advanced_world_map.ui.selector")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -47,6 +48,15 @@ local searchData = {}
 ---@type table<string, boolean>
 local targetCells = {}
 
+local usePatternSearch = false
+
+
+local searchModes = {
+    Locations = "locations",
+    Actors = "actors",
+    Items = "items"
+}
+
 
 ---@param handler advancedWorldMap.ui.mapElementMeta
 local function getMarkerId(handler)
@@ -61,14 +71,12 @@ end
 
 
 ---@param menu advancedWorldMap.ui.menu.map
-local function createTemporaryMarker(id, menu, dt, pos, color, text, showZoomIn)
-    local mapWidget = menu.mapWidget
+local function createTemporaryMarker(id, mapWidget, menu, loc, pos, color, textTable, locNamesTable, showZoomIn)
     if temporaryMarkers[id] then return end
 
-    local tooltipText = text or ""
-    local cellName = mapDataHandler.cellNameById[mapWidget.cellId or cellLib.getCellIdByPos(pos) or ""]
-    if cellName then
-        tooltipText = tooltipText..string.format("\n\n%s\n(%d, %d)", cellName, math.floor(pos.x), math.floor(pos.y))
+    local tooltipText = table.concat(tableLib.keys(textTable or {}), ", ")
+    if locNamesTable and next(locNamesTable) then
+        tooltipText = tooltipText.."\n\n"..table.concat(tableLib.keys(locNamesTable), " / ")
     end
 
     local h = mapWidget:createImageMarker{
@@ -77,10 +85,10 @@ local function createTemporaryMarker(id, menu, dt, pos, color, text, showZoomIn)
         color = color or config.data.ui.foundMarkerColor,
         texture = worldMarkerTexture,
         anchor = util.vector2(0.5, 1),
-        size = util.vector2(config.data.legend.markerSize * 2.5, config.data.legend.markerSize * 5),
+        size = util.vector2(config.data.legend.markerSize * 2, config.data.legend.markerSize * 4),
         showWhenZoomedOut = true,
         showWhenZoomedIn = showZoomIn,
-        tooltipContent = text and ui.content{
+        tooltipContent = textTable and ui.content{
             {
                 type = ui.TYPE.TextEdit,
                 props = {
@@ -93,7 +101,7 @@ local function createTemporaryMarker(id, menu, dt, pos, color, text, showZoomIn)
                     readOnly = true,
                     size = util.vector2(
                         util.clamp(
-                            stringLib.length(text) * config.data.ui.fontSize * config.data.ui.textHeightMul,
+                            stringLib.length(tooltipText) * config.data.ui.fontSize * config.data.ui.textHeightMul,
                             300,
                             uiUtils.getScaledScreenSize().x / 5
                         ),
@@ -107,10 +115,13 @@ local function createTemporaryMarker(id, menu, dt, pos, color, text, showZoomIn)
             mouseRelease = function(e, layout, pressed)
                 if e.button ~= 1 or not pressed then return end
 
-                if menu.mapWidget.cellId ~= dt.cellId then
-                    menu:updateMapWidgetCell(dt.cellId)
+                if menu.mapWidget.cellId ~= loc.id then
+                    menu:updateMapWidgetCell(loc.id)
                 end
-                menu.mapWidget:focusOnWorldPosition(dt.pos)
+                menu.mapWidget:focusOnWorldPosition(loc.pos)
+                if not menu.mapWidget:isInZoomInMode() then
+                    menu.mapWidget:setZoom(menu.mapWidget:getZoomModeThreshold() + 0.5)
+                end
                 menu.mapWidget:updateMarkers()
 
                 menu:update()
@@ -121,7 +132,7 @@ local function createTemporaryMarker(id, menu, dt, pos, color, text, showZoomIn)
 end
 
 
-local function removeTemporaryWorldMarkers()
+local function removeTemporaryMarkers()
     for i, handler in pairs(temporaryMarkers) do
         handler:destroy()
         temporaryMarkers[i] = nil
@@ -175,11 +186,9 @@ end
 
 ---@param handler advancedWorldMap.ui.mapElementMeta
 ---@param textFilter string
-local function updateLayoutForMarker(handler, textFilter, color)
+local function updateLayoutForMarker(handler, textFilter)
     local userData = handler:getUserData()
     if not userData then return end
-
-    local changeVisibility = false
 
     if userData.allowSearchFilter then
         local posHash = getPosHash(handler._parent.cellId, handler._params.pos)
@@ -187,9 +196,10 @@ local function updateLayoutForMarker(handler, textFilter, color)
 
         if data and next(data) then
             local params = data[1]
-            setMarkerColor(handler, params.color)
-        elseif userData.searchText and userData.searchText:find(textFilter, 1, true) then
-            setMarkerColor(handler, color or config.data.ui.foundMarkerColor)
+            setMarkerColor(handler, params.color or config.data.ui.defaultColor)
+        elseif userData.searchText and (userData.searchText:find(textFilter, 1, true) or
+                usePatternSearch and userData.searchText:find(textFilter)) then
+            setMarkerColor(handler, config.data.ui.foundMarkerColor)
         end
     end
 end
@@ -267,7 +277,7 @@ end
 
 
 ---@param menu advancedWorldMap.ui.menu.map
----@return {cellId : string?, pos : {x : number, y : number}, text : string, color : any, dist : number?, priority : number?}[]
+---@return {cellId : string?, pos : {x : number, y : number}, locations: table?, text : string, color : any, dist : number?, priority : number?}[]
 local function getResults(menu, str, showUnrevealed, searchAllLocations)
     local res = {}
 
@@ -280,41 +290,58 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
         if checked[cellId] then return end
         checked[cellId] = true
 
-        if isExterior == nil then isExterior = cellId:find(commonData.exteriorCellLabel) and true or false end
+        if isExterior == nil then isExterior = cellId:find(commonData.exteriorCellLabel, 1, true) and true or false end
 
-        local name = mapDataHandler.cellNameById[cellId] or string.format("%s: \"%s\"", l10n("CellId"), cellId)
-        local nameLower = stringLib.utf8_lower(name)
+        local doors = mapDataHandler.entrances[cellId]
 
-        if not isExterior and nameLower:find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(cellId)) then
-            local doors = mapDataHandler.entrances[cellId]
-            local pos = {x = 0, y = 0}
-            if doors then
-                local cnt = #doors
-                for _, d in pairs(doors) do
-                    pos.x = pos.x + d.pos.x
-                    pos.y = pos.y + d.pos.y
+        if not isExterior then
+            local _, door = next(doors or {})
+            ---@type advancedWorldMap.dynamicDataHandler.entranceData?
+            local destCellDoor
+            if door then
+                for _, d in pairs(entrances[door.dCId] or {}) do
+                    if d.dCId == cellId then
+                        destCellDoor = d
+                        break
+                    end
                 end
-                pos.x = pos.x / cnt
-                pos.y = pos.y / cnt
             end
+            local name = destCellDoor and destCellDoor.name or mapDataHandler.cellNameById[cellId] or ""
+            local nameLower = stringLib.utf8_lower(name)
 
-            table.insert(res, {
-                text = name,
-                cellId = cellId,
-                pos = pos,
-                priority = 0,
-                color = config.data.ui.foundMarkerColor
-            })
+            if (nameLower:find(str, 1, true) or usePatternSearch and nameLower:find(str)) and
+                    (showUnrevealed or discoveredLocations.isDiscovered(cellId)) then
+
+                local altPos = {x = 0, y = 0}
+                if not destCellDoor and doors then
+                    local cnt = #doors
+                    for _, d in pairs(doors) do
+                        altPos.x = altPos.x + d.pos.x
+                        altPos.y = altPos.y + d.pos.y
+                    end
+                    altPos.x = altPos.x / cnt
+                    altPos.y = altPos.y / cnt
+                end
+
+                table.insert(res, {
+                    text = name,
+                    cellId = destCellDoor and destCellDoor.cId or cellId,
+                    pos = destCellDoor and destCellDoor.pos or altPos,
+                    priority = 0,
+                    color = config.data.ui.foundMarkerColor
+                })
+            end
         end
 
         if inInteriors then
             if isExterior then
-                for _, dt in pairs(mapDataHandler.entrances[cellId] or {}) do
+                for _, dt in pairs(doors or {}) do
                     if checked[dt.dCId] then goto continue end
                     checked[dt.dCId] = true
 
                     local destNameLower = stringLib.utf8_lower(dt.name)
-                    if destNameLower:find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
+                    if (destNameLower:find(str, 1, true) or usePatternSearch and destNameLower:find(str)) and
+                            (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
                         table.insert(res, {
                             text = dt.fName,
                             cellId = not dt.isEx and dt.cId or nil,
@@ -341,7 +368,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
             processCell(mapWidget.cellId, false, true)
         else
             for cellId, list in pairs(entrances) do
-                if not cellId:find(commonData.exteriorCellLabel) then
+                if not cellId:find(commonData.exteriorCellLabel, 1, true) then
                     goto continue
                 end
 
@@ -352,7 +379,9 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
             local names = mapDataHandler.cellNameData
             for name, dt in pairs(names) do
-                if stringLib.utf8_lower(name):find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
+                local nameLower = stringLib.utf8_lower(name)
+                if (nameLower:find(str, 1, true) or usePatternSearch and nameLower:find(str)) and
+                        (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                     table.insert(res, {
                         text = dt.name,
                         cellId = nil,
@@ -366,7 +395,7 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
     else
         local interiors = {}
         for cellId, list in pairs(entrances) do
-            if not cellId:find(commonData.exteriorCellLabel) then
+            if not cellId:find(commonData.exteriorCellLabel, 1, true) then
                 table.insert(interiors, cellId)
                 goto continue
             end
@@ -382,7 +411,9 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
 
         local names = mapDataHandler.cellNameData
         for name, dt in pairs(names) do
-            if stringLib.utf8_lower(name):find(str, 1, true) and (showUnrevealed or discoveredLocations.isDiscovered(name)) then
+            local nameLower = stringLib.utf8_lower(name)
+            if (nameLower:find(str, 1, true) or usePatternSearch and nameLower:find(str)) and
+                    (showUnrevealed or discoveredLocations.isDiscovered(name)) then
                 table.insert(res, {
                     text = dt.name,
                     cellId = nil,
@@ -418,11 +449,26 @@ local function create(menu)
         searchAllLocations = true
     end
 
+    local nearbySearch = localStorage.data[commonData.searchNearbyFieldId]
+    if nearbySearch == nil then
+        nearbySearch = true
+    end
+
+    local searchMode = localStorage.data[commonData.searchModeFieldId] or searchModes.Locations
+    if not commonData.isSaveBloatFixed() and searchMode ~= searchModes.Locations then
+        searchMode = searchModes.Locations
+    end
+    localStorage.data[commonData.searchModeFieldId] = searchMode
+
 
     local onMapElementCreatedCallback = function (e)
         if textFilter == "" then return end
 
-        updateLayoutForMarker(e.marker, textFilter)
+        if searchMode == searchModes.Locations then
+            updateLayoutForMarker(e.marker, textFilter)
+        else
+            setMarkerColor(e.marker, nil, true)
+        end
 
         if not showUnrevealed then return end
         local handler = e.marker
@@ -437,14 +483,38 @@ local function create(menu)
         setMarkerVisibility(handler, true)
     end
 
-    local worldMarkersData
+    local temporaryMarkersData
+    ---@type table<string, string[]> by cellId, marker hash
+    local temporaryCellMarkerLinks = {}
     local mapInitCallbackFunc = function (e)
-        if not worldMarkersData or e.cellId ~= nil then return end
+        if not temporaryMarkersData then return end
 
-        for _, dt in pairs(worldMarkersData) do
-            createTemporaryMarker(dt.posHash, e.menu, dt.dt, dt.pos, dt.color, dt.text, dt.showZoomIn)
+        local cellMarkerHashes = temporaryCellMarkerLinks[e.menu.mapWidget.cellId or commonData.exteriorMapId]
+        if not cellMarkerHashes then return end
+
+        for _, hash in pairs(cellMarkerHashes) do
+            local dt = temporaryMarkersData[hash]
+            if dt then
+                createTemporaryMarker(hash, e.menu.mapWidget, e.menu, dt.loc, dt.pos, dt.color, dt.text, dt.destNames, dt.showZoomIn)
+            end
         end
+
         e.menu:update()
+    end
+
+    local updateExistingMarkers = function ()
+        for _, handler in pairs(menu.mapWidget:getActiveMarkers() or {}) do
+            onMapElementCreatedCallback{marker = handler, mapWidget = menu.mapWidget}
+        end
+    end
+
+    local restoreExistingMarkers = function ()
+        for _, handler in pairs(menu.mapWidget:getActiveMarkers() or {}) do
+            local userData = handler:getUserData()
+            if userData and (userData.type == commonData.doorMarkerType or userData.type == commonData.doorDescrMarkerType) then
+                handler:restoreLayout()
+            end
+        end
     end
 
 
@@ -452,7 +522,7 @@ local function create(menu)
         resetMarkersVisibility()
     end
 
-    local tooltipContent = ui.content{
+    local iconTooltipContent = ui.content{
         {
             type = ui.TYPE.Text,
             props = {
@@ -474,7 +544,7 @@ local function create(menu)
         },
         events = {
             mouseMove = async:callback(function(e, layout)
-                tooltip.createOrMove(e, layout, tooltipContent, 1)
+                tooltip.createOrMove(e, layout, iconTooltipContent, 1)
             end),
 
             focusLoss = async:callback(function(e, layout)
@@ -489,6 +559,7 @@ local function create(menu)
 
         eventSys.registerHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
         eventSys.registerHandler(eventSys.EVENT.onMapClosed, onMapClosedCallback)
+        eventSys.registerHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
 
         local size = util.vector2(
             math.max(mapWidgetSize.x / 3, 250),
@@ -497,15 +568,20 @@ local function create(menu)
 
         local scrollBoxContent = ui.content{}
 
-        local scrollBoxSize = util.vector2(size.x, size.y - (config.data.ui.fontSize * 5))
+        local separatorSize = 1
+        local searchBarTextEditSize = util.vector2(size.x, math.floor((config.data.ui.fontSize * 1.3 + 1) / 2) * 2)
+        local searchBarSize = util.vector2(searchBarTextEditSize.x, searchBarTextEditSize.y + 4)
+        local searchTypeSelectorSize = util.vector2(size.x, math.floor(config.data.ui.fontSize * 1.5 / 2) * 2)
+        local checkboxesLayoutSize = util.vector2(size.x - config.data.ui.fontSize, math.floor(config.data.ui.fontSize * 1.75 / 2) * 2)
+        local scrollBoxSize = util.vector2(size.x, size.y - (searchBarSize.y + checkboxesLayoutSize.y + searchTypeSelectorSize.y + separatorSize + 2))
 
         local scrollBoxLayout = scrollBox{
             updateFunc = menu.update,
             contentHeight = 0,
             leftOffset = 2,
             size = scrollBoxSize,
-            position = util.vector2(0, config.data.ui.fontSize * 5),
-            scrollAmount = config.data.ui.fontSize * 2,
+            position = util.vector2(0, searchBarSize.y + searchTypeSelectorSize.y + checkboxesLayoutSize.y + separatorSize),
+            scrollAmount = config.data.ui.fontSize * 3,
             content = scrollBoxContent,
             autoOptimize = true,
         }
@@ -513,31 +589,94 @@ local function create(menu)
         ---@type advancedWorldMap.ui.scrollBox
         local scrollBoxMeta = scrollBoxLayout.userData.scrollBoxMeta ---@diagnostic disable-line: need-check-nil
 
-        local function fill(showUnrevealed, searchAllLocations)
+        local setSearchResults
+
+        local function fillList(suppressEvent)
             resetMarkersColor()
-            removeTemporaryWorldMarkers()
+            removeTemporaryMarkers()
+            restoreExistingMarkers()
             searchData = {}
-            worldMarkersData = {}
+            temporaryMarkersData = {}
+            temporaryCellMarkerLinks = {}
             targetCells = {}
             uiUtils.clearContent(scrollBoxContent)
+            scrollBoxMeta:setScrollPosition(0)
+            scrollBoxMeta:setContentHeight(0)
+            scrollBoxMeta:updateContent()
 
             if textFilter == "" then return end
 
-            updateVisibilityForActiveMarkers(menu.mapWidget, textFilter)
+            if stringLib.length(textFilter) < 2 then
+                ui.showMessage(l10n("SearchFilterLengthWarning"))
+                return
+            end
 
-            local results = getResults(menu, textFilter, showUnrevealed, searchAllLocations)
+            scrollBoxContent:add{
+                type = ui.TYPE.Text,
+                props = {
+                    text = l10n("Loading"),
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                },
+            }
+            scrollBoxMeta:updateContent()
 
-            eventSys.triggerEvent(eventSys.EVENT.onSearch, {results = results, filter = textFilter,
-                params = {showUnrevealed = showUnrevealed, searchAllLocations = searchAllLocations}})
+            if searchMode == searchModes.Locations then
+                updateVisibilityForActiveMarkers(menu.mapWidget, textFilter)
+            end
+
+            if searchMode == searchModes.Locations then
+                local results = getResults(menu, textFilter, showUnrevealed, searchAllLocations)
+                setSearchResults(results, suppressEvent)
+
+            else
+                ---@type advancedWorldMap.helpers.search.objectPositions.params
+                local params = {
+                    text = textFilter,
+                    byName = true,
+                    inInventory = searchMode == searchModes.Items and config.data.search.inInventory or false,
+                    startingCellId = playerRef.cell.id,
+                    allowedCells = not showUnrevealed and discoveredLocations.discovered or nil,
+                    onlyNearby = nearbySearch,
+                    limit = config.data.search.maxObjectResults,
+                }
+
+                if searchMode == searchModes.Actors then
+                    params.types = {
+                        "NPC", "Creature"
+                    }
+                elseif searchMode == searchModes.Items then
+                    params.types = {
+                        "Apparatus", "Armor", "Book", "Clothing", "Ingredient", "Light", "Lockpick", "Miscellaneous", "Probe", "Repair", "Weapon"
+                    }
+                end
+
+                core.sendGlobalEvent("AdvWMap:searchObjects", {
+                    player = playerRef,
+                    params = params,
+                    mode = searchMode,
+                })
+
+                menu:update()
+            end
+        end
+
+        setSearchResults = function (results, suppressEvent)
+            if not suppressEvent then
+                eventSys.triggerEvent(eventSys.EVENT.onSearch, {results = results, filter = textFilter, mode = searchMode,
+                    params = {showUnrevealed = showUnrevealed, searchAllLocations = searchAllLocations, nearbySearch = nearbySearch}})
+            end
 
             for _, res in pairs(results) do
                 local dist
-                if menu.mapWidget.cellId then
-                    if res.cellId == menu.mapWidget.cellId then
-                        dist = commonData.distance2D(res.pos, playerRef.position)
+                if res.pos then
+                    if menu.mapWidget.cellId then
+                        if res.cellId == menu.mapWidget.cellId then
+                            dist = commonData.distance2D(res.pos, playerRef.position)
+                        end
+                    else
+                        dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
                     end
-                else
-                    dist = commonData.distance2D(res.pos, playerPos.gexExteriorPos())
                 end
                 res.dist = dist or 0
                 res.priority = res.priority or 0
@@ -551,44 +690,89 @@ local function create(menu)
                 end
             end)
 
+            uiUtils.clearContent(scrollBoxContent)
+
             local height = 0
 
             for _, dt in ipairs(results) do
                 local text = dt.text or ""
 
-                if dt.cellId then
-                    targetCells[dt.cellId] = true
+                local locations = dt.locations or {
+                    {id = dt.cellId, pos = dt.pos}
+                }
+
+                local isObjectSearchMode = searchMode ~= searchModes.Locations
+                for _, locData in pairs(locations) do
+                    if locData.id then
+                        targetCells[locData.id] = true
+                    end
+
+                    local posHash = getPosHash(locData.id, locData.pos)
+
+                    searchData[posHash] = searchData[posHash] or {}
+                    table.insert(searchData[posHash], dt)
+
+                    local function addMarkerData(cellId, pHash, pos, locName, color, tx, showZoomIn)
+                        local markerData = temporaryMarkersData[pHash]
+                        if not markerData then
+                            temporaryMarkersData[pHash] = {
+                                posHash = pHash,
+                                pos = pos,
+                                color = color,
+                                text = {[tx] = true},
+                                showZoomIn = showZoomIn,
+                                loc = locData,
+                                destNames = {[locName or ""] = true}
+                            }
+                            local cellIdForLink = cellId or commonData.exteriorMapId
+                            temporaryCellMarkerLinks[cellIdForLink] = temporaryCellMarkerLinks[cellIdForLink] or {}
+                            table.insert(temporaryCellMarkerLinks[cellIdForLink], pHash)
+                        else
+                            if markerData.color ~= color then
+                                markerData.color = config.data.ui.foundMarkerColor
+                            end
+                            if not markerData.text[tx] then
+                                markerData.text[tx] = true
+                                markerData.destNames[locName] = true
+                            end
+                        end
+                    end
+
+                    local cellName = mapDataHandler.cellNameById[locData.id or cellLib.getCellIdByPos(locData.pos) or ""] or
+                        locData.id or string.format("(%d, %d)", math.floor(locData.pos.x), math.floor(locData.pos.y))
+
+                    if locData.id ~= nil then
+                        local entrances = getWorldEntrancesForCell(locData.id)
+                        for pHash, entranceDt in pairs(entrances) do
+                            addMarkerData(nil, pHash, entranceDt.pos, cellName, config.data.ui.foundMarkerLightColor, text, true)
+                            targetCells[entranceDt.dCId] = true
+                        end
+                    end
+
+                    if isObjectSearchMode or locData.id == nil then
+                        local color = locData.owner and config.data.ui.foundMarkerLightColor or config.data.ui.foundMarkerColor
+                        local markerText = text
+                        if locData.owner then
+                            local ownerName = locData.owner.name or locData.owner.id or ""
+                            markerText = locData.owner.tp == l10n("types.Container") and
+                                l10n("SearchMarkerInContainerPattern", {item = text, container = ownerName}) or
+                                l10n("SearchMarkerOnActorPattern", {item = text, actor = ownerName})
+                        end
+                        addMarkerData(locData.id, posHash, locData.pos, cellName, color, markerText, isObjectSearchMode)
+                    end
                 end
 
-                local posHash = getPosHash(dt.cellId, dt.pos)
-
-                searchData[posHash] = searchData[posHash] or {}
-                table.insert(searchData[posHash], dt)
-
-                local function addWorldMarkerData(pHash, pos, color, tx, showZoomIn)
-                    if not worldMarkersData[pHash] then
-                        worldMarkersData[pHash] = {
-                            posHash = pHash,
-                            pos = pos,
-                            color = color,
-                            text = tx,
-                            showZoomIn = showZoomIn,
-                            dt = dt,
+                local tooltipContent = isObjectSearchMode and ui.content {
+                    {
+                        type = ui.TYPE.Text,
+                        props = {
+                            text = l10n("ObjectIdTooltipPattern", {id = dt.id or "???"}),
+                            textSize = config.data.ui.fontSize,
+                            textColor = config.data.ui.defaultColor,
+                            autoSize = true,
                         }
-                    elseif worldMarkersData[pHash].color ~= color then
-                        worldMarkersData[pHash].color = config.data.ui.foundMarkerColor
-                    end
-                end
-
-                if dt.cellId == nil then
-                    addWorldMarkerData(posHash, dt.pos, config.data.ui.foundMarkerColor, text)
-                else
-                    local entrances = getWorldEntrancesForCell(dt.cellId)
-                    for pHash, entranceDt in pairs(entrances) do
-                        addWorldMarkerData(pHash, entranceDt.pos, config.data.ui.foundMarkerLightColor, text, true)
-                        targetCells[entranceDt.dCId] = true
-                    end
-                end
+                    }
+                }
 
                 local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, size.x, config.data.ui.textHeightMul)
 
@@ -607,7 +791,7 @@ local function create(menu)
                         propagateEvents = false,
                     },
                     userData = {
-
+                        positionIndex = 0,
                     },
                     events = {
                         mousePress = async:callback(function(e, layout)
@@ -621,6 +805,8 @@ local function create(menu)
                                 layout.props.textShadowColor = nil
                                 menu:update()
                             end
+
+                            tooltip.destroy(layout)
                         end),
 
                         mouseMove = async:callback(function(e, layout)
@@ -630,6 +816,10 @@ local function create(menu)
                                 layout.props.textShadowColor = config.data.ui.textShadowColor
                                 menu:update()
                             end
+
+                            if tooltipContent then
+                                tooltip.createOrMove(e, layout, tooltipContent, 1)
+                            end
                         end),
 
                         mouseRelease = async:callback(function(e, layout)
@@ -638,10 +828,17 @@ local function create(menu)
                             scrollBoxMeta:mouseRelease(e)
 
                             if scrollBoxMeta.lastMovedDistance < 20 then
-                                if menu.mapWidget.cellId ~= dt.cellId then
-                                    menu:updateMapWidgetCell(dt.cellId)
+                                local index = (layout.userData.positionIndex + 1)
+                                if index > #locations then index = 1 end
+                                layout.userData.positionIndex = index
+
+                                local locDt = locations[index]
+                                if not locDt then return end
+
+                                if menu.mapWidget.cellId ~= locDt.id then
+                                    menu:updateMapWidgetCell(locDt.id)
                                 end
-                                menu.mapWidget:focusOnWorldPosition(dt.pos)
+                                menu.mapWidget:focusOnWorldPosition(locDt.pos)
                                 menu.mapWidget:updateMarkers()
 
                                 menu:update()
@@ -656,31 +853,83 @@ local function create(menu)
                 height = height + config.data.ui.fontSize + textHeight
             end
 
-            local worldMapWidget = menu:getCachedMapWidget()
-            if worldMapWidget then
-                for posHash, dt in pairs(worldMarkersData) do
-                    createTemporaryMarker(posHash, menu, dt.dt, dt.pos, dt.color, dt.text, dt.showZoomIn)
+            for cellId, hashes in pairs(temporaryCellMarkerLinks) do
+                local cachedMapWidget = menu:getCachedMapWidget(cellId)
+                if cachedMapWidget then
+                    for _, hash in pairs(hashes) do
+                        local dt = temporaryMarkersData[hash]
+                        if dt then
+                            createTemporaryMarker(hash, cachedMapWidget, menu, dt.loc, dt.pos, dt.color, dt.text, dt.destNames, dt.showZoomIn)
+                        end
+                    end
                 end
-            else
-                eventSys.registerHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
             end
+
+            updateExistingMarkers()
 
             scrollBoxMeta:setScrollPosition(0)
             scrollBoxMeta:setContentHeight(height)
             scrollBoxMeta:updateContent()
         end
 
+        local updateCheckboxVisibility
+
+        local searchTypeSelectorButtons = {
+            {
+                text = l10n("SearchSelectorLocations"),
+                checked = searchMode == searchModes.Locations,
+                onClick = function (layout)
+                    searchMode = searchModes.Locations
+                    localStorage.data[commonData.searchModeFieldId] = searchMode
+                    updateCheckboxVisibility()
+                    fillList()
+                end
+            },
+        }
+
+        if commonData.isSaveBloatFixed() then
+            table.insert(searchTypeSelectorButtons, {
+                text = l10n("SearchSelectorActors"),
+                checked = searchMode == searchModes.Actors,
+                onClick = function (layout)
+                    searchMode = searchModes.Actors
+                    localStorage.data[commonData.searchModeFieldId] = searchMode
+                    updateCheckboxVisibility()
+                    fillList()
+                end
+            })
+            table.insert(searchTypeSelectorButtons, {
+                text = l10n("SearchSelectorItems"),
+                checked = searchMode == searchModes.Items,
+                onClick = function (layout)
+                    searchMode = searchModes.Items
+                    localStorage.data[commonData.searchModeFieldId] = searchMode
+                    updateCheckboxVisibility()
+                    fillList()
+                end
+            })
+        end
+
+        local searchTypeSelectorLayout = selector{
+            size = searchTypeSelectorSize,
+            anchor = util.vector2(0.5, 0),
+            position = util.vector2(size.x / 2, searchBarSize.y),
+            update = menu.update,
+            buttons = searchTypeSelectorButtons,
+        }
+
 
         local showUnrevealedCBLayout = checkBox{
             updateFunc = menu.update,
             text = l10n("searchShowUnrevealed"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize * 1.8),
+            anchor = util.vector2(0, 0.5),
+            position = util.vector2(0, checkboxesLayoutSize.y / 2),
             checked = showUnrevealed,
             event = function (checked, layout)
                 showUnrevealed = checked
                 localStorage.data[commonData.showUnrevealedFieldId] = checked
-                fill(showUnrevealed, searchAllLocations)
+                fillList()
                 menu.mapWidget:updateMarkers()
                 menu:update()
             end,
@@ -705,12 +954,14 @@ local function create(menu)
             updateFunc = menu.update,
             text = l10n("searchAllLocationsCheckbox"),
             textSize = config.data.ui.fontSize * 0.9,
-            position = util.vector2(2, config.data.ui.fontSize * 3.3),
+            anchor = util.vector2(1, 0.5),
+            position = util.vector2(checkboxesLayoutSize.x, checkboxesLayoutSize.y / 2),
+            visible = searchMode == searchModes.Locations,
             checked = searchAllLocations,
             event = function (checked, layout)
                 searchAllLocations = checked
                 localStorage.data[commonData.searchAllLocationsFieldId] = checked
-                fill(showUnrevealed, searchAllLocations)
+                fillList()
                 menu.mapWidget:updateMarkers()
                 menu:update()
             end,
@@ -731,11 +982,62 @@ local function create(menu)
             },
         }
 
+        local searchNearbyCBLayout = checkBox{
+            updateFunc = menu.update,
+            text = l10n("searchNearbyCheckbox"),
+            textSize = config.data.ui.fontSize * 0.9,
+            anchor = util.vector2(1, 0.5),
+            position = util.vector2(checkboxesLayoutSize.x, checkboxesLayoutSize.y / 2),
+            visible = searchMode ~= searchModes.Locations,
+            checked = nearbySearch,
+            event = function (checked, layout)
+                nearbySearch = checked
+                localStorage.data[commonData.searchNearbyFieldId] = checked
+                fillList()
+                menu.mapWidget:updateMarkers()
+                menu:update()
+            end,
+            tooltipContent = ui.content {
+                {
+                    type = ui.TYPE.TextEdit,
+                    props = {
+                        text = l10n("searchNearbyTooltip"),
+                        textSize = config.data.ui.fontSize,
+                        textColor = config.data.ui.defaultColor,
+                        autoSize = true,
+                        multiline = true,
+                        wordWrap = true,
+                        readOnly = true,
+                        size = util.vector2(math.max(300, uiUtils.getScaledScreenSize().x / 4), 0),
+                    }
+                }
+            },
+        }
+
+        updateCheckboxVisibility = function ()
+            searchNearbyCBLayout.props.visible = searchMode ~= searchModes.Locations
+            searchAllLocationsCBLayout.props.visible = searchMode == searchModes.Locations
+        end
+
+        local checkboxesLayout = {
+            type = ui.TYPE.Widget,
+            props = {
+                size = checkboxesLayoutSize,
+                anchor = util.vector2(0.5, 0),
+                position = util.vector2(size.x / 2, searchBarSize.y + searchTypeSelectorSize.y + separatorSize),
+            },
+            content = ui.content {
+                showUnrevealedCBLayout,
+                searchAllLocationsCBLayout,
+                searchNearbyCBLayout,
+            }
+        }
+
         local searchBarLayout
         searchBarLayout = {
             type = ui.TYPE.Widget,
             props = {
-                size = util.vector2(size.x, config.data.ui.fontSize * 1.3 + 4),
+                size = searchBarSize,
             },
             content = ui.content {
                 {
@@ -743,22 +1045,23 @@ local function create(menu)
                     props = {
                         text = "",
                         anchor = util.vector2(0, 0.5),
-                        size = util.vector2(size.x - 114, config.data.ui.fontSize * 1.3),
+                        size = searchBarTextEditSize,
                         textAlignV = ui.ALIGNMENT.Center,
                         textSize = config.data.ui.fontSize,
-                        position = util.vector2(2, config.data.ui.fontSize * 1.3 / 2 + 2),
+                        position = util.vector2(2, searchBarTextEditSize.y / 2 + 2),
                         textColor = config.data.ui.defaultColor,
                     },
                     events = {
                         textChanged = async:callback(function(text, layout)
                             userInputText = text
                             textFilter = stringLib.utf8_lower(text)
+                            usePatternSearch = stringLib.hasEscapeCharacters(text)
                             searchBarLayout.content[1].props.text = userInputText
                         end),
                         keyRelease = async:callback(function(e, layout)
                             if e.code == input.KEY.Enter then
                                 searchBarLayout.content[1].props.text = userInputText
-                                fill(showUnrevealed, searchAllLocations)
+                                fillList()
                                 menu.mapWidget:updateMarkers()
                                 menu:update()
                             end
@@ -774,9 +1077,25 @@ local function create(menu)
                     size = util.vector2(100, config.data.ui.fontSize * 0.9),
                     textSize = config.data.ui.fontSize * 0.9,
                     anchor = util.vector2(1, 0.5),
-                    position = util.vector2(size.x - 2, config.data.ui.fontSize * 1.3 / 2 + 2),
+                    position = util.vector2(size.x - 2, searchBarTextEditSize.y / 2 + 2),
+                    tooltipDelay = 0.75,
+                    tooltipContent = ui.content {
+                        {
+                            type = ui.TYPE.TextEdit,
+                            props = {
+                                text = l10n("SearchBtnPatternMatchingInfo"),
+                                textSize = config.data.ui.fontSize,
+                                textColor = config.data.ui.defaultColor,
+                                autoSize = true,
+                                multiline = true,
+                                wordWrap = true,
+                                readOnly = true,
+                                size = util.vector2(math.max(300, uiUtils.getScaledScreenSize().x / 4), 0),
+                            }
+                        }
+                    },
                     event = function (layout)
-                        fill(showUnrevealed, searchAllLocations)
+                        fillList()
                         menu.mapWidget:updateMarkers()
                         menu:update()
                     end
@@ -804,8 +1123,19 @@ local function create(menu)
                     },
                 },
                 searchBarLayout,
-                showUnrevealedCBLayout,
-                searchAllLocationsCBLayout,
+                searchTypeSelectorLayout,
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = ui.texture{ path = "textures/menu_thin_border_top.dds" },
+                        tileH = true,
+                        tileV = false,
+                        size = util.vector2(0, separatorSize),
+                        relativeSize = util.vector2(separatorSize, 0),
+                        position = util.vector2(0, searchBarSize.y + searchTypeSelectorSize.y),
+                    },
+                },
+                checkboxesLayout,
                 scrollBoxLayout,
                 borders()
             }
@@ -826,20 +1156,25 @@ local function create(menu)
             end
             searchBarLayout.content[1].events.textChanged(text)
 
-            fill(showUnrevealed, searchAllLocations)
+            fillList()
         end
+
+        menu.userData.advWMapSetSearchResults = setSearchResults
     end
 
     local function onClose(menu)
         textFilter = ""
+        usePatternSearch = false
         userInputText = ""
         menu.userData.advWMapSearch = nil
+        menu.userData.advWMapSetSearchResults = nil
         iconLayout.props.color = config.data.ui.defaultColor
         resetMarkersVisibility()
         resetMarkersColor()
-        removeTemporaryWorldMarkers()
+        removeTemporaryMarkers()
         searchData = {}
-        worldMarkersData = {}
+        temporaryMarkersData = nil
+        temporaryCellMarkerLinks = {}
         targetCells = {}
         eventSys.unregisterHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
         eventSys.unregisterHandler(eventSys.EVENT.onMapClosed, onMapClosedCallback)

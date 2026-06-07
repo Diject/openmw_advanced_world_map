@@ -790,5 +790,19 @@ return {
         ["AdvWMap:tmCall"] = function (id)
             realTimer.executeTimer(id)
         end,
+
+        ["AdvWMap:updateSearchResults"] = function (dt)
+            local menu = menuHandler.getMenu(commonData.mapMenuId)
+            if not menu or not menu.userData.advWMapSetSearchResults then return end
+            if dt.mode ~= localStorage.data[commonData.searchModeFieldId] then return end
+
+            local results = tableLib.values(dt.results)
+            for _, dt in pairs(results) do
+                dt.text = string.format("%s (%s)", dt.name, dt.type)
+                dt.priority = 99999 - dt.i
+            end
+
+            menu.userData.advWMapSetSearchResults(results)
+        end,
     },
 }

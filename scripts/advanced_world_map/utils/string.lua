@@ -209,4 +209,9 @@ function this.sanitize(str)
 end
 
 
+function this.hasEscapeCharacters(str)
+    return str:find("([%%%^%$%(%)%.%[%]%*%+%-%?])") ~= nil
+end
+
+
 return this

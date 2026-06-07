@@ -311,12 +311,26 @@ I.Settings.registerGroup{
 
 
 I.Settings.registerGroup{
+    key = commonData.configSearchSectionName,
+    page = commonData.settingPage,
+    l10n = commonData.l10nKey,
+    name = "SearchSettings",
+    permanentStorage = true,
+    order = 6,
+    settings = {
+        numberSetting{key = "search.maxObjectResults", name = "SettingSearchMaxObjectResults", description = "SettingSearchMaxObjectResultsDescription", default = config.default.search.maxObjectResults, min = 1, integer = true},
+        boolSetting{key = "search.inInventory", name = "SettingSearchInInventory", description = "SettingSearchInInventoryDescription", default = config.default.search.inInventory},
+    },
+}
+
+
+I.Settings.registerGroup{
     key = commonData.configInputSectionName,
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
     name = "InputSettings",
     permanentStorage = true,
-    order = 6,
+    order = 7,
     settings = {
         boolSetting{key = "input.gamepadControls", name = "SettingInputGamepadControls", description = "SettingInputGamepadControlsDescription", default = config.default.input.gamepadControls},
         boolSetting{key = "input.gamepadControlsBumperMode", name = "SettingInputGamepadControlsBumperMode", description = "SettingInputGamepadControlsBumperModeDescription", default = config.default.input.gamepadControlsBumperMode},
@@ -337,7 +351,7 @@ I.Settings.registerGroup{
     l10n = commonData.l10nKey,
     name = "UISettings",
     permanentStorage = true,
-    order = 7,
+    order = 8,
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
         boolSetting{key = "ui.thickBorders", name = "SettingUIThickBorders", description = "SettingUIThickBordersDescription", default = config.default.ui.thickBorders},
