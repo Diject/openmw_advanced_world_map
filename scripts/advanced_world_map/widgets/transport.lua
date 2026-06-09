@@ -373,7 +373,10 @@ eventSys.registerHandler(eventSys.EVENT.onMapInitialized, function (e)
     create()
 
     local function timerCallback()
-        if not parent.userData.tooltip then return end
+        if not parent.userData.tooltip then
+            config.setValue("message.transportFeatureInfoShown", 1)
+            return
+        end
         if config.data.message.transportFeatureInfoShown ~= 0 then
             tooltip.destroy(parent, true)
             return
