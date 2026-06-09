@@ -603,6 +603,7 @@ end
 ---@field searchText string? lowercase
 ---@field searchLabel string?
 ---@field userData table?
+---@field update boolean?
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@field layerId integer
@@ -629,6 +630,7 @@ end
 ---@field searchText string? lowercase
 ---@field searchLabel string?
 ---@field userData table?
+---@field update boolean?
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
@@ -654,7 +656,14 @@ local function createMarker(self, params, onlyInitialize)
     local content = self:getLayerLayout(params.layerId).content
 
     if params.id and uiUtils.isExistsInContent(content, params.id) then
-        return params.id, params.layerId, content[params.id].userData.markerElement, content[params.id]
+        local handler = content[params.id].userData.markerElement
+        if params.update then
+            handler._params = params
+            handler:restoreLayout()
+            params.update = nil
+            eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
+        end
+        return params.id, params.layerId, handler, content[params.id]
     end
 
     local function addZoomInOutData(id, layout)
@@ -696,24 +705,29 @@ local function createMarker(self, params, onlyInitialize)
         local cacheId = getMarkerCacheId(id, params.layerId)
         local cachedLayout = self._markerLayoutCache[cacheId]
         if cachedLayout then
+            local handler = cachedLayout.userData.markerElement
 
-            if cachedLayout.userData.forceChanged then
-                cachedLayout.userData.markerElement:restoreLayout()
-            else
-                cachedLayout.props.relativePosition = relPos
+            if params.update then
+                handler._params = params
+                handler:restoreLayout()
+                params.update = nil
+            elseif cachedLayout.userData.forceChanged then
+                handler:restoreLayout()
             end
+
+            cachedLayout.props.relativePosition = relPos
 
             if eventSys.triggerEvent(
                         eventSys.EVENT.onMapElementCreate,
-                        {mapWidget = self, marker = cachedLayout.userData.markerElement}
+                        {mapWidget = self, marker = handler}
                     ) then
                 return
             end
 
             if params.visible == false then
                 self.hiddenElements[params.layerId][id] = cachedLayout
-                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
-                return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
+                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
+                return id, params.layerId, handler, cachedLayout
             end
 
             addZoomInOutData(id, cachedLayout)
@@ -735,8 +749,8 @@ local function createMarker(self, params, onlyInitialize)
 
             local res = uiUtils.safeAddToContent(content, cachedLayout)
             if res then
-                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = cachedLayout.userData.markerElement})
-                return id, params.layerId, cachedLayout.userData.markerElement, cachedLayout
+                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
+                return id, params.layerId, handler, cachedLayout
             else
                 return
             end
@@ -816,6 +830,8 @@ local function createMarker(self, params, onlyInitialize)
     addZoomInOutData(markerName, marker)
 
     eventSys.triggerEvent(eventSys.EVENT.onMapElementInitialized, {mapWidget = self, marker = markerELement})
+
+    if params.update then params.update = nil end
 
     if not placeOnMap then
         return markerName, params.layerId, markerELement, marker
