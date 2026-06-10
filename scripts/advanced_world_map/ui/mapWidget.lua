@@ -546,14 +546,15 @@ function mapWidgetMeta:updateMarkersScale()
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
         for i, elem in ipairs(layout.content) do
             if elem.userData and elem.userData.autoScale then
-                if elem.props.text then
+                local props = elem.userData.inContainer and elem.content[1].props or elem.props
+                if props.text then
                     local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
-                    elem.props.textSize = math.max(1, tSizeVal)
-                    if elem.props.size then
-                        elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
+                    props.textSize = math.max(1, tSizeVal)
+                    if props.size then
+                        props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                     end
-                elseif elem.props.resource then
-                    elem.props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
+                elseif props.resource then
+                    props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
             end
         end
@@ -618,6 +619,9 @@ end
 ---@field color any util.color.rgb
 ---@field textShadow boolean?
 ---@field shadowColor any util.color.rgb
+---@field textBackground boolean?
+---@field textBackgroundColor any util.color.rgb
+---@field textBackgroundAlpha number?
 ---@field anchor any util.vector2
 ---@field textAlignH any ui.ALIGNMENT
 ---@field textAlignV any ui.ALIGNMENT
@@ -732,11 +736,12 @@ local function createMarker(self, params, onlyInitialize)
 
             addZoomInOutData(id, cachedLayout)
 
-            if cachedLayout.props.textSize then
-                cachedLayout.props.textSize = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.fontSize, self.zoom)
+            local props = cachedLayout.userData.inContainer and cachedLayout.content[1].props or cachedLayout.props
+            if props.textSize then
+                props.textSize = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.fontSize, self.zoom)
             end
-            if cachedLayout.props.size then
-                cachedLayout.props.size = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.size, self.zoom)
+            if props.size then
+                props.size = (cachedLayout.userData.scaleFunc or self.SCALE_FUNCTION.marker)(cachedLayout.userData.size, self.zoom)
             end
 
             if self.inActiveMode then
@@ -773,8 +778,8 @@ local function createMarker(self, params, onlyInitialize)
 
     local layoutEvents = isLayerInteractive and self.markerEvents or nil
 
-    local marker
-    marker = {
+    local layout
+    layout = {
         type = params.text and (params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         name = markerName,
         props = {
@@ -809,8 +814,9 @@ local function createMarker(self, params, onlyInitialize)
             cellId = self.cellId,
             pressed = {},
             movedDistance = 0,
+            inContainer = params.text and params.textBackground,
             onMouseWheel = isLayerInteractive and function(value)
-                if not marker.userData.inFocus then return end
+                if not layout.userData.inFocus then return end
                 setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul or self.zoom / config.data.main.zoomingMul)
                 self:update()
             end or nil,
@@ -819,12 +825,62 @@ local function createMarker(self, params, onlyInitialize)
         events = self.inActiveMode and layoutEvents or nil,
     }
 
+    local marker
+    if layout.userData.inContainer then
+        layout.props.anchor = nil
+        layout.props.relativePosition = nil
+        layout.props.alpha = nil
+        layout.props.visible = nil
+        local ev = layout.events
+
+        local bgColor = params.textBackgroundColor or config.data.ui.backgroundColor
+        local bgAlpha = params.textBackgroundAlpha
+        local templateId = string.format("%s_%s", bgColor, bgAlpha)
+        local template = self._markerTemplateCache[templateId]
+        if not template then
+            template = {
+                type = ui.TYPE.Container,
+                content = ui.content{
+                    {
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = uiUtils.whiteTexture,
+                            color = bgColor,
+                            relativeSize = util.vector2(1, 1),
+                            alpha = bgAlpha,
+                        }
+                    },
+                }
+            }
+            self._markerTemplateCache[templateId] = template
+        end
+
+        marker = {
+            template = template,
+            name = layout.name,
+            props = {
+                anchor = anchor,
+                relativePosition = relPos,
+                visible = params.visible,
+                alpha = alpha,
+            },
+            userData = layout.userData,
+            events = ev,
+            content = ui.content{
+                layout,
+            }
+        }
+        layout.userData.container = marker
+    else
+        marker = layout
+    end
+
     -- Do not cache built-in markers
     if onlyInitialize ~= nil then
         self._markerLayoutCache[getMarkerCacheId(markerName, params.layerId)] = marker
     end
 
-    local markerELement = mapElement.new(self, markerName, params.layerId, params, marker)
+    local markerELement = mapElement.new(self, markerName, params.layerId, params, layout)
     marker.userData.markerElement = markerELement
 
     addZoomInOutData(markerName, marker)
@@ -1712,11 +1768,11 @@ function mapWidgetMeta:setInActiveMode(active)
         if not userData then goto continue end
 
         if active then
-            mrk._elemLayout.events = mrk._elemLayout.userData._events or mrk._elemLayout.events
-            mrk._elemLayout.userData._events = nil
+            mrk._container.events = mrk._container.userData._events or mrk._container.events
+            mrk._container.userData._events = nil
         else
-            mrk._elemLayout.userData._events = mrk._elemLayout.events or mrk._elemLayout.userData._events
-            mrk._elemLayout.events = nil
+            mrk._container.userData._events = mrk._container.events or mrk._container.userData._events
+            mrk._container.events = nil
         end
 
         ::continue::
@@ -1757,6 +1813,7 @@ function this.new(params)
     meta.cellStatics = nil
 
     meta._markerLayoutCache = {}
+    meta._markerTemplateCache = {}
     meta._coroutineCancelFlags = {}
 
     meta.screenPosition = params.screenPosition or util.vector2(0, 0)

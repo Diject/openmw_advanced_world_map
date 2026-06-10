@@ -82,6 +82,9 @@
 ---@field color Color? RGB color (vector3 or array)
 ---@field textShadow boolean? Whether to show text shadow (default false)
 ---@field shadowColor Color? RGB color for text shadow
+---@field textBackground boolean? Whether to show background behind text (default false). Text background parameters cannot be changed dynamically after marker creation.
+---@field backgroundColor Color? RGB color for text background
+---@field textBackgroundAlpha number? Opacity for text background [0-1] (default 1)
 ---@field anchor Vector2? Anchor point (vector2, default 0.5, 0.5)
 ---@field textAlignH ALIGNMENT? Horizontal text alignment
 ---@field textAlignV ALIGNMENT? Vertical text alignment

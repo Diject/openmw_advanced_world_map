@@ -14,8 +14,8 @@ mapElementMeta.__index = mapElementMeta
 
 ---@param val boolean
 function mapElementMeta:setVisibility(val)
-    local isVisibleChanged = self._elemLayout.props.visible ~= val
-    self._elemLayout.props.visible = val
+    local isVisibleChanged = self._container.props.visible ~= val
+    self._container.props.visible = val
     self._params.visible = val
     if isVisibleChanged then
         self._parent:setElementVisibility(self._id, self._layerId, val)
@@ -32,7 +32,7 @@ end
 
 ---@param val number [0, 1]
 function mapElementMeta:setAlpha(val)
-    self._elemLayout.props.alpha = val
+    self._container.props.alpha = val
     self._params.alpha = val
 end
 
@@ -85,7 +85,7 @@ end
 
 function mapElementMeta:setPosition(pos)
     self._params.pos = pos
-    self._elemLayout.props.relativePosition = self._parent:getRelativePositionByWorldPosition(pos)
+    self._container.props.relativePosition = self._parent:getRelativePositionByWorldPosition(pos)
 end
 
 function mapElementMeta:getPosition()
@@ -115,13 +115,19 @@ end
 function mapElementMeta:updateLayout(data)
     if not data then data = {} end ---@diagnostic disable-line: missing-fields
     local props = self._elemLayout.props
+    local containerProps = self._container.props
     props.text = data.text or props.text
-    props.size = data.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.size, self._parent.zoom) or props.size
-    props.textSize = data.fontSize and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.fontSize, self._parent.zoom)
-        or props.textSize
-    props.anchor = data.anchor or props.anchor
+    if data.size then
+        props.size = data.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.size, self._parent.zoom)
+        self._elemLayout.userData.size = data.size
+    end
+    if data.fontSize then
+        props.textSize = data.fontSize and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.fontSize, self._parent.zoom)
+        self._elemLayout.userData.fontSize = data.fontSize
+    end
+    containerProps.anchor = data.anchor or containerProps.anchor
     if data.pos then
-        props.relativePosition = self._parent:getRelativePositionByWorldPosition(data.pos)
+        containerProps.relativePosition = self._parent:getRelativePositionByWorldPosition(data.pos)
     end
     if data.color then
         props.textColor = props.text and data.color or nil
@@ -132,13 +138,13 @@ function mapElementMeta:updateLayout(data)
     end
     props.textShadowColor = data.shadowColor or props.textShadowColor
     if data.visible ~= nil then
-        local last = props.visible
-        props.visible = data.visible
-        if last ~= props.visible then
+        local last = containerProps.visible
+        containerProps.visible = data.visible
+        if last ~= containerProps.visible then
             self._parent:setElementVisibility(self._id, self._layerId, data.visible)
         end
     end
-    props.alpha = data.alpha or props.alpha
+    containerProps.alpha = data.alpha or containerProps.alpha
     props.resource = data.texture or props.resource
     props.textAlignH = data.textAlignH or props.textAlignH
     props.textAlignV = data.textAlignV or props.textAlignV
@@ -184,17 +190,14 @@ end
 
 
 function mapElementMeta:restoreLayout()
-    local isVisibleChanged = self._elemLayout.props.visible ~= self._params.visible
-    self._elemLayout.props = {
+    local isVisibleChanged = self._container.props.visible ~= self._params.visible
+    local elemLayout = self._elemLayout
+    elemLayout.props = {
         text = self._params.text,
         textSize = self._params.text and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
-        anchor = self._params.anchor or util.vector2(0.5, 0.5),
-        relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos),
         textColor = self._params.text and (self._params.color or config.data.ui.defaultColor) or nil,
         textShadow = self._params.text and self._params.textShadow or nil,
         textShadowColor = self._params.text and self._params.shadowColor or nil,
-        visible = self._params.visible,
-        alpha = self._params.alpha or 1,
         resource = self._params.texture,
         size = self._params.size and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.size, self._parent.zoom),
         color = self._params.texture and (self._params.color or config.data.ui.defaultColor),
@@ -206,11 +209,17 @@ function mapElementMeta:restoreLayout()
         readOnly = self._params.autoHeight and true or nil,
         autoSize = self._params.autoHeight and true or nil,
     }
-    self._elemLayout.type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image
-    self._elemLayout.userData.scaleFunc = self._params.scaleFunc
-    self._elemLayout.userData.autoScale = true
-    self._elemLayout.userData.fontSize = self._params.text and (self._params.fontSize or 18) or nil
-    self._elemLayout.userData.size = self._params.size
+    elemLayout.type = self._params.text and (self._params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image
+    elemLayout.userData.scaleFunc = self._params.scaleFunc
+    elemLayout.userData.autoScale = true
+    elemLayout.userData.fontSize = self._params.text and (self._params.fontSize or 18) or nil
+    elemLayout.userData.size = self._params.size
+
+    local containerProps = self._container.props
+    containerProps.anchor = self._params.anchor or util.vector2(0.5, 0.5)
+    containerProps.relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos)
+    containerProps.alpha = self._params.alpha or 1
+    containerProps.visible = self._params.visible
 
     self._elemLayout.userData.forceChanged = false
 
@@ -270,6 +279,7 @@ function this.new(parentMeta, id, layerId, elemParams, elemLayout)
     meta._parent = parentMeta
     meta._params = elemParams
     meta._elemLayout = elemLayout
+    meta._container = elemLayout.userData.container and elemLayout.userData.container or elemLayout
 
     return meta
 end
