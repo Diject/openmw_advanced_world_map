@@ -326,8 +326,10 @@ local function buildTransportData(entrances)
 end
 
 
-local function buildData()
+local function buildData(params)
     local world = require("openmw.world")
+
+    local isPresizeOccupied = params.isPresizeOccupied
 
     local function getRegionName(id)
         if not id then return "" end
@@ -363,7 +365,7 @@ local function buildData()
         minGridY = math.min(minGridY, cell.gridY)
         maxGridY = math.max(maxGridY, cell.gridY)
 
-        if core.land then
+        if isPresizeOccupied and core.land then
             local posX = cell.gridX * 8192
             local posY = cell.gridY * 8192
             local aboveWater = 0
@@ -621,7 +623,7 @@ end
 
 
 function this.globalBuildData(playerRef, options)
-    buildData()
+    buildData(options)
     playerRef:sendEvent("AdvWMap:updateMapData", {
         cellNameData = this.cellNameData,
         regionNameData = this.regionNameData,
@@ -652,6 +654,10 @@ function this.playerInit(playerRef, cellCount, options)
         stor:get("contentFileCount") ~= #core.contentFiles.list
 
     if shouldRebuild then
+        options = options or {}
+        local dataSettingStorage = storage.playerSection(commonData.configDataSectionName)
+        options.isPresizeOccupied = dataSettingStorage:get("data.initializer") == commonData.dataInitializerTypes[6]
+
         if not commonData.isSaveBloatFixed() and require("scripts.advanced_world_map.config.config").data.data.safeInit then
             types.Player.sendMenuEvent(playerRef, "AdvWMap:startDataRebuilding", {plId = playerRef.id, options = options})
         else
