@@ -14,7 +14,7 @@ local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 local this = {}
 
-this.version = 7
+this.version = 8
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -35,6 +35,11 @@ this.cellCount = 0
 this.contentFileCount = 0
 
 local initialized = false
+
+
+local forbiddenCellPrefixes = { -- lowercase
+    ["solstheim"] = true
+}
 
 
 ---@class advancedWorldMap.dynamicDataHandler.cellData
@@ -77,75 +82,6 @@ local function isContentFile(name)
         end
     end
     return false
-end
-
-
-local function findMaxRectangle(occupied)
-    local bestX1, bestY1, bestX2, bestY2, bestArea = nil, nil, nil, nil, 0
-
-    for x, col in pairs(occupied) do
-        for y in pairs(col) do
-            if not col[y] then goto continue end
-
-            local maxX = x
-            while occupied[maxX + 1] and occupied[maxX + 1][y] do
-                maxX = maxX + 1
-            end
-
-            local maxY = y
-            local canExpand = true
-            while canExpand do
-                local nextY = maxY + 1
-                for xi = x, maxX do
-                    if not (occupied[xi] and occupied[xi][nextY]) then
-                        canExpand = false
-                        break
-                    end
-                end
-                if canExpand then
-                    maxY = nextY
-                end
-            end
-
-            local area = (maxX - x + 1) * (maxY - y + 1)
-            if area > bestArea then
-                bestX1, bestY1, bestX2, bestY2, bestArea = x, y, maxX, maxY, area
-            end
-
-            ::continue::
-        end
-    end
-
-    if bestArea > 0 then
-        return bestX1, bestY1, bestX2, bestY2
-    end
-    return nil
-end
-
-local function worldCoverWithRectangles(occupied)
-    local res = {}
-
-    while true do
-        local x1, y1, x2, y2 = findMaxRectangle(occupied)
-        if not x1 then break end
-
-        table.insert(res, {x1, y1, x2, y2})
-
-        for x = x1, x2 do
-            local col = occupied[x]
-            if col then
-                for y = y1, y2 do
-                    col[y] = nil
-                end
-
-                if not next(col) then
-                    occupied[x] = nil
-                end
-            end
-        end
-    end
-
-    return res
 end
 
 
@@ -510,6 +446,9 @@ local function buildData()
         return name
     end
 
+    ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
+    local entrancesWithCellName = {}
+
     for _, cell in pairs(world.cells) do
         if not cell.id then goto continue end
 
@@ -524,12 +463,22 @@ local function buildData()
 
             if not dest or not destPos then goto continue end
 
+            local exTypeCellName
             local name = getCellName(dest)
+            local fullName = name
             if name:find(",") then
-                if cell.isExterior then
-                    local cellNameMark = stringLib.getBeforeComma(cell.name)
+                if not dest.isExterior then
+                    local cellNameMark = stringLib.getBeforeComma(dest.name)
                     if cellNameData[cellNameMark] then
+                        exTypeCellName = cellNameMark
                         name = stringLib.getAfterComma(name)
+                    end
+
+                    if cell.isExterior then
+                        local cellIdMark = stringLib.getBeforeComma(dest.id)
+                        if forbiddenCellPrefixes[cellIdMark] then
+                            fullName = name
+                        end
                     end
                 else
                     name = stringLib.getAfterComma(name)
@@ -540,7 +489,7 @@ local function buildData()
 
             entrances[cell.id] = entrances[cell.id] or {}
             ---@type advancedWorldMap.dynamicDataHandler.entranceData
-            entrances[cell.id][doorHash] = {
+            local data = {
                 pos = door.position,
                 cId = cell.id,
                 isEx = cell.isExterior,
@@ -548,16 +497,30 @@ local function buildData()
                 dPos = destPos,
                 isDEx = dest.isExterior,
                 name = name,
-                fName = getCellName(dest),
+                fName = fullName,
                 dHash = doorHash,
                 isDLEx = dest.isExterior or dest:hasTag("QuasiExterior"),
                 isLEx = cell.isExterior or cell:hasTag("QuasiExterior"),
             }
+            entrances[cell.id][doorHash] = data
+
+            if exTypeCellName then
+                entrancesWithCellName[exTypeCellName] = entrancesWithCellName[exTypeCellName] or {}
+                table.insert(entrancesWithCellName[exTypeCellName], data)
+            end
 
             ::continue::
         end
 
         ::continue::
+    end
+
+    for _, list in pairs(entrancesWithCellName) do
+        if #list <= 2 then
+            for _, dt in pairs(list) do
+                dt.name = dt.fName
+            end
+        end
     end
 
 
