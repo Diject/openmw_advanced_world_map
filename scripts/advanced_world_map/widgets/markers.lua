@@ -691,6 +691,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     cellId = dt.dCId,
                     hash = dt.dHash,
                     searchText = stringLib.utf8_lower(dt.name),
+                    name = dt.name,
                     fullName = dt.fName,
                     allowSearchFilter = true,
                     imageMarker = nil,
@@ -1137,10 +1138,11 @@ eventSys.registerHandler(eventSys.EVENT.onMapDestroyed, function (e)
 
         this.markerById[marker.id] = nil
 
-        if marker.text then
-            local markers = this.markersByName[marker.text]
+        local markerName = marker.userData.name
+        if markerName then
+            local markers = this.markersByName[markerName]
             if markers then
-                this.markersByName[marker.text][marker.id] = nil
+                this.markersByName[markerName][marker.id] = nil
             end
         end
 
