@@ -296,7 +296,7 @@ function menuMeta:setMinimapModeParams()
         self:setMapWidgetSize(minimapModeSize - util.vector2(self.borderSize * 2, self.borderSize * 2))
 
         local posV = config.data.main.minimap.relativePosition
-        self.menu.layout.props.relativePosition = util.vector2(posV.x, posV.y)
+        self.layout.props.relativePosition = util.vector2(posV.x, posV.y)
 
         self.isInMinimapMode = true
     end
@@ -380,7 +380,7 @@ function menuMeta:setMapWidgetSize(newSize)
     self.headerLayout.props.size = util.vector2(self.mainLayout.props.size.x, hSize.y)
 
     local size = util.vector2(self.mainSize.x, self.mainSize.y + hSize.y)
-    self.menu.layout.props.size = size
+    self.layout.props.size = size
     self.size = size
 
     if self.useDefaultHeader then
@@ -439,14 +439,14 @@ function menuMeta:setBorders(thick, coverHeader)
 end
 
 
----@param params {visible : boolean?, fullMode : boolean?, skipStateUpdate : boolean?}?
+---@param params {visible : boolean?, fullMode : boolean?, skipStateUpdate : boolean?, init : boolean?}?
 ---@return boolean
 function menuMeta:updateInteractiveElements(params)
     tooltip.destroyLast()
     params = params or {}
     local shouldUpdate = false
-    local layout = self.menu.layout
-    if not layout then return shouldUpdate end
+    local layout = self.layout
+    if (not self.menu or not self.menu.layout) and not params.init then return shouldUpdate end
 
     if params.visible == nil then
         self:externalDeactivate()
@@ -506,6 +506,8 @@ function menuMeta:updateInteractiveElements(params)
             self.mapWidget:focusOnWorldPosition(mapCenter)
             self.mapWidget:updateMarkers(true)
         end
+
+        localStorage.data[commonData.inMinimapModeKeyId] = false
     else
         if not localStorage.data[commonData.pinnedStateFieldId] then
             menuHandler.destroyMenu(commonData.mapMenuId)
@@ -518,7 +520,7 @@ function menuMeta:updateInteractiveElements(params)
         self.mainLayout.props.alpha = config.data.ui.minimapAlpha * 0.01
         self:setBorders(false, false)
 
-        if #self.widgetInactiveHeaderLayout.content == 0 then
+        if not params.init and #self.widgetInactiveHeaderLayout.content == 0 then
             header.props.visible = false
         end
         if self.mapWidget then
@@ -537,6 +539,8 @@ function menuMeta:updateInteractiveElements(params)
                 self.mapWidget:focusOnWorldPosition(mapCenter)
             end
             self.mapWidget:updateMarkers(true)
+
+            localStorage.data[commonData.inMinimapModeKeyId] = true
         end
     end
     header.content[3].props.visible = isMenuMode
@@ -1289,6 +1293,14 @@ function this.create(params)
         meta.mapWidget:updateMarkers()
     end
 
+    localStorage.data[commonData.inMinimapModeKeyId] = false
+    if config.data.main.minimap.enabled and not menuMode.isMenuInteractive() then
+        meta:updateInteractiveElements{
+            fullMode = false,
+            init = true,
+        }
+    end
+
     meta.menu = ui.create(layout)
     this.activeMenuMeta = meta
 
@@ -1582,6 +1594,7 @@ end, 10000)
 
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
     I.DijectKeyBindings.action.unregister(commonData.togglePinKeyId, togglePinActionFunc)
+    localStorage.data[commonData.inMinimapModeKeyId] = nil
 end, 10000)
 
 eventSys.registerHandler(eventSys.EVENT.onMapClosed, function (e)

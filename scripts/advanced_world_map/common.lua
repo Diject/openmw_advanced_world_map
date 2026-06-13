@@ -29,6 +29,7 @@ this.moveHistoryBackKeyId = "AdvWMap:moveHistoryBackKey"
 this.moveHistoryForwardKeyId = "AdvWMap:moveHistoryForwardKey"
 this.toggleTransportKeyId = "AdvWMap:toggleTransportKey"
 this.cycleTransportKeyId = "AdvWMap:cycleTransportKey"
+this.inMinimapModeKeyId = "AdvWMap:inMinimapModeKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 

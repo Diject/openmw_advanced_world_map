@@ -66,6 +66,7 @@ local l10n = core.l10n(commonData.l10nKey)
 
 local hasAttemptedToGetData = false
 
+local openMenu
 
 
 pcall(function ()
@@ -163,6 +164,15 @@ local function onLoad(data)
     -- must be after localStorage init
     notesWidgetData.loadData()
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
+
+    if config.data.main.minimap.enabled and localStorage.data[commonData.inMinimapModeKeyId] == true and
+            localStorage.data[commonData.pinnedStateFieldId] then
+        async:newUnsavableSimulationTimer(1, function ()
+            if localStorage.data[commonData.inMinimapModeKeyId] == true then
+                openMenu(false, true)
+            end
+        end)
+    end
 end
 
 
@@ -218,7 +228,7 @@ local function initDataForMenu(options)
 end
 
 
-local function openMenu(inMenuMode, internal, hideCloseBtn)
+openMenu = function (inMenuMode, internal, hideCloseBtn)
     if not initDataForMenu({openMenu = true, openInMenuMode = inMenuMode}) then return end
 
     if inMenuMode and not menuMode.isMenuInteractive() then
