@@ -27,6 +27,7 @@ local interval = require("scripts.advanced_world_map.ui.interval")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local thickBorders = require("scripts.advanced_world_map.ui.bordersThick")
+local headerParts = require("scripts.advanced_world_map.ui.headerParts")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local button = require("scripts.advanced_world_map.ui.button")
@@ -204,11 +205,13 @@ function menuMeta:addWidget(params)
 
         content:insert(index, params.layout)
         if index ~= 1 then
-            content:insert(index, interval(self.params.fontSize * 0.75, 0))
+            content:insert(index, interval(self.params.fontSize * 0.6, 0))
         end
     end
 
-    addWidget(self.widgetActiveHeaderLayout.content)
+    local activeHeaderContent = self.useDefaultHeader and self.widgetActiveHeaderLayout.content[1].content or
+        self.widgetActiveHeaderLayout.content
+    addWidget(activeHeaderContent)
 
     if params.showWhenMenuInactive then
         addWidget(self.widgetInactiveHeaderLayout.content)
@@ -380,6 +383,11 @@ function menuMeta:setMapWidgetSize(newSize)
     self.menu.layout.props.size = size
     self.size = size
 
+    if self.useDefaultHeader then
+        self.headerLayout.content[1].props.size = util.vector2(self.size.x - self.borderSize * 2,
+            self.headerFullHeight - self.borderSize)
+    end
+
     self.mainLayout.content[1].props.size = self.mainSize
     self.mapWidget:setLayoutPosition(util.vector2(self:getWidgetWindowWidth() + self.borderSize, self.borderSize))
 
@@ -399,8 +407,10 @@ function menuMeta:setBorders(thick, coverHeader)
     self.headerFullHeight = self.headerHeight + 2 + self.headerOffset
     self.mainSize = util.vector2(self.size.x, self.size.y - self.headerFullHeight)
 
-    self.headerLayout.content[3].props.position = util.vector2(-self.borderSize - 2, self.headerOffset * 0.5 + self.headerYOffsetPos)
-    self.widgetActiveHeaderLayout.props.position = util.vector2(self.borderSize + 2, self.headerOffset * 0.5 + self.headerYOffsetPos)
+    local xOffset = self.useDefaultHeader and self.params.fontSize / 2 or 2
+
+    self.headerRightBtnBlock.props.position = util.vector2(-self.closeBtnXOffset, self.headerOffset * 0.5)
+    self.widgetActiveHeaderLayout.props.position = util.vector2(self.borderSize + xOffset, self.headerOffset * 0.5)
     self.mainLayout.props.position = util.vector2(0, self.headerFullHeight)
 
     local bords = thick and {thickBorders.borders()} or {borders()}
@@ -484,8 +494,7 @@ function menuMeta:updateInteractiveElements(params)
         header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
         header.content[2] = self.widgetActiveHeaderLayout
         self.mainLayout.content[2].props.visible = true
-        -- self.mainLayout.props.alpha = config.data.ui.alpha * 0.01
-        self:setBorders(config.data.ui.thickBorders, config.data.ui.coverHeader)
+        self:setBorders(config.data.ui.thickBorders, self.useDefaultHeader)
 
         self.isInMinimapMode = false
 
@@ -659,6 +668,7 @@ end
 ---@field relativeSize any?
 ---@field fontSize number?
 ---@field isCreatedExternally boolean?
+---@field hideCloseBtn boolean?
 ---@field onClose function?
 
 
@@ -696,12 +706,14 @@ function this.create(params)
 
     meta.screenPosition = params.relativePosition:emul(screenSize)
 
-    local headerHeight = math.floor(params.fontSize * 1.25 / 2) * 2
+    meta.useDefaultHeader = config.data.ui.coverHeader
+
+    local headerHeight = meta.useDefaultHeader and 18 or math.floor(params.fontSize * 1.25 / 2) * 2
     meta.headerHeight = headerHeight
     meta.borderSize = config.data.ui.thickBorders and 4 or 2
-    meta.headerOffset = config.data.ui.coverHeader and meta.borderSize or 0
-    meta.headerYOffsetPos = config.data.ui.coverHeader and 0 or 1
+    meta.headerOffset = meta.useDefaultHeader and meta.borderSize or 0
     meta.headerFullHeight = headerHeight + 2 + meta.headerOffset
+    meta.closeBtnXOffset = meta.useDefaultHeader and meta.borderSize or 4
     local headerSize = util.vector2(meta.size.x, meta.headerFullHeight)
 
     local mainSize = util.vector2(meta.size.x, meta.size.y - meta.headerFullHeight)
@@ -719,22 +731,76 @@ function this.create(params)
     ---@type string?
     menuMeta.activeWidgetId = nil
 
-    meta.widgetActiveHeaderLayout = {
-        type = ui.TYPE.Flex,
-        props = {
-            horizontal = true,
-            anchor = util.vector2(0, 0.5),
-            relativePosition = util.vector2(0, 0.5),
-            arrange = ui.ALIGNMENT.Center,
-            position = util.vector2(meta.borderSize + 2, meta.headerOffset * 0.5 + meta.headerYOffsetPos)
-        },
-        userData = {
+    if meta.useDefaultHeader then
+        meta.widgetActiveHeaderLayout = {
+            template = {
+                type = ui.TYPE.Container,
+                content = ui.content{
+                    {
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = uiUtils.whiteTexture,
+                            color = config.data.ui.backgroundColor,
+                            relativeSize = util.vector2(1, 1),
+                        }
+                    },
+                }
+            },
+            props = {
+                anchor = util.vector2(0, 0.5),
+                relativePosition = util.vector2(0, 0.5),
+                position = util.vector2(meta.borderSize + params.fontSize / 2, meta.headerOffset * 0.5)
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = true,
+                        arrange = ui.ALIGNMENT.Center,
+                    },
+                    userData = {
 
-        },
-        content = ui.content {
+                    },
+                    content = ui.content {
+                        {
+                            props = {
+                                size = util.vector2(2, meta.headerFullHeight),
+                            },
+                            userData = {
+                                [commonData.widgetPriorityField] = math.huge,
+                            },
+                            content = ui.content(headerParts.right)
+                        },
+                        interval(0, 0),
 
+                        interval(meta.params.fontSize * 0.6, 0),
+                        {
+                            props = {
+                                size = util.vector2(2, meta.headerFullHeight),
+                            },
+                            userData = {
+                                [commonData.widgetPriorityField] = -math.huge,
+                            },
+                            content = ui.content(headerParts.left)
+                        },
+                    }
+                }
+            },
         }
-    }
+    else
+        meta.widgetActiveHeaderLayout = {
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+                anchor = util.vector2(0, 0.5),
+                relativePosition = util.vector2(0, 0.5),
+                arrange = ui.ALIGNMENT.Center,
+                position = util.vector2(meta.borderSize + 2, meta.headerOffset * 0.5)
+            },
+            userData = {},
+            content = ui.content {}
+        }
+    end
 
     meta.widgetInactiveHeaderLayout = {
         type = ui.TYPE.Flex,
@@ -744,7 +810,7 @@ function this.create(params)
             autoSize = false,
             anchor = util.vector2(0, 0.5),
             relativePosition = util.vector2(0, 0.5),
-            position = util.vector2(0, meta.headerOffset * 0.5 + meta.headerYOffsetPos),
+            position = util.vector2(0, -1),
             arrange = ui.ALIGNMENT.Center,
             align = ui.ALIGNMENT.Center,
         },
@@ -806,10 +872,41 @@ function this.create(params)
         }
     }
 
+    local pinnedBtnLayout
+    local unpinnedBtnLayout
+    if meta.useDefaultHeader then
+        pinnedBtnLayout = headerParts.pinnedBtn
+        unpinnedBtnLayout = headerParts.unpinnedBtn
+    else
+        pinnedBtnLayout = {
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = ui.texture{ path = commonData.pinIconPath },
+                    alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
+                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
+                    color = localStorage.data[commonData.pinnedStateFieldId] and config.data.ui.whiteColor or
+                        config.data.ui.defaultColor,
+                    anchor = util.vector2(0.5, 0.5),
+                    position = util.vector2(meta.headerHeight / 2, meta.headerHeight / 2),
+                },
+            },
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = uiUtils.whiteTexture,
+                    alpha = 0,
+                    size = util.vector2(meta.headerHeight, meta.headerHeight),
+                },
+            },
+        }
+        unpinnedBtnLayout = pinnedBtnLayout
+    end
+
     local pinBtnLayout = {
         type = ui.TYPE.Widget,
         props = {
-            size = util.vector2(meta.headerHeight, meta.headerHeight),
+            size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
             anchor = util.vector2(0.5, 0.5),
         },
         userData = {},
@@ -838,35 +935,146 @@ function this.create(params)
                 tooltip.destroy(layout)
             end),
         },
-        content = ui.content{
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = ui.texture{ path = commonData.pinIconPath },
-                    alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
-                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
-                    color = localStorage.data[commonData.pinnedStateFieldId] and config.data.ui.whiteColor or
-                        config.data.ui.defaultColor,
-                    anchor = util.vector2(0.5, 0.5),
-                    position = util.vector2(meta.headerHeight / 2, meta.headerHeight / 2),
-                },
-            },
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = uiUtils.whiteTexture,
-                    alpha = 0,
-                    size = util.vector2(meta.headerHeight, meta.headerHeight),
-                },
-            },
-        }
+        content = ui.content(localStorage.data[commonData.pinnedStateFieldId] and pinnedBtnLayout or unpinnedBtnLayout)
     }
 
     meta.togglePin = function (self)
         local newVal = not localStorage.data[commonData.pinnedStateFieldId]
         localStorage.data[commonData.pinnedStateFieldId] = newVal
-        pinBtnLayout.content[1].props.alpha = newVal and 1 or 0.5
-        pinBtnLayout.content[1].props.color = newVal and config.data.ui.whiteColor or config.data.ui.defaultColor
+        if meta.useDefaultHeader then
+            pinBtnLayout.content = ui.content(newVal and pinnedBtnLayout or unpinnedBtnLayout)
+        else
+            pinBtnLayout.content[1].props.alpha = newVal and 1 or 0.5
+            pinBtnLayout.content[1].props.color = newVal and config.data.ui.whiteColor or config.data.ui.defaultColor
+        end
+    end
+
+
+    local closeBtnLayout
+    local closeBtnPressedLayout
+
+    local function setCloseBtnState(layout, isDown)
+        if meta.useDefaultHeader then
+                meta.headerRightBtnBlock.content[3] = isDown and closeBtnPressedLayout or closeBtnLayout
+            else
+                layout.props.textShadow = not isDown
+            end
+        meta:update()
+    end
+
+    local closeBtnEvents = {
+        mousePress = async:callback(function(e, layout)
+            meta.headerLayout.events.mousePress(e, meta.headerLayout)
+            if e.button ~= 1 then return end
+            layout.userData.pressed = true
+            setCloseBtnState(layout, true)
+        end),
+        mouseRelease = async:callback(function(e, layout)
+            local movedDist = meta.headerMovedDistance
+            meta.headerLayout.events.mouseRelease(e, meta.headerLayout)
+            setCloseBtnState(layout, false)
+            if layout.userData.pressed and movedDist <= 25 then
+                menuHandler.destroyMenu(commonData.mapMenuId)
+            end
+            layout.userData.pressed = false
+        end),
+        mouseMove = async:callback(function(e, layout)
+            meta.headerLayout.events.mouseMove(e, meta.headerLayout)
+        end),
+        focusLoss = async:callback(function(e, layout)
+            meta.headerLayout.events.focusLoss(e, meta.headerLayout)
+            setCloseBtnState(layout, false)
+            layout.userData.pressed = false
+        end)
+    }
+
+    if meta.useDefaultHeader then
+        closeBtnLayout = {
+            props = {
+                size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
+                anchor = util.vector2(1, 0.5),
+                relativePosition = util.vector2(1, 0.5),
+                visible = menuMode.isMenuInteractive(),
+            },
+            userData = {},
+            events = closeBtnEvents,
+        }
+        closeBtnPressedLayout = tableLib.copy(closeBtnLayout)
+        closeBtnLayout.content = ui.content(headerParts.unpinnedBtn)
+        closeBtnPressedLayout.content = ui.content(headerParts.pinnedBtn)
+        local closeTextLayout = {
+            type = ui.TYPE.Text,
+            props = {
+                text = l10n("X"),
+                textSize = meta.headerHeight,
+                autoSize = false,
+                size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
+                textColor = config.data.ui.backgroundColor,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+            },
+        }
+        closeBtnLayout.content:add(closeTextLayout)
+        closeBtnPressedLayout.content:add(closeTextLayout)
+    else
+        closeBtnLayout = {
+            type = ui.TYPE.Text,
+            props = {
+                text = l10n("Close"),
+                textSize = meta.headerHeight,
+                autoSize = true,
+                anchor = util.vector2(1, 0.5),
+                relativePosition = util.vector2(1, 0.5),
+                textColor = config.data.ui.defaultColor,
+                textShadow = true,
+                textShadowColor = config.data.ui.textShadowColor,
+                propagateEvents = false,
+                visible = menuMode.isMenuInteractive(),
+            },
+            userData = {},
+            events = closeBtnEvents,
+            }
+    end
+
+    local headerBackground
+    if meta.useDefaultHeader then
+        headerBackground = {
+            type = ui.TYPE.Widget,
+            props = {
+                size = util.vector2(meta.size.x - meta.borderSize * 2, meta.headerFullHeight - meta.borderSize),
+                position = util.vector2(meta.borderSize, meta.borderSize),
+            },
+            content = ui.content(headerParts.full)
+        }
+    else
+        headerBackground = {
+            type = ui.TYPE.Image,
+            props = {
+                resource = commonData.whiteTexture,
+                relativeSize = util.vector2(1, 1),
+                color = config.data.ui.backgroundColor,
+            }
+        }
+    end
+
+
+    meta.headerRightBtnBlock = {
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = true,
+            arrange = ui.ALIGNMENT.Center,
+            relativePosition = util.vector2(1, 0.5),
+            anchor = util.vector2(1, 0.5),
+            position = util.vector2(-meta.closeBtnXOffset, (meta.headerOffset * 0.5))
+        },
+        userData = {},
+        content = ui.content{
+            pinBtnLayout,
+        },
+    }
+    if not params.hideCloseBtn then
+        meta.headerRightBtnBlock.content:add(interval(params.fontSize / 2, meta.headerHeight))
+        meta.headerRightBtnBlock.content:add(closeBtnLayout)
     end
 
 
@@ -910,6 +1118,7 @@ function this.create(params)
                     meta.screenPosition = props.relativePosition:emul(screenSize)
                     meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
                         util.vector2(meta.borderSize, meta.borderSize)
+                    meta.mapWidget:closeRightMouseMenu()
                     meta:update()
                 end
 
@@ -922,72 +1131,13 @@ function this.create(params)
             end),
         },
         content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = commonData.whiteTexture,
-                    relativeSize = util.vector2(1, 1),
-                    color = config.data.ui.backgroundColor,
-                    alpha = config.data.ui.headerBackgroundAlpha / 100,
-                }
-            },
+            headerBackground,
             menuMode.isMenuInteractive() and meta.widgetActiveHeaderLayout or meta.widgetInactiveHeaderLayout,
-            {
-                type = ui.TYPE.Flex,
-                props = {
-                    horizontal = true,
-                    arrange = ui.ALIGNMENT.Center,
-                    relativePosition = util.vector2(1, 0.5),
-                    anchor = util.vector2(1, 0.5),
-                    position = util.vector2(-meta.borderSize - 2, (meta.headerOffset * 0.5) + meta.headerYOffsetPos)
-                },
-                userData = {},
-                content = ui.content{
-                    pinBtnLayout,
-                    interval(params.fontSize / 2, 0),
-                    {
-                        type = ui.TYPE.Text,
-                        props = {
-                            text = l10n("Close"),
-                            textSize = params.fontSize * 1.4,
-                            autoSize = true,
-                            anchor = util.vector2(1, 0.5),
-                            relativePosition = util.vector2(1, 0.5),
-                            textColor = config.data.ui.defaultColor,
-                            textShadow = true,
-                            textShadowColor = config.data.ui.textShadowColor,
-                            propagateEvents = false,
-                            visible = menuMode.isMenuInteractive(),
-                        },
-                        userData = {},
-                        events = {
-                            mousePress = async:callback(function(e, layout)
-                                meta.headerLayout.events.mousePress(e, meta.headerLayout)
-                                if e.button ~= 1 then return end
-                                layout.userData.pressed = true
-                            end),
-                            mouseRelease = async:callback(function(e, layout)
-                                local movedDist = meta.headerMovedDistance
-                                meta.headerLayout.events.mouseRelease(e, meta.headerLayout)
-                                if layout.userData.pressed and movedDist <= 25 then
-                                    menuHandler.destroyMenu(commonData.mapMenuId)
-                                end
-                                layout.userData.pressed = false
-                            end),
-                            mouseMove = async:callback(function(e, layout)
-                                meta.headerLayout.events.mouseMove(e, meta.headerLayout)
-                            end),
-                            focusLoss = async:callback(function(e, layout)
-                                meta.headerLayout.events.focusLoss(e, meta.headerLayout)
-                            end)
-                        }
-                    }
-                },
-            },
+            meta.headerRightBtnBlock,
         }
     }
 
-    if config.data.ui.coverHeader then
+    if meta.useDefaultHeader then
         local bords = config.data.ui.thickBorders and {thickBorders.borders()} or {borders()}
         for i = 1, 3 do
             headerLayout.content:add(bords[i])

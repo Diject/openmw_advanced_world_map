@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 14,
+    version = 15,
     main = {
         menuKey = "N",
         relativeSize = {
@@ -139,8 +139,8 @@ this.default = {
         worldMarkerShadow = false,
         alpha = 100, -- deprecated
         minimapAlpha = 100, -- deprecated
-        thickBorders = false,
-        coverHeader = false,
+        thickBorders = true,
+        coverHeader = true,
     },
     message = {
         transportFeatureInfoShown = 0,

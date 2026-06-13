@@ -218,7 +218,7 @@ local function initDataForMenu(options)
 end
 
 
-local function openMenu(inMenuMode, internal)
+local function openMenu(inMenuMode, internal, hideCloseBtn)
     if not initDataForMenu({openMenu = true, openInMenuMode = inMenuMode}) then return end
 
     if inMenuMode and not menuMode.isMenuInteractive() then
@@ -235,6 +235,7 @@ local function openMenu(inMenuMode, internal)
 
     menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
         isCreatedExternally = not internal,
+        hideCloseBtn = hideCloseBtn,
         onClose = function ()
             if inMenuMode then
                 menuMode.deactivate()
@@ -263,7 +264,7 @@ if configLib.data.main.overrideDefault then
                         localStorage.data[commonData.hideInInterfaceMenuFieldId] then
                     return
                 end
-                openMenu(nil, true)
+                openMenu(nil, true, true)
             end)
         end,
         function ()

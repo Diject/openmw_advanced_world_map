@@ -26,6 +26,7 @@
 ---@field headerHeight number Height of the header bar
 ---@field mapWidget AdvancedWorldMap.MapWidget Current active map widget instance
 ---@field centerOnPlayer boolean Whether to center map on player position
+---@field useDefaultHeader boolean Whether to use the default morrowind-style header
 local AdvancedWorldMapMenuMap = {}
 
 ---Opens or toggles a header widget by ID.

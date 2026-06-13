@@ -185,6 +185,17 @@ if configVersion < config.default.version then
             legendSettingStorage:set("legend.markerSize", config.default.legend.markerSize)
         end
     end
+    if configVersion < 15 then
+        local uiSettingStorage = storage.playerSection(commonData.configUISectionName)
+        local thickBorders = uiSettingStorage:get("ui.thickBorders")
+        if thickBorders == nil then
+            uiSettingStorage:set("ui.thickBorders", config.default.ui.thickBorders)
+        end
+        local coverHeader = uiSettingStorage:get("ui.coverHeader")
+        if coverHeader == nil then
+            uiSettingStorage:set("ui.coverHeader", config.default.ui.coverHeader)
+        end
+    end
 end
 
 
@@ -354,10 +365,8 @@ I.Settings.registerGroup{
     order = 8,
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
-        boolSetting{key = "ui.thickBorders", name = "SettingUIThickBorders", description = "SettingUIThickBordersDescription", default = config.default.ui.thickBorders},
         boolSetting{key = "ui.coverHeader", name = "SettingUICoverHeader", description = "SettingUICoverHeaderDescription", default = config.default.ui.coverHeader},
-        -- numberSetting{key = "ui.alpha", name = "SettingUIAlpha", description = "SettingUIAlphaDescription", default = config.default.ui.alpha, min = 0, max = 100},
-        -- numberSetting{key = "ui.minimapAlpha", name = "SettingUIMinimapAlpha", description = "SettingUIMinimapAlphaDescription", default = config.default.ui.minimapAlpha, min = 0, max = 100},
+        boolSetting{key = "ui.thickBorders", name = "SettingUIThickBorders", description = "SettingUIThickBordersDescription", default = config.default.ui.thickBorders},
         numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},
         numberSetting{key = "ui.scrollArrowSize", name = "SettingUIScrollBarSize", description = "SettingUIScrollBarSizeDescription", default = config.default.ui.scrollArrowSize, min = 1, max = 100, integer = true},
         numberSetting{key = "ui.mouseScrollAmount", name = "SettingUIMouseScrollAmount", description = "SettingUIMouseScrollAmountDescription", default = config.default.ui.mouseScrollAmount, min = 1, max = 500, integer = true},

@@ -10,6 +10,8 @@ local config = require("scripts.advanced_world_map.config.configLib")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
+local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 
 local l10n = core.l10n(commonData.l10nKey)
@@ -36,10 +38,16 @@ end
 
 ---@param menu advancedWorldMap.ui.menu.map
 local function toggleMap(menu)
+    local playerCell = playerRef.cell
+
     if menu.mapWidget.cellId then
+        local exitPoss = menu.mapWidget.cellId ~= playerCell.id and cellHelper.findExitPoss(menu.mapWidget.cellId, dataHandler.entrances)
         menu:updateMapWidgetCell()
+        if exitPoss and next(exitPoss) then
+            menu.mapWidget:focusOnWorldPosition(exitPoss[1])
+            menu.mapWidget:updateMarkers()
+        end
     else
-        local playerCell = playerRef.cell
 
         if playerCell.isExterior then
             local mapWidget = menu.mapWidget
@@ -64,7 +72,7 @@ local function create(menu)
         type = ui.TYPE.Text,
         props = {
             text = isMapTypeWorld(menu.mapWidget) and l10n("Local") or l10n("World"),
-            textSize = menu.headerHeight - 2,
+            textSize = menu.headerHeight,
             anchor = util.vector2(0.5, 0.5),
             textColor = config.data.ui.defaultColor,
         },
