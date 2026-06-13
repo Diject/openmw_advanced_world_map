@@ -278,6 +278,7 @@ I.Settings.registerGroup{
         numberSetting{key = "legend.zoomToGroup", name = "SettingLegendZoomToGroup", description = "SettingLegendZoomToGroupDescription", default = config.default.legend.zoomToGroup, min = 0},
         boolSetting{key = "legend.visitedCellsOnWorldMap", name = "SettingLegendVisitedCellsOnWorldMap", description = "SettingLegendVisitedCellsOnWorldMapDescription", default = config.default.legend.visitedCellsOnWorldMap},
         numberSetting{key = "legend.markerSize", name = "SettingLegendMarkerSize", description = "SettingLegendMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},
+        boolSetting{key = "legend.localMarkerBackground", name = "SettingLegendLocalMarkerBackground", description = "SettingLegendLocalMarkerBackgroundDescription", default = config.default.legend.localMarkerBackground},
         numberSetting{key = "legend.playerMarkerSize", name = "SettingLegendPlayerMarkerSize", description = "SettingLegendPlayerMarkerSizeDescription", default = config.default.legend.playerMarkerSize, min = 1, max = 250},
         numberSetting{key = "legend.alpha.region", name = "SettingLegendRegionAlpha", description = "SettingLegendRegionAlphaDescription", default = config.default.legend.alpha.region, min = 0, max = 100},
         numberSetting{key = "legend.alpha.city", name = "SettingLegendCityAlpha", description = "SettingLegendCityAlphaDescription", default = config.default.legend.alpha.city, min = 0, max = 100},
