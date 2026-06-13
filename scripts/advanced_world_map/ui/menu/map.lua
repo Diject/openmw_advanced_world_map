@@ -1011,11 +1011,10 @@ function this.create(params)
             props = {
                 text = l10n("X"),
                 textSize = meta.headerHeight,
-                autoSize = false,
-                size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
+                anchor = util.vector2(0.5, 0.5),
+                autoSize = true,
+                position = util.vector2((meta.headerFullHeight - meta.borderSize) / 2, (meta.headerFullHeight - meta.borderSize) / 2),
                 textColor = config.data.ui.backgroundColor,
-                textAlignH = ui.ALIGNMENT.Center,
-                textAlignV = ui.ALIGNMENT.Center,
             },
         }
         closeBtnLayout.content:add(closeTextLayout)

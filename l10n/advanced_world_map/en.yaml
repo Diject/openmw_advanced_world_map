@@ -4,6 +4,7 @@ modDescription: "Interactive world map with search, fast travel, and more."
 
 YesY: "Yes [Y]"
 NoX: "No [X]"
+Close: "Close"
 You: "You"
 Map: "Map"
 Search: "Search"
