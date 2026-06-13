@@ -244,6 +244,12 @@ function mapWidgetMeta:getRelativePositionOfCursor()
 end
 
 
+function mapWidgetMeta:getScreenPositionOfCursor()
+    local mouseOffset = self.layout.userData.mousePos
+    return mouseOffset
+end
+
+
 function mapWidgetMeta:getWorldPositionByRelativePosition(relPos)
     local displaySize = self:getDisplaySize()
     local paddingScaled = self:getPadding(self.zoom)
@@ -1585,17 +1591,25 @@ end
 
 
 function mapWidgetMeta:openRightMouseMenu()
+    local menu = self.layout.userData.contextMenu
+    if menu and menu.layout then
+        menu:destroy()
+        self.layout.userData.contextMenu = nil
+    end
+
     if eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
         local layersLayout = self.layout.content[2]
         uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
 
-        local relPos = self:getRelativePositionOfCursor()
+        local pos = self:getScreenPositionOfCursor()
         local lay = {
+            layer = commonData.messageLayer,
             name = commonData.rightClickMenuId,
             type = ui.TYPE.Flex,
             props = {
                 autoSize = true,
-                relativePosition = relPos,
+                position = pos,
+                anchor = util.vector2(0, 0),
                 propagateEvents = false,
             },
             content = ui.content{
@@ -1605,33 +1619,23 @@ function mapWidgetMeta:openRightMouseMenu()
         local layContent = lay.content
         eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
             mapWidget = self,
-            relPos = relPos,
+            relPos = self:getRelativePositionOfCursor(),
             content = layContent,
             marker = self.layout.userData.lastMarkerElement,
         })
 
         if #layContent > 0 then
-            pcall(function ()
-                local i = 2
-                while (rawget(lay.content, i)) do
-                    lay.content:insert(i, interval(0, config.data.ui.fontSize / 3))
-                    i = i + 2
-                end
-            end)
-
-            layersLayout.content:add(lay)
-            self:update()
-            self.layout.userData.hasActiveMenu = true
+            self.layout.userData.contextMenu = ui.create(lay)
         end
     end
 end
 
 
 function mapWidgetMeta:closeRightMouseMenu()
-    if not self.layout.userData.hasActiveMenu then return end
-    local layout = self.layout.content[2]
-    uiUtils.removeFromContent(layout.content, commonData.rightClickMenuId)
-    self.layout.userData.hasActiveMenu = nil
+    local menu = self.layout.userData.contextMenu
+    if not menu or not menu.layout then return end
+    menu:destroy()
+    self.layout.userData.contextMenu = nil
 end
 
 
