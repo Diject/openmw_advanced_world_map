@@ -668,6 +668,7 @@ local function createMarker(self, params, onlyInitialize)
     if params.id and uiUtils.isExistsInContent(content, params.id) then
         local handler = content[params.id].userData.markerElement
         if params.update then
+            handler._elemLayout.userData.userData = params.userData
             handler._params = params
             handler:restoreLayout()
             params.update = nil

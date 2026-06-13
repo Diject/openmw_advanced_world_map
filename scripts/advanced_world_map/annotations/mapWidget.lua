@@ -67,6 +67,7 @@
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|Vector2, zoom: number): number|Vector2)? Custom scaling function
 ---@field userData any Custom user data
+---@field update boolean? If true, updates the marker if it already exists instead of returning the existing one
 
 ---Parameters for creating a text marker
 ---@class AdvancedWorldMap.MapWidget.CreateTextMarkerParams
@@ -94,6 +95,7 @@
 ---@field showWhenZoomedOut boolean? Only show when zoomed out
 ---@field scaleFunc (fun(size: number|Vector2, zoom: number): number|Vector2)? Custom scaling function
 ---@field userData any Custom user data
+---@field update boolean? If true, updates the marker if it already exists instead of returning the existing one
 
 ---Parameters for creating a map widget
 ---@class AdvancedWorldMap.MapWidget.Params
