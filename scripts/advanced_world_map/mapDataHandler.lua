@@ -648,13 +648,13 @@ end
 
 
 function this.playerInit(playerRef, cellCount, options)
+    options = options or {}
     local stor = storage.playerSection(commonData.mapDataStorageName)
 
-    local shouldRebuild = stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
+    local shouldRebuild = options.force or stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
         stor:get("contentFileCount") ~= #core.contentFiles.list
 
     if shouldRebuild then
-        options = options or {}
         local dataSettingStorage = storage.playerSection(commonData.configDataSectionName)
         options.isPresizeOccupied = dataSettingStorage:get("data.initializer") == commonData.dataInitializerTypes[6]
 

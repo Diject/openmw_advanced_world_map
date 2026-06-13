@@ -87,9 +87,26 @@ storage.playerSection(commonData.configLegendSectionName):subscribe(async:callba
     mapMenu.clearMapWidgetCache()
 end))
 
-storage.playerSection(commonData.configDataSectionName):subscribe(async:callback(function(_, id)
+local isDataStorageTimerRunning
+local configDataSection = storage.playerSection(commonData.configDataSectionName)
+configDataSection:subscribe(async:callback(function(_, id)
     mapTextureHandler.init()
     mapMenu.clearMapWidgetCache()
+    if id == "data.initializer" then
+        if configDataSection:get(id) == commonData.dataInitializerTypes[6] then
+            if not isDataStorageTimerRunning then
+                isDataStorageTimerRunning = true
+                async:newUnsavableSimulationTimer(0.1, function ()
+                    if isDataStorageTimerRunning then
+                        core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = {force = true}})
+                        isDataStorageTimerRunning = false
+                    end
+                end)
+            end
+        else
+            isDataStorageTimerRunning = false
+        end
+    end
 end))
 
 storage.playerSection(commonData.configNotesSectionName):subscribe(async:callback(function(_, id)
@@ -128,7 +145,7 @@ mainSectionStorage:subscribe(async:callback(function(_, _)
     local reset = mainSectionStorage:get("main.resetSizePos")
     if reset and not isStorageTimerRunning then
         isStorageTimerRunning = true
-        async:newUnsavableSimulationTimer(0.1, function ()
+        async:newUnsavableSimulationTimer(0.01, function ()
             resetSizePos()
             mainSectionStorage:set("main.resetSizePos", false)
             isStorageTimerRunning = false
