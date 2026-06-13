@@ -417,7 +417,7 @@ end
 
 
 function mapWidgetMeta:getZoomModeThreshold()
-    return config.data.tileset.zoomToShow * self.eScale / self.uiScale
+    return config.data.tileset.zoomToShow / (self.eScale * self.uiScale)
 end
 
 
