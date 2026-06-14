@@ -23,6 +23,7 @@ local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 ---@field textAlignH any?
 ---@field textAlignV any?
 ---@field tooltipContent any?
+---@field tooltipDelay number?
 ---@field getScrollBoxMeta (fun() : advancedWorldMap.ui.scrollBox)?
 ---@field event fun(checked : boolean, layout : any)?
 ---@field updateFunc fun()
@@ -101,7 +102,7 @@ return function(params)
                     params.getScrollBoxMeta():mouseMove(e)
                 end
                 if not params.tooltipContent then return end
-                tooltip.createOrMove(e, layout, params.tooltipContent)
+                tooltip.createOrMove(e, layout, params.tooltipContent, params.tooltipDelay)
             end),
         },
         content = ui.content {
