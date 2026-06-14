@@ -43,7 +43,7 @@ local function create(menu)
         type = ui.TYPE.Text,
         props = {
             text = "",
-            textSize = menu.useDefaultHeader and menu.headerHeight or menu.headerHeight - 4,
+            textSize = menu.headerHeight,
             anchor = util.vector2(0.5, 0.5),
             textColor = config.data.ui.defaultColor,
         },

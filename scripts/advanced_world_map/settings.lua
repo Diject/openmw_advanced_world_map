@@ -367,6 +367,7 @@ I.Settings.registerGroup{
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
         boolSetting{key = "ui.coverHeader", name = "SettingUICoverHeader", description = "SettingUICoverHeaderDescription", default = config.default.ui.coverHeader},
+        numberSetting{key = "ui.headerSize", name = "SettingUIHeaderSize", default = config.default.ui.headerSize, min = 12, max = 48, integer = true},
         boolSetting{key = "ui.thickBorders", name = "SettingUIThickBorders", description = "SettingUIThickBordersDescription", default = config.default.ui.thickBorders},
         numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},
         numberSetting{key = "ui.scrollArrowSize", name = "SettingUIScrollBarSize", description = "SettingUIScrollBarSizeDescription", default = config.default.ui.scrollArrowSize, min = 1, max = 100, integer = true},

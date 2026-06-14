@@ -146,6 +146,7 @@ this.default = {
         minimapAlpha = 100, -- deprecated
         thickBorders = true,
         coverHeader = true,
+        headerSize = 18,
     },
     message = {
         transportFeatureInfoShown = 0,

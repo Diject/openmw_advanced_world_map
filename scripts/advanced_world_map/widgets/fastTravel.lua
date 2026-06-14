@@ -120,7 +120,7 @@ local function create(menu)
         type = ui.TYPE.Text,
         props = {
             text = l10n("Ft"),
-            textSize = config.data.ui.fontSize,
+            textSize = menu.headerHeight,
             textColor = config.data.ui.defaultColor,
             anchor = util.vector2(0.5, 0.5),
             size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),

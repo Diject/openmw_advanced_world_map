@@ -713,7 +713,7 @@ function this.create(params)
 
     meta.useDefaultHeader = config.data.ui.coverHeader
 
-    local headerHeight = meta.useDefaultHeader and 18 or math.floor(params.fontSize * 1.25 / 2) * 2
+    local headerHeight = config.data.ui.headerSize
     meta.headerHeight = headerHeight
     meta.borderSize = config.data.ui.thickBorders and 4 or 2
     meta.headerOffset = meta.useDefaultHeader and meta.borderSize or 0

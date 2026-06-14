@@ -271,6 +271,7 @@ SettingInputCycleTransportKeyDescription: "The key used to cycle through differe
 UISettings: "UI"
 SettingUIFontSize: "Font size"
 SettingUIFontSizeDescription: "The font size of all UI text elements is scaled according to this value."
+SettingUIHeaderSize: "Header size"
 SettingUIThickBorders: "Thick borders"
 SettingUIThickBordersDescription: "When enabled, the map window borders will be thicker."
 SettingUICoverHeader: "Morrowind-style header"
