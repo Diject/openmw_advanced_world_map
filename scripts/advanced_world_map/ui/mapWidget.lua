@@ -1661,6 +1661,7 @@ function mapWidgetMeta:setLayerVisibility(layerId, visible)
 
     if not layout then return false end
 
+    layout.props.visible = visible
     if visible then
         self:getMapLayersLayout().content[layerId] = self.layers[layerId]
     else
