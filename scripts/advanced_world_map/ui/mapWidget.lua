@@ -824,7 +824,7 @@ local function createMarker(self, params, onlyInitialize)
             inContainer = params.text and params.textBackground,
             onMouseWheel = isLayerInteractive and function(value)
                 if not layout.userData.inFocus then return end
-                setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul or self.zoom / config.data.main.zoomingMul)
+                setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul * value or self.zoom / (config.data.main.zoomingMul * -value))
                 self:update()
             end or nil,
             _events = not self.inActiveMode and layoutEvents or nil,

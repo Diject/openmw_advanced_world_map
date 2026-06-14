@@ -202,6 +202,8 @@ end
 
 
 local function onMouseWheel(vertical)
+    local old = vertical
+    vertical = util.clamp(vertical, -4, 4)
     menuHandler.onMouseWheelCallback(vertical)
 end
 

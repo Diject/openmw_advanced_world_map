@@ -448,9 +448,9 @@ return function(params)
                 if not contentData.userData.inFocus then return end
 
                 if vertical > 0 then
-                    meta:scrollUp(config.data.ui.mouseScrollAmount)
+                    meta:scrollUp(config.data.ui.mouseScrollAmount * vertical)
                 elseif vertical < 0 then
-                    meta:scrollDown(config.data.ui.mouseScrollAmount)
+                    meta:scrollDown(config.data.ui.mouseScrollAmount * -vertical)
                 end
             end,
         },
