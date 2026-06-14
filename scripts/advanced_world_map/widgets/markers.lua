@@ -346,7 +346,7 @@ local function createMarkers(widget, cellId, allowedCells)
     local charHeight = fontInWorldCoords
     local lineHeight = cellId and charHeight / 10 or charHeight / 4
     local mergeDist = 768 * 768
-    local freeMarkerMul = 1.75
+    local isolatedMarkerMul = 1.75
 
     local entrancesData = {}
 
@@ -455,7 +455,7 @@ local function createMarkers(widget, cellId, allowedCells)
 
     local populationMap = {}
     ---@type table<advancedWorldMap.ui.mapElementMeta, boolean>
-    local freeMarkers = {}
+    local isolatedMarkers = {}
 
     for _, mInfo in ipairs(allData) do
         local dt = mInfo.dt
@@ -518,7 +518,7 @@ local function createMarkers(widget, cellId, allowedCells)
 
                 if isExterior then
                     local posId = this.getMarkerId(nil, dt.pos.x, dt.pos.y, "markerText")
-                    local free = true
+                    local isolated = true
 
                     local maxDist = dt.fName == dt.name and 1536 or 6144
                     local steps = math.ceil(maxDist / eps)
@@ -531,7 +531,7 @@ local function createMarkers(widget, cellId, allowedCells)
                                 if popList then
                                     for _, d in pairs(popList.m) do
                                         if d.name ~= dt.name and commonData.distance2D(d.pos, dt.pos) < maxDist then
-                                            free = false
+                                            isolated = false
                                             return
                                         end
                                     end
@@ -541,8 +541,8 @@ local function createMarkers(widget, cellId, allowedCells)
                     end
                     check()
 
-                    if free then
-                        freeMarkers[posId] = true
+                    if isolated then
+                        isolatedMarkers[posId] = true
                     end
                 end
             end
@@ -595,7 +595,7 @@ local function createMarkers(widget, cellId, allowedCells)
                 local mInfo = data.mInfo
 
                 local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
-                local isFree = freeMarkers[textId] == true
+                local isIsolated = isolatedMarkers[textId] == true
 
                 local textMarkerHandler = this.markerById[textId]
 
@@ -610,8 +610,8 @@ local function createMarkers(widget, cellId, allowedCells)
 
                 local textAnchor = entranceAnchors[1]
                 local text = "  "..dt.name.."  "
-                local textWidth = charHeight * stringLib.length(dt.name) * 0.6 * (isFree and freeMarkerMul or 1)
-                local textHeight = charHeight * (isFree and freeMarkerMul or 1)
+                local textWidth = charHeight * stringLib.length(dt.name) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
+                local textHeight = charHeight * (isIsolated and isolatedMarkerMul or 1)
 
                 local possibleAnchorsData = {}
                 for k, anchor in ipairs(entranceAnchors) do
@@ -666,7 +666,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     end
                 end
 
-                local fontSize = math.floor(config.data.legend.markerSize * (isFree and freeMarkerMul or 1))
+                local fontSize = math.floor(config.data.legend.markerSize * (isIsolated and isolatedMarkerMul or 1))
                 local pos = dt.pos
                 local alpha = config.data.legend.alpha.entrance * 0.01
                 local userData
@@ -702,6 +702,7 @@ local function createMarkers(widget, cellId, allowedCells)
                 userData.textWidth = textWidth
                 userData.textHeight = textHeight
                 userData.isTileDiscovered = isTileDiscovered
+                userData.isIsolated = isIsolated
 
                 ---@diagnostic disable-next-line: cast-local-type
                 textMarkerHandler = widget:createTextMarker{
@@ -980,6 +981,9 @@ local function createMarkers(widget, cellId, allowedCells)
                 local marker = markerByData[dt]
                 if not marker then goto continue end
 
+                local userData = marker:getUserData()
+                if userData.isIsolated then goto continue end
+
                 local pos = marker._params.pos
                 if pos.x >= cluster.bb.center.x and pos.y >= cluster.bb.center.y then
                     quadrants[2][marker._params.text] = marker
@@ -996,7 +1000,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     alpha = 0,
                 }
 
-                local linkedMarkers = marker:getUserData().linkedImageMarkers
+                local linkedMarkers = userData.linkedImageMarkers
                 if linkedMarkers then
                     for _, h in pairs(linkedMarkers) do
                         local defaultAlpha = h:getAlpha()
