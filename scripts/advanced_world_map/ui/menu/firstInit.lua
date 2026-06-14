@@ -30,6 +30,68 @@ local this = {}
 ---@field yesCallback fun()?
 
 
+local function getPreviewTooltipContent(imSize, im1Id, im2Id)
+    return ui.content{
+        {
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+            },
+            content = ui.content{
+                {
+                    type = ui.TYPE.Widget,
+                    props = {
+                        size = util.vector2(imSize, imSize)
+                    },
+                    content = ui.content{
+                        {
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, im1Id) },
+                                size = util.vector2(imSize, imSize),
+                            }
+                        },
+                        {
+                            type = ui.TYPE.Text,
+                            props = {
+                                text = l10n("On"),
+                                textSize = config.data.ui.fontSize * 2,
+                                textColor = config.data.ui.whiteColor,
+                                position = util.vector2(8, 24),
+                            }
+                        },
+                    }
+                },
+                {
+                    type = ui.TYPE.Widget,
+                    props = {
+                        size = util.vector2(imSize, imSize)
+                    },
+                    content = ui.content{
+                        {
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, im2Id) },
+                                size = util.vector2(imSize, imSize),
+                            }
+                        },
+                        {
+                            type = ui.TYPE.Text,
+                            props = {
+                                text = l10n("Off"),
+                                textSize = config.data.ui.fontSize * 2,
+                                textColor = config.data.ui.whiteColor,
+                                position = util.vector2(8, 24),
+                            }
+                        },
+                    }
+                }
+            }
+        }
+    }
+end
+
+
 ---@param params advancedWorldMap.ui.menu.firstInit.params
 ---@return advancedWorldMap.ui.menu.firstInit
 function this.new(params)
@@ -39,8 +101,10 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 19 or 25))
+    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 17 or 23))
     params.relativePosition = util.vector2(0.5, 0.5)
+
+    local previewImageSize = math.floor(screenSize.x / 4 / 128) * 128
 
 
     ---@class advancedWorldMap.ui.menu.firstInit
@@ -104,22 +168,12 @@ function this.new(params)
                     interval(0, params.fontSize / 2),
                     checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingLegendOnlyDiscoveredDescription"),
+                        text = l10n("SettingTilesetOnlyDiscoveredDescription").." "..l10n("HoverToPreview"),
                         textSize = config.data.ui.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
-                        checked = config.data.legend.onlyDiscovered,
-                        event = function (checked, layout)
-                            config.setValue("legend.onlyDiscovered", checked)
-                        end
-                    },
-                    interval(0, params.fontSize / 2),
-                    checkBox{
-                        updateFunc = meta.update,
-                        text = l10n("SettingTilesetOnlyDiscoveredDescription"),
-                        textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
-                        textAlignV = ui.ALIGNMENT.Center,
+                        tooltipContent = getPreviewTooltipContent(previewImageSize, 1, 2),
+                        tooltipDelay = 1.5,
                         checked = config.data.tileset.onlyDiscovered,
                         event = function (checked, layout)
                             config.setValue("tileset.onlyDiscovered", checked)
@@ -128,30 +182,58 @@ function this.new(params)
                     interval(0, params.fontSize / 2),
                     checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingFastTravelEnabledDescription"),
+                        text = l10n("SettingLegendOnlyDiscoveredDescription").." "..l10n("HoverToPreview"),
                         textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 3),
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        tooltipContent = getPreviewTooltipContent(previewImageSize, 2, 3),
+                        tooltipDelay = 1.5,
+                        checked = config.data.legend.onlyDiscovered,
+                        event = function (checked, layout)
+                            config.setValue("legend.onlyDiscovered", checked)
+                        end
+                    },
+                    interval(0, params.fontSize / 2),
+                    checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingLegendLocalMarkerBackgroundDescriptionInMenu").." "..l10n("HoverToPreview"),
+                        textSize = config.data.ui.fontSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        tooltipContent = getPreviewTooltipContent(previewImageSize, 3, 4),
+                        tooltipDelay = 1.5,
+                        checked = config.data.legend.localMarkerBackground,
+                        event = function (checked, layout)
+                            config.setValue("legend.localMarkerBackground", checked)
+                        end
+                    },
+                    interval(0, params.fontSize / 2),
+                    checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingFastTravelEnabledDescriptionInMenu"),
+                        textSize = config.data.ui.fontSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.fastTravel.enabled,
                         event = function (checked, layout)
                             config.setValue("fastTravel.enabled", checked)
                         end
                     },
-                    interval(0, params.fontSize / 2),
-                    {
-                        type = ui.TYPE.Text,
-                        props = {
-                            text = l10n("firstInitMenuDataSourceNote"),
-                            textSize = params.fontSize,
-                            autoSize = false,
-                            size = util.vector2(mainSize.x - 3, params.fontSize * 3),
-                            textColor = config.data.ui.defaultColor,
-                            multiline = true,
-                            wordWrap = true,
-                            textAlignH = ui.ALIGNMENT.Center,
-                            textAlignV = ui.ALIGNMENT.Center,
-                        },
-                    },
+                    -- interval(0, params.fontSize / 2),
+                    -- {
+                    --     type = ui.TYPE.Text,
+                    --     props = {
+                    --         text = l10n("firstInitMenuDataSourceNote"),
+                    --         textSize = params.fontSize,
+                    --         autoSize = false,
+                    --         size = util.vector2(mainSize.x - 3, params.fontSize * 3),
+                    --         textColor = config.data.ui.defaultColor,
+                    --         multiline = true,
+                    --         wordWrap = true,
+                    --         textAlignH = ui.ALIGNMENT.Center,
+                    --         textAlignV = ui.ALIGNMENT.Center,
+                    --     },
+                    -- },
                     interval(0, params.fontSize),
                     {
                         type = ui.TYPE.Flex,

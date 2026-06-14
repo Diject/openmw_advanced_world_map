@@ -151,6 +151,8 @@ this.noteMarkerPath = "textures/icons/advanced_world_map/featherIco.png"
 
 this.widgetIconsDir = "textures/icons/advanced_world_map/widget/"
 
+this.previewImagesDir = "textures/icons/advanced_world_map/preview/"
+
 this.customMapDir = "textures/advanced_world_map/custom/"
 this.defaultTRMapDir = "textures/advanced_world_map/default/TRmap/"
 this.defaultBaseMapDir = "textures/advanced_world_map/default/basemap/"

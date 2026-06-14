@@ -41,7 +41,7 @@ this.cachedMapWidgetLayout = {}
 this.cachedMapWidgetMetatable = {}
 
 function this.clearMapWidgetCache()
-    menuHandler.destroyAllMenus()
+    menuHandler.destroyAllExcept(commonData.firstInitMenuId)
     this.cachedMapWidgetLayout = {}
     for id, m in pairs(this.cachedMapWidgetMetatable) do
         m.invalid = true
