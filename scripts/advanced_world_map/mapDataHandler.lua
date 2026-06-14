@@ -205,11 +205,11 @@ local function buildTransportData(entrances)
             end
         end
 
-        if node and dist < 2048 then
+        if node and dist < 3072 then
             return nodeId, node
         end
 
-        if unknownTypeNode and unknownTypeNodeDist < 2048 then
+        if unknownTypeNode and unknownTypeNodeDist < 3072 then
             unknownTypeNode.tp = tp
             return unknownTypeNodeId, unknownTypeNode
         end
