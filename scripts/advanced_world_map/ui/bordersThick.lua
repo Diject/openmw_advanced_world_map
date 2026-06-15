@@ -23,8 +23,8 @@ return {
                     tileV = true,
                     size = util.vector2(4, 0),
                     relativeSize = util.vector2(0, 1),
-                    anchor = util.vector2(0, 0),
-                    relativePosition = util.vector2(0, 0),
+                    anchor = nil,
+                    relativePosition = nil,
                 },
             },
             {
@@ -47,8 +47,8 @@ return {
                     tileV = false,
                     size = util.vector2(0, 4),
                     relativeSize = util.vector2(1, 0),
-                    anchor = util.vector2(0, 0),
-                    relativePosition = util.vector2(0, 0),
+                    anchor = nil,
+                    relativePosition = nil,
                 },
             },
             {
@@ -68,8 +68,8 @@ return {
                 props = {
                     resource = borderTextures[5],
                     size = util.vector2(4, 4),
-                    anchor = util.vector2(0, 0),
-                    relativePosition = util.vector2(0, 0),
+                    anchor = nil,
+                    relativePosition = nil,
                 },
             },
             {

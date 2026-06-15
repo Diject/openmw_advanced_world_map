@@ -23,12 +23,12 @@ this.default = {
             enabled = false,
             cellLabel = true,
             relativeSize = {
-                x = 0.7,
-                y = 0.7,
+                x = 0.2,
+                y = 0.2,
             },
             relativePosition = {
-                x = 0.15,
-                y = 0.15,
+                x = 0.8,
+                y = 0,
             },
         },
         centerOnPlayer = true,
@@ -56,7 +56,7 @@ this.default = {
             entrance = 95,
             city = 60,
             transport = 80,
-            background = 50, -- local
+            background = 60, -- local
             backgroundAlt = nil, -- local
         },
         visibility = {

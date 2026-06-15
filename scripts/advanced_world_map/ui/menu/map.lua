@@ -4,6 +4,7 @@ local util = require("openmw.util")
 local core = require("openmw.core")
 local playerRef = require("openmw.self")
 local input = require("openmw.input")
+local auxUi = require("openmw_aux.ui")
 local I = require("openmw.interfaces")
 local UI = I.UI
 
@@ -25,13 +26,13 @@ local l10n = core.l10n(commonData.l10nKey)
 
 local interval = require("scripts.advanced_world_map.ui.interval")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
-local borders = require("scripts.advanced_world_map.ui.borders")
-local thickBorders = require("scripts.advanced_world_map.ui.bordersThick")
+local borders = {require("scripts.advanced_world_map.ui.borders")()}
+local thickBorders = {require("scripts.advanced_world_map.ui.bordersThick").borders()}
 local headerParts = require("scripts.advanced_world_map.ui.headerParts")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local button = require("scripts.advanced_world_map.ui.button")
-
+local resizerEvents = require("scripts.advanced_world_map.ui.resizerEvents")
 
 
 local this = {}
@@ -53,6 +54,30 @@ end
 
 ---@type advancedWorldMap.ui.menu.map
 this.activeMenuMeta = nil
+
+
+local function getMeta()
+    return this.activeMenuMeta
+end
+
+local mapBordersThin = auxUi.deepLayoutCopy(borders)
+local mapBordersThick = auxUi.deepLayoutCopy(thickBorders)
+mapBordersThick[1].events = resizerEvents
+mapBordersThick[1].userData = {getMeta = getMeta, left = true}
+mapBordersThin[1].events = resizerEvents
+mapBordersThin[1].userData = {getMeta = getMeta, left = true}
+mapBordersThick[2].events = resizerEvents
+mapBordersThick[2].userData = {getMeta = getMeta, right = true}
+mapBordersThin[2].events = resizerEvents
+mapBordersThin[2].userData = {getMeta = getMeta, right = true}
+mapBordersThick[3].events = resizerEvents
+mapBordersThick[3].userData = {getMeta = getMeta, top = true}
+mapBordersThin[3].events = resizerEvents
+mapBordersThin[3].userData = {getMeta = getMeta, top = true}
+mapBordersThick[4].events = resizerEvents
+mapBordersThick[4].userData = {getMeta = getMeta, bottom = true}
+mapBordersThin[4].events = resizerEvents
+mapBordersThin[4].userData = {getMeta = getMeta, bottom = true}
 
 
 ---@class advancedWorldMap.ui.menu.map
@@ -414,8 +439,6 @@ function menuMeta:setBorders(thick, coverHeader)
     self.widgetActiveHeaderLayout.props.position = util.vector2(self.borderSize + xOffset, self.headerOffset * 0.5)
     self.mainLayout.props.position = util.vector2(0, self.headerFullHeight)
 
-    local bords = thick and {thickBorders.borders()} or {borders()}
-
     local headerContent = self.headerLayout.content
     local headerContentCount = #headerContent
     if headerContentCount == 8 then
@@ -424,18 +447,24 @@ function menuMeta:setBorders(thick, coverHeader)
         end
     end
 
+    local mapBorders = thick and mapBordersThick or mapBordersThin
+
     if coverHeader then
         for i = 1, 3 do
-            self.headerLayout.content:add(bords[i])
+            self.headerLayout.content:add(mapBorders[i])
         end
-        self.headerLayout.content:add(bords[5])
-        self.headerLayout.content:add(bords[6])
+        self.headerLayout.content:add(mapBorders[5])
+        self.headerLayout.content:add(mapBorders[6])
     end
 
     self:updateMapWidgetWidth()
 
-    for _, b in ipairs(bords) do
-        content:add(b)
+    for i, b in ipairs(mapBorders) do
+        if i == 3 and self.useDefaultHeader then
+            content:add((thick and thickBorders or borders)[i])
+        else
+            content:add(b)
+        end
     end
 end
 
@@ -707,6 +736,7 @@ function this.create(params)
     end
 
     local screenSize = uiUtils.getScaledScreenSize()
+    meta.screenSize = screenSize
     meta.size = screenSize:emul(params.relativeSize)
 
     meta.screenPosition = params.relativePosition:emul(screenSize)
@@ -1142,12 +1172,12 @@ function this.create(params)
     }
 
     if meta.useDefaultHeader then
-        local bords = config.data.ui.thickBorders and {thickBorders.borders()} or {borders()}
+        local headerBorders = config.data.ui.thickBorders and mapBordersThick or mapBordersThin
         for i = 1, 3 do
-            headerLayout.content:add(bords[i])
+            headerLayout.content:add(headerBorders[i])
         end
-        headerLayout.content:add(bords[5])
-        headerLayout.content:add(bords[6])
+        headerLayout.content:add(headerBorders[5])
+        headerLayout.content:add(headerBorders[6])
     end
 
     meta.headerLayout = headerLayout
@@ -1212,55 +1242,16 @@ function this.create(params)
                     relativePosition = util.vector2(1, 1),
                 },
                 userData = {
-
+                    getMeta = function ()
+                        return meta
+                    end,
+                    left = false,
+                    right = true,
+                    bottom = true,
                 },
-                events = {
-                    mousePress = async:callback(function(e, layout)
-                        if e.button ~= 1 then return end
-                        layout.userData.lastMousePos = e.position
-                    end),
-
-                    mouseRelease = async:callback(function(e, layout)
-                        if e.button ~= 1 then return end
-                        layout.userData.lastMousePos = nil
-                        meta.mapWidget:updateMarkers(true)
-                        meta:update()
-                    end),
-
-                    mouseMove = async:callback(function(e, layout)
-                        local lastPos = layout.userData.lastMousePos
-                        if not lastPos then return end
-
-                        meta:closeActiveWidget()
-
-                        local posDif = util.vector2(e.position.x - lastPos.x, e.position.y - lastPos.y)
-                        local minSize = util.vector2(50, 50)
-
-                        local mapSize = meta.mapWidget:getSize()
-                        local newSize = util.vector2(math.max(minSize.x, mapSize.x + posDif.x), math.max(minSize.y, mapSize.y + posDif.y))
-
-                        local size = meta:setMapWidgetSize(newSize)
-
-                        if not meta.minimapSetupMode then
-                            config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
-                            config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
-
-                            meta.defaultMainSize = meta.mainLayout.props.size
-                        end
-
-                        eventSys.triggerEvent(eventSys.EVENT["onResized"], {
-                            menu = meta,
-                            size = size,
-                            mapWidgetSize = newSize
-                        })
-
-                        meta:update()
-
-                        layout.userData.lastMousePos = e.position
-                    end),
-                },
+                events = resizerEvents,
             },
-            table.unpack(config.data.ui.thickBorders and {thickBorders.borders()} or {borders()}),
+            table.unpack(config.data.ui.thickBorders and mapBordersThick or mapBordersThin),
         },
     }
 
