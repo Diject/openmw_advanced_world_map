@@ -364,10 +364,13 @@ local function toggleMenu()
             })
         end
 
-        if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown then
+        if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
+                configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent then
             if not menuMode.isMenuInteractive() then
                 menuMode.activate()
             end
+
+            configLib.setValue("message.firstInitMenuShown", configLib.data.message.firstInitMenuShownCurrent)
 
             menuHandler.registerMenu(commonData.firstInitMenuId, firstInitMenu.new{
                 yesCallback = function ()

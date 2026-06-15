@@ -152,6 +152,8 @@ this.default = {
     message = {
         transportFeatureInfoShown = 0,
         minimapFeatureInfoShown = 0,
+        firstInitMenuShown = 0,
+        firstInitMenuShownCurrent = 1, -- local
     }
 }
 
