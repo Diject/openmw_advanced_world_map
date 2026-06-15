@@ -277,7 +277,7 @@ I.Settings.registerGroup{
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
     name = "TilesetSettings",
-    description = "TilesetSettingsDescription",
+    -- description = "TilesetSettingsDescription",
     permanentStorage = true,
     order = 2,
     settings = {
@@ -292,7 +292,7 @@ I.Settings.registerGroup{
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
     name = "LegendSettings",
-    description = "LegendSettingsDescription",
+    -- description = "LegendSettingsDescription",
     permanentStorage = true,
     order = 3,
     settings = {
