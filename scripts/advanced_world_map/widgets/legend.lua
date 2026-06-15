@@ -95,6 +95,14 @@ local function create(menu)
     local function onOpen(menu, content)
         iconLayout.props.color = config.data.ui.whiteColor
 
+        if config.data.message.minimapFeatureInfoShown == 1 then
+            menu.pinBtnTooltipContent[1].type = ui.TYPE.Text
+            menu.pinBtnTooltipContent[1].props.size = nil
+            menu.pinBtnTooltipContent[1].props.readOnly = nil
+            menu.pinBtnTooltipContent[1].props.text = l10n("PinUnpin")
+            config.setValue("message.minimapFeatureInfoShown", 2)
+        end
+
         local mapWidgetSize = menu.mapWidget:getSize()
 
         local size = util.vector2(

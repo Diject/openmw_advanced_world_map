@@ -92,6 +92,7 @@ MinimapModeCBTooltip: "If enabled, the map in noninteractive (pinned) state will
 MinimapModeSetupBtn: "Setup pos/size"
 MinimapModeSetupBtnTooltip: "Sets the size and position of the map for minimap mode. Click, then adjust the size and position of the map to be used in minimap mode and fully close the map to save these settings."
 MinimapModeSetupMessage: "Set the size and position of the map for minimap mode, then fully close the map to save these settings."
+MinimapFeatureInfo: "You can set up minimap mode to have a separate size and position in the HUD while pinned. Configure it in the Legend widget."
 CellLabelVisibilityCB: "Location name"
 TransportFeatureInfo: "The map can display transport routes. To toggle them, right-click the legend widget or press [{toggleTransportKey}]. To switch between transport types, press [{cycleTransportKey}].\nUse any of these controls to dismiss this message."
 LegendWidgetTooltip: "Map legend.\nRight-click to toggle transport routes.\nLeft-click to open."

@@ -715,6 +715,10 @@ function this.create(params)
         localStorage.data[commonData.pinnedStateFieldId] = not config.data.main.fastClose
     end
 
+    if config.data.main.minimap.enabled and config.data.message.minimapFeatureInfoShown < 2 then
+        config.setValue("message.minimapFeatureInfoShown", 2)
+    end
+
     ---@class advancedWorldMap.ui.menu.map
     local meta = setmetatable({}, menuMeta)
 
@@ -902,10 +906,19 @@ function this.create(params)
             props = {
                 text = l10n("PinUnpin"),
                 textSize = params.fontSize,
+                autoSize = true,
                 textColor = config.data.ui.defaultColor,
+                anchor = util.vector2(0.5, 0),
+                -- size = util.vector2(uiUtils.getScaledScreenSize().x / 5, 0),
+                multiline = true,
+                wordWrap = true,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+                -- readOnly = true,
             },
         }
     }
+    meta.pinBtnTooltipContent = pinBtnTooltipContent
 
     local pinnedBtnLayout
     local unpinnedBtnLayout
@@ -950,6 +963,15 @@ function this.create(params)
                 meta.headerLayout.events.mousePress(e, meta.headerLayout)
                 if e.button ~= 1 then return end
                 layout.userData.pressed = true
+
+                if config.data.message.minimapFeatureInfoShown == 0 then
+                    pinBtnTooltipContent[1].type = ui.TYPE.TextEdit
+                    pinBtnTooltipContent[1].props.size = util.vector2(uiUtils.getScaledScreenSize().x / 5, 0)
+                    pinBtnTooltipContent[1].props.readOnly = true
+                    pinBtnTooltipContent[1].props.text = l10n("MinimapFeatureInfo")
+
+                    config.setValue("message.minimapFeatureInfoShown", 1)
+                end
             end),
 
             mouseRelease = async:callback(function(e, layout)

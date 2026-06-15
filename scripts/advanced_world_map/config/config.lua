@@ -151,6 +151,7 @@ this.default = {
     },
     message = {
         transportFeatureInfoShown = 0,
+        minimapFeatureInfoShown = 0,
     }
 }
 
