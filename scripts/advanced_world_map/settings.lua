@@ -131,21 +131,43 @@ local function selectSetting(args)
 end
 
 
-local res, isKeyAvailable = pcall(function()
-    local bindingSection = storage.playerSection('OMWInputBindings')
-    return bindingSection:get(config.default.main.menuKey) == nil
+local res, isMKeyAvailable, isNKeyAvailable = pcall(function()
+    local bindingSection = storage.playerSection("OMWInputBindings")
+    local binds = bindingSection:asTable()
+    local isMKeyAvailable = true
+    local isNKeyAvailable = true
+    for kId, dt in pairs(binds) do
+        if dt.device == "keyboard" then
+            if dt.button == input.KEY.M then
+                isMKeyAvailable = false
+            elseif dt.button == input.KEY.N then
+                isNKeyAvailable = false
+            end
+        end
+    end
+    return isMKeyAvailable, isNKeyAvailable
 end)
 if not res then
-    print(isKeyAvailable)
+    print(isMKeyAvailable)
+    isMKeyAvailable = nil
 end
 
 
 local defaultStorage = storage.playerSection(commonData.configMiscSectionName)
+local mainSettingsSection = storage.playerSection(commonData.configMainSectionName)
+local isFirstInit = mainSettingsSection:get("main.menuKey") == nil
 local inputModuleVersion = defaultStorage:get("input.version") or 0
+
 if inputModuleVersion == 0 and I.DijectKeyBindings then
-    local sections = storage:allPlayerSections()
-    if sections and not sections[commonData.configMainSectionName] and isKeyAvailable then
-        I.DijectKeyBindings.registerKey(commonData.menuKeyId, config.default.main.menuKey)
+    if isFirstInit and isMKeyAvailable then
+        I.DijectKeyBindings.registerKey(commonData.menuKeyId, "M")
+        mainSettingsSection:set("main.menuKey", "M")
+    else
+        I.DijectKeyBindings.registerKey(commonData.menuKeyId, "N")
+        mainSettingsSection:set("main.menuKey", "N")
+        if isFirstInit then
+            defaultStorage:set("input.validateMHotkey", true)
+        end
     end
 
     if not I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) then

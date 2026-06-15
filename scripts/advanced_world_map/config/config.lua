@@ -10,7 +10,7 @@ local this = {}
 this.default = {
     version = 15,
     main = {
-        menuKey = "N",
+        menuKey = "M",
         relativeSize = {
             x = 70,
             y = 70,
@@ -111,6 +111,7 @@ this.default = {
         moveHistoryForwardHotkey = "MB5",
         toggleTransportHotkey = "C_DPadUp",
         cycleTransportHotkey = "C_DPadRight",
+        validateMHotkey = nil, -- temporary
     },
     ui = {
         fontSize = 18,

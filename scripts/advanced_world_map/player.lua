@@ -154,6 +154,31 @@ mainSectionStorage:subscribe(async:callback(function(_, _)
 end))
 
 
+local defaultSectionStorage = storage.playerSection(commonData.configMiscSectionName)
+
+if defaultSectionStorage:get("input.validateMHotkey") == true then
+    async:newUnsavableSimulationTimer(1, function ()
+        defaultSectionStorage:set("input.validateMHotkey", nil)
+
+        local bindingSection = storage.playerSection("OMWInputBindings")
+        local binds = bindingSection:asTable()
+        local isMKeyAvailable = true
+        for kId, dt in pairs(binds) do
+            if dt.device == "keyboard" and dt.type == "trigger" and dt.button == input.KEY.M and dt.key then
+                if input.triggers[dt.key] then
+                    isMKeyAvailable = false
+                    break
+                end
+            end
+        end
+
+        if isMKeyAvailable then
+            configLib.setValue("main.menuKey", "M")
+        end
+    end)
+end
+
+
 local function onInit()
     if not localStorage.isPlayerStorageReady() then
         localStorage.initPlayerStorage()
