@@ -160,6 +160,8 @@ if defaultSectionStorage:get("input.validateMHotkey") == true then
     async:newUnsavableSimulationTimer(1, function ()
         defaultSectionStorage:set("input.validateMHotkey", nil)
 
+        if config.data.main.menuKey ~= "N" then return end
+
         local bindingSection = storage.playerSection("OMWInputBindings")
         local binds = bindingSection:asTable()
         local isMKeyAvailable = true

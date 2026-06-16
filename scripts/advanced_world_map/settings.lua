@@ -131,43 +131,42 @@ local function selectSetting(args)
 end
 
 
-local res, isMKeyAvailable, isNKeyAvailable = pcall(function()
-    local bindingSection = storage.playerSection("OMWInputBindings")
-    local binds = bindingSection:asTable()
-    local isMKeyAvailable = true
-    local isNKeyAvailable = true
-    for kId, dt in pairs(binds) do
-        if dt.device == "keyboard" then
-            if dt.button == input.KEY.M then
-                isMKeyAvailable = false
-            elseif dt.button == input.KEY.N then
-                isNKeyAvailable = false
-            end
-        end
-    end
-    return isMKeyAvailable, isNKeyAvailable
-end)
-if not res then
-    print(isMKeyAvailable)
-    isMKeyAvailable = nil
-end
+-- local res, isMKeyAvailable, isNKeyAvailable = pcall(function()
+--     local bindingSection = storage.playerSection("OMWInputBindings")
+--     local binds = bindingSection:asTable()
+--     local isMKeyAvailable = true
+--     local isNKeyAvailable = true
+--     for kId, dt in pairs(binds) do
+--         if dt.device == "keyboard" then
+--             if dt.button == input.KEY.M then
+--                 isMKeyAvailable = false
+--             elseif dt.button == input.KEY.N then
+--                 isNKeyAvailable = false
+--             end
+--         end
+--     end
+--     return isMKeyAvailable, isNKeyAvailable
+-- end)
+-- if not res then
+--     print(isMKeyAvailable)
+--     isMKeyAvailable = nil
+-- end
 
 
 local defaultStorage = storage.playerSection(commonData.configMiscSectionName)
 local mainSettingsSection = storage.playerSection(commonData.configMainSectionName)
-local isFirstInit = mainSettingsSection:get("main.menuKey") == nil
+local isFirstInit = mainSettingsSection:get("main.updateFrequency") == nil
 local inputModuleVersion = defaultStorage:get("input.version") or 0
 
 if inputModuleVersion == 0 and I.DijectKeyBindings then
-    if isFirstInit and isMKeyAvailable then
-        I.DijectKeyBindings.registerKey(commonData.menuKeyId, "M")
-        mainSettingsSection:set("main.menuKey", "M")
-    else
+    -- if isFirstInit and isMKeyAvailable then
+    --     I.DijectKeyBindings.registerKey(commonData.menuKeyId, "M")
+    --     mainSettingsSection:set("main.menuKey", "M")
+    -- else
+    if isFirstInit then
         I.DijectKeyBindings.registerKey(commonData.menuKeyId, "N")
         mainSettingsSection:set("main.menuKey", "N")
-        if isFirstInit then
-            defaultStorage:set("input.validateMHotkey", true)
-        end
+        defaultStorage:set("input.validateMHotkey", true)
     end
 
     if not I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) then
