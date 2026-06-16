@@ -24,6 +24,8 @@ this.regionNameData = nil
 this.entrances = nil
 ---@type table<string, string> by cell id
 this.cellNameById = nil
+---@type table<string, boolean> by cell id
+this.validCellsWithoutName = {}
 ---@type {max : {x : integer, y : integer}, min : {x : integer, y : integer}}
 this.grid = nil
 ---@type {[1] : number, [2] : number, [3] : number, [4] : number}[]
@@ -342,6 +344,7 @@ local function buildData(params)
     end
 
     this.cellNameById = {}
+    this.validCellsWithoutName = {}
 
     local minGridX = math.huge
     local minGridY = math.huge
@@ -454,7 +457,11 @@ local function buildData(params)
     for _, cell in pairs(world.cells) do
         if not cell.id then goto continue end
 
-        this.cellNameById[cell.id] = getCellName(cell)
+        local cellName = getCellName(cell)
+        this.cellNameById[cell.id] = cellName
+        if not cellName then
+            this.validCellsWithoutName[cell.id] = true
+        end
 
         local doors = cell:getAll(types.Door)
         for _, door in pairs(doors) do
@@ -506,7 +513,7 @@ local function buildData(params)
             }
             entrances[cell.id][doorHash] = data
 
-            if exTypeCellName then
+            if exTypeCellName and cell.isExterior then
                 entrancesWithCellName[exTypeCellName] = entrancesWithCellName[exTypeCellName] or {}
                 table.insert(entrancesWithCellName[exTypeCellName], data)
             end
@@ -629,6 +636,7 @@ function this.globalBuildData(playerRef, options)
         regionNameData = this.regionNameData,
         entrances = this.entrances,
         cellNameById = this.cellNameById,
+        validCellsWithoutName = this.validCellsWithoutName,
         grid = this.grid,
         worldMapTileRectangles = this.worldMapTileRectangles,
         transport = this.transport,
@@ -671,6 +679,7 @@ function this.playerInit(playerRef, cellCount, options)
         this.regionNameData = data.regionNameData or {}
         this.entrances = data.entrances or {}
         this.cellNameById = data.cellNameById or {}
+        this.validCellsWithoutName = data.validCellsWithoutName or {}
         this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
         this.worldMapTileRectangles = data.worldMapTileRectangles or {}
         this.transport = data.transport or {}
@@ -685,6 +694,7 @@ function this.playerInit(playerRef, cellCount, options)
             grid = this.grid,
             worldMapTileRectangles = this.worldMapTileRectangles,
             transport = this.transport,
+            validCellsWithoutName = this.validCellsWithoutName,
         })
 
         if options then
@@ -704,6 +714,7 @@ function this.updateData(playerRef, data)
     this.regionNameData = data.regionNameData or {}
     this.entrances = data.entrances or {}
     this.cellNameById = data.cellNameById or {}
+    this.validCellsWithoutName = data.validCellsWithoutName or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
     this.transport = data.transport or {}
@@ -715,6 +726,7 @@ function this.updateData(playerRef, data)
     stor:set("regionNameData", this.regionNameData)
     stor:set("entrances", this.entrances)
     stor:set("cellNameById", this.cellNameById)
+    stor:set("validCellsWithoutName", this.validCellsWithoutName)
     stor:set("grid", this.grid)
     stor:set("worldMapTileRectangles", this.worldMapTileRectangles)
     stor:set("transport", this.transport)
@@ -739,6 +751,7 @@ function this.loadMapData(data)
     this.regionNameData = data.regionNameData or {}
     this.entrances = data.entrances or {}
     this.cellNameById = data.cellNameById or {}
+    this.validCellsWithoutName = data.validCellsWithoutName or {}
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
     this.transport = data.transport or {}

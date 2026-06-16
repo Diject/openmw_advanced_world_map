@@ -1329,8 +1329,11 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local gry = minGridY + y + 1
 
                 local cellId = cellLib.getCellIdByGrid(grx, gry)
-                local isValid = not isZoomOut and (not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
+                local isValidCell = cellId and (mapDataHandler.cellNameById[cellId] or mapDataHandler.validCellsWithoutName[cellId])
+                local isValid = isValidCell and (
+                    not isZoomOut and (not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
                     isZoomOut and config.data.legend.visitedCellsOnWorldMap and discoveredLocs.isVisited(cellId)
+                )
 
                 local lyP = yP
                 yP = startPos.y - tileFullHeight * y
@@ -2111,7 +2114,7 @@ function this.new(params)
             meta = meta,
             onMouseWheel = function(value)
                 if not meta.layout.userData.inFocus then return end
-                setZoom(meta, value > 0 and meta.zoom * config.data.main.zoomingMul or meta.zoom / config.data.main.zoomingMul)
+                setZoom(meta, value > 0 and meta.zoom * config.data.main.zoomingMul or meta.zoom / config.data.main.zoomingMul, nil, true)
                 meta:update()
             end,
 
