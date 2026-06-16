@@ -53,28 +53,19 @@ local resizerEvents = {
         if not meta.minimapSetupMode then
             config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
             config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
+        end
 
-            meta.defaultMainSize = meta.mainLayout.props.size
+        meta.defaultMainSize = meta.mainLayout.props.size
 
-            -- if userData.left then
-            --     local menuPos = meta.menu.layout.props.relativePosition:emul(screenSize)
-            --     local newMenuPos = util.vector2(menuPos.x - xDif, menuPos.y)
-            --     meta.menu.layout.props.relativePosition = newMenuPos:ediv(screenSize)
-            --     meta.screenPosition = newMenuPos + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
-            --         util.vector2(meta.borderSize, meta.borderSize)
-            --     meta.mapWidget.screenPosition = meta.screenPosition
+        if userData.left or userData.top then
+            local menuPos = meta.menu.layout.props.relativePosition:emul(screenSize)
+            local newMenuPos = util.vector2(menuPos.x - xDif, menuPos.y - yDif)
+            meta.menu.layout.props.relativePosition = newMenuPos:ediv(screenSize)
+            meta.screenPosition = newMenuPos + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
+                util.vector2(meta.borderSize, meta.borderSize)
+            meta.mapWidget.screenPosition = meta.screenPosition
 
-            --     config.setValue("main.relativePosition.x", meta.menu.layout.props.relativePosition.x * 100)
-            -- end
-
-            if userData.left or userData.top then
-                local menuPos = meta.menu.layout.props.relativePosition:emul(screenSize)
-                local newMenuPos = util.vector2(menuPos.x - xDif, menuPos.y - yDif)
-                meta.menu.layout.props.relativePosition = newMenuPos:ediv(screenSize)
-                meta.screenPosition = newMenuPos + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
-                    util.vector2(meta.borderSize, meta.borderSize)
-                meta.mapWidget.screenPosition = meta.screenPosition
-
+            if not meta.minimapSetupMode then
                 config.setValue("main.relativePosition.y", meta.menu.layout.props.relativePosition.y * 100)
                 config.setValue("main.relativePosition.x", meta.menu.layout.props.relativePosition.x * 100)
             end

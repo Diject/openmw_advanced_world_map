@@ -431,9 +431,7 @@ return {
         ["AdvWMap:searchObjects"] = function (dt)
             if not dt.params or not dt.player then return end
             local res = searchLib.objectPositions(dt.params)
-            if res then
-                dt.player:sendEvent("AdvWMap:updateSearchResults", {results = res, mode = dt.mode})
-            end
+            dt.player:sendEvent("AdvWMap:updateSearchResults", {results = res or {}, mode = dt.mode})
         end,
 
         ["AdvWMap:initMapData"] = function (dt)

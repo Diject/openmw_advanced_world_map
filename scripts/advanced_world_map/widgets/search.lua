@@ -74,7 +74,7 @@ end
 local function createTemporaryMarker(id, mapWidget, menu, loc, pos, color, textTable, locNamesTable, showZoomIn)
     if temporaryMarkers[id] then return end
 
-    local tooltipText = table.concat(tableLib.keys(textTable or {}), ", ")
+    local tooltipText = table.concat(tableLib.keys(textTable or {}), "; ")
     if locNamesTable and next(locNamesTable) then
         tooltipText = tooltipText.."\n\n"..table.concat(tableLib.keys(locNamesTable), " / ")
     end

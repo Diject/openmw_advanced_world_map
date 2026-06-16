@@ -570,7 +570,11 @@ local function fastTravelMessageCallback(data)
             localStorage.data[commonData.fastTravelTimestampFieldId] = core.getGameTime()
             fastTravel.lastTimestamp = core.getRealTime()
 
-            menuHandler.destroyMenu(commonData.mapMenuId)
+            if not config.data.main.minimap.enabled then
+                menuHandler.destroyMenu(commonData.mapMenuId)
+            else
+                menuMode.deactivate()
+            end
         end,
     })
 end
