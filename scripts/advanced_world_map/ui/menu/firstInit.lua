@@ -12,6 +12,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
@@ -85,6 +86,42 @@ local function getPreviewTooltipContent(imSize, im1Id, im2Id)
                             }
                         },
                     }
+                }
+            }
+        }
+    }
+end
+
+
+local function HoverToPreviewBlock(imSize, im1Id, im2Id, cbLayout)
+    local tooltipContent = getPreviewTooltipContent(imSize, im1Id, im2Id)
+    return {
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = true,
+            arrange = ui.ALIGNMENT.Center,
+        },
+        content = ui.content {
+            cbLayout,
+            {
+                type = ui.TYPE.Text,
+                props = {
+                    text = l10n("HoverToPreview"),
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                    size = util.vector2(80, config.data.ui.fontSize * 2),
+                    textAlignV = ui.ALIGNMENT.Center,
+                    textAlignH = ui.ALIGNMENT.Center,
+                    multiline = true,
+                },
+                events = {
+                    mouseMove = async:callback(function(e, layout)
+                        tooltip.createOrMove(e, layout, tooltipContent)
+                    end),
+
+                    focusLoss = async:callback(function(e, layout)
+                        tooltip.destroy(layout)
+                    end),
                 }
             }
         }
@@ -166,47 +203,42 @@ function this.new(params)
                         },
                     },
                     interval(0, params.fontSize / 2),
-                    checkBox{
+                    HoverToPreviewBlock(previewImageSize, 1, 2, checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingTilesetOnlyDiscoveredDescription").." "..l10n("HoverToPreview"),
+                        text = l10n("SettingTilesetOnlyDiscoveredDescription"),
                         textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
-                        tooltipContent = getPreviewTooltipContent(previewImageSize, 1, 2),
-                        tooltipDelay = 1.5,
+                        anchor = util.vector2(0, 0.5),
                         checked = config.data.tileset.onlyDiscovered,
                         event = function (checked, layout)
                             config.setValue("tileset.onlyDiscovered", checked)
                         end
-                    },
+                    }),
                     interval(0, params.fontSize / 2),
-                    checkBox{
+                    HoverToPreviewBlock(previewImageSize, 2, 3, checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingLegendOnlyDiscoveredDescription").." "..l10n("HoverToPreview"),
+                        text = l10n("SettingLegendOnlyDiscoveredDescription"),
                         textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
-                        tooltipContent = getPreviewTooltipContent(previewImageSize, 2, 3),
-                        tooltipDelay = 1.5,
                         checked = config.data.legend.onlyDiscovered,
                         event = function (checked, layout)
                             config.setValue("legend.onlyDiscovered", checked)
                         end
-                    },
+                    }),
                     interval(0, params.fontSize / 2),
-                    checkBox{
+                    HoverToPreviewBlock(previewImageSize, 3, 4, checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingLegendLocalMarkerBackgroundDescriptionInMenu").." "..l10n("HoverToPreview"),
+                        text = l10n("SettingLegendLocalMarkerBackgroundDescriptionInMenu"),
                         textSize = config.data.ui.fontSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
-                        tooltipContent = getPreviewTooltipContent(previewImageSize, 3, 4),
-                        tooltipDelay = 1.5,
                         checked = config.data.legend.localMarkerBackground,
                         event = function (checked, layout)
                             config.setValue("legend.localMarkerBackground", checked)
                         end
-                    },
+                    }),
                     interval(0, params.fontSize / 2),
                     checkBox{
                         updateFunc = meta.update,
