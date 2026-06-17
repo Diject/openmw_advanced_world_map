@@ -663,11 +663,28 @@ local function createMarker(self, params, onlyInitialize)
 
     local isLayerInteractive = params.layerId == this.layerId.marker
 
+    if params.textBackground and (params.textBackgroundAlpha or 1) == 0 then
+        params.textBackground = nil
+    end
+
     local content = self:getLayerLayout(params.layerId).content
+
+    local function updateZoomInOutDataParams(id, _params)
+        local cId = self.zoomMarkersCellIdById[id]
+        if cId then
+            if self.zoomInMarkers[cId] and self.zoomInMarkers[cId][id] then
+                self.zoomInMarkers[cId][id].params = _params
+            end
+            if self.zoomOutMarkers[cId] and self.zoomOutMarkers[cId][id] then
+                self.zoomOutMarkers[cId][id].params = _params
+            end
+        end
+    end
 
     if params.id and uiUtils.isExistsInContent(content, params.id) then
         local handler = content[params.id].userData.markerElement
         if params.update then
+            updateZoomInOutDataParams(params.id, params)
             handler._elemLayout.userData.userData = params.userData
             handler._params = params
             handler:restoreLayout()
@@ -719,6 +736,7 @@ local function createMarker(self, params, onlyInitialize)
             local handler = cachedLayout.userData.markerElement
 
             if params.update then
+                updateZoomInOutDataParams(id, params)
                 handler._params = params
                 handler:restoreLayout()
                 params.update = nil
@@ -1536,7 +1554,7 @@ end
 ---@return boolean
 function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local lay = self:getPlayerLayout()
-    if lay.props.visible == false then return false end
+    if lay.props.visible == false and not focusOnPlayer then return false end
 
     local playerMarkerLayout = lay.content[1]
     local playerCell = playerRef.cell
@@ -1549,7 +1567,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
         playerMarkerLayout.props.visible = self._playerMarkerVisible ~= false
     end
 
-    if self._playerMarkerVisible == false then return false end
+    if self._playerMarkerVisible == false and not focusOnPlayer then return false end
 
     local mapLayerPosition = self:getMapLayersLayout().props.position
 
