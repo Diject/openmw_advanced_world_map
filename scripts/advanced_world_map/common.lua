@@ -41,6 +41,7 @@ this.mapDataStorageName = "AdvancedWorldMap:mapDataStorage"
 this.notesStorageName = "AdvancedWorldMap:notes"
 
 this.messageLayer = "AdvWMap:Message"
+this.HUDLayer = "AdvWMap:HUD"
 
 -- local storage
 this.visitedLocsFieldId = "visitedLocationsHashSet"

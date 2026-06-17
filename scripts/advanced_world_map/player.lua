@@ -73,6 +73,9 @@ pcall(function ()
     if not ui.layers.indexOf(commonData.messageLayer) then
         ui.layers.insertBefore("DragAndDrop", commonData.messageLayer, { interactive = true })
     end
+    if not ui.layers.indexOf(commonData.HUDLayer) then
+        ui.layers.insertAfter("HUD", commonData.HUDLayer, { interactive = false })
+    end
 end)
 
 

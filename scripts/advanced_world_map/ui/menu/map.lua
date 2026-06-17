@@ -271,7 +271,7 @@ function menuMeta:getMapWidgetForCell(cellId)
             cellId = cellId,
             screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth() + self.borderSize,
                 self.headerFullHeight + self.borderSize),
-            zoom = cellId and (localStorage.data[commonData.localMapZoomFieldId] or 0.5) or (localStorage.data[commonData.worldMapZoomFieldId] or 1),
+            zoom = cellId and (localStorage.data[commonData.localMapZoomFieldId] or 8) or (localStorage.data[commonData.worldMapZoomFieldId] or 1),
         }
         isNew = true
     end
@@ -369,7 +369,7 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
 
     if not isNew then
         if cellId then
-            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 0.5, nil, true)
+            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 8, nil, true)
         else
             meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1, nil , true)
         end
@@ -527,6 +527,7 @@ function menuMeta:updateInteractiveElements(params)
         self:setBorders(config.data.ui.thickBorders, self.useDefaultHeader)
 
         self.isInMinimapMode = false
+        self.layout.layer = "Windows"
 
         if self.mainSize.x ~= self.defaultMainSize.x or self.mainSize.y ~= self.defaultMainSize.y then
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
@@ -558,6 +559,8 @@ function menuMeta:updateInteractiveElements(params)
         end
 
         if config.data.main.minimap.enabled then
+            self.layout.layer = commonData.HUDLayer
+
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
             self:closeActiveWidget()
             self:setMinimapModeParams()
