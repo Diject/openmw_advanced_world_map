@@ -428,15 +428,31 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
     local size = self:getSize()
     local paddingBase = isInZoomInMode and 2048 or 4096
     local mul = paddingBase / (self.mapInfo.pixelsPerCell * self.zoom)
-    local paddingX = math.max(8192, size.x * mul)
-    local paddingY = math.max(8192, size.y * mul)
+    local minPadding = self.inActiveMode and 8192 or 2048
+    local paddingX = math.max(minPadding, size.x * mul)
+    local paddingY = math.max(minPadding, size.y * mul)
+    local halfPaddingX = paddingX * 0.5
+    local halfPaddingY = paddingY * 0.5
 
-    visibleRect.bottom = math.floor((visibleRect.bottom - paddingY) / 8192) * 8192
-    visibleRect.top = math.floor((visibleRect.top + paddingY) / 8192) * 8192 + 8191
-    visibleRect.left = math.floor((visibleRect.left - paddingX) / 8192) * 8192
-    visibleRect.right = math.floor((visibleRect.right + paddingX) / 8192) * 8192 + 8191
+    if self.inActiveMode then
+        visibleRect.bottom = math.floor((visibleRect.bottom - paddingY) / 8192) * 8192
+        visibleRect.top = math.floor((visibleRect.top + paddingY) / 8192) * 8192 + 8191
+        visibleRect.left = math.floor((visibleRect.left - paddingX) / 8192) * 8192
+        visibleRect.right = math.floor((visibleRect.right + paddingX) / 8192) * 8192 + 8191
+    else
+        visibleRect.bottom = visibleRect.bottom - paddingY
+        visibleRect.top = visibleRect.top + paddingY
+        visibleRect.left = visibleRect.left - paddingX
+        visibleRect.right = visibleRect.right + paddingX
+    end
 
     self._markerRect = visibleRect
+    self._markerRectLimited = {
+        bottom = visibleRect.bottom + halfPaddingY,
+        top = visibleRect.top - halfPaddingY,
+        left = visibleRect.left + halfPaddingX,
+        right = visibleRect.right - halfPaddingX
+    }
 
     if eventSys.triggerEvent(eventSys.EVENT.onZoomMarkersUpdate, {mapWidget = self, region = visibleRect}) then
         return
@@ -573,14 +589,15 @@ function mapWidgetMeta:updateMarkers(force)
 end
 
 
-function mapWidgetMeta:refreshVisibleArea()
-    if not self.onZoomMarkersRect then return end
+function mapWidgetMeta:refreshVisibleArea(skipPlayerTilesUpdate)
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
 
-    if self.onZoomMarkersRect.top < visibleRect.top or self.onZoomMarkersRect.bottom > visibleRect.bottom or
-            self.onZoomMarkersRect.right < visibleRect.right or self.onZoomMarkersRect.left > visibleRect.left then
+    if self._markerRectLimited.top < visibleRect.top or self._markerRectLimited.bottom > visibleRect.bottom or
+            self._markerRectLimited.right < visibleRect.right or self._markerRectLimited.left > visibleRect.left then
         self:updateOnZoomMarkers()
-        self._updatePlayerTiles = true
+        if not skipPlayerTilesUpdate then
+            self._updatePlayerTiles = true
+        end
     end
 end
 
@@ -1127,7 +1144,10 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly, force)
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
-                    tryCreateActiveMarker(self, dt.params, preloadOnly)
+                    local pos = dt.params.pos
+                    if this.isPointInRegion(region, pos.x, pos.y) then
+                        tryCreateActiveMarker(self, dt.params, preloadOnly)
+                    end
                 end
 
             end
@@ -1553,6 +1573,8 @@ end
 ---@param focusOnPlayer boolean?
 ---@return boolean
 function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
+    self:refreshVisibleArea(true)
+
     local lay = self:getPlayerLayout()
     if lay.props.visible == false and not focusOnPlayer then return false end
 
@@ -1973,6 +1995,9 @@ function this.new(params)
     meta.minZoom = math.min(screenSize.x / meta.mapInfo.width / 4, meta.mapInfo.pixelsPerCell / (4 * meta.eScale * uiScale))
 
     meta._lastOnZoomZoom = -1
+
+    ---@type advancedWorldMap.ui.mapWidget.region
+    meta._markerRectLimited = {bottom = 0, top = 0, left = 0, right = 0}
 
     meta.update = function(self)
         params.updateFunc()
