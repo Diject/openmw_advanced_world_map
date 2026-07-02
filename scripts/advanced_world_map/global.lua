@@ -369,7 +369,9 @@ return {
                 spendTime(playerRef, data.travelTime)
             end
 
-            playerRef:sendEvent("AdvWMap:playSound", {soundId = "mysticism hit"})
+            if data.currency == "Magicka" then
+                playerRef:sendEvent("AdvWMap:playSound", {soundId = "mysticism hit"})
+            end
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellcast"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnleft"})
             playerRef:sendEvent("AdvWMap:cancelAnimation", {groupName = "spellturnright"})
@@ -440,6 +442,10 @@ return {
 
         ["AdvWMap:updateMapData"] = function (dt)
             mapDataHandler.loadMapData(dt)
+        end,
+
+        ["AdvWMap:removeItem"] = function (dt)
+            dt.item:remove(dt.count)
         end,
     },
 }

@@ -138,7 +138,7 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 17 or 23))
+    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 18 or 24))
     params.relativePosition = util.vector2(0.5, 0.5)
 
     local previewImageSize = math.floor(screenSize.x / 4 / 128) * 128
@@ -154,6 +154,7 @@ function this.new(params)
 
     function meta:close()
         if not self.menu then return end
+        if params.yesCallback then params.yesCallback() end
         self.menu:destroy()
         I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerBCallback, 100)
         I.DijectKeyBindings.keybind.unregister("Y", meta.controllerBCallback, 100)
@@ -161,6 +162,59 @@ function this.new(params)
 
 
     local mainSize = util.vector2(params.size.x, params.size.y)
+
+
+    local ftCurrencyLayout = {
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = true,
+            align = ui.ALIGNMENT.Center,
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.Text,
+                props = {
+                    text = l10n("FirstInitFastTravelCurrency"),
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                    autoSize = true,
+                },
+            },
+            interval(10, config.data.ui.fontSize * 1.5),
+            button{
+                updateFunc = meta.update,
+                textSize = config.data.ui.fontSize,
+                text = l10n(config.data.fastTravel.currency),
+                event = function (layout)
+                    local currentIndex = 1
+                    for i, currency in ipairs(commonData.fastTravelCurrencyTypes) do
+                        if currency == config.data.fastTravel.currency then
+                            currentIndex = i
+                            break
+                        end
+                    end
+
+                    local nextIndex = currentIndex + 1
+                    if nextIndex > #commonData.fastTravelCurrencyTypes then
+                        nextIndex = 1
+                    end
+
+                    local nextCurrency = commonData.fastTravelCurrencyTypes[nextIndex]
+                    if nextCurrency == "FTCurrencyMagicka" then
+                        config.setValue("fastTravel.passTime", false)
+                    else
+                        config.setValue("fastTravel.passTime", true)
+                    end
+
+                    config.setValue("fastTravel.currency", nextCurrency)
+
+                    layout.content[1].content[1].props.text = l10n(nextCurrency)
+                    meta:update()
+                end
+            },
+        }
+    }
+
 
     local mainLayout
     mainLayout = {
@@ -251,21 +305,8 @@ function this.new(params)
                             config.setValue("fastTravel.enabled", checked)
                         end
                     },
-                    -- interval(0, params.fontSize / 2),
-                    -- {
-                    --     type = ui.TYPE.Text,
-                    --     props = {
-                    --         text = l10n("firstInitMenuDataSourceNote"),
-                    --         textSize = params.fontSize,
-                    --         autoSize = false,
-                    --         size = util.vector2(mainSize.x - 3, params.fontSize * 3),
-                    --         textColor = config.data.ui.defaultColor,
-                    --         multiline = true,
-                    --         wordWrap = true,
-                    --         textAlignH = ui.ALIGNMENT.Center,
-                    --         textAlignV = ui.ALIGNMENT.Center,
-                    --     },
-                    -- },
+                    interval(0, params.fontSize / 2),
+                    ftCurrencyLayout,
                     interval(0, params.fontSize),
                     {
                         type = ui.TYPE.Flex,
@@ -284,7 +325,7 @@ function this.new(params)
                                 text = l10n("YesY"),
                                 event = function (layout)
                                     meta:close()
-                                    if params.yesCallback then params.yesCallback() end
+                                    -- if params.yesCallback then params.yesCallback() end
                                 end
                             },
                         }

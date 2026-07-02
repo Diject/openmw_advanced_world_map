@@ -337,8 +337,9 @@ I.Settings.registerGroup{
         boolSetting{key = "fastTravel.allowToInterior", name = "SettingFastTravelAllowToInterior", description = "SettingFastTravelAllowToInteriorDescription", default = config.default.fastTravel.allowToInterior},
         boolSetting{key = "fastTravel.passTime", name = "SettingFastTravelPassTime", description = "SettingFastTravelPassTimeDescription", default = config.default.fastTravel.passTime},
         numberSetting{key = "fastTravel.cooldown", name = "SettingFastTravelCooldown", description = "SettingFastTravelCooldownDescription", default = config.default.fastTravel.cooldown, min = 0},
-        numberSetting{key = "fastTravel.baseMagickaCost", name = "SettingFastTravelBaseMagickaCost", description = "SettingFastTravelBaseMagickaCostDescription", default = config.default.fastTravel.baseMagickaCost, min = 0},
-        numberSetting{key = "fastTravel.additionalCost", name = "SettingFastTravelAdditionalCost", description = "SettingFastTravelAdditionalCostDescription", default = config.default.fastTravel.additionalCost, min = 0},
+        selectSetting{key = "fastTravel.currency", name = "SettingFastTravelCurrency", description = "SettingFastTravelCurrencyDescription", default = config.default.fastTravel.currency, l10n = commonData.l10nKey, items = commonData.fastTravelCurrencyTypes},
+        numberSetting{key = "fastTravel.baseMagickaCost", name = "SettingFastTravelBaseCost", description = "SettingFastTravelBaseCostDescription", default = config.default.fastTravel.baseMagickaCost, min = 0},
+        numberSetting{key = "fastTravel.additionalCost", name = "SettingFastTravelAdditionalCost2", description = "SettingFastTravelAdditionalCostDescription2", default = config.default.fastTravel.additionalCost, min = 0},
     },
 }
 

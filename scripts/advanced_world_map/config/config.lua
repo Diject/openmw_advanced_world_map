@@ -82,6 +82,7 @@ this.default = {
         cooldown = 3,
         baseMagickaCost = 30,
         additionalCost = 4,
+        currency = "FTCurrencyMagicka", -- Magicka, Gold, Health, Free
     },
     notes = {
         mapFontSize = 10,

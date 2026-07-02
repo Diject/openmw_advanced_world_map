@@ -481,16 +481,34 @@ local function fastTravelMessageCallback(data)
         return
     end
 
-    local cost = configLib.data.fastTravel.baseMagickaCost
+    local fTravelMult = core.getGMST("fTravelMult") or 4000
+    local fTravelTimeMult = core.getGMST("fTravelMult") or 16000
+
+    local fastTravelCurrency = configLib.data.fastTravel.currency
+    data.currency = fastTravelCurrency
+
+    local isCurrencyMagicka = fastTravelCurrency == "FTCurrencyMagicka"
+    local isCurrencyGold = fastTravelCurrency == "FTCurrencyGold"
+    local isCurrencyHealth = fastTravelCurrency == "FTCurrencyHealth"
+    local isCurrencyFree = fastTravelCurrency == "FTCurrencyFree"
+
+    local cost = isCurrencyFree and 0 or configLib.data.fastTravel.baseMagickaCost
+    local additionalCost = isCurrencyFree and 0 or configLib.data.fastTravel.additionalCost
 
     local capacity = types.Actor.getCapacity(self)
     local encumbrance = types.Actor.getEncumbrance(self)
 
-    cost = cost + data.worldDistance / 16384 * configLib.data.fastTravel.additionalCost
-    cost = cost + 2 * math.min(10, data.depthToPoint) * configLib.data.fastTravel.additionalCost
-    cost = cost + math.max(0, (encumbrance - capacity) / 10) *
-        configLib.data.fastTravel.additionalCost
-    cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
+    if isCurrencyMagicka then
+        cost = cost + data.worldDistance / 16384 * additionalCost
+        cost = cost + 2 * math.min(10, data.depthToPoint) * additionalCost
+        cost = math.floor(math.max(0, cost * (2 - types.NPC.stats.skills.mysticism(self).base / 100)))
+    elseif isCurrencyGold then
+        cost = cost + (data.worldDistance + data.depthToPoint * 3072) / fTravelMult * additionalCost
+    elseif isCurrencyHealth then
+        cost = cost + (data.worldDistance + data.depthToPoint * 3072) / 8192 * additionalCost
+    end
+
+    cost = cost + math.max(0, (encumbrance - capacity) / 10) * additionalCost
     cost = cost * (1 + 0.5 * #followers)
     if data.isInSameInteriorBlock then
         cost = cost * 0.66
@@ -498,9 +516,10 @@ local function fastTravelMessageCallback(data)
 
     local plSpeed = types.Actor.stats.attributes.speed(self).modified
     local travelTime = configLib.data.fastTravel.passTime and core.API_REVISION >= 111 and
-        math.ceil((data.worldDistance + data.depthToPoint * 4096) / 24576 * 100 / plSpeed * (encumbrance / capacity + 0.5)) or 0
+        math.ceil((data.worldDistance + data.depthToPoint * 3072) / fTravelTimeMult * 100 / plSpeed * (encumbrance / capacity + 0.5)) or 0
 
     local eventData = {
+        currency = fastTravelCurrency,
         cost = cost,
         cell = pDoor.destCell(data.targetDoor),
         position = pDoor.destPosition(data.targetDoor),
@@ -518,8 +537,12 @@ local function fastTravelMessageCallback(data)
 
     local message = eventData.message or ""
     if cost > 0 or travelTime > 0 then
+        local currencyMessageId = isCurrencyMagicka and "fastTravelMagickaCost" or
+            isCurrencyGold and "fastTravelGoldCost" or
+            isCurrencyHealth and "fastTravelHealthCost" or "fastTravelMagickaCost"
+
         message = message.."\n"..l10n("fastTravelCostMessage"):format(
-            cost > 0 and l10n("fastTravelMagickaCost", {count = cost}):format(cost) or "",
+            cost > 0 and l10n(currencyMessageId, {count = cost}):format(cost) or "",
             cost > 0 and travelTime > 0 and l10n("fastTravelAnd") or "",
             travelTime > 0 and l10n("fastTravelTimeCost", {count = travelTime}):format(travelTime) or ""
         )
@@ -529,14 +552,37 @@ local function fastTravelMessageCallback(data)
         message = message,
         relativeSize = util.vector2(0.25, 0.2),
         yesCallback = function ()
-            local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
-            if currentMagicka < eventData.cost then
-                ui.showMessage(l10n("NotEnoughMagicka"))
-                menuHandler.destroyMenu(commonData.mapMenuId)
-                return
-            end
+            if isCurrencyMagicka then
+                local currentMagicka = types.Actor.stats.dynamic.magicka(self).current
+                if currentMagicka < eventData.cost then
+                    ui.showMessage(l10n("NotEnoughMagicka"))
+                    menuHandler.destroyMenu(commonData.mapMenuId)
+                    return
+                end
 
-            types.Actor.stats.dynamic.magicka(self).current = math.max(0, currentMagicka - eventData.cost)
+                types.Actor.stats.dynamic.magicka(self).current = math.max(0, currentMagicka - eventData.cost)
+
+            elseif isCurrencyGold then
+                local inventory = types.Actor.inventory(self)
+                local gold = inventory:find("gold_001")
+                if not gold or gold.count < eventData.cost then
+                    ui.showMessage(l10n("NotEnoughGold"))
+                    menuHandler.destroyMenu(commonData.mapMenuId)
+                    return
+                end
+
+                core.sendGlobalEvent("AdvWMap:removeItem", {item = gold, count = eventData.cost})
+
+            elseif isCurrencyHealth then
+                local currentHealth = types.Actor.stats.dynamic.health(self).current
+                if currentHealth < eventData.cost then
+                    ui.showMessage(l10n("NotEnoughHealth"))
+                    menuHandler.destroyMenu(commonData.mapMenuId)
+                    return
+                end
+
+                types.Actor.stats.dynamic.health(self).current = math.max(0, currentHealth - eventData.cost)
+            end
 
             if configLib.data.fastTravel.withFollowers then
                 data.followers = followers
@@ -565,7 +611,7 @@ local function fastTravelMessageCallback(data)
                 end
             end)
 
-            if I.SkillProgression then
+            if isCurrencyMagicka and I.SkillProgression then
                 I.SkillProgression.skillUsed("mysticism", {
                     useType = I.SkillProgression.SKILL_USE_TYPES.Spellcast_Success,
                     scale = util.clamp(eventData.cost / 50, 1, 3)

@@ -178,6 +178,7 @@
 
 ---Event data for fast travel resolve event
 ---@class AdvancedWorldMap.Event.OnFastTravelResolveEvent
+---@field currency string Fast travel currency type
 ---@field cost number Fast travel cost
 ---@field message string Fast travel message
 ---@field position Vector3 Target world position
@@ -187,6 +188,7 @@
 
 ---Event data for fast travel resolved event
 ---@class AdvancedWorldMap.Event.OnFastTravelResolvedEvent
+---@field currency string Fast travel currency type
 ---@field cost number Fast travel cost
 ---@field message string Fast travel message
 ---@field position Vector3 Target world position

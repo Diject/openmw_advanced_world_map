@@ -177,6 +177,13 @@ this.dataInitializerTypes = {
 
 this.TotSPFileName = "solstheim tomb of the snow prince.esm"
 
+this.fastTravelCurrencyTypes = {
+    "FTCurrencyMagicka",
+    "FTCurrencyGold",
+    "FTCurrencyHealth",
+    "FTCurrencyFree",
+}
+
 
 function this.colorToArray(color)
     return {color.r, color.g, color.b, color.a}

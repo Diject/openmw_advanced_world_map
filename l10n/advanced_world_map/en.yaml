@@ -44,6 +44,16 @@ fastTravelTimeCost: |-
     one {hour}
     other {hours}
   }
+fastTravelGoldCost: |-
+  cost %d {count, plural,
+    one {gold}
+    other {gold}
+  }
+fastTravelHealthCost: |-
+  cost %d {count, plural,
+    one {health point}
+    other {health points}
+  }
 fastTravelWhileInCombat: "You cannot fast travel while in combat."
 fastTravelNotAllowedToInterior: "You cannot fast travel to interiors."
 fastTravelTooltip: "Fast travel.\n\nClick 3 times or use right mouse menu at any point on the map to fast travel there. Fast travel is only possible if a valid position exists near the destination."
@@ -63,6 +73,12 @@ fastTravelRealTimeSecCooldownMessage: |-
     other {seconds}
   } before you can use fast travel again.
 NotEnoughMagicka: "Not enough magicka."
+NotEnoughGold: "Not enough gold."
+NotEnoughHealth: "Not enough health."
+FTCurrencyHealth: "Health"
+FTCurrencyMagicka: "Magicka"
+FTCurrencyGold: "Gold"
+FTCurrencyFree: "Free"
 Local: "Local"
 World: "World"
 searchAllLocationsCheckbox: "All locations"
@@ -78,6 +94,7 @@ EditNote: "Edit Note"
 Undefined: "Undefined"
 firstInitMenuMessage: "Advanced World Map quick setup. Please configure the essential settings below. Much more in the settings."
 firstInitMenuDataSourceNote: "If the world map texture will not display correctly, try to change the data source for it in the settings. More info on the mod page on Nexus Mods."
+FirstInitFastTravelCurrency: "Fast travel currency:  "
 mapDataNotInitialized: "Map data is not available. Report this issue on the mod page on Nexus Mods."
 charGenNotFinished: "You cannot open the map until character generation is complete."
 HoverToPreview: "(Hover to\npreview)"
@@ -238,10 +255,16 @@ SettingFastTravelPassTime: "Pass time when fast traveling"
 SettingFastTravelPassTimeDescription: "When enabled, time will pass according to the distance traveled when fast traveling. Will only work on OpenMW 0.51+."
 SettingFastTravelCooldown: "Fast travel cooldown"
 SettingFastTravelCooldownDescription: "The cooldown time between consecutive fast travels, measured in in-game hours or as this value multiplied by 2 real-time minutes. Set to 0 to disable."
-SettingFastTravelBaseMagickaCost: "Base magicka cost"
-SettingFastTravelBaseMagickaCostDescription: "The base magicka cost for fast traveling."
-SettingFastTravelAdditionalCost: "Magicka cost per unit distance"
-SettingFastTravelAdditionalCostDescription: "The additional magicka cost per unit distance traveled when fast traveling."
+SettingFastTravelCurrency: "Fast travel currency"
+SettingFastTravelCurrencyDescription: "The type of currency used for fast travel. Options are Magicka, Gold, Health, or Free (no cost)."
+# SettingFastTravelBaseMagickaCost: "Base magicka cost"
+# SettingFastTravelBaseMagickaCostDescription: "The base magicka cost for fast traveling."
+SettingFastTravelBaseCost: "Base cost"
+SettingFastTravelBaseCostDescription: "The base cost for fast traveling, in the selected currency."
+# SettingFastTravelAdditionalCost: "Magicka cost per unit distance"
+# SettingFastTravelAdditionalCostDescription: "The additional magicka cost per unit distance traveled when fast traveling."
+SettingFastTravelAdditionalCost2: "Additional cost per unit distance"
+SettingFastTravelAdditionalCostDescription2: "The additional cost per unit distance traveled when fast traveling, in the selected currency."
 
 SearchSettings: "Search"
 SettingSearchMaxObjectResults: "Max locations per object"
