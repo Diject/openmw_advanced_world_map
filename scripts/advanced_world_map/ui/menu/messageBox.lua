@@ -45,7 +45,7 @@ function this.newSimple(params)
     params.size = params.size or util.vector2(150, 200)
 
     if not params.relativePosition then
-        params.relativePosition = util.vector2((screenSize.x - params.size.x) / 2 / screenSize.x, (screenSize.y - params.size.y) / 2 / screenSize.y)
+        params.relativePosition = util.vector2(0.5, 0.5)
     end
     params.message = params.message or ""
 
@@ -71,59 +71,48 @@ function this.newSimple(params)
 
     local mainLayout
     mainLayout = {
-        type = ui.TYPE.Widget,
-        props = {
-            size = mainSize,
-            position = util.vector2(0, headerSize.y),
-        },
-        userData = {
+        type = ui.TYPE.Flex,
+        props = {},
+        userData = {},
+        events = {
+            mousePress = async:callback(function(coord, layout)
+                layout.userData.lastMousePos = util.vector2(coord.position.x / screenSize.x, coord.position.y / screenSize.y)
+            end),
 
+            mouseRelease = async:callback(function(_, layout)
+                layout.userData.lastMousePos = nil
+            end),
+
+            mouseMove = async:callback(function(coord, layout)
+                if not layout.userData.lastMousePos then return end
+
+                local props = meta.menu.layout.props
+                local relativePos = util.vector2(coord.position.x / screenSize.x, coord.position.y / screenSize.y)
+
+                props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - relativePos)
+                meta:update()
+
+                layout.userData.lastMousePos = relativePos
+            end),
         },
         content = ui.content {
+            interval(0, headerSize.y),
             {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = uiUtils.whiteTexture,
-                    relativeSize = util.vector2(1, 1),
-                    color = config.data.ui.backgroundColor,
-                }
-            },
-            {
-                type = ui.TYPE.Text,
+                type = ui.TYPE.TextEdit,
                 props = {
                     text = params.message,
                     textSize = params.fontSize,
-                    autoSize = false,
-                    size = util.vector2(mainSize.x, mainSize.y - params.fontSize * 2),
+                    size = util.vector2(mainSize.x, 0),
                     textColor = config.data.ui.defaultColor,
                     multiline = true,
                     wordWrap = true,
                     textAlignH = ui.ALIGNMENT.Center,
                     textAlignV = ui.ALIGNMENT.Center,
+                    readOnly = true,
+                    autoSize = true,
                 },
-                userData = {},
-                events = {
-                    mousePress = async:callback(function(coord, layout)
-                        layout.userData.lastMousePos = util.vector2(coord.position.x / screenSize.x, coord.position.y / screenSize.y)
-                    end),
-
-                    mouseRelease = async:callback(function(_, layout)
-                        layout.userData.lastMousePos = nil
-                    end),
-
-                    mouseMove = async:callback(function(coord, layout)
-                        if not layout.userData.lastMousePos then return end
-
-                        local props = meta.menu.layout.props
-                        local relativePos = util.vector2(coord.position.x / screenSize.x, coord.position.y / screenSize.y)
-
-                        props.relativePosition = props.relativePosition - (layout.userData.lastMousePos - relativePos)
-                        meta:update()
-
-                        layout.userData.lastMousePos = relativePos
-                    end),
-                }
             },
+            interval(0, headerSize.y),
             {
                 type = ui.TYPE.Flex,
                 props = {
@@ -157,17 +146,16 @@ function this.newSimple(params)
                     },
                 }
             },
-            borders(),
         },
     }
 
 
     local layout = {
-        type = ui.TYPE.Widget,
+        template = customTemplates.boxSolid,
         layer = commonData.messageLayer,
         props = {
-            size = params.size,
             relativePosition = params.relativePosition,
+            anchor = util.vector2(0.5, 0.5),
         },
         userData = {
             meta = meta,
