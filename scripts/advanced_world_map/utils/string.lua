@@ -179,8 +179,16 @@ function this.fuzzySearch(text, pattern, threshold)
 end
 
 
+local altCommaLength = this.length("，")
+local function findCommaPos(str)
+    local pos = string.find(str, ", ")
+    if pos then return pos, 2 end
+    pos = string.find(str, "，")
+    if pos then return pos, altCommaLength end
+end
+
 function this.getBeforeComma(str)
-    local pos = string.find(str, ",")
+    local pos, len = findCommaPos(str)
     if pos then
         return string.sub(str, 1, pos - 1)
     else
@@ -190,12 +198,54 @@ end
 
 
 function this.getAfterComma(str)
-    local pos = string.find(str, ", ")
+    local pos, len = findCommaPos(str)
     if pos then
-        return string.sub(str, pos + 2, #str)
+        return string.sub(str, pos + len, #str)
     else
         return str
     end
+end
+
+
+function this.getAfterBeforeComma(str)
+    local pos, len = findCommaPos(str)
+    if pos then
+        return string.sub(str, pos + len, #str), string.sub(str, 1, pos - 1)
+    else
+        return str, nil
+    end
+end
+
+
+function this.getBeforeAfterComma(str)
+    local pos, len = findCommaPos(str)
+    if pos then
+        return string.sub(str, 1, pos - 1), string.sub(str, pos + len, #str)
+    else
+        return str, nil
+    end
+end
+
+
+function this.containsComma(str)
+    return findCommaPos(str) ~= nil
+end
+
+
+local trimmedCharacters = {
+    [" "] = true,
+    [","] = true,
+    [":"] = true,
+    ["，"] = true,
+}
+
+function this.trimStart(str)
+    for p, c in utf8.codes(str) do
+        if not trimmedCharacters[utf8.char(c)] then
+            return string.sub(str, p)
+        end
+    end
+    return ""
 end
 
 
