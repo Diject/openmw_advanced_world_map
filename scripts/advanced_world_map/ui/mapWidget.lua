@@ -34,12 +34,20 @@ local mapElement = require("scripts.advanced_world_map.ui.mapElement")
 local l10n = core.l10n(commonData.l10nKey)
 
 
-local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 
 
 
 local this = {}
+
+this.playerMarkerMenu = nil
+
+function this.destroyPlayerMarkerMenu()
+    if this.playerMarkerMenu and this.playerMarkerMenu.layout then
+        this.playerMarkerMenu:destroy()
+    end
+    this.playerMarkerMenu = nil
+end
 
 local uniquesId = 0
 this.getUniqueId = function ()
@@ -1810,21 +1818,53 @@ end
 
 
 function mapWidgetMeta:setInActiveMode(active)
+    local modeChanged = self.inActiveMode ~= active
     self.inActiveMode = active
 
-    for _, mrk in pairs(self:getActiveMarkers()) do
-        local userData = mrk._elemLayout.userData
-        if not userData then goto continue end
+    if modeChanged then
+        for _, mrk in pairs(self:getActiveMarkers()) do
+            local userData = mrk._elemLayout.userData
+            if not userData then goto continue end
 
-        if active then
-            mrk._container.events = mrk._container.userData._events or mrk._container.events
-            mrk._container.userData._events = nil
-        else
-            mrk._container.userData._events = mrk._container.events or mrk._container.userData._events
-            mrk._container.events = nil
+            if active then
+                mrk._container.events = mrk._container.userData._events or mrk._container.events
+                mrk._container.userData._events = nil
+            else
+                mrk._container.userData._events = mrk._container.events or mrk._container.userData._events
+                mrk._container.events = nil
+            end
+
+            ::continue::
+        end
+    end
+
+    this.destroyPlayerMarkerMenu()
+    if not active then
+        self.layout.content[2].content[self.LAYER.player] = getDefaultLayerLayout()
+
+        if not ui.layers.indexOf(commonData.playerMarkerLayer) then
+            ui.layers.insertAfter("Windows", commonData.playerMarkerLayer, { interactive = false })
         end
 
-        ::continue::
+        this.playerMarkerMenu = ui.create{
+            type = ui.TYPE.Widget,
+            layer = commonData.playerMarkerLayer,
+            props = {
+                position = self.screenPosition,
+                size = self.layout.props.size,
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Widget,
+                    props = self.layout.content[2].props,
+                    content = ui.content {
+                        self:getPlayerLayout()
+                    }
+                },
+            }
+        }
+    else
+        self.layout.content[2].content[self.LAYER.player] = self.layers[self.LAYER.player]
     end
 end
 
@@ -1849,6 +1889,8 @@ end
 ---@return table?
 ---@return advancedWorldMap.ui.mapWidgetMeta?
 function this.new(params)
+
+    this.destroyPlayerMarkerMenu()
 
     params.fontSize = params.fontSize or 18
 

@@ -216,7 +216,7 @@ local function onLoad(data)
             localStorage.data[commonData.pinnedStateFieldId] then
         async:newUnsavableSimulationTimer(1, function ()
             if localStorage.data[commonData.inMinimapModeKeyId] == true then
-                openMenu(false, true)
+                openMenu(false, true, config.data.main.overrideDefault)
             end
         end)
     end

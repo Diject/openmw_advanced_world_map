@@ -504,11 +504,19 @@ function menuMeta:updateInteractiveElements(params)
         end
     end
 
+    local function updatePlayerMarkerLayer()
+        if mapWidget.playerMarkerMenu and mapWidget.playerMarkerMenu.layout then
+            mapWidget.playerMarkerMenu.layout.props.visible = layout.props.visible
+            mapWidget.playerMarkerMenu:update()
+        end
+    end
+
     if params.visible == nil then
         if isMenuMode and (lastUIMode ~= "Journal" and lastUIMode ~= "Interface" or (lastUIMode == "Journal" and not menuMode.isActivated()) or
                 (config.data.main.minimap.enabled and not config.data.main.overrideDefault and not menuMode.isActivated())) then
             shouldUpdate = layout.props.visible ~= false or shouldUpdate
             layout.props.visible = false
+            updatePlayerMarkerLayer()
             return shouldUpdate
         else
             layout.props.visible = true
@@ -516,6 +524,8 @@ function menuMeta:updateInteractiveElements(params)
     else
         layout.props.visible = params.visible
     end
+
+    updatePlayerMarkerLayer()
 
     local header = self.headerLayout
 
@@ -558,9 +568,9 @@ function menuMeta:updateInteractiveElements(params)
             self.mapWidget:closeRightMouseMenu()
         end
 
-        if config.data.main.minimap.enabled then
-            self.layout.layer = commonData.HUDLayer
+        self.layout.layer = commonData.HUDLayer
 
+        if config.data.main.minimap.enabled then
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
             self:closeActiveWidget()
             self:setMinimapModeParams()
@@ -576,10 +586,11 @@ function menuMeta:updateInteractiveElements(params)
             localStorage.data[commonData.inMinimapModeKeyId] = true
         end
     end
+    self:updateMapWidgetWidth()
     header.content[3].props.visible = isMenuMode
-    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
 
     self.mapWidget:setInActiveMode(isMenuMode)
+    self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
 
     return true
 end
@@ -635,9 +646,11 @@ end
 
 function menuMeta:close()
     tooltip.destroyLast()
+    mapWidget.destroyPlayerMarkerMenu()
     if not self.menu then return end
 
     if self:externalDeactivate() == true then
+        self.mapWidget:setInActiveMode(menuMode.isMenuInteractive())
         return true
     end
 
@@ -888,6 +901,9 @@ function this.create(params)
             eventSys.triggerEvent(eventSys.EVENT.onUpdate, {menu = meta})
             local co = coroutine.create(function ()
                 meta.menu:update()
+                if mapWidget.playerMarkerMenu then
+                    mapWidget.playerMarkerMenu:update()
+                end
             end)
             coroutine.resume(co)
             updateCDTimer = realTimer.newTimer(0, function ()
@@ -1054,7 +1070,6 @@ function this.create(params)
                 size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
                 anchor = util.vector2(1, 0.5),
                 relativePosition = util.vector2(1, 0.5),
-                visible = menuMode.isMenuInteractive(),
             },
             userData = {},
             events = closeBtnEvents,
@@ -1088,7 +1103,6 @@ function this.create(params)
                 textShadow = true,
                 textShadowColor = config.data.ui.textShadowColor,
                 propagateEvents = false,
-                visible = menuMode.isMenuInteractive(),
             },
             userData = {},
             events = closeBtnEvents,
@@ -1227,7 +1241,9 @@ function this.create(params)
 
         meta.mainLayout.content[1].props.size = meta.mainSize
 
-        meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(widgetWindowWidth, meta.headerFullHeight) +
+        local screenPosition = meta.layout.props.relativePosition:emul(meta.screenSize)
+
+        meta.mapWidget.screenPosition = screenPosition + util.vector2(widgetWindowWidth, meta.headerFullHeight) +
             util.vector2(meta.borderSize, meta.borderSize)
     end
 
