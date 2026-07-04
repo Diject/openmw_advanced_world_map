@@ -483,13 +483,13 @@ end
 
 
 ---@param self advancedWorldMap.ui.mapWidgetMeta
-local function setZoom(self, zoom, relativePos, force)
+local function setZoom(self, zoom, relativePos, force, skipRounding)
     local widget = self:getMapLayersLayout()
 
     local oldZoom = self.zoom
     local oldSize = self:getDisplaySize(oldZoom)
 
-    if zoom >= 0.5 then
+    if zoom >= 0.5 and not skipRounding then
         local tileSize = 64
         local targetPixels = math.floor(tileSize * zoom + 0.5)
         zoom = targetPixels / tileSize
@@ -543,7 +543,7 @@ function mapWidgetMeta:setZoom(zoom, relativePos, useScale)
     if useScale then
         zoom = zoom / self.eScale
     end
-    setZoom(self, zoom, relativePos or self:getRelativePositionOfVisibleCenter())
+    setZoom(self, zoom, relativePos or self:getRelativePositionOfVisibleCenter(), nil, true)
 end
 
 
@@ -593,7 +593,7 @@ end
 
 
 function mapWidgetMeta:updateMarkers(force)
-    setZoom(self, self.zoom, nil, force)
+    setZoom(self, self.zoom, nil, force, true)
 end
 
 
@@ -867,7 +867,7 @@ local function createMarker(self, params, onlyInitialize)
             inContainer = params.text and params.textBackground,
             onMouseWheel = isLayerInteractive and function(value)
                 if not layout.userData.inFocus then return end
-                setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul * value or self.zoom / (config.data.main.zoomingMul * -value))
+                setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul * value or self.zoom / (config.data.main.zoomingMul * -value), nil, true)
                 self:update()
             end or nil,
             _events = not self.inActiveMode and layoutEvents or nil,
@@ -2011,6 +2011,7 @@ function this.new(params)
         local eventParams = {mapWidget = meta, mapInfo = mapTextureHandler.mapInfo, texture = texture}
         eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInitialize, eventParams)
         mapLayout = getWorldMapTextureLayout(meta, eventParams.mapInfo, eventParams.texture)
+        meta.zoom = meta.zoom / meta.eScale
     end
 
 
