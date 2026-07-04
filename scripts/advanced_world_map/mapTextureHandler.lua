@@ -386,4 +386,11 @@ function this.isWorldMapTextureV2InCache(x, y)
 end
 
 
+function this.clearWorldMapTextureCache()
+    for i, _ in pairs(this.worldTextureCache) do
+        this.worldTextureCache[i] = nil
+    end
+end
+
+
 return this

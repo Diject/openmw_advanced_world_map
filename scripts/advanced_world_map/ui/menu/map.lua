@@ -684,6 +684,7 @@ function menuMeta:close()
         end
     end
     mapTextureHandler.clearInteriorTextureCache()
+    mapTextureHandler.clearWorldMapTextureCache()
 
     if config.data.main.saveVisibilityStateInInterfaceMenu then
         local isInterfaceMode = false
