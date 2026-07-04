@@ -11,7 +11,11 @@
 ---@field isDLEx boolean is destination cell like exterior
 ---@field name string destination cell name
 ---@field fName string destination cell full name
+---@field pN string? prefix name (for cells with comma in name)
+---@field ppN string? second prefix name
 ---@field dHash string door hash
+---@field isIsl boolean? is isolated from other entrances
+---@field pHash string? parent entrance hash (for grouped entrances)
 
 ---@class AdvancedWorldMap.DataHandler.TransportData
 ---@field nodes AdvancedWorldMap.DataHandler.TransportNode[] list of transport nodes

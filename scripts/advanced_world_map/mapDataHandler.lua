@@ -14,7 +14,7 @@ local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 local this = {}
 
-this.version = 8
+this.version = 9
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -61,7 +61,11 @@ local forbiddenCellPrefixes = { -- lowercase
 ---@field isDLEx boolean is destination cell like exterior
 ---@field name string destination cell name
 ---@field fName string destination cell full name
+---@field pN string? prefix name (for cells with comma in name)
+---@field ppN string? second prefix name
 ---@field dHash string door hash
+---@field isIsl boolean? is isolated from other entrances
+---@field pHash string? parent entrance hash (for grouped entrances)
 
 ---@class advancedWorldMap.dynamicDataHandler.transport
 ---@field nodes advancedWorldMap.dynamicDataHandler.transport.node[] list of transport nodes
@@ -73,6 +77,22 @@ local forbiddenCellPrefixes = { -- lowercase
 ---@field p Vector2 position
 ---@field ls integer[] list of node ids that have this node in their list of destinations
 ---@field ars string[]? list of actor record ids that are on this node
+
+
+function this.getClusterBoundingBox(cluster)
+    local fpos = cluster[1].pos
+    local minX, maxX = fpos.x, fpos.x
+    local minY, maxY = fpos.y, fpos.y
+    for _, m in pairs(cluster) do
+        local pos = m.pos
+        if pos.x < minX then minX = pos.x end
+        if pos.x > maxX then maxX = pos.x end
+        if pos.y < minY then minY = pos.y end
+        if pos.y > maxY then maxY = pos.y end
+    end
+    return {x = util.vector2(minX, minY), y = util.vector2(maxX, maxY), center = util.vector2((minX + maxX) / 2, (minY + maxY) / 2)}
+end
+
 
 local function isContentFile(name)
     name = name:lower()
@@ -355,9 +375,10 @@ local function buildData(params)
     local regionNameData = {}
     local entrances = {}
     local occupied = {}
+    local exCellSecondPrefixes = {}
     this.cellCount = #world.cells
     for _, cell in pairs(world.cells) do
-        if not cell.isExterior then goto continue end
+        if not cell.isExterior or not cell.id then goto continue end
 
         if cell.gridX > 1000 or cell.gridX < -1000 or cell.gridY > 1000 or cell.gridY < -1000 then
             goto continue
@@ -390,7 +411,13 @@ local function buildData(params)
 
         if not cell.name or cell.name == "" then goto continue end
 
-        local name = stringLib.getBeforeComma(cell.name)
+        local name, pName = stringLib.getBeforeAfterComma(cell.name)
+        if cell.isExterior and pName then
+            local n, p = stringLib.getBeforeAfterComma(cell.displayName or cell.name)
+            if p then
+                exCellSecondPrefixes[cell.id] = p
+            end
+        end
 
         local cellDt = cellNameData[name]
         if not cellDt then
@@ -451,88 +478,6 @@ local function buildData(params)
         return name
     end
 
-    ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
-    local entrancesWithCellName = {}
-
-    for _, cell in pairs(world.cells) do
-        if not cell.id then goto continue end
-
-        local cellName = getCellName(cell)
-        this.cellNameById[cell.id] = cellName
-        if not cellName then
-            this.validCellsWithoutName[cell.id] = true
-        end
-
-        local doors = cell:getAll(types.Door)
-        for _, door in pairs(doors) do
-            if not types.Door.isTeleport(door) then goto continue end
-
-            local dest = pDoor.destCell(door)
-            local destPos = pDoor.destPosition(door)
-
-            if not dest or not destPos then goto continue end
-
-            local exTypeCellName
-            local name = getCellName(dest)
-            local fullName = name
-            if name:find(",") then
-                if not dest.isExterior then
-                    local cellNameMark = stringLib.getBeforeComma(dest.name)
-                    if cellNameData[cellNameMark] then
-                        exTypeCellName = cellNameMark
-                        name = stringLib.getAfterComma(name)
-                    end
-
-                    if cell.isExterior then
-                        local cellIdMark = stringLib.getBeforeComma(dest.id)
-                        if forbiddenCellPrefixes[cellIdMark] then
-                            fullName = name
-                        end
-                    end
-                else
-                    name = stringLib.getAfterComma(name)
-                end
-            end
-
-            local doorHash = commonData.doorHash(door, dest.id or "")
-
-            entrances[cell.id] = entrances[cell.id] or {}
-            ---@type advancedWorldMap.dynamicDataHandler.entranceData
-            local data = {
-                pos = door.position,
-                cId = cell.id,
-                isEx = cell.isExterior,
-                dCId = dest.id or "",
-                dPos = destPos,
-                isDEx = dest.isExterior,
-                name = name,
-                fName = fullName,
-                dHash = doorHash,
-                isDLEx = dest.isExterior or dest:hasTag("QuasiExterior"),
-                isLEx = cell.isExterior or cell:hasTag("QuasiExterior"),
-            }
-            entrances[cell.id][doorHash] = data
-
-            if exTypeCellName and cell.isExterior then
-                entrancesWithCellName[exTypeCellName] = entrancesWithCellName[exTypeCellName] or {}
-                table.insert(entrancesWithCellName[exTypeCellName], data)
-            end
-
-            ::continue::
-        end
-
-        ::continue::
-    end
-
-    for _, list in pairs(entrancesWithCellName) do
-        if #list <= 2 then
-            for _, dt in pairs(list) do
-                dt.name = dt.fName
-            end
-        end
-    end
-
-
     local cellNameLines = {}
     local cellNames = {}
     for _, dt in pairs(cellNameData) do
@@ -557,6 +502,228 @@ local function buildData(params)
         end
 
         ::continue::
+    end
+
+    ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
+    local entrancesWithCellName = {}
+    local populationMap = {}
+    -- local exNames = {}
+
+    for _, cell in pairs(world.cells) do
+        if not cell.id then goto continue end
+
+        local cellName = getCellName(cell)
+        this.cellNameById[cell.id] = cellName
+        if not cellName then
+            this.validCellsWithoutName[cell.id] = true
+        end
+
+        local doors = cell:getAll(types.Door)
+        for _, door in pairs(doors) do
+            if not types.Door.isTeleport(door) then goto continue end
+
+            local dest = pDoor.destCell(door)
+            local destPos = pDoor.destPosition(door)
+
+            if not dest or not destPos then goto continue end
+
+            local exTypeCellName
+            local name = getCellName(dest)
+            local prefixName
+            local fullName = name
+            if name:find(",") or name:find("，") then
+                if not dest.isExterior then
+                    local nm, cellNameMark = stringLib.getAfterBeforeComma(name)
+                    if cellNames[cellNameMark] then
+                        exTypeCellName = cellNameMark
+                        name = nm
+                    end
+
+                    if cell.isExterior then
+                        prefixName = cellNameMark
+
+                        local cellIdMark = stringLib.getBeforeComma(dest.id)
+                        if forbiddenCellPrefixes[cellIdMark] then
+                            fullName = name
+                        end
+                    end
+                else
+                    name = stringLib.getAfterComma(name)
+                end
+            end
+
+            local doorHash = commonData.doorHash(door, dest.id or "")
+
+            entrances[cell.id] = entrances[cell.id] or {}
+            ---@type advancedWorldMap.dynamicDataHandler.entranceData
+            local data = {
+                pos = door.position,
+                cId = cell.id,
+                isEx = cell.isExterior,
+                dCId = dest.id or "",
+                dPos = destPos,
+                isDEx = dest.isExterior,
+                name = name,
+                fName = fullName,
+                pN = prefixName,
+                dHash = doorHash,
+                isDLEx = dest.isExterior or dest:hasTag("QuasiExterior"),
+                isLEx = cell.isExterior or cell:hasTag("QuasiExterior"),
+            }
+            entrances[cell.id][doorHash] = data
+
+            if cell.isExterior then
+                local x = math.floor(data.pos.x / 1024)
+                local y = math.floor(data.pos.y / 1024)
+                local id = x * 100000 + y
+                populationMap[id] = populationMap[id] or {x = x, y = y, m = {}}
+                table.insert(populationMap[id].m, data)
+            end
+
+            if exTypeCellName and cell.isExterior then
+                entrancesWithCellName[exTypeCellName] = entrancesWithCellName[exTypeCellName] or {}
+                table.insert(entrancesWithCellName[exTypeCellName], data)
+
+                if prefixName then
+                    local sPrefixes = {}
+                    for x = cell.gridX - 1, cell.gridX + 1 do
+                        for y = cell.gridY - 1, cell.gridY + 1 do
+                            local pp = exCellSecondPrefixes[commonData.exteriorCellIdFormat:format(x, y)]
+                            if pp and not sPrefixes[pp] then
+                                sPrefixes[pp] = x == cell.gridX and y == cell.gridY
+                            end
+                        end
+                    end
+                    for sPrefix, isCurrentCell in pairs(sPrefixes) do
+                        if isCurrentCell then
+                            data.ppN = sPrefix
+                        end
+                        if data.name:sub(1, #sPrefix) == sPrefix then
+                            data.ppN = sPrefix
+                            data.name = stringLib.trimStart(data.name:sub(#sPrefix + 1))
+                        end
+                    end
+                end
+            end
+
+            ::continue::
+        end
+
+        ::continue::
+    end
+
+    for _, list in pairs(entrancesWithCellName) do
+        if #list <= 2 then
+            for _, dt in pairs(list) do
+                dt.name = dt.fName
+            end
+        end
+    end
+
+
+    local mergeDist = 768 * 768
+    local nameGroups = {}
+    for _, lst in pairs(entrances) do
+        for _, dt in pairs(lst) do
+            nameGroups[dt.name] = nameGroups[dt.name] or {}
+            table.insert(nameGroups[dt.name], dt)
+        end
+    end
+
+    for _, entries in pairs(nameGroups) do
+        local used = {}
+        local entryCount = #entries
+        for i = 1, entryCount do
+            if not used[i] then
+                used[i] = true
+
+                local entry = entries[i]
+                local cluster = { entry }
+                local expanded = true
+                for k = 1, 5 do
+                    expanded = false
+                    for j = 1, entryCount do
+                        if not used[j] then
+                            local ej = entries[j]
+                            if ej.isEx and entry.isEx or ej.cId == entry.cId then
+                                for _, cm in pairs(cluster) do
+                                    local dx = cm.pos.x - ej.pos.x
+                                    local dy = cm.pos.y - ej.pos.y
+                                    if dx * dx + dy * dy <= mergeDist then
+                                        used[j] = true
+                                        table.insert(cluster, ej)
+                                        expanded = true
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    if not expanded then break end
+                end
+
+                local cx, cy = 0, 0
+                for _, e in pairs(cluster) do
+                    cx = cx + e.pos.x
+                    cy = cy + e.pos.y
+                end
+                local clusterSize = #cluster
+                cx = cx / clusterSize
+                cy = cy / clusterSize
+
+                local bestEntry = cluster[1]
+                local bestDist = math.huge
+                for _, e in pairs(cluster) do
+                    local dx = e.pos.x - cx
+                    local dy = e.pos.y - cy
+                    local dsq = dx * dx + dy * dy
+                    if dsq < bestDist then
+                        bestDist = dsq
+                        bestEntry = e
+                    end
+                end
+
+                local repDt = bestEntry
+
+                for _, e in pairs(cluster) do
+                    if e ~= repDt then
+                        e.pHash = repDt.dHash
+                    end
+                end
+            end
+        end
+    end
+
+    for _, data in pairs(populationMap) do
+        local x = data.x
+        local y = data.y
+        for _, dt in pairs(data.m) do
+            local maxDist = dt.fName == dt.name and 2048 or 6144
+            local steps = math.ceil(maxDist / 1024)
+
+            local isolated = true
+            local function check()
+                for i = x - steps, x + steps do
+                    for j = y - steps, y + steps do
+                        local popData = populationMap[i * 100000 + j]
+                        if popData then
+                            for _, d in pairs(popData.m) do
+                                if (d.name ~= dt.name and d.name:sub(1, #dt.name) ~= dt.name) and
+                                        (d.pN ~= nil) == (dt.pN ~= nil) and
+                                        commonData.distance2D(d.pos, dt.pos) < maxDist then
+                                    isolated = false
+                                    return
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            check()
+
+            dt.isIsl = isolated or nil
+        end
     end
 
 
