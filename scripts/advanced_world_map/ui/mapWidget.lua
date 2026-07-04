@@ -121,6 +121,9 @@ mapWidgetMeta.getUniqueId = function (self)
     return this.getUniqueId()
 end
 
+mapWidgetMeta.isPointInRegion = this.isPointInRegion
+mapWidgetMeta.isRegionEqual = this.compareRegions
+
 
 function mapWidgetMeta:getDisplaySize(scale)
     local baseSize = self.displayMapSize or util.vector2(self.mapInfo.width, self.mapInfo.height)

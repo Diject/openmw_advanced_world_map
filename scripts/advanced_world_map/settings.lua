@@ -297,6 +297,7 @@ I.Settings.registerGroup{
     settings = {
         boolSetting{key = "legend.onlyDiscovered", name = "SettingLegendOnlyDiscovered", description = "SettingLegendOnlyDiscoveredDescription", default = config.default.legend.onlyDiscovered},
         numberSetting{key = "legend.zoomToGroup", name = "SettingLegendZoomToGroup", description = "SettingLegendZoomToGroupDescription", default = config.default.legend.zoomToGroup, min = 0},
+        numberSetting{key = "legend.zoomToName", name = "SettingLegendZoomToName", description = "SettingLegendZoomToNameDescription", default = config.default.legend.zoomToName, min = 0},
         boolSetting{key = "legend.visitedCellsOnWorldMap", name = "SettingLegendVisitedCellsOnWorldMap", description = "SettingLegendVisitedCellsOnWorldMapDescription", default = config.default.legend.visitedCellsOnWorldMap},
         numberSetting{key = "legend.markerSize", name = "SettingLegendMarkerSize", description = "SettingLegendMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},
         boolSetting{key = "legend.localMarkerBackground", name = "SettingLegendLocalMarkerBackground", description = "SettingLegendLocalMarkerBackgroundDescription", default = config.default.legend.localMarkerBackground},

@@ -47,6 +47,7 @@ this.default = {
         worldMarkerSize = 14,
         playerMarkerSize = 48,
         zoomToGroup = 7,
+        zoomToName = 4.2,
         onlyDiscovered = true,
         visitedCellsOnWorldMap = false,
         transportOnlyDiscovered = false,
