@@ -1,3 +1,7 @@
+Version 1.13.0
+
+- Added support for overlay textures on the world map.
+
 Version 1.12.0
 
 - At lower zoom levels, local map markers are now replaced with a single location name.

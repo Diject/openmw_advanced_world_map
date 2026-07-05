@@ -240,6 +240,13 @@
 ---@field path string World map texture path
 ---@field mapInfo AdvancedWorldMap.MapImageInfo? Map image information. nil if something went wrong with map image initialization
 
+---Event data for world map overlay texture get event
+---@class AdvancedWorldMap.Event.OnWorldMapOverlayTextureGetEvent
+---@field x integer x texture coordinate
+---@field y integer y texture coordinate
+---@field path string World map overlay texture path
+---@field mapInfo AdvancedWorldMap.MapImageInfo? Map image information. nil if something went wrong with map image initialization
+
 ---Event data for new location discovery event
 ---@class AdvancedWorldMap.Event.OnDiscoverEvent
 ---@field discoveredMap table<string, boolean> Table of newly discovered location ids
@@ -291,6 +298,7 @@ AdvancedWorldMapEvent.EVENT = {
     onWorldMapTextureInit = "onWorldMapTextureInit", -- Event triggered when the world map texture is initializing. You can replace the map texture here
     onWorldMapLocalTextureGet = "onWorldMapLocalTextureGet", -- Event triggered when the map widget is trying to get a local map texture path. You can change the path to load custom local map textures.
     onWorldMapTextureGet = "onWorldMapTextureGet", -- Event triggered when the map widget is trying to get a world map version 2 texture path. You can change the path to load a custom world map texture for specific coordinates.
+    onWorldMapOverlayTextureGet = "onWorldMapOverlayTextureGet", -- Event triggered when the map widget is trying to get a world map overlay texture path
 }
 
 ---Registers an event handler in the event system.
@@ -338,6 +346,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onWorldMapTextureInit", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureInitEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWorldMapLocalTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapLocalTextureGetEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWorldMapTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureGetEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onWorldMapOverlayTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapOverlayTextureGetEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system

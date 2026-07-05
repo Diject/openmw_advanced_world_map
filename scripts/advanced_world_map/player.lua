@@ -660,7 +660,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 15,
+        version = 16,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -698,6 +698,10 @@ return {
         end,
         setWorldMapInfo = function (mapInfo, dirPath, mapImagePath)
             return mapTextureHandler.setWorldMapInfo(mapInfo, dirPath, mapImagePath)
+        end,
+        getWorldMapInfo = function ()
+            ---@diagnostic disable-next-line: return-type-mismatch
+            return mapTextureHandler.mapInfo, mapTextureHandler.mapDir, mapTextureHandler.mapImagePath
         end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),

@@ -492,8 +492,9 @@ local function setZoom(self, zoom, relativePos, force, skipRounding)
     local oldZoom = self.zoom
     local oldSize = self:getDisplaySize(oldZoom)
 
-    if zoom >= 0.5 and not skipRounding then
-        local tileSize = 64
+    if not skipRounding then
+        local mapInfo = not self.cellId and config.data.data.altExMapInfo or self.mapInfo
+        local tileSize = (mapInfo.tileSize or (mapInfo.pixelsPerCell * 16)) * self._zoomRoundingMul
         local targetPixels = math.floor(tileSize * zoom + 0.5)
         zoom = targetPixels / tileSize
     end
@@ -1301,23 +1302,10 @@ function mapWidgetMeta:placeGroundTextures(region)
         local minGridY = math.floor(region.bottom / 8192)
         local maxGridY = math.ceil(region.top / 8192)
 
+        local mapLayout = self:getMapLayout()
 
-        if self.mapInfo and (self.mapInfo.version == 2 or self.mapInfo.version == 3) then
-            local tileSize = self.mapInfo.tileSize or (self.mapInfo.pixelsPerCell * 16)
-            local tileGridSize = tileSize / self.mapInfo.pixelsPerCell
-            local tileCoordSize = tileGridSize * 8192
-            local gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / tileGridSize - 1 or minGridX / tileGridSize)
-            local gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / tileGridSize - 1 or maxGridX / tileGridSize)
-            local gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / tileGridSize - 1 or minGridY / tileGridSize)
-            local gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / tileGridSize - 1 or maxGridY / tileGridSize)
-
-            local startPos = self:getAbsolutePositionByWorldPosition(
-                util.vector2(tileCoordSize * gridTileMinX, tileCoordSize * gridTileMinY - 8192)
-            )
-            startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
-            local tileFullHeight = tileSize * self.zoom
-
-            local mapLayout = self:getMapLayout()
+        local function placeTiles(func, startPos, tileFullHeight, gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY, alpha)
+            -- tileFullHeight = tileFullHeight + (tileFullHeight % 2)
 
             local xP = startPos.x + tileFullHeight * -2
             for x = -1, gridTileMaxX - gridTileMinX do
@@ -1328,7 +1316,7 @@ function mapWidgetMeta:placeGroundTextures(region)
 
                 local yP = startPos.y - tileFullHeight * -2
                 for y = -1, gridTileMaxY - gridTileMinY do
-                    local texture = mapTextureHandler.getWorldMapTextureV2(gridTileMinX + x, gridTileMinY + y)
+                    local texture = func(gridTileMinX + x, gridTileMinY + y)
 
                     local lyP = yP
                     yP = startPos.y - tileFullHeight * y
@@ -1345,12 +1333,57 @@ function mapWidgetMeta:placeGroundTextures(region)
                             resource = texture,
                             size = sz,
                             position = pos,
-                            anchor = util.vector2(0, 1)
+                            anchor = util.vector2(0, 1),
+                            alpha = alpha,
                         }
                     }
 
                     ::continue::
                 end
+            end
+        end
+
+
+        if self.mapInfo and (self.mapInfo.version == 2 or self.mapInfo.version == 3) then
+            local tileSize
+            local tileGridSize
+            local tileCoordSize
+            local gridTileMinX
+            local gridTileMaxX
+            local gridTileMinY
+            local gridTileMaxY
+            local startPos
+
+            local function calcVars(mapInfo)
+                tileSize = mapInfo.tileSize or (mapInfo.pixelsPerCell * 16)
+                tileGridSize = tileSize / mapInfo.pixelsPerCell
+                tileCoordSize = tileGridSize * 8192
+                gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / tileGridSize - 1 or minGridX / tileGridSize)
+                gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / tileGridSize - 1 or maxGridX / tileGridSize)
+                gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / tileGridSize - 1 or minGridY / tileGridSize)
+                gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / tileGridSize - 1 or maxGridY / tileGridSize)
+
+                startPos = self:getAbsolutePositionByWorldPosition(
+                    util.vector2(tileCoordSize * gridTileMinX, tileCoordSize * gridTileMinY - 8192)
+                )
+                startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
+            end
+
+            calcVars(self.mapInfo)
+
+            local tileFullHeight = tileSize * self.zoom
+
+            placeTiles(mapTextureHandler.getWorldMapTextureV2, startPos, tileFullHeight,
+                gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY)
+
+            ---@type advancedWorldMap.mapImageInfo?
+            local altMapInfo = config.data.data.altExMapInfo
+            if altMapInfo then
+                calcVars(altMapInfo)
+                local tileFullHeight = math.floor(tileSize * self.zoom * self._zoomRoundingMul)
+
+                placeTiles(mapTextureHandler.getWorldMapTextureV2_alt, startPos, tileFullHeight,
+                    gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY, config.data.data.altExMapAlpha * 0.01)
             end
         end
 
@@ -2039,6 +2072,13 @@ function this.new(params)
     local uiScale = uiUtils.getUIScale()
     meta.maxZoom = screenSize.x / (meta.mapInfo.pixelsPerCell * meta.eScale) * 5
     meta.minZoom = math.min(screenSize.x / meta.mapInfo.width / 4, meta.mapInfo.pixelsPerCell / (4 * meta.eScale * uiScale))
+
+    if not params.cellId and config.data.data.altExMapInfo then
+        ---@diagnostic disable-next-line: undefined-field
+        meta._zoomRoundingMul = meta.mapInfo.pixelsPerCell / config.data.data.altExMapInfo.pixelsPerCell
+    else
+        meta._zoomRoundingMul = 1
+    end
 
     meta._lastOnZoomZoom = -1
 

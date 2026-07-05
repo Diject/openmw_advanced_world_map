@@ -39,6 +39,7 @@
 ---@field gridX {min : integer, max : integer}
 ---@field gridY {min : integer, max : integer}
 ---@field bColor number[]?
+---@field waterWithAlpha boolean?
 
 ---@class AdvancedWorldMap.Interface.UIElements
 ---@field scrollBox fun(params: any): Layout creates a scroll box
@@ -66,5 +67,6 @@
 ---@field getTransportData fun() : AdvancedWorldMap.DataHandler.TransportData? gets the transport route data
 ---@field getDoorHash fun(doorRef: GameObject, destCellId: string) : string gets the door hash for the given door reference and destination cell ID
 ---@field setWorldMapInfo fun(mapInfo: AdvancedWorldMap.MapImageInfo, dirPath: string, mapV1ImagePath: string?): boolean sets the world map info for the map. Used to inject custom map info when the map is initialized.
+---@field getWorldMapInfo fun() : AdvancedWorldMap.MapImageInfo?, string?, string? gets the world map info, directory path, and map image path
 ---@field uiElements AdvancedWorldMap.Interface.UIElements
 ---@field realTimer fun(time: number, callback: fun()) sets a real time timer

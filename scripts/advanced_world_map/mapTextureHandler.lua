@@ -381,6 +381,25 @@ function this.getWorldMapTextureV2(x, y)
 end
 
 
+function this.getWorldMapTextureV2_alt(x, y)
+    if not this.mapDir then return end
+    local path = config.data.data.altExMapPath..string.format("(%d,%d).png", x, y)
+
+    if this.worldTextureCache[path] then
+        return this.worldTextureCache[path]
+    end
+
+    local eventData = {x = x, y = y, path = path, mapInfo = config.data.data.altExMapInfo}
+    eventSys.triggerEvent(eventSys.EVENT.onWorldMapOverlayTextureGet, eventData)
+
+    if not vfs.fileExists(eventData.path) then return end
+
+    local texture = ui.texture{ path = eventData.path }
+    this.worldTextureCache[path] = texture
+    return texture
+end
+
+
 function this.isWorldMapTextureV2InCache(x, y)
     return this.worldTextureCache[string.format("(%d,%d).png", x, y)] ~= nil
 end

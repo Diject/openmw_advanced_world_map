@@ -101,6 +101,9 @@ this.default = {
         initializer = commonData.dataInitializerTypes[1],
         safeInit = true,
         hasSafeInitMessageBeenShown = false,
+        altExMapPath = nil,
+        altExMapInfo = nil,
+        altExMapAlpha = 6,
     },
     input = {
         version = 2,
