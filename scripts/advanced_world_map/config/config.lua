@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 16,
+    version = 17,
     main = {
         menuKey = "M",
         relativeSize = {
@@ -57,7 +57,7 @@ this.default = {
             entrance = 95,
             city = 60,
             transport = 80,
-            background = 60, -- local
+            background = 65, -- local
             backgroundAlt = nil, -- local
         },
         visibility = {
