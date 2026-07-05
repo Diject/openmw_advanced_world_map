@@ -1,8 +1,9 @@
 ﻿"version": 2
-"time": 1768055913
+"time": 1783269417
 "width": 6112
 "height": 3040
 "pixelsPerCell": 32
+"waterWithAlpha": true
 "gridX":
   "max": 50
   "min": -140
