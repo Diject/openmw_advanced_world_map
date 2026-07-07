@@ -25,6 +25,7 @@ local mapData = require("scripts.advanced_world_map.mapDataHandler")
 ---@field gridX {min : integer, max : integer}
 ---@field gridY {min : integer, max : integer}
 ---@field bColor number[]?
+---@field textures table<string, number>?
 
 ---@class advancedWorldMap.localCellInfo
 ---@field mX integer?
@@ -364,10 +365,16 @@ end
 
 function this.getWorldMapTextureV2(x, y)
     if not this.mapDir then return end
-    local path = this.mapDir..string.format("(%d,%d).png", x, y)
+    local fName = ("(%d,%d).png"):format(x, y)
+    local path
+    if this.mapInfo.textures and not this.mapInfo.textures[fName] then
+        path = ""
+    else
+        path = this.mapDir..fName
+    end
 
-    if this.worldTextureCache[path] then
-        return this.worldTextureCache[path]
+    if this.worldTextureCache[fName] then
+        return this.worldTextureCache[fName]
     end
 
     local eventData = {x = x, y = y, path = path, mapInfo = this.mapInfo}
@@ -376,26 +383,35 @@ function this.getWorldMapTextureV2(x, y)
     if not vfs.fileExists(eventData.path) then return end
 
     local texture = ui.texture{ path = eventData.path }
-    this.worldTextureCache[path] = texture
+    this.worldTextureCache[fName] = texture
     return texture
 end
 
 
 function this.getWorldMapTextureV2_alt(x, y)
-    if not this.mapDir then return end
-    local path = config.data.data.altExMapPath..string.format("(%d,%d).png", x, y)
+    local dataConfig = config.data.data
+    if not dataConfig.altExMapPath then return end
 
-    if this.worldTextureCache[path] then
-        return this.worldTextureCache[path]
+    local fName = ("(%d,%d).png"):format(x, y)
+    local path
+    if dataConfig.altExMapInfo.textures and not dataConfig.altExMapInfo.textures[fName] then
+        path = ""
+    else
+        path = dataConfig.altExMapPath..fName
     end
 
-    local eventData = {x = x, y = y, path = path, mapInfo = config.data.data.altExMapInfo}
+    local cacheKey = "a"..fName
+    if this.worldTextureCache[cacheKey] then
+        return this.worldTextureCache[cacheKey]
+    end
+
+    local eventData = {x = x, y = y, path = path, mapInfo = dataConfig.altExMapInfo}
     eventSys.triggerEvent(eventSys.EVENT.onWorldMapOverlayTextureGet, eventData)
 
     if not vfs.fileExists(eventData.path) then return end
 
     local texture = ui.texture{ path = eventData.path }
-    this.worldTextureCache[path] = texture
+    this.worldTextureCache[cacheKey] = texture
     return texture
 end
 

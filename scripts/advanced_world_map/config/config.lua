@@ -102,6 +102,7 @@ this.default = {
         safeInit = true,
         hasSafeInitMessageBeenShown = false,
         altExMapPath = nil,
+        ---@type advancedWorldMap.mapImageInfo
         altExMapInfo = nil,
         altExMapAlpha = 6,
     },

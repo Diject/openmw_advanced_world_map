@@ -40,6 +40,7 @@
 ---@field gridY {min : integer, max : integer}
 ---@field bColor number[]?
 ---@field waterWithAlpha boolean?
+---@field textures table<string, number>?
 
 ---@class AdvancedWorldMap.Interface.UIElements
 ---@field scrollBox fun(params: any): Layout creates a scroll box
