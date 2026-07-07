@@ -233,7 +233,7 @@ end
 
 local function onMouseWheel(vertical)
     local old = vertical
-    vertical = util.clamp(vertical, -4, 4)
+    vertical = util.clamp(vertical, -6, 6)
     menuHandler.onMouseWheelCallback(vertical)
 end
 
@@ -482,7 +482,7 @@ local function fastTravelMessageCallback(data)
     end
 
     local fTravelMult = core.getGMST("fTravelMult") or 4000
-    local fTravelTimeMult = core.getGMST("fTravelMult") or 16000
+    local fTravelTimeMult = core.getGMST("fTravelTimeMult") or 16000
 
     local fastTravelCurrency = configLib.data.fastTravel.currency
     data.currency = fastTravelCurrency
@@ -495,8 +495,8 @@ local function fastTravelMessageCallback(data)
     local cost = isCurrencyFree and 0 or configLib.data.fastTravel.baseMagickaCost
     local additionalCost = isCurrencyFree and 0 or configLib.data.fastTravel.additionalCost
 
-    local capacity = types.Actor.getCapacity(self)
-    local encumbrance = types.Actor.getEncumbrance(self)
+    local capacity = math.max(1, types.Actor.getCapacity(self))
+    local encumbrance = math.max(0, types.Actor.getEncumbrance(self))
 
     if isCurrencyMagicka then
         cost = cost + data.worldDistance / 16384 * additionalCost
@@ -514,9 +514,10 @@ local function fastTravelMessageCallback(data)
         cost = cost * 0.66
     end
 
-    local plSpeed = types.Actor.stats.attributes.speed(self).modified
+    local plSpeedMul = math.sqrt(100 / util.clamp(types.Actor.stats.attributes.speed(self).modified + 25, 25, 400))
+    local encumbranceMul = util.clamp(encumbrance / capacity + 0.25, 0.5, 3)
     local travelTime = configLib.data.fastTravel.passTime and core.API_REVISION >= 111 and
-        math.ceil((data.worldDistance + data.depthToPoint * 3072) / fTravelTimeMult * 100 / plSpeed * (encumbrance / capacity + 0.5)) or 0
+        util.round((data.worldDistance + data.depthToPoint * 3072) / fTravelTimeMult * math.max(0.5, plSpeedMul * encumbranceMul)) or 0
 
     local eventData = {
         currency = fastTravelCurrency,
