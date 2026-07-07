@@ -1,3 +1,8 @@
+Version 1.13.1
+
+- Fixed fast travel time calculation.
+- Added support for 'textures' field in world map info (AdvancedWorldMap.MapImageInfo type).
+
 Version 1.13.0
 
 - Added support for overlay textures on the world map.
