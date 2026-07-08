@@ -408,11 +408,24 @@ function mapWidgetMeta:getSize()
     return self.layout.props.size
 end
 
+
+local function roundMinZoom(self)
+    local mapInfo = not self.cellId and config.data.data.altExMapInfo or self.mapInfo
+    local tileSize = (mapInfo.tileSize or (mapInfo.pixelsPerCell * 16))
+    local targetPixels = math.floor((tileSize * self.minZoom) / self._zoomRoundingMul) * self._zoomRoundingMul
+    self.minZoom = targetPixels / tileSize
+end
+
+
 function mapWidgetMeta:setSize(newSize)
     local screenSize = uiUtils.getScaledScreenSize()
     local uiScale = uiUtils.getUIScale()
     self.maxZoom = screenSize.x / (self.mapInfo.pixelsPerCell * self.eScale) * 5
-    self.minZoom = math.min(screenSize.x / self.mapInfo.width / 4, self.mapInfo.pixelsPerCell / (4 * self.eScale * uiScale))
+    local divVal = self.cellId and 6 or 3
+    self.minZoom = math.min(screenSize.x / self.mapInfo.width / divVal, self.mapInfo.pixelsPerCell / (divVal * self.eScale * uiScale))
+
+    roundMinZoom(self)
+
     self.layout.props.size = newSize
 end
 
@@ -494,9 +507,18 @@ local function setZoom(self, zoom, relativePos, force, skipRounding)
 
     if not skipRounding then
         local mapInfo = not self.cellId and config.data.data.altExMapInfo or self.mapInfo
-        local tileSize = (mapInfo.tileSize or (mapInfo.pixelsPerCell * 16)) * self._zoomRoundingMul
-        local targetPixels = math.floor(tileSize * zoom + 0.5)
-        zoom = targetPixels / tileSize
+        local tileSize = (mapInfo.tileSize or (mapInfo.pixelsPerCell * 16))
+        -- Round the zoom so that the dimensions of both tiles (when using altExMapInfo) are whole numbers of pixels,
+        -- which will ensure that the tiles are placed correctly without gaps
+        local targetPixels = math.floor((tileSize * zoom) / self._zoomRoundingMul) * self._zoomRoundingMul
+        local newZoom = util.clamp(targetPixels / tileSize, self.minZoom, self.maxZoom)
+
+        -- for cases where the zoom calculation result is rounded to the same value as the old zoom
+        if zoom ~= oldZoom and newZoom == oldZoom then
+            newZoom = math.floor(tileSize * zoom) / tileSize
+        end
+
+        zoom = newZoom
     end
 
     zoom = util.clamp(zoom, self.minZoom, self.maxZoom)
@@ -1380,7 +1402,7 @@ function mapWidgetMeta:placeGroundTextures(region)
             local altMapInfo = config.data.data.altExMapInfo
             if altMapInfo then
                 calcVars(altMapInfo)
-                local tileFullHeight = math.floor(tileSize * self.zoom * self._zoomRoundingMul)
+                local tileFullHeight = math.floor(tileSize * self.zoom * self._altTexturePxDiffMul)
 
                 placeTiles(mapTextureHandler.getWorldMapTextureV2_alt, startPos, tileFullHeight,
                     gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY, config.data.data.altExMapAlpha * 0.01)
@@ -1447,6 +1469,7 @@ function mapWidgetMeta:placeGroundTextures(region)
             end
         end
 
+        local maxTilesPerFrame = isZoomOut and 400 or 6
         local function updateTiles()
             local cnt = 0
             for i, dt in pairs(queue) do
@@ -1463,7 +1486,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                     }
                 }
                 cnt = cnt + 1
-                if cnt % 6 == 0 then
+                if cnt % maxTilesPerFrame == 0 then
                     coroutine.yield()
                 end
                 ::continue::
@@ -2071,13 +2094,24 @@ function this.new(params)
     local screenSize = uiUtils.getScaledScreenSize()
     local uiScale = uiUtils.getUIScale()
     meta.maxZoom = screenSize.x / (meta.mapInfo.pixelsPerCell * meta.eScale) * 5
-    meta.minZoom = math.min(screenSize.x / meta.mapInfo.width / 4, meta.mapInfo.pixelsPerCell / (4 * meta.eScale * uiScale))
+    local minZoomDivVal = meta.cellId and 6 or 3
+    meta.minZoom = math.min(screenSize.x / meta.mapInfo.width / minZoomDivVal, meta.mapInfo.pixelsPerCell / (minZoomDivVal * meta.eScale * uiScale))
 
     if not params.cellId and config.data.data.altExMapInfo then
         ---@diagnostic disable-next-line: undefined-field
-        meta._zoomRoundingMul = meta.mapInfo.pixelsPerCell / config.data.data.altExMapInfo.pixelsPerCell
+        meta._altTexturePxDiffMul = meta.mapInfo.pixelsPerCell / config.data.data.altExMapInfo.pixelsPerCell
+        meta._zoomRoundingMul = 1 / (meta._altTexturePxDiffMul % 1)
+        if meta._zoomRoundingMul < 1 then
+            meta._zoomRoundingMul = 1 / meta._zoomRoundingMul
+        end
+        if meta._zoomRoundingMul % 1 ~= 0 then
+            meta._zoomRoundingMul = 1
+        end
+
+        roundMinZoom(meta)
     else
         meta._zoomRoundingMul = 1
+        meta._altTexturePxDiffMul = 1
     end
 
     meta._lastOnZoomZoom = -1
