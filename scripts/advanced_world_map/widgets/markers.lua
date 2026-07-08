@@ -333,10 +333,7 @@ local lastCellId = true
 
 ---@param widget advancedWorldMap.ui.mapWidgetMeta
 local function createMarkers(widget, cellId, allowedCells)
-    for _, m in pairs(temporaryMarkers) do
-        m:destroy()
-    end
-    temporaryMarkers = {}
+    local newTemporaryMarkers = {}
 
     if eventSys.triggerEvent(eventSys.EVENT.onCellMarkersCreate, {mapWidget = widget, cellId = cellId}) then
         return
@@ -355,6 +352,8 @@ local function createMarkers(widget, cellId, allowedCells)
     local charHeight = fontInWorldCoords
     local lineHeight = cellId and charHeight / 10 or charHeight / 3
     local isolatedMarkerMul = 1.75
+    local markerFontSize = config.data.legend.markerSize
+    local isolatedFontSize = math.floor(markerFontSize * isolatedMarkerMul)
     local isolatedImageMarkerSize = util.vector2(config.data.legend.markerSize * 1.2, config.data.legend.markerSize * 1.2)
     local unisolatedImageMarkerSize = util.vector2(config.data.legend.markerSize * 0.65, config.data.legend.markerSize * 0.65)
 
@@ -433,6 +432,7 @@ local function createMarkers(widget, cellId, allowedCells)
     end
 
     local groupClusters
+    ---@type table<string, {m: advancedWorldMap.dynamicDataHandler.entranceData[], cnt: number, pN: string, nLen: integer, bb: table}>
     local prefixNames
     local lastCreatedMarkerByName = {}
 
@@ -506,6 +506,19 @@ local function createMarkers(widget, cellId, allowedCells)
                     end
                 end
             end
+
+            if doGroupToName then
+                for n, prDt in pairs(prefixNames) do
+                    local bb = mapDataHandler.getClusterBoundingBox(prDt.m)
+                    prDt.bb = bb
+                    local namelen = stringLib.length(n)
+                    prDt.nLen = namelen
+                    local center = bb.center
+                    local hLen = math.ceil(namelen * 0.5)
+                    addOccupiedRegion(center.x - fontInWorldCoords * hLen, center.x + fontInWorldCoords * hLen,
+                        center.y - fontInWorldCoords, center.y + fontInWorldCoords)
+                end
+            end
         end
 
         local function getAnchorOverlap(anchor, linePosData, textWidth, textHeight)
@@ -563,7 +576,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     textMarkerHandler:setVisibility(textMarkerHandler:getVisibility())
                 end
 
-                if doGroup and textMarkerHandler and not ungrouped[dt] and isTileDiscoveredStateEqual and
+                if doGroup and textMarkerHandler and not ungrouped[dt] and not isIsolated and isTileDiscoveredStateEqual and
                         text == textMarkerHandler._params.text then
                     mInfo.textMarker = textMarkerHandler
                     lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
@@ -639,7 +652,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     end
                 end
 
-                local fontSize = math.floor(config.data.legend.markerSize * (isIsolated and isolatedMarkerMul or 1))
+                local fontSize = isIsolated and isolatedFontSize or markerFontSize
                 local pos = dt.pos
                 local alpha = config.data.legend.alpha.entrance * 0.01
                 local userData = textMarkerHandler and textMarkerHandler:getUserData()
@@ -716,7 +729,8 @@ local function createMarkers(widget, cellId, allowedCells)
                     textMarkerHandler:getUserData().clustered = false
 
                     if data.notParent then
-                        temporaryMarkers[textId] = textMarkerHandler
+                        temporaryMarkers[textId] = nil
+                        newTemporaryMarkers[textId] = textMarkerHandler
                     end
                 end
 
@@ -1042,11 +1056,12 @@ local function createMarkers(widget, cellId, allowedCells)
             end
             local center = util.vector2(xCenter / cCnt, yCenter / cCnt)
 
-            local bb = mapDataHandler.getClusterBoundingBox(pDt.m)
+            local bb = pDt.bb
             local bbWidth = bb.y.x - bb.x.x
 
-            local fontSaseMul = pDt.cnt > 3 and 2.5 or 1.5
-            local fontSize = math.floor(config.data.legend.markerSize * fontSaseMul + math.min(64, bbWidth / 192, pDt.cnt * 0.5) * 0.25)
+            local fontSizeMul = pDt.cnt > 3 and 2.5 or 1.5
+            local fontSize = math.floor(config.data.legend.markerSize * fontSizeMul + math.min(64, bbWidth / 192, pDt.cnt * 0.5) * 0.25)
+            fontSize = math.max(isolatedFontSize, fontSize)
             local fontSizeInWorldCoords = widget.SCALE_FUNCTION.marker(fontSize, targetZoom) * 8192 /
                 (widget.mapInfo.pixelsPerCell * targetZoom * widget.eScale)
 
@@ -1058,7 +1073,7 @@ local function createMarkers(widget, cellId, allowedCells)
                 name = name,
                 isDiscovered = isDiscovered,
                 halfHeight = fontSizeInWorldCoords * 0.5,
-                halfWidth = fontSizeInWorldCoords * stringLib.length(name) * 0.7 * 0.5,
+                halfWidth = fontSizeInWorldCoords * pDt.nLen * 0.7 * 0.5,
             })
         end
 
@@ -1134,6 +1149,8 @@ local function createMarkers(widget, cellId, allowedCells)
             end
 
             local newMarker = widget:createTextMarker{
+                id = "_NGr_"..dt.name,
+                update = true,
                 layerId = widget.LAYER.name,
                 text = dt.name,
                 anchor = util.vector2(0.5, 0.5),
@@ -1155,10 +1172,8 @@ local function createMarkers(widget, cellId, allowedCells)
                     allowSearchFilter = true,
                 }
             }
-            if temporaryMarkers[dt.name] then
-                temporaryMarkers[dt.name]:destroy()
-            end
-            temporaryMarkers[dt.name] = newMarker
+            temporaryMarkers[dt.name] = nil
+            newTemporaryMarkers[dt.name] = newMarker
         end
 
 
@@ -1247,6 +1262,11 @@ local function createMarkers(widget, cellId, allowedCells)
             ::continue::
         end
     end
+
+    for _, m in pairs(temporaryMarkers) do
+        m:destroy()
+    end
+    temporaryMarkers = newTemporaryMarkers
 
     widget:update()
 end
