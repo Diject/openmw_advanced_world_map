@@ -1,3 +1,8 @@
+Version 1.13.2
+
+- Fixed gaps between world map tiles.
+- Fixed some cases of overlapping markers on the local map.
+
 Version 1.13.1
 
 - Fixed fast travel time calculation.
