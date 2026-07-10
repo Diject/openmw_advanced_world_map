@@ -138,7 +138,7 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 18 or 24))
+    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 18 or 25))
     params.relativePosition = util.vector2(0.5, 0.5)
 
     local previewImageSize = math.floor(screenSize.x / 4 / 128) * 128
