@@ -606,9 +606,22 @@ function mapWidgetMeta:updateMarkersScale()
     playerMarkerLayout.content[1].props.size = playerMarkerImageSize
     playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
 
+    local isInZoomInMode = self:isInZoomInMode()
+    -- Some markers may be stuck after zooming out and I don't know why.
+    -- TODO: Investigate why this happens and fix it properly. For now, just remove the stucked markers.
+    local stuckedMarkers = {}
+
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
         for i, elem in ipairs(layout.content) do
+            if not elem.userData or not elem.userData.params then goto continue end
+
+            if elem.name and (elem.userData.params.showWhenZoomedIn or false) ~= isInZoomInMode and
+                    (elem.userData.params.showWhenZoomedOut or false) ~= not isInZoomInMode then
+                stuckedMarkers[elem.name] = elem.userData.params.layerId
+                goto continue
+            end
+
             if elem.userData and elem.userData.autoScale then
                 local props = elem.userData.inContainer and elem.content[1].props or elem.props
                 if props.text then
@@ -621,7 +634,13 @@ function mapWidgetMeta:updateMarkersScale()
                     props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
             end
+
+            ::continue::
         end
+    end
+
+    for id, layerId in pairs(stuckedMarkers) do
+        self:removeMarker(id, layerId)
     end
 end
 
