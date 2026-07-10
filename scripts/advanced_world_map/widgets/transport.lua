@@ -339,6 +339,7 @@ eventSys.registerHandler(eventSys.EVENT.onMapInitialized, function (e)
     if not menuProps then return end
 
     local parent = {userData = {}}
+    local shownTm = core.getRealTime()
 
     local function create()
         local menuPos = menuProps.relativePosition:emul(uiUtils.getScaledScreenSize())
@@ -379,6 +380,13 @@ eventSys.registerHandler(eventSys.EVENT.onMapInitialized, function (e)
         end
         if config.data.message.transportFeatureInfoShown ~= 0 then
             tooltip.destroy(parent, true)
+            return
+        end
+        if core.getRealTime() - shownTm > 16 then
+            if parent.userData.tooltip then
+                tooltip.destroy(parent, true)
+            end
+            config.setValue("message.transportFeatureInfoShown", 1)
             return
         end
 
