@@ -1,3 +1,9 @@
+Version 1.13.3
+
+- Fixed markers getting stuck after zooming out.
+- Made zooming faster.
+- Fixed various layout issues.
+
 Version 1.13.2
 
 - Fixed gaps between world map tiles.
