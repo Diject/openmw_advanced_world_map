@@ -41,6 +41,9 @@ local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
 local this = {}
 
 this.playerMarkerMenu = nil
+this.lastMouseWheelTimestamp = 0
+this.mouseWheelCount = 0
+this.mouseWheelTimer = nil
 
 function this.destroyPlayerMarkerMenu()
     if this.playerMarkerMenu and this.playerMarkerMenu.layout then
@@ -510,12 +513,17 @@ local function setZoom(self, zoom, relativePos, force, skipRounding)
         local tileSize = (mapInfo.tileSize or (mapInfo.pixelsPerCell * 16))
         -- Round the zoom so that the dimensions of both tiles (when using altExMapInfo) are whole numbers of pixels,
         -- which will ensure that the tiles are placed correctly without gaps
-        local targetPixels = math.floor((tileSize * zoom) / self._zoomRoundingMul) * self._zoomRoundingMul
-        local newZoom = util.clamp(targetPixels / tileSize, self.minZoom, self.maxZoom)
+        local function getNewZoom(zm)
+            local targetPixels = math.floor((tileSize * zm) / self._zoomRoundingMul) * self._zoomRoundingMul
+            local newZoom = util.clamp(targetPixels / tileSize, self.minZoom, self.maxZoom)
+            return newZoom
+        end
+        local newZoom = getNewZoom(zoom)
 
         -- for cases where the zoom calculation result is rounded to the same value as the old zoom
         if zoom ~= oldZoom and newZoom == oldZoom then
-            newZoom = math.floor(tileSize * zoom) / tileSize
+            local step = self._zoomRoundingMul / tileSize * (zoom > oldZoom and 1 or -1)
+            newZoom = getNewZoom(zoom + step)
         end
 
         zoom = newZoom
@@ -565,11 +573,11 @@ local function setZoom(self, zoom, relativePos, force, skipRounding)
 end
 
 ---@param zoom number
-function mapWidgetMeta:setZoom(zoom, relativePos, useScale)
+function mapWidgetMeta:setZoom(zoom, relativePos, useScale, skipRounding)
     if useScale then
         zoom = zoom / self.eScale
     end
-    setZoom(self, zoom, relativePos or self:getRelativePositionOfVisibleCenter(), nil, true)
+    setZoom(self, zoom, relativePos or self:getRelativePositionOfVisibleCenter(), nil, skipRounding == true)
 end
 
 
@@ -891,11 +899,7 @@ local function createMarker(self, params, onlyInitialize)
             pressed = {},
             movedDistance = 0,
             inContainer = params.text and params.textBackground,
-            onMouseWheel = isLayerInteractive and function(value)
-                if not layout.userData.inFocus then return end
-                setZoom(self, value > 0 and self.zoom * config.data.main.zoomingMul * value or self.zoom / (config.data.main.zoomingMul * -value), nil, true)
-                self:update()
-            end or nil,
+            onMouseWheel = isLayerInteractive and self.mouseWheelEvent or nil,
             _events = not self.inActiveMode and layoutEvents or nil,
         },
         events = self.inActiveMode and layoutEvents or nil,
@@ -1633,7 +1637,7 @@ function mapWidgetMeta:updateWorldMapTexture(texture, mapInfo)
         texture = ui.texture{ path = texture }
     end
     getWorldMapTextureLayout(self, mapInfo, texture, self:getLayerLayout(this.layerId.map))
-    self:setZoom(self.zoom)
+    self:setZoom(self.zoom, nil, nil, true)
 end
 
 
@@ -1684,7 +1688,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
 
     if focusOnPlayer then
         if self._updatePlayerTiles then
-            self:setZoom(self.zoom, playerRelPos)
+            self:setZoom(self.zoom, playerRelPos, nil, true)
             self._updatePlayerTiles = false
         else
             self:focusOnWorldPosition(pos)
@@ -2264,6 +2268,40 @@ function this.new(params)
     }
 
 
+    local function setWheelZoom()
+        local zoomMul = config.data.main.zoomingMul * (this.mouseWheelCount >= 0 and 1 or -1)
+        local zoom = meta.zoom
+        for i = 1, math.abs(this.mouseWheelCount) do
+            zoom = zoomMul > 0 and zoom * zoomMul or zoom / -zoomMul
+        end
+        this.mouseWheelCount = 0
+        if zoomMul == 0 then return end
+        setZoom(meta, zoom, nil, true)
+        meta:update()
+    end
+
+    meta.mouseWheelEvent = function (value, layout)
+        if not layout.userData.inFocus then return end
+        local tm = core.getRealTime()
+        local tmDiff = tm - this.lastMouseWheelTimestamp
+        this.lastMouseWheelTimestamp = tm
+        if tmDiff < 0.1 then
+            if this.mouseWheelTimer then
+                this.mouseWheelTimer()
+            end
+            this.mouseWheelCount = this.mouseWheelCount + value
+            this.mouseWheelTimer = realTimer.newTimer(0.12, function ()
+                setWheelZoom()
+                this.mouseWheelTimer = nil
+            end)
+            return
+        else
+            this.mouseWheelCount = value
+        end
+        setWheelZoom()
+    end
+
+
     local main
     main = {
         type = ui.TYPE.Widget,
@@ -2275,11 +2313,7 @@ function this.new(params)
         },
         userData = {
             meta = meta,
-            onMouseWheel = function(value)
-                if not meta.layout.userData.inFocus then return end
-                setZoom(meta, value > 0 and meta.zoom * config.data.main.zoomingMul or meta.zoom / config.data.main.zoomingMul, nil, true)
-                meta:update()
-            end,
+            onMouseWheel = meta.mouseWheelEvent,
 
             inFocus = false,
             mousePos = util.vector2(0, 0),

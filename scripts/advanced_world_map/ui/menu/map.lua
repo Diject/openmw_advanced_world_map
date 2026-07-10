@@ -369,9 +369,9 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
 
     if not isNew then
         if cellId then
-            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 8, nil, true)
+            meta:setZoom(localStorage.data[commonData.localMapZoomFieldId] or 8, nil, true, true)
         else
-            meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1, nil , true)
+            meta:setZoom(localStorage.data[commonData.worldMapZoomFieldId] or 1, nil , true, true)
         end
     else
         self.mapWidget:updateMarkers()
@@ -1342,7 +1342,7 @@ function this.create(params)
         for _, dt in pairs(content) do
             if not type(dt) == "table" then goto continue end
             if dt.userData and dt.userData.onMouseWheel then
-                dt.userData.onMouseWheel(value)
+                dt.userData.onMouseWheel(value, dt)
             end
 
             if dt.content then
