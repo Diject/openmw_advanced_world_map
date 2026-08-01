@@ -742,12 +742,16 @@ return {
         onMouseWheel = onMouseWheel,
         onKeyPress = function (key)
             if key.code == input.KEY.Escape and menuHandler.hasActiveMenus() then
-                hotkeyCloseMenu()
+                realTimer.newTimer(0, function ()
+                    hotkeyCloseMenu()
+                end)
             end
         end,
         onControllerButtonPress = function (buttonId)
             if buttonId == input.CONTROLLER_BUTTON.B and menuHandler.hasActiveMenus() then
-                hotkeyCloseMenu()
+                realTimer.newTimer(0, function ()
+                    hotkeyCloseMenu()
+                end)
             end
         end,
         onMouseButtonRelease = function (buttonId)
