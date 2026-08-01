@@ -276,6 +276,10 @@ function AdvancedWorldMapMapWidget:getActiveMarkers() end
 ---@return boolean inFocus True if the map is in focus
 function AdvancedWorldMapMapWidget:isInFocus() end
 
+---Checks if the map widget is in active mode
+---@return boolean isActive True if the map widget is in active mode
+function AdvancedWorldMapMapWidget:isInActiveMode() end
+
 ---Checks if the map widget is valid (not destroyed or removed from cache)
 ---@return boolean isValid True if the map widget is valid
 function AdvancedWorldMapMapWidget:isValid() end

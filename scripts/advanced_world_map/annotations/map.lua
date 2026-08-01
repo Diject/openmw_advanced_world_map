@@ -96,6 +96,10 @@ function AdvancedWorldMapMenuMap:getWidgetWindowWidth() end
 ---Adjusts map size to account for open widgets.
 function AdvancedWorldMapMenuMap:updateMapWidgetWidth() end
 
+---Checks if the map menu is currently visible.
+---@return boolean isVisible True if the map menu is visible
+function AdvancedWorldMapMenuMap:isVisible() end
+
 ---Triggers a UI update/refresh
 function AdvancedWorldMapMenuMap:update() end
 
