@@ -99,7 +99,8 @@ function this.updateDiscovered(newDiscovered)
         local tempMrk = temporaryMarkers[name]
         if tempMrk then
             updateVisibility(tempMrk)
-            tempMrk:setColor(config.data.ui.markerDefaultColor)
+            tempMrk:setColor(tempMrk:getUserData().useWorldColor and config.data.ui.worldDefaultColor or
+                config.data.ui.markerDefaultColor)
         end
     end
 end
@@ -1170,6 +1171,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     type = commonData.cityRegionMarkerType,
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
+                    useWorldColor = not hasTexture,
                 }
             }
             temporaryMarkers[dt.name] = nil
