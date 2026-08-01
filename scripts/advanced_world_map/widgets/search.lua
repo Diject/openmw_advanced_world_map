@@ -1154,8 +1154,26 @@ local function create(menu)
             if params.searchAllLocations ~= nil then
                 searchAllLocationsCBLayout.userData.meta:setChecked(params.showUnrevealed)
             end
+            if params.nearbySearch ~= nil then
+                nearbySearch = params.nearbySearch
+            end
+            local newSearchMode = params.searchMode or searchModes.Locations
             searchBarLayout.content[1].events.textChanged(text)
 
+            ---@type advancedWorldMap.ui.horizontalSelector
+            local selectorMeta = searchTypeSelectorLayout.userData.meta
+            if newSearchMode == searchModes.Locations then
+                selectorMeta:select(1)
+                searchMode = newSearchMode
+            elseif newSearchMode == searchModes.Actors and commonData.isSaveBloatFixed() then
+                selectorMeta:select(2)
+                searchMode = newSearchMode
+            elseif newSearchMode == searchModes.Items and commonData.isSaveBloatFixed() then
+                selectorMeta:select(3)
+                searchMode = newSearchMode
+            end
+
+            updateCheckboxVisibility()
             fillList()
         end
 
