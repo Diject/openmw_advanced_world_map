@@ -661,7 +661,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 17,
+        version = 18,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -670,7 +670,15 @@ return {
             configLib.setValue(valuePath, value)
         end,
         openMapMenu = openMenu,
-        closeMapMenu = closeMenu,
+        closeMapMenu = function ()
+            local menu = menuHandler.getMenu(commonData.mapMenuId)
+            if menu then
+                if menu:close() then
+                    return
+                end
+            end
+            closeMenu()
+        end,
         toggleMapMenu = toggleMenu,
         getMapMenu = getMenu,
         isDiscovered = function (cellId)

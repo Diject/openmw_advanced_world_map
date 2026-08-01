@@ -596,6 +596,12 @@ function menuMeta:updateInteractiveElements(params)
 end
 
 
+---@return boolean
+function menuMeta:isVisible()
+    return self.menu and self.menu.layout and self.menu.layout.props.visible or false
+end
+
+
 function menuMeta:externalActivate()
     if self.isActivatedExternally then return end
 
@@ -606,6 +612,8 @@ function menuMeta:externalActivate()
     self.internal = {
         visibility = layout.props.visible,
         isInMinimapMode = self.isInMinimapMode,
+        wasMenuModeActive = menuMode.isActivated(),
+        mapWidgetCellId = self.mapWidget and self.mapWidget.cellId,
     }
 
     self:updateInteractiveElements{
@@ -623,11 +631,26 @@ function menuMeta:externalDeactivate()
     self.isActivatedExternally = false
     local visible = self.internal.visibility
     local isInMinimapMode = self.internal.isInMinimapMode
+    local wasMenuModeActive = self.internal.wasMenuModeActive
+    local mapWidgetCellId = self.internal.mapWidgetCellId
+    self.internal = nil
+
     self:updateInteractiveElements{
         visible = visible,
+        fullMode = not isInMinimapMode,
         skipStateUpdate = true,
     }
-    self.internal = nil
+
+    self:closeActiveWidget()
+
+    if self.mapWidget and self.mapWidget.cellId ~= mapWidgetCellId then
+        self:updateMapWidgetCell(mapWidgetCellId, true)
+    end
+
+    if isInMinimapMode and wasMenuModeActive and menuMode.isActivated() then
+        menuMode.deactivate()
+    end
+
     self:update()
 
     return isInMinimapMode
@@ -649,7 +672,8 @@ function menuMeta:close()
     mapWidget.destroyPlayerMarkerMenu()
     if not self.menu then return end
 
-    if self:externalDeactivate() == true then
+    if self.isActivatedExternally then
+        self:externalDeactivate()
         self.mapWidget:setInActiveMode(menuMode.isMenuInteractive())
         return true
     end
