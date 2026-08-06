@@ -14,9 +14,8 @@ mapElementMeta.__index = mapElementMeta
 
 ---@param val boolean
 function mapElementMeta:setVisibility(val)
-    local isVisibleChanged = self._container.props.visible ~= val
-    -- For some reason, commenting this fixes the issue with 'memory leak' (markers not being removed from the content). But I don't know why
-    -- self._container.props.visible = val
+    local isVisibleChanged = (self._container.props.visible ~= false) ~= val or (self._params.visible ~= false) ~= val
+    self._container.props.visible = val
     self._params.visible = val
     if isVisibleChanged then
         self._parent:setElementVisibility(self._id, self._layerId, val)
@@ -191,7 +190,7 @@ end
 
 
 function mapElementMeta:restoreLayout()
-    local isVisibleChanged = self._container.props.visible ~= self._params.visible
+    local isVisibleChanged = (self._container.props.visible ~= false) ~= (self._params.visible ~= false)
     local elemLayout = self._elemLayout
     elemLayout.props = {
         text = self._params.text,

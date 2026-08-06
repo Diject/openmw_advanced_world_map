@@ -607,12 +607,14 @@ function mapWidgetMeta:updateMarkersScale()
     playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
 
     local isInZoomInMode = self:isInZoomInMode()
-    -- Some markers may be stuck after zooming out and I don't know why.
-    -- TODO: Investigate why this happens and fix it properly. For now, just remove the stucked markers.
-    local stuckedMarkers = {}
 
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
+
+        -- Some markers may be stuck after zooming out and I don't know why.
+        -- TODO: Investigate why this happens and fix it properly. For now, just remove the stucked markers.
+        local stuckedMarkers = {}
+
         for i, elem in ipairs(layout.content) do
             if not elem.userData or not elem.userData.params then goto continue end
 
@@ -637,10 +639,10 @@ function mapWidgetMeta:updateMarkersScale()
 
             ::continue::
         end
-    end
 
-    for id, layerId in pairs(stuckedMarkers) do
-        self:removeMarker(id, layerId)
+        for id, layerId in pairs(stuckedMarkers) do
+            self:removeMarker(id, layerId)
+        end
     end
 end
 
@@ -759,22 +761,9 @@ local function createMarker(self, params, onlyInitialize)
         end
     end
 
-    if params.id and uiUtils.isExistsInContent(content, params.id) then
-        local handler = content[params.id].userData.markerElement
-        if params.update then
-            updateZoomInOutDataParams(params.id, params)
-            handler._elemLayout.userData.userData = params.userData
-            handler._params = params
-            handler:restoreLayout()
-            params.update = nil
-            eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
-        end
-        return params.id, params.layerId, handler, content[params.id]
-    end
-
-    local function addZoomInOutData(id, layout)
-        if self.zoomMarkersCellIdById[id] then return end
-        local cellId = layout.userData.cellId or cellLib.getCellIdByPos(params.pos)
+    local function addZoomInOutData(id, layout, forceCellId)
+        if not forceCellId and self.zoomMarkersCellIdById[id] then return end
+        local cellId = forceCellId or layout.userData.cellId or cellLib.getCellIdByPos(params.pos)
 
         if params.showWhenZoomedIn then
             self.zoomInMarkers[cellId] = self.zoomInMarkers[cellId] or {}
@@ -799,6 +788,37 @@ local function createMarker(self, params, onlyInitialize)
         self.activeZoomMarkers[getActiveMarkerId(params)] = {id, params.layerId, layout.userData.markerElement}
     end
 
+    local function removeZoomInOutData(cellId, markerId)
+        if self.zoomOutMarkers[cellId] then
+            self.zoomOutMarkers[cellId][markerId] = nil
+        end
+        if self.zoomInMarkers[cellId] then
+            self.zoomInMarkers[cellId][markerId] = nil
+        end
+        self.zoomMarkersCellIdById[markerId] = nil
+    end
+
+    if params.id and uiUtils.isExistsInContent(content, params.id) then
+        local handler = content[params.id].userData.markerElement
+        if params.update then
+            local oldCellId = self.zoomMarkersCellIdById[params.id]
+            if oldCellId then
+                local cellId = self.cellId or cellLib.getCellIdByPos(params.pos)
+                if oldCellId ~= cellId then
+                    removeZoomInOutData(oldCellId, params.id)
+                    addZoomInOutData(params.id, handler._container, cellId)
+                end
+            end
+            updateZoomInOutDataParams(params.id, params)
+            handler._elemLayout.userData.userData = params.userData
+            handler._params = params
+            handler:restoreLayout()
+            params.update = nil
+            eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
+        end
+        return params.id, params.layerId, handler, content[params.id]
+    end
+
     params.pos = params.pos or util.vector3(0, 0, 0)
     local relPos = self:getRelativePositionByWorldPosition(params.pos)
 
@@ -814,6 +834,14 @@ local function createMarker(self, params, onlyInitialize)
             local handler = cachedLayout.userData.markerElement
 
             if params.update then
+                local oldCellId = self.zoomMarkersCellIdById[id]
+                if oldCellId then
+                    local cellId = self.cellId or cellLib.getCellIdByPos(params.pos)
+                    if oldCellId ~= cellId then
+                        removeZoomInOutData(oldCellId, id)
+                        addZoomInOutData(id, cachedLayout, cellId)
+                    end
+                end
                 updateZoomInOutDataParams(id, params)
                 handler._params = params
                 handler:restoreLayout()
@@ -831,13 +859,13 @@ local function createMarker(self, params, onlyInitialize)
                 return
             end
 
-            if params.visible == false then
+            addZoomInOutData(id, cachedLayout)
+
+            if params.visible == false or cachedLayout.props.visible == false then
                 self.hiddenElements[params.layerId][id] = cachedLayout
                 eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
                 return id, params.layerId, handler, cachedLayout
             end
-
-            addZoomInOutData(id, cachedLayout)
 
             local props = cachedLayout.userData.inContainer and cachedLayout.content[1].props or cachedLayout.props
             if props.textSize then
