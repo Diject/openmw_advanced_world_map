@@ -62,13 +62,14 @@ function this.updateDiscovered(newDiscovered)
         local userData = handler:getUserData()
         if not userData then return end
         userData.discovered = true
-        if not userData.disabled and not userData.filtered then
+        if not userData.disabled and not userData.filtered and not userData.clustered then
             handler:setVisibility(true)
         else
             handler:updateParams{visible = true} ---@diagnostic disable-line: missing-fields
         end
     end
 
+    local addedSecondPrefixes = {}
     for _, name in pairs(newDiscovered or {}) do
         for _, handler in pairs(this.entranceMarkersByDestCellId[name] or {}) do
             updateVisibility(handler)
@@ -80,6 +81,11 @@ function this.updateDiscovered(newDiscovered)
                 elseif discoveredLocs.isDiscovered(userData.cellId) then
                     handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultColor or
                         config.data.ui.markerDefaultColor)
+                end
+
+                if userData.sPref and not addedSecondPrefixes[userData.sPref] then
+                    table.insert(newDiscovered, userData.sPref)
+                    addedSecondPrefixes[userData.sPref] = true
                 end
             end
         end
@@ -687,7 +693,7 @@ local function createMarkers(widget, cellId, allowedCells)
                 }
                 userData.anchor = textAnchor
                 userData.anchorLocked = lockAnchor
-                userData.useWorldColor = not hasLocalTexture
+                userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
                 userData.textWidth = textWidth
                 userData.textHeight = textHeight
                 userData.isTileDiscovered = isTileDiscovered
@@ -877,9 +883,10 @@ local function createMarkers(widget, cellId, allowedCells)
             textMarker = textMarkerHandler,
             name = dt.name,
             fullName = dt.fName,
+            sPref = doGroupToName and dt.ppN or nil
         }
 
-        userData.useWorldColor = not hasLocalTexture
+        userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
         userData.isTileDiscovered = isTileDiscovered
 
         local isIsolated = textMarkerHandler and textMarkerHandler:getUserData().isIsolated or false
@@ -1021,6 +1028,7 @@ local function createMarkers(widget, cellId, allowedCells)
                 end
 
                 marker:getUserData().clustered = true
+                marker:getUserData().grouped = false
             end
 
             for _, dt in pairs(pDt.m) do
@@ -1149,6 +1157,9 @@ local function createMarkers(widget, cellId, allowedCells)
                 shadowColor = hasTexture and config.data.ui.markerBackgroundColor or config.data.ui.markerBackgroundAltColor
             end
 
+            if temporaryMarkers[dt.name] then
+                temporaryMarkers[dt.name]:destroy()
+            end
             local newMarker = widget:createTextMarker{
                 id = "_NGr_"..dt.name,
                 update = true,
@@ -1256,6 +1267,7 @@ local function createMarkers(widget, cellId, allowedCells)
                     }
 
                     marker:getUserData().grouped = true
+                    marker:getUserData().clustered = false
                 end
 
                 ::continue::
@@ -1270,6 +1282,7 @@ local function createMarkers(widget, cellId, allowedCells)
     end
     temporaryMarkers = newTemporaryMarkers
 
+    widget.userData.markersWereCreated = true
     widget:update()
 end
 
@@ -1283,7 +1296,8 @@ local function updateMarkers(e)
         lastExZoom = mapWidget.zoom
     end
 
-    if mapWidget.cellId == lastCellId and lastInZoom == mapWidget.zoom then
+    if mapWidget.cellId and mapWidget.cellId == lastCellId and lastInZoom == mapWidget.zoom and
+            mapWidget.userData.markersWereCreated then
         return
     end
 
