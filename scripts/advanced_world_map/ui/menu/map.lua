@@ -24,6 +24,7 @@ local menuHandler = require("scripts.advanced_world_map.menuHandler")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+local templates = require("scripts.advanced_world_map.ui.templates")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local mapWidget = require("scripts.advanced_world_map.ui.mapWidget")
 local borders = {require("scripts.advanced_world_map.ui.borders")()}
@@ -240,7 +241,7 @@ function menuMeta:addWidget(params)
     addWidget(activeHeaderContent)
 
     if params.showWhenMenuInactive then
-        addWidget(self.widgetInactiveHeaderLayout.content)
+        addWidget(self.widgetInactiveHeaderLayout.content[1].content)
     end
 end
 
@@ -558,10 +559,9 @@ function menuMeta:updateInteractiveElements(params)
         header.content[1].props.alpha = 0
         header.content[2] = self.widgetInactiveHeaderLayout
         self.mainLayout.content[2].props.visible = false
-        self.mainLayout.props.alpha = config.data.ui.minimapAlpha * 0.01
         self:setBorders(false, false)
 
-        if not params.init and #self.widgetInactiveHeaderLayout.content == 0 then
+        if not params.init and #self.widgetInactiveHeaderLayout.content[1].content == 0 then
             header.props.visible = false
         end
         if self.mapWidget then
@@ -883,22 +883,25 @@ function this.create(params)
     end
 
     meta.widgetInactiveHeaderLayout = {
-        type = ui.TYPE.Flex,
+        template = templates.roundedBackground,
         props = {
-            horizontal = true,
             relativeSize = util.vector2(1, 1),
-            autoSize = false,
-            anchor = util.vector2(0, 0.5),
-            relativePosition = util.vector2(0, 0.5),
+            anchor = util.vector2(0.5, 0.5),
+            relativePosition = util.vector2(0.5, 0.5),
             position = util.vector2(0, -1),
-            arrange = ui.ALIGNMENT.Center,
-            align = ui.ALIGNMENT.Center,
         },
-        userData = {
-
-        },
-        content = ui.content {
-
+        userData = {},
+        content = ui.content{
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = true,
+                    autoSize = true,
+                    arrange = ui.ALIGNMENT.Center,
+                    align = ui.ALIGNMENT.Center,
+                },
+                content = ui.content {}
+            }
         }
     }
 
