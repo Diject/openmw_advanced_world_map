@@ -52,6 +52,10 @@ this.markerById = {}
 ---@type advancedWorldMap.ui.mapElementMeta[]
 local temporaryMarkers = {}
 
+---@type table<string, any>
+local bestAnchorCache = {}
+local bestAnchorCacheZoom = nil
+
 
 
 ---@param newDiscovered string[]
@@ -339,7 +343,10 @@ local lastInZoom = nil
 local lastCellId = true
 
 ---@param widget advancedWorldMap.ui.mapWidgetMeta
-local function createMarkers(widget, cellId, allowedCells)
+---@param cellId string?
+---@param allowedCells table<string, boolean>?
+---@param region advancedWorldMap.ui.mapWidget.region?
+local function createMarkers(widget, cellId, allowedCells, region)
     local newTemporaryMarkers = {}
 
     if eventSys.triggerEvent(eventSys.EVENT.onCellMarkersCreate, {mapWidget = widget, cellId = cellId}) then
@@ -353,6 +360,11 @@ local function createMarkers(widget, cellId, allowedCells)
     local doGroupToName = isExterior and doGroup and
         widgetZoom * 32 / widget.mapInfo.pixelsPerCell <= (config.data.legend.zoomToName / uiUtils.getUIScale())
 
+    if bestAnchorCacheZoom ~= widgetZoom then
+        bestAnchorCache = {}
+        bestAnchorCacheZoom = widgetZoom
+    end
+
     local targetZoom = allowedCells and widgetZoom or 30 / widget.eScale
     local fontInWorldCoords = widget.SCALE_FUNCTION.marker(config.data.legend.markerSize, targetZoom) * 8192 /
         (widget.mapInfo.pixelsPerCell * targetZoom * widget.eScale)
@@ -363,6 +375,17 @@ local function createMarkers(widget, cellId, allowedCells)
     local isolatedFontSize = math.floor(markerFontSize * isolatedMarkerMul)
     local isolatedImageMarkerSize = util.vector2(config.data.legend.markerSize * 1.2, config.data.legend.markerSize * 1.2)
     local unisolatedImageMarkerSize = util.vector2(config.data.legend.markerSize * 0.65, config.data.legend.markerSize * 0.65)
+
+    local anchorCacheMargin = fontInWorldCoords * 16
+    local isAllowedToUseAnchorCache = region and
+        (math.abs(region.right - region.left) > anchorCacheMargin * 2 or math.abs(region.top - region.bottom) > anchorCacheMargin * 2) or false
+
+    local function isInAnchorCacheSafeRegion(pos)
+        if not isAllowedToUseAnchorCache then return false end
+
+        return pos.x >= region.left + anchorCacheMargin and pos.x <= region.right - anchorCacheMargin and ---@diagnostic disable-line: need-check-nil
+            pos.y >= region.bottom + anchorCacheMargin and pos.y <= region.top - anchorCacheMargin ---@diagnostic disable-line: need-check-nil
+    end
 
     local entrancesData = {}
 
@@ -596,30 +619,43 @@ local function createMarkers(widget, cellId, allowedCells)
 
                 local bestAnchorData
                 local lockAnchor = false
-                if not isExterior or not textMarkerHandler or not widget.isPointInRegion(lastExRect, dt.pos.x, dt.pos.y) then
-                    for k, anchor in ipairs(entranceAnchors) do
-                        local d = {
+                local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(dt.pos)
+
+                if canUseCache and bestAnchorCache[textId] then
+                    bestAnchorData = {
+                        bestAnchorCache[textId],
+                        getAnchorOverlap(bestAnchorCache[textId], dt, textWidth, textHeight),
+                    }
+                else
+                    if not isExterior or not textMarkerHandler or not widget.isPointInRegion(lastExRect, dt.pos.x, dt.pos.y) then
+                        for k, anchor in ipairs(entranceAnchors) do
+                            local d = {
+                                anchor,
+                                getAnchorOverlap(anchor, dt, textWidth, textHeight),
+                            }
+                            if not bestAnchorData then
+                                bestAnchorData = d
+                            end
+
+                            if d[2] == 0 then
+                                bestAnchorData = d
+                                break
+                            elseif d[2] < bestAnchorData[2] then
+                                bestAnchorData = d
+                            end
+                        end
+                    else
+                        local anchor = textMarkerHandler._params.anchor or util.vector2(0, 0)
+                        bestAnchorData = {
                             anchor,
                             getAnchorOverlap(anchor, dt, textWidth, textHeight),
                         }
-                        if not bestAnchorData then
-                            bestAnchorData = d
-                        end
-
-                        if d[2] == 0 then
-                            bestAnchorData = d
-                            break
-                        elseif d[2] < bestAnchorData[2] then
-                            bestAnchorData = d
-                        end
+                        lockAnchor = true
                     end
-                else
-                    local anchor = textMarkerHandler._params.anchor or util.vector2(0, 0)
-                    bestAnchorData = {
-                        anchor,
-                        getAnchorOverlap(anchor, dt, textWidth, textHeight),
-                    }
-                    lockAnchor = true
+
+                    if canUseCache and not lockAnchor then
+                        bestAnchorCache[textId] = bestAnchorData[1]
+                    end
                 end
                 textAnchor = bestAnchorData[1]
 
@@ -1302,8 +1338,8 @@ local function updateMarkers(e)
     end
 
     local cells = {}
+    local region = e.region
     if not mapWidget.cellId then
-        local region = e.region
         for x = math.floor(region.left / 8192), math.floor(region.right / 8192) do
             for y = math.floor(region.bottom / 8192), math.floor(region.top / 8192) do
                 local cId = cellLib.getCellIdByGrid(x, y)
@@ -1314,7 +1350,7 @@ local function updateMarkers(e)
         cells[mapWidget.cellId] = true
     end
 
-    createMarkers(mapWidget, mapWidget.cellId, cells)
+    createMarkers(mapWidget, mapWidget.cellId, cells, region)
 
     if not mapWidget.cellId then
         lastExRect = e.region
