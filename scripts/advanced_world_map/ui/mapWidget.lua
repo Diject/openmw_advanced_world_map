@@ -2115,7 +2115,8 @@ function this.new(params)
 
     else
         local texture
-        if not mapTextureHandler.mapInfo or (mapTextureHandler.mapInfo.version < 2 or mapTextureHandler.mapInfo.version > 3) then
+        if not mapTextureHandler.mapInfo or (not mapTextureHandler.mapInfo.version or mapTextureHandler.mapInfo.version < 2 or
+                mapTextureHandler.mapInfo.version > 3) then
             texture = mapTextureHandler.getWorldMapTexture()
         end
         local eventParams = {mapWidget = meta, mapInfo = mapTextureHandler.mapInfo, texture = texture}
