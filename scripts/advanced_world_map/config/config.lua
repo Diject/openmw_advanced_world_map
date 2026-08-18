@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 17,
+    version = 18,
     main = {
         menuKey = "M",
         relativeSize = {
@@ -22,6 +22,7 @@ this.default = {
         minimap = {
             enabled = false,
             cellLabel = true,
+            bottomHeader = false,
             relativeSize = {
                 x = 0.2,
                 y = 0.2,

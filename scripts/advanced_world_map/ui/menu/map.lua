@@ -470,6 +470,17 @@ function menuMeta:setBorders(thick, coverHeader)
 end
 
 
+function menuMeta:updateHeaderPosition(isBottom)
+    if isBottom then
+        self.mainLayout.props.position = util.vector2(0, 0)
+        self.headerLayout.props.position = util.vector2(0, self.mainLayout.props.size.y - (self.useDefaultHeader and self.borderSize or 0))
+    else
+        self.mainLayout.props.position = util.vector2(0, self.headerFullHeight)
+        self.headerLayout.props.position = util.vector2(0, 0)
+    end
+end
+
+
 ---@param params {visible : boolean?, fullMode : boolean?, skipStateUpdate : boolean?, init : boolean?}?
 ---@return boolean
 function menuMeta:updateInteractiveElements(params)
@@ -536,6 +547,7 @@ function menuMeta:updateInteractiveElements(params)
         header.content[2] = self.widgetActiveHeaderLayout
         self.mainLayout.content[2].props.visible = true
         self:setBorders(config.data.ui.thickBorders, self.useDefaultHeader)
+        self:updateHeaderPosition()
 
         self.isInMinimapMode = false
         self.layout.layer = "Windows"
@@ -585,6 +597,8 @@ function menuMeta:updateInteractiveElements(params)
 
             localStorage.data[commonData.inMinimapModeKeyId] = true
         end
+
+        self:updateHeaderPosition(config.data.main.minimap.bottomHeader)
     end
     self:updateMapWidgetWidth()
     header.content[3].props.visible = isMenuMode
@@ -884,6 +898,7 @@ function this.create(params)
 
     meta.widgetInactiveHeaderLayout = {
         template = templates.roundedBackground,
+        type = ui.TYPE.Container,
         props = {
             relativeSize = util.vector2(1, 1),
             anchor = util.vector2(0.5, 0.5),
@@ -1271,7 +1286,7 @@ function this.create(params)
 
         local screenPosition = meta.layout.props.relativePosition:emul(meta.screenSize)
 
-        meta.mapWidget.screenPosition = screenPosition + util.vector2(widgetWindowWidth, meta.headerFullHeight) +
+        meta.mapWidget.screenPosition = screenPosition + util.vector2(widgetWindowWidth, meta.mainLayout.props.position.y) +
             util.vector2(meta.borderSize, meta.borderSize)
     end
 
@@ -1596,6 +1611,21 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         end
     }
 
+    local bottomCellLabelCB = checkBox{
+        updateFunc = menu.update,
+        text = l10n("BottomCellLabelCB"),
+        textSize = config.data.ui.fontSize,
+        anchor = util.vector2(0, 0.5),
+        position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
+        checked = config.data.main.minimap.bottomHeader,
+        getScrollBoxMeta = function ()
+            return e.scrollBox
+        end,
+        event = function (checked, layout)
+            config.setValue("main.minimap.bottomHeader", checked)
+        end
+    }
+
 
     content:add{
         type = ui.TYPE.Flex,
@@ -1618,6 +1648,8 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
             },
             interval(0, config.data.ui.fontSize / 3),
             addVPadding(cellLabelCB),
+            interval(0, config.data.ui.fontSize / 3),
+            addVPadding(bottomCellLabelCB),
         }
     }
 end, -10)
