@@ -99,6 +99,25 @@ local function getMapImage(dirPath)
 end
 
 
+local function setWorldMapInfo(mapInfo, dirPath, mapImagePath, internal)
+    if dirPath and config.data.data.useTilemap and vfs.fileExists(dirPath..commonData.tilemapSubDir.."mapInfo.yaml") then
+        dirPath = dirPath..commonData.tilemapSubDir
+        mapInfo = markup.loadYaml(dirPath.."mapInfo.yaml")
+    end
+    local eventData = {imagePath = mapImagePath, mapInfo = mapInfo, dirPath = dirPath, internal = internal}
+    eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInit, eventData)
+
+    if eventData.mapInfo and eventData.dirPath then
+        this.mapImagePath = eventData.imagePath
+        this.mapDir = eventData.dirPath
+        this.mapInfo = eventData.mapInfo
+        log("World map image initialized from: "..eventData.dirPath)
+        return true
+    end
+    return false
+end
+
+
 ---@return boolean
 local function initMapImage(initializerType)
     local imagePath, mapInfo, dirPath
@@ -166,32 +185,12 @@ local function initMapImage(initializerType)
 
     ::next::
 
-    local eventData = {imagePath = imagePath, mapInfo = mapInfo, dirPath = dirPath, internal = true}
-    eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInit, eventData)
-
-    if eventData.mapInfo and eventData.dirPath then
-        this.mapImagePath = eventData.imagePath
-        this.mapInfo = eventData.mapInfo
-        this.mapDir = eventData.dirPath
-        log("World map image initialized from: "..eventData.dirPath)
-        return true
-    end
-    return false
+    return setWorldMapInfo(mapInfo, dirPath, imagePath, true)
 end
 
 
 function this.setWorldMapInfo(mapInfo, dirPath, mapImagePath)
-    local eventData = {imagePath = mapImagePath, mapInfo = mapInfo, dirPath = dirPath, internal = false}
-    eventSys.triggerEvent(eventSys.EVENT.onWorldMapTextureInit, eventData)
-
-    if eventData.mapInfo and eventData.dirPath then
-        this.mapImagePath = eventData.imagePath
-        this.mapInfo = eventData.mapInfo
-        this.mapDir = eventData.dirPath
-        log("World map image initialized from: "..eventData.dirPath)
-        return true
-    end
-    return false
+    return setWorldMapInfo(mapInfo, dirPath, mapImagePath, false)
 end
 
 

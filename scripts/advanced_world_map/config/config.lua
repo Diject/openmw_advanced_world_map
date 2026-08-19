@@ -100,6 +100,7 @@ this.default = {
     },
     data = {
         initializer = commonData.dataInitializerTypes[1],
+        useTilemap = false,
         safeInit = true,
         hasSafeInitMessageBeenShown = false,
         altExMapPath = nil,

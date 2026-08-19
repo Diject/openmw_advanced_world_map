@@ -201,6 +201,8 @@ SettingDataInitializerDescription: |
   "Tamriel Rebuilt+" - built-in texture for TR + Project Cyrodiil + Skyrim: Home of the Nords.
   "Base game" - built-in texture for the original Morrowind + Bloodmoon.
   "None" - no texture (map cells will be filled with a solid color).
+SettingUseTilemap: "Tile world map texture"
+SettingUseTilemapDescription: "When enabled, the world map texture can be displayed as a tilemap. Requires a tilemap texture to be available for the selected world map texture initializer."
 SettingSafeInit: "Safe initialization"
 SettingSafeInitDescription: "Warning! Due to an OpenMW issue, map initialization increases the size of all subsequent saves for the current character (TR adds ~20 MB). This overhead decreases as you explore. Enabling this option uses a temporary save to bypass the issue, but the initialization takes longer because the game needs to save and reload. This initialization process repeats whenever active mods change. [Fixed in OpenMW 0.52; your version is older.]"
 SettingSafeInitDescriptionFixed: "Only affects OpenMW versions before 0.52. Due to an OpenMW issue, map initialization increases the size of all subsequent saves for the current character (TR adds ~20 MB). Enabling this option uses a temporary save to bypass the issue, but the initialization takes longer because the game needs to save and reload. This initialization process repeats whenever active mods change."

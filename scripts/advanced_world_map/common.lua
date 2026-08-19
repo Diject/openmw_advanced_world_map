@@ -159,6 +159,7 @@ this.customMapDir = "textures/advanced_world_map/custom/"
 this.defaultTRMapDir = "textures/advanced_world_map/default/TRmap/"
 this.defaultBaseMapDir = "textures/advanced_world_map/default/basemap/"
 this.questDataMapDir = "questData/"
+this.tilemapSubDir = "tilemap/"
 
 this.TotSPFixMapDir = "textures/advanced_world_map/default/TotSP/"
 
