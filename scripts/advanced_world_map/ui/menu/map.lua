@@ -232,7 +232,14 @@ function menuMeta:addWidget(params)
 
         content:insert(index, params.layout)
         if index ~= 1 then
-            content:insert(index, interval(self.params.fontSize * 0.6, 0))
+            content:insert(index, {
+                props = {
+                    size = util.vector2(self.params.fontSize * 0.6, 0),
+                },
+                userData = {
+                    __parent = params.layout
+                }
+            })
         end
     end
 
@@ -243,6 +250,36 @@ function menuMeta:addWidget(params)
     if params.showWhenMenuInactive then
         addWidget(self.widgetInactiveHeaderLayout.content[1].content)
     end
+end
+
+
+---@return boolean
+function menuMeta:removeWidget(id)
+    local widgetData = self.widgets[id]
+    if not widgetData or not widgetData.layout then return false end
+
+    local function removeFromContent(content)
+        local found = true
+        while found do
+            found = false
+            for i, lay in ipairs(content) do
+                if lay == widgetData.layout or lay.userData and lay.userData.__parent == widgetData.layout then
+                    uiUtils.removeFromContent(content, i)
+                    found = true
+                    break
+                end
+            end
+        end
+    end
+
+    local activeHeaderContent = self.useDefaultHeader and self.widgetActiveHeaderLayout.content[1].content or
+        self.widgetActiveHeaderLayout.content
+
+    removeFromContent(activeHeaderContent)
+    removeFromContent(self.widgetInactiveHeaderLayout.content[1].content)
+    self.widgets[id] = nil
+
+    return true
 end
 
 
