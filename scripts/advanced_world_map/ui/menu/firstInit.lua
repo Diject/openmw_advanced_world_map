@@ -138,7 +138,7 @@ function this.new(params)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 18 or 25))
+    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 20 or 27) + 10)
     params.relativePosition = util.vector2(0.5, 0.5)
 
     local previewImageSize = math.floor(screenSize.x / 4 / 128) * 128
@@ -256,6 +256,19 @@ function this.new(params)
                             textAlignV = ui.ALIGNMENT.Center,
                         },
                     },
+                    interval(0, params.fontSize / 2),
+                    HoverToPreviewBlock(previewImageSize, 5, 6, checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingUseTilemapDescriptionInMenu"),
+                        textSize = config.data.ui.fontSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        anchor = util.vector2(0, 0.5),
+                        checked = config.data.data.useTilemap,
+                        event = function (checked, layout)
+                            config.setValue("data.useTilemap", checked)
+                        end
+                    }),
                     interval(0, params.fontSize / 2),
                     HoverToPreviewBlock(previewImageSize, 1, 2, checkBox{
                         updateFunc = meta.update,

@@ -371,6 +371,8 @@ local function toggleMenu()
 
         if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
                 configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent then
+            menuHandler.destroyAllMenus()
+
             if not menuMode.isMenuInteractive() then
                 menuMode.activate()
             end
@@ -622,7 +624,7 @@ local function fastTravelMessageCallback(data)
             localStorage.data[commonData.fastTravelTimestampFieldId] = core.getGameTime()
             fastTravel.lastTimestamp = core.getRealTime()
 
-            if not config.data.main.minimap.enabled then
+            if not localStorage.data[commonData.pinnedStateFieldId] then
                 menuHandler.destroyMenu(commonData.mapMenuId)
             else
                 menuMode.deactivate()
@@ -677,7 +679,6 @@ return {
                     return
                 end
             end
-            closeMenu()
         end,
         toggleMapMenu = toggleMenu,
         getMapMenu = getMenu,

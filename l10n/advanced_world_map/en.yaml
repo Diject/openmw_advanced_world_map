@@ -202,7 +202,8 @@ SettingDataInitializerDescription: |
   "Base game" - built-in texture for the original Morrowind + Bloodmoon.
   "None" - no texture (map cells will be filled with a solid color).
 SettingUseTilemap: "Tile world map texture"
-SettingUseTilemapDescription: "When enabled, the world map texture can be displayed as a tilemap. Requires a tilemap texture to be available for the selected world map texture initializer."
+SettingUseTilemapDescription: "When enabled, the world map can be displayed as a game world view (a top-down view assembled from local map tiles). Requires a game world view texture to be available for the selected world map texture initializer."
+SettingUseTilemapDescriptionInMenu: "Enable to display the world map as a game world view when such a texture is available."
 SettingSafeInit: "Safe initialization"
 SettingSafeInitDescription: "Warning! Due to an OpenMW issue, map initialization increases the size of all subsequent saves for the current character (TR adds ~20 MB). This overhead decreases as you explore. Enabling this option uses a temporary save to bypass the issue, but the initialization takes longer because the game needs to save and reload. This initialization process repeats whenever active mods change. [Fixed in OpenMW 0.52; your version is older.]"
 SettingSafeInitDescriptionFixed: "Only affects OpenMW versions before 0.52. Due to an OpenMW issue, map initialization increases the size of all subsequent saves for the current character (TR adds ~20 MB). Enabling this option uses a temporary save to bypass the issue, but the initialization takes longer because the game needs to save and reload. This initialization process repeats whenever active mods change."
@@ -227,8 +228,8 @@ SettingLegendVisitedCellsOnWorldMapDescription: "When enabled, cells that have b
 SettingLegendMarkerSize: "Marker size"
 SettingLegendMarkerSizeDescription: "The size of the markers displayed on the map."
 SettingLegendLocalMarkerBackground: "Local marker background"
-SettingLegendLocalMarkerBackgroundDescription: "When enabled, local text markers will have a background to improve readability. Note: this reduces the map's performance by up to 50%."
-SettingLegendLocalMarkerBackgroundDescriptionInMenu: "Add a background to markers for better visibility. Note: this reduces the map's performance by up to 50%."
+SettingLegendLocalMarkerBackgroundDescription: "When enabled, local text markers will have a background to improve readability. Note: this reduces the map's performance by up to 40%."
+SettingLegendLocalMarkerBackgroundDescriptionInMenu: "Add a background to markers for better visibility. Note: this reduces the map's performance by up to 40%."
 SettingLegendPlayerMarkerSize: "Player marker size"
 SettingLegendPlayerMarkerSizeDescription: "The size of the player marker displayed on the map."
 SettingLegendRegionAlpha: "Region name alpha"
