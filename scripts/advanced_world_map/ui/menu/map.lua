@@ -1552,6 +1552,16 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local content = e.content
     local menu = e.menu
 
+    local function recreateCellNameWidget()
+        local widget = menu.widgets["AdvancedWorldMap:CellName"]
+        if not widget then return end
+
+        local params = widget.params
+        params.showWhenMenuInactive = not config.data.main.minimap.enabled or config.data.main.minimap.cellLabel
+        menu:removeWidget("AdvancedWorldMap:CellName")
+        menu:addWidget(params)
+    end
+
     local function addVPadding(elem, padding)
         return {
             type = ui.TYPE.Widget,
@@ -1645,6 +1655,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         end,
         event = function (checked, layout)
             config.setValue("main.minimap.cellLabel", checked)
+            recreateCellNameWidget()
         end
     }
 
@@ -1658,6 +1669,16 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         getScrollBoxMeta = function ()
             return e.scrollBox
         end,
+        tooltipContent = ui.content{
+            {
+                type = ui.TYPE.Text,
+                props = {
+                    text = l10n("RequiresReopen"),
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                }
+            }
+        },
         event = function (checked, layout)
             config.setValue("main.minimap.bottomHeader", checked)
         end

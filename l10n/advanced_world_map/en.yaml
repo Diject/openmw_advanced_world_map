@@ -124,6 +124,7 @@ SearchMarkerInContainerPattern: "{item} (in {container})"
 SearchMarkerOnActorPattern: "{item} (on {actor})"
 ObjectIdTooltipPattern: "ID: \"{id}\""
 Loading: "Loading..."
+RequiresReopen: "Requires reopening the map to take effect."
 SearchBtnPatternMatchingInfo: |
   Search supports plain text and Lua pattern matching.
   Pattern search is activated if these characters are present: ^$().[]*+-?%
