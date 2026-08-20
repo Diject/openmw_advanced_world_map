@@ -1461,7 +1461,7 @@ function mapWidgetMeta:placeGroundTextures(region)
         end
 
         local isZoomOut = not self:isInZoomInMode()
-        if isZoomOut and not config.data.legend.visitedCellsOnWorldMap then return end
+        if isZoomOut and not config.data.tileset.visitedCellsOnWorldMap then return end
 
 
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
@@ -1487,7 +1487,7 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local isValidCell = cellId and (mapDataHandler.cellNameById[cellId] or mapDataHandler.validCellsWithoutName[cellId])
                 local isValid = isValidCell and (
                     not isZoomOut and (not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
-                    isZoomOut and config.data.legend.visitedCellsOnWorldMap and discoveredLocs.isVisited(cellId)
+                    isZoomOut and config.data.tileset.visitedCellsOnWorldMap and discoveredLocs.isVisited(cellId)
                 )
 
                 local lyP = yP

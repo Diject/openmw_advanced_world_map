@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 18,
+    version = 19,
     main = {
         menuKey = "M",
         relativeSize = {
@@ -50,7 +50,7 @@ this.default = {
         zoomToGroup = 7,
         zoomToName = 4.2,
         onlyDiscovered = true,
-        visitedCellsOnWorldMap = false,
+        visitedCellsOnWorldMap = false, -- deprecated
         transportOnlyDiscovered = false,
         localMarkerBackground = true,
         alpha = {
@@ -72,6 +72,7 @@ this.default = {
     },
     tileset = {
         onlyDiscovered = true,
+        visitedCellsOnWorldMap = false,
         zoomToShow = 3.5,
     },
     fastTravel = {

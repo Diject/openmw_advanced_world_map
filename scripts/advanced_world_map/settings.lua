@@ -217,6 +217,14 @@ if configVersion < config.default.version then
             uiSettingStorage:set("ui.coverHeader", config.default.ui.coverHeader)
         end
     end
+    if configVersion < 19 then
+        local legendSettingStorage = storage.playerSection(commonData.configLegendSectionName)
+        local tilesetSettingStorage = storage.playerSection(commonData.configTilesetSectionName)
+        local visitedCellsOnWorldMap = legendSettingStorage:get("legend.visitedCellsOnWorldMap")
+        if visitedCellsOnWorldMap ~= nil then
+            tilesetSettingStorage:set("tileset.visitedCellsOnWorldMap", visitedCellsOnWorldMap)
+        end
+    end
 end
 
 
@@ -283,6 +291,7 @@ I.Settings.registerGroup{
     settings = {
         boolSetting{key = "tileset.onlyDiscovered", name = "SettingTilesetOnlyDiscovered", description = "SettingTilesetOnlyDiscoveredDescription", default = config.default.tileset.onlyDiscovered},
         numberSetting{key = "tileset.zoomToShow", name = "SettingTilesetZoomToShow", description = "SettingTilesetZoomToShowDescription", default = config.default.tileset.zoomToShow, min = 0.1, max = 12},
+        boolSetting{key = "tileset.visitedCellsOnWorldMap", name = "SettingLegendVisitedCellsOnWorldMap", description = "SettingLegendVisitedCellsOnWorldMapDescription", default = config.default.tileset.visitedCellsOnWorldMap},
     },
 }
 
@@ -299,7 +308,6 @@ I.Settings.registerGroup{
         boolSetting{key = "legend.onlyDiscovered", name = "SettingLegendOnlyDiscovered", description = "SettingLegendOnlyDiscoveredDescription", default = config.default.legend.onlyDiscovered},
         numberSetting{key = "legend.zoomToGroup", name = "SettingLegendZoomToGroup", description = "SettingLegendZoomToGroupDescription", default = config.default.legend.zoomToGroup, min = 0},
         numberSetting{key = "legend.zoomToName", name = "SettingLegendZoomToName", description = "SettingLegendZoomToNameDescription", default = config.default.legend.zoomToName, min = 0},
-        boolSetting{key = "legend.visitedCellsOnWorldMap", name = "SettingLegendVisitedCellsOnWorldMap", description = "SettingLegendVisitedCellsOnWorldMapDescription", default = config.default.legend.visitedCellsOnWorldMap},
         numberSetting{key = "legend.markerSize", name = "SettingLegendMarkerSize", description = "SettingLegendMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},
         boolSetting{key = "legend.localMarkerBackground", name = "SettingLegendLocalMarkerBackground", description = "SettingLegendLocalMarkerBackgroundDescription", default = config.default.legend.localMarkerBackground},
         numberSetting{key = "legend.playerMarkerSize", name = "SettingLegendPlayerMarkerSize", description = "SettingLegendPlayerMarkerSizeDescription", default = config.default.legend.playerMarkerSize, min = 1, max = 250},
