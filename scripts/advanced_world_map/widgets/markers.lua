@@ -342,6 +342,9 @@ local lastExZoom = nil
 local lastInZoom = nil
 local lastCellId = true
 
+--- gl to understand what is going on here.
+--- This function is responsible for creating markers on the map widget based on the provided rect.
+--- It handles grouping of markers, determining visibility based on discovery status, and managing anchor positions for text markers.
 ---@param widget advancedWorldMap.ui.mapWidgetMeta
 ---@param cellId string?
 ---@param allowedCells table<string, boolean>?
@@ -353,6 +356,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
         return
     end
     local entrances = mapDataHandler.entrances or {}
+
+    -- constants
 
     local isExterior = cellId == nil
     local widgetZoom = widget.zoom
@@ -389,6 +394,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     local entrancesData = {}
 
+    -- fill entrancesData with entrances that are in allowedCells or all entrances if cellId is nil
     if allowedCells then
         for cId, _ in pairs(allowedCells) do
             local cellEntrances = entrances[cId]
@@ -438,6 +444,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     local populationMap = {}
 
+    -- group entrances by their parent hash and assign them to lines based on their y position
     for h, listDt in pairs(markersByParentHash) do
         local dt = listDt.dt
         local notFoundParent = not dt or nil
@@ -466,11 +473,13 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local prefixNames
     local lastCreatedMarkerByName = {}
 
+    -- create a grid of occupied intervals for each line based on the entrances' positions and sizes
     do
         ---@type {[1] : number, [2] : number}[][]
         local occupationIntervals = {}
         local ungrouped = {}
 
+        -- create a population map to group entrances by their grid positions
         local eps = doGroup and 6 * fontInWorldCoords * config.data.ui.textHeightMul or 6144
         if isExterior then
             for _, lst in pairs(entrancesData) do
@@ -496,6 +505,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
         end
 
+        -- create occupation intervals for each line based on the entrances' positions and sizes
         for cId, lst in pairs(entrancesData) do
             for _, dt in pairs(lst) do
                 local size = charHeight * 0.25
@@ -510,6 +520,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
         end
 
+        -- if grouping is enabled, create occupation intervals for the clusters and group them by name if doGroupToName
         if doGroup and groupClusters then
             local function addOccupiedRegion(sx, ex, sy, ey)
                 local line0Id = math.floor(sy / lineHeight)
@@ -551,6 +562,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
         end
 
+        -- calculate the overlap of a text marker with existing occupation intervals based on its anchor position and size
         local function getAnchorOverlap(anchor, linePosData, textWidth, textHeight)
             textHeight = textHeight or charHeight
             local pos = linePosData.pos
@@ -586,6 +598,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
         ---@type table<advancedWorldMap.ui.mapElementMeta, table<advancedWorldMap.ui.mapElementMeta, boolean>>
         local markerCollusions = {}
 
+        -- create text markers for each entrance, determining their anchor positions and visibility based on discovery status and grouping settings
         for _, lineDt in pairs(entranceByLine) do
 
             for j, data in ipairs(lineDt) do
@@ -606,6 +619,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     textMarkerHandler:setVisibility(textMarkerHandler:getVisibility())
                 end
 
+                -- if grouping is enabled and the text marker already exists and is not ungrouped, use the existing text marker;
+                -- otherwise, create a new text marker with the appropriate anchor position and visibility settings
                 if doGroup and textMarkerHandler and not ungrouped[dt] and not isIsolated and isTileDiscoveredStateEqual and
                         text == textMarkerHandler._params.text then
                     mInfo.textMarker = textMarkerHandler
@@ -621,6 +636,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 local lockAnchor = false
                 local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(dt.pos)
 
+                -- if we can use the cache and have a cached anchor for this textId, use it; otherwise, find the best anchor by checking overlaps with existing markers
                 if canUseCache and bestAnchorCache[textId] then
                     bestAnchorData = {
                         bestAnchorCache[textId],
@@ -659,6 +675,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 end
                 textAnchor = bestAnchorData[1]
 
+                -- if the best anchor has at least 2 collusions, shorten the text to fit within the available space
                 if not lockAnchor and #bestAnchorData[7] >= 2 then
                     text = stringLib.utf8_sub(text, 2, 14)..((stringLib.length(text) - 2) > 14 and "..." or "")
                     textWidth = charHeight * (stringLib.length(text) - 2) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
@@ -669,6 +686,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
                 local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
 
+                -- determine the color and background color of the text marker based on whether it is in an exterior cell,
+                -- whether the destination cell is discovered or visited, and whether there is a local texture for the world map
                 local color, backgroundColor, hasLocalTexture
                 if isExterior then
                     color, backgroundColor, hasLocalTexture = getWorldMarkerColor(dt.cId, cId, dt.pos)
@@ -700,6 +719,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 local alpha = config.data.legend.alpha.entrance * 0.01
                 local userData = textMarkerHandler and textMarkerHandler:getUserData()
 
+                -- if the text marker already exists and has the same grouping and clustering settings,and the tile discovery state is the same,
+                -- update its anchor lock status; otherwise, create a new text marker with the appropriate parameters
                 if userData and (userData.grouped == doGroup or userData.clustered == doGroupToName) and
                         isTileDiscoveredStateEqual then
                     userData.anchorLocked = lockAnchor
@@ -716,6 +737,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     end
                 end
 
+                -- if the text marker already exists, update its userData; otherwise, create a new userData
                 userData = userData or {
                     type = commonData.doorDescrMarkerType,
                     cellId = dt.dCId,
@@ -735,6 +757,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 userData.isTileDiscovered = isTileDiscovered
                 userData.isIsolated = isIsolated
 
+                -- create a new text marker with the specified parameters
                 ---@diagnostic disable-next-line: cast-local-type
                 textMarkerHandler = widget:createTextMarker{
                     id = textId,
@@ -757,6 +780,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
                 if not textMarkerHandler then goto continue end
 
+                -- if the text marker was successfully created, update the relevant data structures to track it and its associated information
                 do
                     this.entranceMarkersByDestCellId[dt.dCId] = this.entranceMarkersByDestCellId[dt.dCId] or {}
                     this.entranceMarkersByDestCellId[dt.dCId][textId] = textMarkerHandler
@@ -866,6 +890,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
         end
 
+        -- if grouping is not enabled, resolve collusions for each marker and its associated collusions
         if not doGroup then
             for marker, collusions in pairs(markerCollusions) do
                 resolveCollusions(marker, collusions)
@@ -874,6 +899,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     end
 
+    -- create image markers for each entrance
     for _, lst in pairs(entrancesData) do
     for _, dt in pairs(lst) do
         local imId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "marker")
@@ -882,6 +908,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
         local isTileDiscovered = cellId ~= nil or not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(dt.cId)
         local isTileDiscoveredStateEqual = imageMarkerHandler and isTileDiscovered == imageMarkerHandler:getUserData().isTileDiscovered or false
 
+        -- if the image marker already exists and has the same tile discovery state, update its alpha; otherwise, create a new image marker
         if imageMarkerHandler and isTileDiscoveredStateEqual then
             imageMarkerHandler:setAlpha(imageMarkerHandler:getAlpha())
             goto continue
@@ -1014,6 +1041,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
     end
     end
 
+    -- hide a marker and its linked image markers if it is not isolated or if forceHide is true
     ---@param marker advancedWorldMap.ui.mapElementMeta
     local function hideMarker(marker, changeVisibility, forceHide)
         local userData = marker:getUserData()
@@ -1039,6 +1067,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
     end
 
 
+    -- if grouping by name is enabled, process the prefix data for each group of entrances with the same name,
+    -- creating a prefix line for each group and adjusting the font size and position based on the number of entrances in the group
     if doGroupToName then
         local prefixLines = {}
         local prefixLineHeight = widget.SCALE_FUNCTION.marker(40, targetZoom) * 8192 /
@@ -1046,6 +1076,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
         local prefixCount = {}
 
+        -- process the prefix data for a group of entrances with the same name,
+        -- creating a prefix line and adjusting the font size and position based on the number of entrances in the group
         local function processPrefixData(name, pDt)
             local isDiscovered = discoveredLocs.isDiscovered(name)
             local isVisible = false
@@ -1122,6 +1154,9 @@ local function createMarkers(widget, cellId, allowedCells, region)
             })
         end
 
+        -- process the prefix data for each group of entrances with the same name, first processing those that do not have a matching prefix name,
+        -- and then processing those that do have a matching prefix name, creating prefix lines for each group and
+        -- adjusting the font size and position based on the number of entrances in the group
         for name, pDt in pairs(prefixNames) do
             if pDt.pN ~= name then
                 processPrefixData(name, pDt)
@@ -1177,6 +1212,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             if not moved then break end
         end
 
+        -- create text markers for each prefix line
         for _, dt in ipairs(prefixList) do
             local hasTexture = mapTextureHandler.isWorldLocalMapTextureExists(cellLib.getGridCoordinates(dt.pos))
             if config.data.tileset.onlyDiscovered and not discoveredLocs.isDiscovered(cellLib.getCellIdByPos(dt.pos)) then
@@ -1226,17 +1262,20 @@ local function createMarkers(widget, cellId, allowedCells, region)
         end
 
 
+    -- if grouping by name is not enabled but grouping is enabled, process the clusters of entrances
     elseif groupClusters then
         for _, cluster in pairs(groupClusters) do
 
             ---@type table<string, advancedWorldMap.ui.mapElementMeta>[]
             local quadrants = {{}, {}, {}, {}}
 
+            -- sort the markers in the cluster into quadrants based on their position relative to the center of the cluster's bounding box
             for _, dt in pairs(cluster.c) do
                 local mDt = dataForTextMarkers[dt]
                 local marker = mDt and mDt.textMarker
                 if not marker then goto continue end
 
+                -- if the marker is not isolated, hide it and its linked image markers
                 hideMarker(marker)
 
                 local pos = marker._params.pos
@@ -1272,6 +1311,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local newFontWorldSize = fontInWorldCoords
             local newFontSize = config.data.legend.markerSize
 
+            -- determine the number of columns and the maximum text length for each quadrant based on the number of markers in the quadrant and the size of the quadrant
             for qn, quadrant in ipairs(quadrants) do
                 if not next(quadrant) then goto continue end
                 local c = #quadrant
@@ -1291,6 +1331,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 for i, marker in ipairs(quadrant) do
 
                     local center = cluster.bb.center
+                    -- update the layout of the marker
                     ---@diagnostic disable-next-line: missing-fields
                     marker:updateLayout{
                         anchor = qAnchor,
