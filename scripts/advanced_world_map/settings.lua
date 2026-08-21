@@ -220,9 +220,22 @@ if configVersion < config.default.version then
     if configVersion < 19 then
         local legendSettingStorage = storage.playerSection(commonData.configLegendSectionName)
         local tilesetSettingStorage = storage.playerSection(commonData.configTilesetSectionName)
+        local uiSettingStorage = storage.playerSection(commonData.configUISectionName)
+
         local visitedCellsOnWorldMap = legendSettingStorage:get("legend.visitedCellsOnWorldMap")
         if visitedCellsOnWorldMap ~= nil then
             tilesetSettingStorage:set("tileset.visitedCellsOnWorldMap", visitedCellsOnWorldMap)
+        end
+
+        local cityAlpha = legendSettingStorage:get("legend.alpha.city")
+        if cityAlpha and cityAlpha < 75 then
+            legendSettingStorage:get("legend.alpha.city", config.default.legend.alpha.city)
+        end
+        uiSettingStorage:set("ui.worldMarkerShadowLightColor", commonData.backgroundColor)
+        uiSettingStorage:set("ui.worldMarkerShadowColor", commonData.backgroundColor)
+        local worldMarkerShadow = uiSettingStorage:get("ui.worldMarkerShadow")
+        if worldMarkerShadow ~= nil then
+            legendSettingStorage:set("legend.worldMarkerShadow", worldMarkerShadow)
         end
     end
 end
@@ -309,6 +322,7 @@ I.Settings.registerGroup{
         numberSetting{key = "legend.zoomToGroup", name = "SettingLegendZoomToGroup", description = "SettingLegendZoomToGroupDescription", default = config.default.legend.zoomToGroup, min = 0},
         numberSetting{key = "legend.zoomToName", name = "SettingLegendZoomToName", description = "SettingLegendZoomToNameDescription", default = config.default.legend.zoomToName, min = 0},
         numberSetting{key = "legend.markerSize", name = "SettingLegendMarkerSize", description = "SettingLegendMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},
+        boolSetting{key = "legend.worldMarkerShadow", name = "SettingUIWorldMarkerShadow", description = "SettingUIWorldMarkerShadowDescription", default = config.default.legend.worldMarkerShadow},
         boolSetting{key = "legend.localMarkerBackground", name = "SettingLegendLocalMarkerBackground", description = "SettingLegendLocalMarkerBackgroundDescription", default = config.default.legend.localMarkerBackground},
         numberSetting{key = "legend.playerMarkerSize", name = "SettingLegendPlayerMarkerSize", description = "SettingLegendPlayerMarkerSizeDescription", default = config.default.legend.playerMarkerSize, min = 1, max = 250},
         numberSetting{key = "legend.alpha.region", name = "SettingLegendRegionAlpha", description = "SettingLegendRegionAlphaDescription", default = config.default.legend.alpha.region, min = 0, max = 100},
@@ -404,7 +418,6 @@ I.Settings.registerGroup{
         numberSetting{key = "ui.resizerSize", name = "SettingUIResizerSize", description = "SettingUIResizerSizeDescription", default = config.default.ui.resizerSize, min = 1, max = 100, integer = true},
         numberSetting{key = "ui.scrollArrowSize", name = "SettingUIScrollBarSize", description = "SettingUIScrollBarSizeDescription", default = config.default.ui.scrollArrowSize, min = 1, max = 100, integer = true},
         numberSetting{key = "ui.mouseScrollAmount", name = "SettingUIMouseScrollAmount", description = "SettingUIMouseScrollAmountDescription", default = config.default.ui.mouseScrollAmount, min = 1, max = 500, integer = true},
-        boolSetting{key = "ui.worldMarkerShadow", name = "SettingUIWorldMarkerShadow", description = "SettingUIWorldMarkerShadowDescription", default = config.default.ui.worldMarkerShadow},
         color{key = "ui.defaultColor", name = "SettingUIDefaultColor", description = "SettingUIDefaultColorDescription", default = config.default.ui.defaultColor},
         color{key = "ui.whiteColor", name = "SettingUIWhiteColor", description = "SettingUIWhiteColorDescription", default = config.default.ui.whiteColor},
         color{key = "ui.backgroundColor", name = "SettingUIBackgroundColor", description = "SettingUIBackgroundColorDescription", default = config.default.ui.backgroundColor},
