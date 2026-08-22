@@ -38,10 +38,15 @@ function AdvancedWorldMapMenuMap:openWidget(id) end
 ---Closes the currently active header widget, if any
 function AdvancedWorldMapMenuMap:closeActiveWidget() end
 
----Adds a widget/button to the header bar.
+---Adds a widget to the header bar.
 ---The widget can have callbacks for open/close events and can be shown in active or inactive menu modes.
 ---@param params AdvancedWorldMap.Menu.AddHeaderElementParams Widget parameters
 function AdvancedWorldMapMenuMap:addWidget(params) end
+
+---Removes a widget from the header bar by ID.
+---@param id string Widget identifier
+---@return boolean success True if the widget was found and removed
+function AdvancedWorldMapMenuMap:removeWidget(id) end
 
 ---Returns whether a specific widget is currently active/open.
 ---@param id string Widget identifier
