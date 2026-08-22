@@ -3,6 +3,7 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local I = require("openmw.interfaces")
+local storage = require("openmw.storage")
 
 local customTemplates = require("scripts.advanced_world_map.ui.templates")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
@@ -11,12 +12,15 @@ local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
+local menuHandler = require("scripts.advanced_world_map.menuHandler")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
+
+local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 
 
 local l10n = core.l10n(commonData.l10nKey)
@@ -31,70 +35,52 @@ local this = {}
 ---@field yesCallback fun()?
 
 
-local function getPreviewTooltipContent(imSize, im1Id, im2Id)
-    return ui.content{
+local function getPreviewTooltipContent(imSize, imageIds, labels)
+    labels = labels or {"On", "Off"}
+
+    local content = ui.content{
         {
             type = ui.TYPE.Flex,
             props = {
                 horizontal = true,
             },
+            content = ui.content{}
+        }
+    }
+
+    for i, imId in ipairs(imageIds) do
+        content[1].content:add{
+            type = ui.TYPE.Widget,
+            props = {
+                size = util.vector2(imSize, imSize)
+            },
             content = ui.content{
                 {
-                    type = ui.TYPE.Widget,
+                    type = ui.TYPE.Image,
                     props = {
-                        size = util.vector2(imSize, imSize)
-                    },
-                    content = ui.content{
-                        {
-                            type = ui.TYPE.Image,
-                            props = {
-                                resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, im1Id) },
-                                size = util.vector2(imSize, imSize),
-                            }
-                        },
-                        {
-                            type = ui.TYPE.Text,
-                            props = {
-                                text = l10n("On"),
-                                textSize = config.data.ui.fontSize * 2,
-                                textColor = config.data.ui.whiteColor,
-                                position = util.vector2(8, 24),
-                            }
-                        },
+                        resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, imId) },
+                        size = util.vector2(imSize, imSize),
                     }
                 },
                 {
-                    type = ui.TYPE.Widget,
+                    type = ui.TYPE.Text,
                     props = {
-                        size = util.vector2(imSize, imSize)
-                    },
-                    content = ui.content{
-                        {
-                            type = ui.TYPE.Image,
-                            props = {
-                                resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, im2Id) },
-                                size = util.vector2(imSize, imSize),
-                            }
-                        },
-                        {
-                            type = ui.TYPE.Text,
-                            props = {
-                                text = l10n("Off"),
-                                textSize = config.data.ui.fontSize * 2,
-                                textColor = config.data.ui.whiteColor,
-                                position = util.vector2(8, 24),
-                            }
-                        },
+                        text = l10n(labels[i] or ""),
+                        textSize = config.data.ui.fontSize * 1.75,
+                        textColor = config.data.ui.whiteColor,
+                        position = util.vector2(8, imSize * 0.05),
                     }
-                }
+                },
             }
         }
-    }
+    end
+
+    return content
 end
 
 
-local function HoverToPreviewBlock(imSize, im1Id, im2Id, cbLayout)
-    local tooltipContent = getPreviewTooltipContent(imSize, im1Id, im2Id)
+local function HoverToPreviewBlock(imSize, imageIds, labels, cbLayout)
+    local tooltipContent = getPreviewTooltipContent(imSize, imageIds, labels)
     return {
         type = ui.TYPE.Flex,
         props = {
@@ -135,13 +121,17 @@ function this.new(params)
     params = params or {}
 
     local screenSize = uiUtils.getScaledScreenSize()
+    local isGridmapPresent = core.contentFiles.has(commonData.gridmapModFileName)
 
     params.fontSize = params.fontSize or config.data.ui.fontSize
 
-    params.size = params.size or util.vector2(800, params.fontSize * (commonData.isSaveBloatFixed() and 20 or 27) + 10)
+    local heightInFontSizes = commonData.isSaveBloatFixed() and 19 or 24.5
+    heightInFontSizes = isGridmapPresent and heightInFontSizes + 2 or heightInFontSizes
+    params.size = params.size or util.vector2(800, params.fontSize * heightInFontSizes)
     params.relativePosition = util.vector2(0.5, 0.5)
 
-    local previewImageSize = math.floor(screenSize.x / 4 / 128) * 128
+    local previewImageSize = math.floor(screenSize.x / 4 / 32) * 32
+    local previewAltImageSize = math.floor(screenSize.x / 6 / 32) * 32
 
 
     ---@class advancedWorldMap.ui.menu.firstInit
@@ -163,6 +153,26 @@ function this.new(params)
 
     local mainSize = util.vector2(params.size.x, params.size.y)
 
+    local longHorizontalLineThin = {
+        props = {
+            size = util.vector2(mainSize.x, math.floor(params.fontSize * 0.5))
+        },
+        content = ui.content{
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = ui.texture{ path = "textures/menu_thin_border_top.dds" },
+                    tileH = true,
+                    tileV = false,
+                    size = util.vector2(0, 1),
+                    relativeSize = util.vector2(1, 0),
+                    anchor = util.vector2(0, 0.5),
+                    relativePosition = util.vector2(0, 0.5),
+                },
+            }
+        }
+    }
+
 
     local ftCurrencyLayout = {
         type = ui.TYPE.Flex,
@@ -175,15 +185,15 @@ function this.new(params)
                 type = ui.TYPE.Text,
                 props = {
                     text = l10n("FirstInitFastTravelCurrency"),
-                    textSize = config.data.ui.fontSize,
+                    textSize = params.fontSize,
                     textColor = config.data.ui.defaultColor,
                     autoSize = true,
                 },
             },
-            interval(10, config.data.ui.fontSize * 1.5),
+            interval(10, params.fontSize * 1.5),
             button{
                 updateFunc = meta.update,
-                textSize = config.data.ui.fontSize,
+                textSize = params.fontSize,
                 text = l10n(config.data.fastTravel.currency),
                 event = function (layout)
                     local currentIndex = 1
@@ -248,32 +258,39 @@ function this.new(params)
                             text = l10n("firstInitMenuMessage"),
                             textSize = params.fontSize,
                             autoSize = false,
-                            size = util.vector2(mainSize.x - 3, params.fontSize * 3),
+                            size = util.vector2(mainSize.x - 3, params.fontSize * 2),
                             textColor = config.data.ui.defaultColor,
                             multiline = true,
                             wordWrap = true,
                             textAlignH = ui.ALIGNMENT.Center,
-                            textAlignV = ui.ALIGNMENT.Center,
+                            textAlignV = ui.ALIGNMENT.Start,
                         },
                     },
-                    interval(0, params.fontSize / 2),
-                    HoverToPreviewBlock(previewImageSize, 5, 6, checkBox{
+                    longHorizontalLineThin,
+                    HoverToPreviewBlock(previewImageSize, {5, 6}, nil, checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingUseTilemapDescriptionInMenu"),
-                        textSize = config.data.ui.fontSize,
+                        textSize = params.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
                         anchor = util.vector2(0, 0.5),
                         checked = config.data.data.useTilemap,
                         event = function (checked, layout)
                             config.setValue("data.useTilemap", checked)
+                            if checked then
+                                config.setValue("legend.worldMarkerShadow", true)
+                                config.setValue("legend.alpha.city", 80)
+                            else
+                                config.setValue("legend.worldMarkerShadow", false)
+                                config.setValue("legend.alpha.city", 70)
+                            end
                         end
                     }),
-                    interval(0, params.fontSize / 2),
-                    HoverToPreviewBlock(previewImageSize, 1, 2, checkBox{
+                    longHorizontalLineThin,
+                    HoverToPreviewBlock(previewImageSize, {1, 2}, nil, checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingTilesetOnlyDiscoveredDescription"),
-                        textSize = config.data.ui.fontSize,
+                        textSize = params.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
                         anchor = util.vector2(0, 0.5),
@@ -282,11 +299,11 @@ function this.new(params)
                             config.setValue("tileset.onlyDiscovered", checked)
                         end
                     }),
-                    interval(0, params.fontSize / 2),
-                    HoverToPreviewBlock(previewImageSize, 2, 3, checkBox{
+                    longHorizontalLineThin,
+                    HoverToPreviewBlock(previewImageSize, {2, 3}, nil, checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingLegendOnlyDiscoveredDescription"),
-                        textSize = config.data.ui.fontSize,
+                        textSize = params.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.legend.onlyDiscovered,
@@ -294,11 +311,11 @@ function this.new(params)
                             config.setValue("legend.onlyDiscovered", checked)
                         end
                     }),
-                    interval(0, params.fontSize / 2),
-                    HoverToPreviewBlock(previewImageSize, 3, 4, checkBox{
+                    longHorizontalLineThin,
+                    HoverToPreviewBlock(previewImageSize, {3, 4}, nil, checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingLegendLocalMarkerBackgroundDescriptionInMenu"),
-                        textSize = config.data.ui.fontSize,
+                        textSize = params.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 80, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.legend.localMarkerBackground,
@@ -306,11 +323,11 @@ function this.new(params)
                             config.setValue("legend.localMarkerBackground", checked)
                         end
                     }),
-                    interval(0, params.fontSize / 2),
+                    longHorizontalLineThin,
                     checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingFastTravelEnabledDescriptionInMenu"),
-                        textSize = config.data.ui.fontSize,
+                        textSize = params.fontSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 2),
                         textAlignV = ui.ALIGNMENT.Center,
                         checked = config.data.fastTravel.enabled,
@@ -320,48 +337,149 @@ function this.new(params)
                     },
                     interval(0, params.fontSize / 2),
                     ftCurrencyLayout,
-                    interval(0, params.fontSize),
-                    {
-                        type = ui.TYPE.Flex,
-                        props = {
-                            autoSize = false,
-                            horizontal = true,
-                            anchor = util.vector2(0.5, 0),
-                            size = util.vector2(mainSize.x - 3, params.fontSize * 2),
-                            align = ui.ALIGNMENT.Center,
-                            arrange = ui.ALIGNMENT.Center,
-                        },
-                        content = ui.content {
-                            button{
-                                updateFunc = meta.update,
-                                textSize = params.fontSize,
-                                text = l10n("YesY"),
-                                event = function (layout)
-                                    meta:close()
-                                    -- if params.yesCallback then params.yesCallback() end
-                                end
-                            },
-                        }
-                    },
+                    longHorizontalLineThin,
                 },
+            },
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    autoSize = false,
+                    horizontal = true,
+                    anchor = util.vector2(0.5, 1),
+                    relativePosition = util.vector2(0.5, 1),
+                    size = util.vector2(mainSize.x - 3, params.fontSize * 2),
+                    align = ui.ALIGNMENT.Center,
+                    arrange = ui.ALIGNMENT.Center,
+                },
+                content = ui.content {
+                    button{
+                        updateFunc = meta.update,
+                        textSize = params.fontSize,
+                        text = l10n("YesY"),
+                        event = function (layout)
+                            meta:close()
+                            -- if params.yesCallback then params.yesCallback() end
+                        end
+                    },
+                }
             },
             borders(),
         },
     }
 
+    if isGridmapPresent then
+        local gridmapStorage = storage.playerSection(commonData.gridmapSettingSectionName)
+        local function getCurrentType()
+            local isEnambed = gridmapStorage:get("enableOldMapOverlay")
+            local alpha = gridmapStorage:get("oldMapOverlayAlpha")
+            if isEnambed == false or (alpha or 9) == 0 then
+                return "FirstInitGridmapPresetOff"
+            elseif alpha < 90 then
+                return "FirstInitGridmapPresetTransparent"
+            else
+                return "FirstInitGridmapPresetOpaque"
+            end
+        end
+
+        local function resetGridmapColorSettingsToDefault()
+            config.data.ui.worldDefaultColor = util.color.rgb(0, 0, 0)
+            gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
+            config.data.ui.worldDefaultDarkColor = util.color.rgb(0.15, 0.15, 0)
+            gridmapStorage:set("worldDefaultDarkColor", config.data.ui.worldDefaultDarkColor)
+            config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0.760784, 0.631372, 0.494117)
+            gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
+            config.data.ui.markerBackgroundAltColor = util.color.rgb(0.55, 0.55, 0.55)
+            gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
+            config.data.legend.alpha.backgroundAlt = 80
+            gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
+        end
+
+        local function setNextType()
+            mapMenu.clearMapWidgetCache()
+            local isEnambed = gridmapStorage:get("enableOldMapOverlay")
+            local alpha = gridmapStorage:get("oldMapOverlayAlpha")
+            if isEnambed == false or (alpha or 10) == 0 then
+                gridmapStorage:set("enableOldMapOverlay", true)
+                gridmapStorage:set("oldMapOverlayAlpha", 10)
+                resetGridmapColorSettingsToDefault()
+            elseif alpha < 90 then
+                gridmapStorage:set("enableOldMapOverlay", true)
+                gridmapStorage:set("oldMapOverlayAlpha", 100)
+                config.data.ui.worldDefaultColor = commonData.defaultColor
+                gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
+                config.data.ui.worldDefaultDarkColor = commonData.defaultDarkColor
+                gridmapStorage:set("worldDefaultDarkColor", config.data.ui.worldDefaultDarkColor)
+                config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0, 0, 0)
+                gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
+                config.data.ui.markerBackgroundAltColor = config.default.ui.markerBackgroundColor
+                gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
+                config.data.legend.alpha.backgroundAlt = config.default.legend.alpha.background
+                gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
+            else
+                gridmapStorage:set("enableOldMapOverlay", false)
+                resetGridmapColorSettingsToDefault()
+            end
+        end
+
+        mainLayout.content[2].content:insert(4, HoverToPreviewBlock(
+            previewAltImageSize,
+            {7, 8, 9},
+            {"FirstInitGridmapPresetOff", "FirstInitGridmapPresetTransparent", "FirstInitGridmapPresetOpaque"},
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = true,
+                    autoSize = false,
+                    size = util.vector2(mainSize.x - params.fontSize * 1 - 74, params.fontSize * 2),
+                    align = ui.ALIGNMENT.Center,
+                    arrange = ui.ALIGNMENT.Center
+                },
+                content = ui.content{
+                    {
+                        type = ui.TYPE.Text,
+                        props = {
+                            text = l10n("FirstInitGridmapMessage"),
+                            textSize = params.fontSize,
+                            textColor = config.data.ui.defaultColor,
+                            autoSize = false,
+                            size = util.vector2(mainSize.x - params.fontSize * 1 - 174, params.fontSize * 3),
+                            anchor = util.vector2(0.5, 0.5),
+                            multiline = true,
+                            wordWrap = true,
+                            textAlignH = ui.ALIGNMENT.Start,
+                            textAlignV = ui.ALIGNMENT.Center,
+                        }
+                    },
+                    button{
+                        updateFunc = meta.update,
+                        textSize = params.fontSize * 0.8,
+                        anchor = util.vector2(0.5, 0.5),
+                        text = l10n(getCurrentType()),
+                        event = function (layout)
+                            setNextType()
+
+                            layout.content[1].content[1].props.text = l10n(getCurrentType())
+                            meta:update()
+                        end
+                    },
+                }
+            }
+        ))
+    end
+
     if not commonData.isSaveBloatFixed() then
         mainLayout.content[2].content:insert(3, checkBox{
             updateFunc = meta.update,
             text = l10n("SettingSafeInitDescription"),
-            textSize = config.data.ui.fontSize,
-            textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 6),
+            textSize = params.fontSize,
+            textElementSize = util.vector2(mainSize.x - params.fontSize * 2, params.fontSize * 5),
             textAlignV = ui.ALIGNMENT.Center,
             checked = config.data.data.safeInit,
             event = function (checked, layout)
                 config.setValue("data.safeInit", checked)
             end
         })
-        mainLayout.content[2].content:insert(4, interval(0, params.fontSize / 2))
+        mainLayout.content[2].content:insert(4, longHorizontalLineThin)
     end
 
 

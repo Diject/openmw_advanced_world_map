@@ -95,6 +95,10 @@ Undefined: "Undefined"
 firstInitMenuMessage: "Advanced World Map quick setup. Please configure the essential settings below. Much more in the settings."
 firstInitMenuDataSourceNote: "If the world map texture will not display correctly, try to change the data source for it in the settings. More info on the mod page on Nexus Mods."
 FirstInitFastTravelCurrency: "Fast travel currency:  "
+FirstInitGridmapMessage: "Tamriel grid-map is active (you can disable it in the OpenMW launcher). Choose how the world map texture is shown on it (preview uses game world view texture):"
+FirstInitGridmapPresetOff: "Off"
+FirstInitGridmapPresetTransparent: "Transparent"
+FirstInitGridmapPresetOpaque: "Opaque"
 mapDataNotInitialized: "Map data is not available. Report this issue on the mod page on Nexus Mods."
 charGenNotFinished: "You cannot open the map until character generation is complete."
 HoverToPreview: "(Hover to\npreview)"
@@ -202,7 +206,7 @@ SettingDataInitializerDescription: |
   "Tamriel Rebuilt+" - built-in texture for TR + Project Cyrodiil + Skyrim: Home of the Nords.
   "Base game" - built-in texture for the original Morrowind + Bloodmoon.
   "None" - no texture (map cells will be filled with a solid color).
-SettingUseTilemap: "Tile world map texture"
+SettingUseTilemap: "Game world view texture"
 SettingUseTilemapDescription: "When enabled, the world map can be displayed as a game world view (a top-down view assembled from local map tiles). Requires a game world view texture to be available for the selected world map texture initializer."
 SettingUseTilemapDescriptionInMenu: "Enable to display the world map as a game world view when such a texture is available."
 SettingSafeInit: "Safe initialization"

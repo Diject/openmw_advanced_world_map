@@ -6,6 +6,8 @@ local this = {}
 
 this.l10nKey = "advanced_world_map"
 
+this.gridmapModFileName = "Advanced World Map - Gridmap.omwscripts"
+
 this.settingPage = "AdvancedWorldMap:Settings"
 
 this.inputBindingsSection = "AdvWMap:InputBindings"
@@ -20,6 +22,8 @@ this.configInputSectionName = "Settings:AdvWMap:Input"
 this.configUISectionName = "Settings:AdvWMap:UI"
 this.configNotesSectionName = "Settings:AdvWMap:Notes"
 this.configMiscSectionName = "Settings:AdvWMap:Misc"
+
+this.gridmapSettingSectionName = "Settings:advWMap_gridmap"
 
 this.menuKeyId = "AdvWMap:menuKey"
 this.toggleMapTypeKeyId = "AdvWMap:toggleMapTypeKey"

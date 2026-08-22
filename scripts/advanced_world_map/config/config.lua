@@ -163,7 +163,7 @@ this.default = {
         transportFeatureInfoShown = 0,
         minimapFeatureInfoShown = 0,
         firstInitMenuShown = 0,
-        firstInitMenuShownCurrent = 1, -- local
+        firstInitMenuShownCurrent = 2, -- local
     }
 }
 

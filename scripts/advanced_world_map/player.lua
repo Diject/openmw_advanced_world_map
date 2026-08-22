@@ -213,7 +213,9 @@ local function onLoad(data)
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
 
     if config.data.main.minimap.enabled and localStorage.data[commonData.inMinimapModeKeyId] == true and
-            localStorage.data[commonData.pinnedStateFieldId] then
+            localStorage.data[commonData.pinnedStateFieldId] and
+            not (configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
+                configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent) then
         async:newUnsavableSimulationTimer(1, function ()
             if localStorage.data[commonData.inMinimapModeKeyId] == true then
                 openMenu(false, true, config.data.main.overrideDefault)
@@ -663,7 +665,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 18,
+        version = 19,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -712,6 +714,9 @@ return {
         getWorldMapInfo = function ()
             ---@diagnostic disable-next-line: return-type-mismatch
             return mapTextureHandler.mapInfo, mapTextureHandler.mapDir, mapTextureHandler.mapImagePath
+        end,
+        _clearCache = function ()
+            mapMenu.clearMapWidgetCache()
         end,
         uiElements = {
             scrollBox = require("scripts.advanced_world_map.ui.scrollBox"),
