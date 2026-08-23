@@ -6,9 +6,16 @@ local commonData = require("scripts.advanced_world_map.common")
 
 if not core.contentFiles.has(commonData.TotSPFileName) then return end
 
+local isDefaultMap = false
+
+eventSys.registerHandler(eventSys.EVENT.onWorldMapTextureInit, function (e)
+    isDefaultMap = e.dirPath and (e.dirPath:find(commonData.defaultTRMapDir, nil, true) or
+            e.dirPath:find(commonData.defaultBaseMapDir, nil, true)) and true or false
+end, -123)
+
 
 eventSys.registerHandler(eventSys.EVENT.onWorldMapTextureGet, function (e)
-    if not e.mapInfo then return end
+    if not isDefaultMap or not e.mapInfo then return end
 
     if not e.path:find(commonData.defaultTRMapDir, nil, true) and
             not e.path:find(commonData.defaultBaseMapDir, nil, true) then return end
