@@ -494,7 +494,7 @@ local function buildData(params)
         }
         cellNames[dt.name] = cellDt
 
-        local hash = math.floor(posY / 4096)
+        local hash = math.floor(posY / 8192)
         for i = -1, 1 do
             local h = hash + i
             cellNameLines[h] = cellNameLines[h] or {}
@@ -728,7 +728,6 @@ local function buildData(params)
 
 
     local function processLines(lines, xPosDiff, heightDiff)
-        local heightDiffHalf = heightDiff / 2
         for _, lineElems in pairs(lines) do
 
             table.sort(lineElems, function (a, b)
@@ -738,7 +737,10 @@ local function buildData(params)
             for j = 2, #lineElems do
                 local el1 = lineElems[j - 1]
                 local el2 = lineElems[j]
-                if el2.posX - el1.posX < xPosDiff and math.abs(el2.posY - el1.posY) < heightDiff then
+                local xDiff = el2.posX - el1.posX
+                local yDiff = math.abs(el2.posY - el1.posY)
+                if xDiff < xPosDiff and yDiff < heightDiff then
+                    local heightDiffHalf = (heightDiff - yDiff) * 0.5
                     if el1.posY > el2.posY then
                         el1.posY = el1.posY + heightDiffHalf
                         el2.posY = el2.posY - heightDiffHalf
@@ -751,7 +753,7 @@ local function buildData(params)
         end
     end
 
-    processLines(cellNameLines, 8192 * 6, 3072)
+    processLines(cellNameLines, 8192 * 6, 4096)
 
     this.cellNameData = cellNames
 
