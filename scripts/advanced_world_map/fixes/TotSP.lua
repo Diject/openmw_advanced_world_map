@@ -1,6 +1,7 @@
 local core = require("openmw.core")
 local vfs = require("openmw.vfs")
 
+local config = require("scripts.advanced_world_map.config.config")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local commonData = require("scripts.advanced_world_map.common")
 
@@ -21,7 +22,8 @@ eventSys.registerHandler(eventSys.EVENT.onWorldMapTextureGet, function (e)
             not e.path:find(commonData.defaultBaseMapDir, nil, true) then return end
 
     local id = string.format("(%d,%d).png", e.x, e.y)
-    local path = commonData.TotSPFixMapDir..id
+    local tilemapDir = config.data.data.useTilemap and "tilemap/" or ""
+    local path = commonData.TotSPFixMapDir..tilemapDir..id
 
     if vfs.fileExists(path) then
         e.path = path
