@@ -1,0 +1,13 @@
+version: 2
+width: 1696
+height: 1536
+pixelsPerCell: 32
+waterWithAlpha: true
+gridX:
+  min: -29
+  max: 23
+gridY:
+  min: -19
+  max: 28
+file: "map.png"
+bColor: [0.0941177, 0.141176, 0.129412]
