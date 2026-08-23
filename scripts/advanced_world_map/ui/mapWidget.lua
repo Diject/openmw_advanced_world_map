@@ -1569,14 +1569,16 @@ end
 ---@param texture string|any?
 local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
     if not mapInfo then
+        local width = (mapDataHandler.grid.max.x - mapDataHandler.grid.min.x + 1) * 32
+        local height = (mapDataHandler.grid.max.y - mapDataHandler.grid.min.y + 1) * 32
         mapInfo = {
-            gridX = {min = 0, max = 0},
-            gridY =  {min = 0, max = 0},
-            height = 32,
+            gridX = {min = mapDataHandler.grid.min.x, max = mapDataHandler.grid.max.x},
+            gridY =  {min = mapDataHandler.grid.min.y, max = mapDataHandler.grid.max.y},
+            height = height,
             pixelsPerCell = 32,
             time = 0,
             version = 0,
-            width = 32,
+            width = width,
             file = "",
         }
     end
