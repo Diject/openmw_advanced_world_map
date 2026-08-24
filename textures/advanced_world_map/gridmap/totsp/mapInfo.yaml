@@ -1,0 +1,19 @@
+version: 3
+time: 1783527650
+width: 15960
+height: 7373
+tileSize: 1024
+pixelsPerCell: 40
+waterWithAlpha: true
+gridX:
+  min: -249.0
+  max: 149.0
+gridY:
+  min: -120.0
+  max: 63.325
+bColor: [0.521569, 0.643137, 0.701961]
+textures:
+  "(-1,1).png": 1
+  "(-2,1).png": 1
+  "(-1,0).png": 1
+  "(-2,0).png": 1

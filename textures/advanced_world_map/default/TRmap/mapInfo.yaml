@@ -1,16 +1,14 @@
-﻿"version": 2
-"time": 1783269417
-"width": 6112
-"height": 3040
-"pixelsPerCell": 32
-"waterWithAlpha": true
-"gridX":
-  "max": 50
-  "min": -140
-"gridY":
-  "max": 34
-  "min": -60
-"bColor":
-- 0.0941176488995552
-- 0.141176477074623
-- 0.129411771893501
+version: 2
+time: 1787513180
+width: 6048
+height: 2976
+pixelsPerCell: 32
+waterWithAlpha: true
+gridX:
+  min: -139
+  max: 49
+gridY:
+  min: -59
+  max: 33
+file: "map.png"
+bColor: [0.0941177, 0.141176, 0.129412]
