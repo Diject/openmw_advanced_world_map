@@ -166,6 +166,34 @@ function this.getMarkerId(cellId, x, y, label)
 end
 
 
+---@param markerParams advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params|advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
+local function removeMarkerData(markerParams)
+    local markerId = markerParams.id
+    if not markerId or not this.markerById[markerId] then return end
+
+    this.markerById[markerId] = nil
+
+    local userData = markerParams.userData
+    if not userData then return end
+
+    local markerName = userData.name
+    if markerName then
+        local markers = this.markersByName[markerName]
+        if markers then
+            this.markersByName[markerName][markerId] = nil
+        end
+    end
+
+    if userData.hash then
+        this.markersByDoorHash[userData.hash] = nil
+    end
+
+    if userData.cellId then
+        this.entranceMarkersByDestCellId[userData.cellId] = nil
+    end
+end
+
+
 local function createWorldMarkers(widget)
     if eventSys.triggerEvent(eventSys.EVENT.onCellMarkersCreate, {mapWidget = widget}) then
         return
@@ -1354,7 +1382,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
         end
     end
 
-    for _, m in pairs(temporaryMarkers) do
+    for mId, m in pairs(temporaryMarkers) do
+        removeMarkerData(m._params)
         m:destroy()
     end
     temporaryMarkers = newTemporaryMarkers
@@ -1447,30 +1476,8 @@ end, 10000)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMapDestroyed, function (e)
-    for _, marker in pairs(e.mapWidget:getRegisteredMarkers()) do
-        if not marker.id or not this.markerById[marker.id] then goto continue end
-
-        this.markerById[marker.id] = nil
-
-        local markerName = marker.userData.name
-        if markerName then
-            local markers = this.markersByName[markerName]
-            if markers then
-                this.markersByName[markerName][marker.id] = nil
-            end
-        end
-
-        if not marker.userData then goto continue end
-
-        if marker.userData.hash then
-            this.markersByDoorHash[marker.userData.hash] = nil
-        end
-
-        if marker.userData.cellId then
-            this.entranceMarkersByDestCellId[marker.userData.cellId] = nil
-        end
-
-        ::continue::
+    for _, markerParams in pairs(e.mapWidget:getRegisteredMarkers()) do
+        removeMarkerData(markerParams)
     end
 end)
 
