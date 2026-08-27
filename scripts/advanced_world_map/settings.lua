@@ -238,6 +238,15 @@ if configVersion < config.default.version then
             legendSettingStorage:set("legend.worldMarkerShadow", worldMarkerShadow)
         end
     end
+    if configVersion < 20 then
+        local overrideDefault = mainSettingsSection:get("main.overrideDefault")
+        if overrideDefault then
+            mainSettingsSection:set("main.charMenu.relativeSize.x", (mainSettingsSection:get("main.relativeSize.x") or config.default.main.relativePosition.x) / 100)
+            mainSettingsSection:set("main.charMenu.relativeSize.y", (mainSettingsSection:get("main.relativeSize.y") or config.default.main.relativePosition.y) / 100)
+            mainSettingsSection:set("main.charMenu.relativePosition.x", (mainSettingsSection:get("main.relativePosition.x") or config.default.main.relativePosition.x) / 100)
+            mainSettingsSection:set("main.charMenu.relativePosition.y", (mainSettingsSection:get("main.relativePosition.y") or config.default.main.relativePosition.y) / 100)
+        end
+    end
 end
 
 
@@ -271,7 +280,6 @@ I.Settings.registerGroup{
         numberSetting{key = "main.zoomingMul", name = "SettingZoomingMul", description = "SettingZoomingMulDescription", default = config.default.main.zoomingMul, min = 1.1, max = 3, integer = false},
         -- boolSetting{key = "main.fastClose", name = "SettingFastClose", description = "SettingFastCloseDescription", default = config.default.main.fastClose},
         boolSetting{key = "main.overrideDefault", name = "SettingOverrideDefaultMap", description = "SettingOverrideDefaultMapDescription", default = config.default.main.overrideDefault},
-        boolSetting{key = "main.saveVisibilityStateInInterfaceMenu", name = "SettingSaveVisibilityStateInInterfaceMenu", description = "SettingSaveVisibilityStateInInterfaceMenuDescription", default = config.default.main.saveVisibilityStateInInterfaceMenu},
         boolSetting{key = "main.firstInitMenu", name = "SettingFirstInitMenu", description = "SettingFirstInitMenuDescription", default = config.default.main.firstInitMenu},
         boolSetting{key = "main.resetSizePos", name = "SettingResetSizePos", description = "SettingResetSizePosDescription", default = config.default.main.resetSizePos},
     },

@@ -352,15 +352,16 @@ function menuMeta:saveMinimapModeParams()
 end
 
 
-function menuMeta:setMinimapModeParams()
-    if config.data.main.minimap.enabled then
+function menuMeta:setMinimapModeParams(relPos, relSize)
+    if config.data.main.minimap.enabled or config.data.main.overrideDefault then
+        relPos = relPos or config.data.main.minimap.relativePosition
+        relSize = relSize or config.data.main.minimap.relativeSize
+
         local screenSize = uiUtils.getScaledScreenSize()
-        local sizeV = config.data.main.minimap.relativeSize
-        local minimapModeSize = util.vector2(sizeV.x, sizeV.y):emul(screenSize)
+        local minimapModeSize = util.vector2(relSize.x, relSize.y):emul(screenSize)
         self:setMapWidgetSize(minimapModeSize - util.vector2(self.borderSize * 2, self.borderSize * 2))
 
-        local posV = config.data.main.minimap.relativePosition
-        self.layout.props.relativePosition = util.vector2(posV.x, posV.y)
+        self.layout.props.relativePosition = util.vector2(relPos.x, relPos.y)
 
         self.isInMinimapMode = true
     end
@@ -518,6 +519,29 @@ function menuMeta:updateHeaderPosition(isBottom)
 end
 
 
+---@param visible boolean? nil - auto
+function menuMeta:updateCloseBtnState(visible)
+    uiUtils.removeFromContent(self.headerRightBtnBlock.content, commonData.headerCloseBtnLayoutName)
+    uiUtils.removeFromContent(self.headerRightBtnBlock.content, commonData.headerCloseBtnIntervalLayoutName)
+
+    if config.data.main.overrideDefault and config.data.main.preserveCloseBtn then
+        visible = true
+    elseif visible == nil then
+        visible = not self.isInCharacterMenuMode
+    end
+
+    if visible then
+        self.headerRightBtnBlock.content:add{
+            name = commonData.headerCloseBtnIntervalLayoutName,
+            props = {
+                size = util.vector2(self.params.fontSize * 0.5, self.headerHeight)
+            }
+        }
+        self.headerRightBtnBlock.content:add(self.closeBtnLayout)
+    end
+end
+
+
 ---@param params {visible : boolean?, fullMode : boolean?, skipStateUpdate : boolean?, init : boolean?}?
 ---@return boolean
 function menuMeta:updateInteractiveElements(params)
@@ -587,13 +611,18 @@ function menuMeta:updateInteractiveElements(params)
         self:updateHeaderPosition()
 
         self.isInMinimapMode = false
+        self.isInCharacterMenuMode = config.data.main.overrideDefault and I.UI.getMode() == "Interface"
         self.layout.layer = "Windows"
 
-        if self.mainSize.x ~= self.defaultMainSize.x or self.mainSize.y ~= self.defaultMainSize.y then
+        self:updateCloseBtnState()
+
+        local defaultMainSize = self.isInCharacterMenuMode and self.characterMenuMainSize or self.defaultMainSize
+
+        if self.mainSize.x ~= defaultMainSize.x or self.mainSize.y ~= defaultMainSize.y then
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
-            self:setMapWidgetSize(self.defaultMainSize - util.vector2(self.borderSize * 2, self.borderSize * 2))
-            local pos = config.data.main.relativePosition
-            self.menu.layout.props.relativePosition = util.vector2(pos.x / 100, pos.y / 100)
+            self:setMapWidgetSize(defaultMainSize - util.vector2(self.borderSize * 2, self.borderSize * 2))
+            local pos = self.isInCharacterMenuMode and config.data.main.charMenu.relativePosition or config.data.main.relativePosition
+            self.menu.layout.props.relativePosition = self.isInCharacterMenuMode and util.vector2(pos.x, pos.y) or util.vector2(pos.x / 100, pos.y / 100)
             self.mapWidget:focusOnWorldPosition(mapCenter)
             self.mapWidget:updateMarkers(true)
         end
@@ -610,6 +639,8 @@ function menuMeta:updateInteractiveElements(params)
         self.mainLayout.content[2].props.visible = false
         self:setBorders(false, false)
 
+        self.isInCharacterMenuMode = false
+
         if not params.init and #self.widgetInactiveHeaderLayout.content[1].content == 0 then
             header.props.visible = false
         end
@@ -619,10 +650,20 @@ function menuMeta:updateInteractiveElements(params)
 
         self.layout.layer = commonData.HUDLayer
 
-        if config.data.main.minimap.enabled then
+        if config.data.main.minimap.enabled or config.data.main.overrideDefault then
+            local relSize, relPos
+            if not config.data.main.minimap.enabled then
+                local cfg = config.data.main.charMenu
+                local screenSize = uiUtils.getScaledScreenSize()
+                relPos = cfg.relativePosition
+                relSize = {
+                    x = cfg.relativeSize.x,
+                    y = cfg.relativeSize.y - self.headerFullHeight / screenSize.y
+                }
+            end
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
             self:closeActiveWidget()
-            self:setMinimapModeParams()
+            self:setMinimapModeParams(relPos, relSize)
             if self.centerOnPlayer and not (not self.mapWidget.cellId and playerRef.cell.isExterior or
                     self.mapWidget.cellId == playerRef.cell.id) then
                 self:updateMapWidgetCell(playerRef.cell.id)
@@ -761,19 +802,6 @@ function menuMeta:close()
     mapTextureHandler.clearInteriorTextureCache()
     mapTextureHandler.clearWorldMapTextureCache()
 
-    if config.data.main.saveVisibilityStateInInterfaceMenu then
-        local isInterfaceMode = false
-        for _, mode in pairs(UI.modes) do
-            if mode == "Interface" then
-                isInterfaceMode = true
-                break
-            end
-        end
-        if isInterfaceMode then
-            localStorage.data[commonData.hideInInterfaceMenuFieldId] = true
-        end
-    end
-
     if self.minimapSetupMode then
         self.minimapSetupMode = false
         self:saveMinimapModeParams()
@@ -795,6 +823,7 @@ end
 ---@field fontSize number?
 ---@field isCreatedExternally boolean?
 ---@field hideCloseBtn boolean?
+---@field inCharacterMenu boolean?
 ---@field onClose function?
 
 
@@ -850,10 +879,15 @@ function this.create(params)
     local mainSize = util.vector2(meta.size.x, meta.size.y - meta.headerFullHeight)
     meta.mainSize = mainSize
     meta.defaultMainSize = mainSize
+    meta.characterMenuMainSize = util.vector2(
+        config.data.main.charMenu.relativeSize.x * screenSize.x,
+        config.data.main.charMenu.relativeSize.y * screenSize.y - meta.headerFullHeight
+    )
 
     meta.centerOnPlayer = config.data.main.centerOnPlayer
 
     meta.minimapSetupMode = false
+    meta.isInCharacterMenuMode = params.inCharacterMenu or false
 
     meta.history = {index = 0, list = {}}
 
@@ -1146,6 +1180,7 @@ function this.create(params)
 
     if meta.useDefaultHeader then
         closeBtnLayout = {
+            name = commonData.headerCloseBtnLayoutName,
             props = {
                 size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
                 anchor = util.vector2(1, 0.5),
@@ -1173,6 +1208,7 @@ function this.create(params)
     else
         closeBtnLayout = {
             type = ui.TYPE.Text,
+            name = commonData.headerCloseBtnLayoutName,
             props = {
                 text = l10n("Close"),
                 textSize = meta.headerHeight,
@@ -1188,6 +1224,8 @@ function this.create(params)
             events = closeBtnEvents,
             }
     end
+
+    meta.closeBtnLayout = closeBtnLayout
 
     local headerBackground
     if meta.useDefaultHeader then
@@ -1225,11 +1263,8 @@ function this.create(params)
             pinBtnLayout,
         },
     }
-    if not params.hideCloseBtn then
-        meta.headerRightBtnBlock.content:add(interval(params.fontSize / 2, meta.headerHeight))
-        meta.headerRightBtnBlock.content:add(closeBtnLayout)
-    end
 
+    meta:updateCloseBtnState(not params.hideCloseBtn)
 
     local headerLayout = {
         type = ui.TYPE.Widget,
@@ -1249,8 +1284,13 @@ function this.create(params)
             mouseRelease = async:callback(function(e, layout)
                 local relativePos = meta.menu.layout.props.relativePosition
                 if not meta.minimapSetupMode then
-                    config.setValue("main.relativePosition.x", relativePos.x * 100)
-                    config.setValue("main.relativePosition.y", relativePos.y * 100)
+                    if meta.isInCharacterMenuMode then
+                        config.setValue("main.charMenu.relativePosition.x", relativePos.x)
+                        config.setValue("main.charMenu.relativePosition.y", relativePos.y)
+                    else
+                        config.setValue("main.relativePosition.x", relativePos.x * 100)
+                        config.setValue("main.relativePosition.y", relativePos.y * 100)
+                    end
                 end
                 layout.userData.lastMousePos = nil
                 meta.headerMovedDistance = 0
@@ -1557,7 +1597,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         if not widget then return end
 
         local params = widget.params
-        params.showWhenMenuInactive = not config.data.main.minimap.enabled or config.data.main.minimap.cellLabel
+        params.showWhenMenuInactive = config.data.main.minimap.cellLabel
         menu:removeWidget("AdvancedWorldMap:CellName")
         menu:addWidget(params)
     end
@@ -1716,20 +1756,6 @@ end, -10)
 local togglePinActionFunc
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
-
-    if config.data.main.saveVisibilityStateInInterfaceMenu then
-        local isInterfaceMode = false
-        for _, mode in pairs(UI.modes) do
-            if mode == "Interface" then
-                isInterfaceMode = true
-                break
-            end
-        end
-        if isInterfaceMode then
-            localStorage.data[commonData.hideInInterfaceMenuFieldId] = false
-        end
-    end
-
     togglePinActionFunc = function ()
         e.menu:togglePin()
         if not localStorage.data[commonData.pinnedStateFieldId] and not menuMode.isMenuInteractive() then

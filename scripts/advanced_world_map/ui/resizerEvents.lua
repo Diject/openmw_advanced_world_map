@@ -14,6 +14,29 @@ local resizerEvents = {
         local userData = layout.userData
         userData.lastMousePos = nil
         local meta = userData.getMeta()
+
+        if not meta.minimapSetupMode then
+            local size = userData.lastSizeForResizer
+            local screenSize = meta.screenSize
+            if size then
+                if meta.isInCharacterMenuMode then
+                    config.setValue("main.charMenu.relativeSize.x", size.x / screenSize.x)
+                    config.setValue("main.charMenu.relativeSize.y", size.y / screenSize.y)
+                else
+                    config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
+                    config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
+                end
+            end
+
+            if meta.isInCharacterMenuMode then
+                config.setValue("main.charMenu.relativePosition.y", meta.menu.layout.props.relativePosition.y)
+                config.setValue("main.charMenu.relativePosition.x", meta.menu.layout.props.relativePosition.x)
+            else
+                config.setValue("main.relativePosition.y", meta.menu.layout.props.relativePosition.y * 100)
+                config.setValue("main.relativePosition.x", meta.menu.layout.props.relativePosition.x * 100)
+            end
+        end
+
         meta.mapWidget:updateMarkers(true)
         meta:update()
     end),
@@ -49,13 +72,13 @@ local resizerEvents = {
         local newSize = util.vector2(math.max(minSize.x, mapSize.x + xDif), math.max(minSize.y, mapSize.y + yDif))
 
         local size = meta:setMapWidgetSize(newSize)
+        userData.lastSizeForResizer = size
 
-        if not meta.minimapSetupMode then
-            config.setValue("main.relativeSize.x", size.x / screenSize.x * 100)
-            config.setValue("main.relativeSize.y", size.y / screenSize.y * 100)
+        if meta.isInCharacterMenuMode then
+            meta.characterMenuMainSize = meta.mainLayout.props.size
+        else
+            meta.defaultMainSize = meta.mainLayout.props.size
         end
-
-        meta.defaultMainSize = meta.mainLayout.props.size
 
         if userData.left or userData.top then
             local menuPos = meta.menu.layout.props.relativePosition:emul(screenSize)
@@ -64,11 +87,6 @@ local resizerEvents = {
             meta.screenPosition = newMenuPos + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
                 util.vector2(meta.borderSize, meta.borderSize)
             meta.mapWidget.screenPosition = meta.screenPosition
-
-            if not meta.minimapSetupMode then
-                config.setValue("main.relativePosition.y", meta.menu.layout.props.relativePosition.y * 100)
-                config.setValue("main.relativePosition.x", meta.menu.layout.props.relativePosition.x * 100)
-            end
         end
 
         eventSys.triggerEvent(eventSys.EVENT["onResized"], {

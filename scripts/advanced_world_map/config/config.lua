@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 19,
+    version = 20,
     main = {
         menuKey = "M",
         relativeSize = {
@@ -32,6 +32,16 @@ this.default = {
                 y = 0,
             },
         },
+        charMenu = {
+            relativeSize = {
+                x = 0.3,
+                y = 0.3,
+            },
+            relativePosition = {
+                x = 0.7,
+                y = 0,
+            },
+        },
         centerOnPlayer = true,
         discoveryRadius = 1500,
         updateFrequency = 30,
@@ -39,7 +49,8 @@ this.default = {
         fastClose = true, -- used only for initializing the pinned state
         clearCacheOnClose = true,
         overrideDefault = false,
-        saveVisibilityStateInInterfaceMenu = false,
+        preserveCloseBtn = false, -- local
+        saveVisibilityStateInInterfaceMenu = false, -- deprecated
         resetSizePos = false,
         zoomingMul = 1.4,
     },

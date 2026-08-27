@@ -212,12 +212,12 @@ local function onLoad(data)
     notesWidgetData.loadData()
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
 
-    if config.data.main.minimap.enabled and localStorage.data[commonData.inMinimapModeKeyId] == true and
-            localStorage.data[commonData.pinnedStateFieldId] and
+    if (config.data.main.minimap.enabled and localStorage.data[commonData.inMinimapModeKeyId] == true or
+            localStorage.data[commonData.pinnedStateFieldId]) and
             not (configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
                 configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent) then
         async:newUnsavableSimulationTimer(1, function ()
-            if localStorage.data[commonData.inMinimapModeKeyId] == true then
+            if localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId] then
                 openMenu(false, true, config.data.main.overrideDefault)
             end
         end)
@@ -279,8 +279,10 @@ local function initDataForMenu(options)
 end
 
 
-openMenu = function (inMenuMode, internal, hideCloseBtn)
+openMenu = function (inMenuMode, internal, hideCloseBtn, params)
     if not initDataForMenu({openMenu = true, openInMenuMode = inMenuMode}) then return end
+
+    params = params or {}
 
     if inMenuMode and not menuMode.isMenuInteractive() then
         menuMode.activate()
@@ -297,6 +299,9 @@ openMenu = function (inMenuMode, internal, hideCloseBtn)
     menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
         isCreatedExternally = not internal,
         hideCloseBtn = hideCloseBtn,
+        relativePosition = params.relativePosition,
+        relativeSize = params.relativeSize,
+        inCharacterMenu = params.inCharacterMenu,
         onClose = function ()
             if inMenuMode then
                 menuMode.deactivate()
@@ -320,12 +325,12 @@ end
 if configLib.data.main.overrideDefault then
     I.UI.registerWindow("Map",
         function()
-            realTimer.newTimer(0.1, function ()
-                if configLib.data.main.saveVisibilityStateInInterfaceMenu and I.UI.getMode() == "Interface" and
-                        localStorage.data[commonData.hideInInterfaceMenuFieldId] then
-                    return
-                end
-                openMenu(nil, true, true)
+            realTimer.newTimer(0.05, function ()
+                openMenu(nil, true, true, {
+                    relativeSize = util.vector2(config.data.main.charMenu.relativeSize.x, config.data.main.charMenu.relativeSize.y),
+                    relativePosition = util.vector2(config.data.main.charMenu.relativePosition.x, config.data.main.charMenu.relativePosition.y),
+                    inCharacterMenu = true
+                })
             end)
         end,
         function ()
@@ -346,7 +351,14 @@ end
 
 
 local function toggleMenu()
-    if menuHandler.getMenu(commonData.mapMenuId) then
+    local menu = menuHandler.getMenu(commonData.mapMenuId)
+    local isInCharacterMenu = I.UI.getMode() == "Interface"
+    local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault
+    local isHiddenInMinimapMode = menu and menu.isInMinimapMode
+    local isRegularMode = menu and not menu.isInCharacterMenuMode and not menu.isInMinimapMode and not config.data.main.overrideDefault
+
+    if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) or
+            isRegularMode then
         if menuMode.isActive() then
             if localStorage.data[commonData.pinnedStateFieldId] then
                 menuMode.deactivate()
@@ -354,17 +366,31 @@ local function toggleMenu()
                 menuHandler.destroyMenu(commonData.mapMenuId)
             end
         else
-            menuHandler.destroyMenu(commonData.mapMenuId)
+            if localStorage.data[commonData.pinnedStateFieldId] and not menuMode.isMenuInteractive() then
+                menuMode.activate()
+            else
+                menuHandler.destroyMenu(commonData.mapMenuId)
+            end
         end
     else
-        local function registerMenu()
+        local function registerMenu(useCharacterMenuParams)
             if not initDataForMenu({toggleMenu = true}) then return end
 
             if not menuMode.isMenuInteractive() then
                 menuMode.activate()
             end
 
+            local relPos, relSize
+            if useCharacterMenuParams then
+                relSize = util.vector2(config.data.main.charMenu.relativeSize.x, config.data.main.charMenu.relativeSize.y)
+                relPos = util.vector2(config.data.main.charMenu.relativePosition.x, config.data.main.charMenu.relativePosition.y)
+            end
+
             menuHandler.registerMenu(commonData.mapMenuId, mapMenu.create{
+                relativePosition = relPos,
+                relativeSize = relSize,
+                inCharacterMenu = useCharacterMenuParams,
+                hideCloseBtn = useCharacterMenuParams,
                 onClose = function ()
                     menuMode.deactivate()
                 end
@@ -392,7 +418,12 @@ local function toggleMenu()
             })
 
         else
-            registerMenu()
+            local useCharacterMenuParams = isInCharacterMenu and config.data.main.overrideDefault
+            if menu and (istInCharacterMenuMode or isHiddenInMinimapMode) then
+                menuHandler.destroyMenu(commonData.mapMenuId)
+                useCharacterMenuParams = false
+            end
+            registerMenu(useCharacterMenuParams)
         end
     end
 end
@@ -814,6 +845,9 @@ return {
             elseif e.newMode == "Loading" then
                 -- update timestamp of the visited cell before the player leaves it
                 discoveredLocs.updateVisited(self.cell)
+            elseif e.oldMode ~= nil and e.newMode == nil and not menuHandler.getMenu(commonData.mapMenuId) and
+                    (localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId]) then
+                openMenu(false, true, config.data.main.overrideDefault)
             end
         end,
 
