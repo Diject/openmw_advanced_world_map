@@ -322,7 +322,9 @@ local function closeMenu()
 end
 
 
-if configLib.data.main.overrideDefault then
+local registeredAsDefault = false
+local function registerAsDefaultMap()
+    registeredAsDefault = true
     I.UI.registerWindow("Map",
         function()
             realTimer.newTimer(0.05, function ()
@@ -347,6 +349,11 @@ if configLib.data.main.overrideDefault then
             closeMenu()
         end
     )
+end
+
+
+if configLib.data.main.overrideDefault then
+    registerAsDefaultMap()
 end
 
 
@@ -408,12 +415,18 @@ local function toggleMenu()
             configLib.setValue("message.firstInitMenuShown", configLib.data.message.firstInitMenuShownCurrent)
 
             menuHandler.registerMenu(commonData.firstInitMenuId, firstInitMenu.new{
-                yesCallback = function ()
+                yesCallback = function (fiMenu)
                     if not configLib.data.data.hasSafeInitMessageBeenShown then
                         configLib.setValue("data.hasSafeInitMessageBeenShown", true)
                     end
                     configLib.setValue("main.firstInitMenu", false)
-                    registerMenu()
+                    if fiMenu.settings.overrideDefault and not registeredAsDefault then
+                        registerAsDefaultMap()
+                        configLib.setValue("main.overrideDefault", true)
+                        menuMode.deactivate()
+                    else
+                        registerMenu()
+                    end
                 end
             })
 
