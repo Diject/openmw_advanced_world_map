@@ -1755,43 +1755,49 @@ end
 
 
 function mapWidgetMeta:openRightMouseMenu()
-    local menu = self.layout.userData.contextMenu
-    if menu and menu.layout then
-        menu:destroy()
-        self.layout.userData.contextMenu = nil
-    end
-
-    if eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
-        local layersLayout = self.layout.content[2]
-        uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
-
-        local pos = self:getScreenPositionOfCursor()
-        local lay = {
-            layer = commonData.messageLayer,
-            name = commonData.rightClickMenuId,
-            type = ui.TYPE.Flex,
-            props = {
-                autoSize = true,
-                position = pos,
-                anchor = util.vector2(0, 0),
-                propagateEvents = false,
-            },
-            content = ui.content{
-
-            },
-        }
-        local layContent = lay.content
-        eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
-            mapWidget = self,
-            relPos = self:getRelativePositionOfCursor(),
-            content = layContent,
-            marker = self.layout.userData.lastMarkerElement,
-        })
-
-        if #layContent > 0 then
-            self.layout.userData.contextMenu = ui.create(lay)
+    realTimer.newTimer(0.05, function ()
+        local menu = self.layout.userData.contextMenu
+        if menu and menu.layout then
+            menu:destroy()
+            self.layout.userData.contextMenu = nil
         end
-    end
+
+         if not menuMode.isMenuInteractive() then
+            return
+        end
+
+        if eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
+            local layersLayout = self.layout.content[2]
+            uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
+
+            local pos = self:getScreenPositionOfCursor()
+            local lay = {
+                layer = commonData.messageLayer,
+                name = commonData.rightClickMenuId,
+                type = ui.TYPE.Flex,
+                props = {
+                    autoSize = true,
+                    position = pos,
+                    anchor = util.vector2(0, 0),
+                    propagateEvents = false,
+                },
+                content = ui.content{
+
+                },
+            }
+            local layContent = lay.content
+            eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
+                mapWidget = self,
+                relPos = self:getRelativePositionOfCursor(),
+                content = layContent,
+                marker = self.layout.userData.lastMarkerElement,
+            })
+
+            if #layContent > 0 then
+                self.layout.userData.contextMenu = ui.create(lay)
+            end
+        end
+    end)
 end
 
 
