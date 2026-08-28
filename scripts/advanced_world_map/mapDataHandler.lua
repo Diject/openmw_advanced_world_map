@@ -494,7 +494,7 @@ local function buildData(params)
         }
         cellNames[dt.name] = cellDt
 
-        local hash = math.floor(posY / 8192)
+        local hash = math.floor(posY / 6144)
         for i = -1, 1 do
             local h = hash + i
             cellNameLines[h] = cellNameLines[h] or {}
