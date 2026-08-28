@@ -190,14 +190,14 @@ local function create(menu)
     eventSys.registerHandler(eventSys.EVENT.onRightMouseMenu, rightBtnMenuFunc)
 
 
-    menu:addWidget{
-        id = "AdvancedWorldMap:FastTravel",
-        layout = iconLayout,
-        onClick = function (m, e)
-            tooltip.create(e, iconLayout, tooltipContent)
-        end,
-        priority = 100,
-    }
+    -- menu:addWidget{
+    --     id = "AdvancedWorldMap:FastTravel",
+    --     layout = iconLayout,
+    --     onClick = function (m, e)
+    --         tooltip.create(e, iconLayout, tooltipContent)
+    --     end,
+    --     priority = 100,
+    -- }
 
 end
 
