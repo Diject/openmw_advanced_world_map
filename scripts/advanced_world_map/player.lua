@@ -135,6 +135,10 @@ local function resetSizePos()
     configLib.setValue("main.minimap.relativeSize.y", config.default.main.minimap.relativeSize.y)
     configLib.setValue("main.minimap.relativePosition.x", config.default.main.minimap.relativePosition.x)
     configLib.setValue("main.minimap.relativePosition.y", config.default.main.minimap.relativePosition.y)
+    configLib.setValue("main.charMenu.relativeSize.x", config.default.main.charMenu.relativeSize.x)
+    configLib.setValue("main.charMenu.relativeSize.y", config.default.main.charMenu.relativeSize.y)
+    configLib.setValue("main.charMenu.relativePosition.x", config.default.main.charMenu.relativePosition.x)
+    configLib.setValue("main.charMenu.relativePosition.y", config.default.main.charMenu.relativePosition.y)
     ui.showMessage(l10n("MapSizePositionResetMessage"))
 end
 
