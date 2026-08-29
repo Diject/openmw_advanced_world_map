@@ -858,7 +858,7 @@ return {
             elseif e.newMode == "Loading" then
                 -- update timestamp of the visited cell before the player leaves it
                 discoveredLocs.updateVisited(self.cell)
-            elseif e.oldMode ~= nil and e.newMode == nil and not menuHandler.getMenu(commonData.mapMenuId) and
+            elseif mapDataHandler.isInitialized() and e.oldMode ~= nil and e.newMode == nil and not menuHandler.getMenu(commonData.mapMenuId) and
                     (localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId]) then
                 openMenu(false, true, config.data.main.overrideDefault)
             end
