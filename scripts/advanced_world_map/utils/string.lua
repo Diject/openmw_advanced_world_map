@@ -181,9 +181,9 @@ end
 
 local altCommaLength = this.length("，")
 local function findCommaPos(str)
-    local pos = string.find(str, ", ")
+    local pos = string.find(str, ", ", 1, true)
     if pos then return pos, 2 end
-    pos = string.find(str, "，")
+    pos = string.find(str, "，", 1, true)
     if pos then return pos, altCommaLength end
 end
 
