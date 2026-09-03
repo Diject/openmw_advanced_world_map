@@ -51,6 +51,7 @@ this.playerMarkerLayer = "AdvWMap:PlMarker"
 -- local storage
 this.visitedLocsFieldId = "visitedLocationsHashSet"
 this.discoveredLocsFieldId = "discoveredLocationsHashSet"
+this.pendingDiscoveredLocsFieldId = "pendingDiscoveredLocations"
 this.sortByDistanceFieldId = "searchSortByDistance"
 this.showUnrevealedFieldId = "searchShowUnrevealed"
 this.searchAllLocationsFieldId = "searchSearchInInteriors"
@@ -72,6 +73,7 @@ this.transportShipmastersFieldId = "transportShipmasters"
 this.transportGuildGuidesFieldId = "transportGuildGuides"
 this.transportOtherFieldId = "transportOther"
 this.transportLocalFieldId = "transportLocal"
+this.disableDialogueMarkersFieldId = "disableDialogueMarkers"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"

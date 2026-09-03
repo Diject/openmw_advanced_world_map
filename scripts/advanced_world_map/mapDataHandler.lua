@@ -14,7 +14,7 @@ local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 local this = {}
 
-this.version = 9
+this.version = 10
 
 ---@type table<string, advancedWorldMap.dynamicDataHandler.cellData> by cell name
 this.cellNameData = nil
@@ -33,6 +33,9 @@ this.worldMapTileRectangles = {}
 ---@type advancedWorldMap.dynamicDataHandler.transport
 this.transport = nil
 
+---@type table<string, string>
+this.worldNameById = {}
+
 this.cellCount = 0
 this.contentFileCount = 0
 
@@ -48,6 +51,7 @@ local forbiddenCellPrefixes = { -- lowercase
 ---@field posX number
 ---@field posY number
 ---@field name string
+---@field id string
 ---@field count integer
 
 ---@class advancedWorldMap.dynamicDataHandler.entranceData
@@ -91,6 +95,19 @@ function this.getClusterBoundingBox(cluster)
         if pos.y > maxY then maxY = pos.y end
     end
     return {x = util.vector2(minX, minY), y = util.vector2(maxX, maxY), center = util.vector2((minX + maxX) / 2, (minY + maxY) / 2)}
+end
+
+
+local function buildWorldNameByIdData()
+    if not this.cellNameData then return end
+    local tb = {}
+    for cN, dt in pairs(this.cellNameData) do
+        if dt.id then
+            tb[dt.id] = dt.name
+        end
+    end
+
+    this.worldNameById = tb
 end
 
 
@@ -422,7 +439,9 @@ local function buildData(params)
         local cellDt = cellNameData[name]
         if not cellDt then
             cellDt = {
-                name = stringLib.getBeforeComma(cell.displayName or cell.name), count = 0,
+                name = stringLib.getBeforeComma(cell.displayName or cell.name),
+                id = stringLib.utf8_lower(name),
+                count = 0,
                 minX = math.huge, maxX = -math.huge,
                 minY = math.huge, maxY = -math.huge,
             }
@@ -487,6 +506,7 @@ local function buildData(params)
         local posY = (dt.minY + (dt.maxY - dt.minY) / 2) * 8192 + 4096
 
         local cellDt = {
+            id = dt.id,
             name = dt.name,
             count = dt.count,
             posX = posX,
@@ -813,6 +833,9 @@ function this.globalBuildData(playerRef, options)
         options = options,
         plId = playerRef.id,
     })
+
+    buildWorldNameByIdData()
+
     initialized = true
 end
 
@@ -870,6 +893,8 @@ function this.playerInit(playerRef, cellCount, options)
             playerRef:sendEvent("AdvWMap:processMapDataOptions", options)
         end
 
+        buildWorldNameByIdData()
+
         initialized = true
 
         return true
@@ -911,6 +936,8 @@ function this.updateData(playerRef, data)
         core.sendGlobalEvent("AdvWMap:processMapDataOptions", {plId = data.plId, options = data.options})
     end
 
+    buildWorldNameByIdData()
+
     initialized = true
 end
 
@@ -924,6 +951,8 @@ function this.loadMapData(data)
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
     this.transport = data.transport or {}
+
+    buildWorldNameByIdData()
 
     initialized = true
 end

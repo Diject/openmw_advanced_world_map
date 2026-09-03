@@ -198,6 +198,9 @@ local function onInit()
     disabledActors.init()
     -- must be after localStorage init
     notesWidgetData.loadData()
+    if core.API_REVISION >= 129 then
+        localStorage.data[commonData.disableDialogueMarkersFieldId] = true
+    end
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
 end
 
@@ -279,6 +282,7 @@ local function initDataForMenu(options)
         end
     end
     hasAttemptedToGetData = true
+    discoveredLocs.updatePending()
     return true
 end
 
@@ -865,6 +869,15 @@ return {
             elseif mapDataHandler.isInitialized() and e.oldMode ~= nil and e.newMode == nil and not menuHandler.getMenu(commonData.mapMenuId) and
                     (localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId]) then
                 openMenu(false, true, config.data.main.overrideDefault)
+            end
+        end,
+
+        DialogueResponse = function(e)
+            if e.type ~= "topic" and e.type ~= "greeting" then return end
+
+            local newDiscovered = discoveredLocs.addFromDialogueScript(e.recordId, e.infoId)
+            if newDiscovered then
+                markers.updateDiscovered(newDiscovered)
             end
         end,
 

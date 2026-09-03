@@ -15,6 +15,7 @@ local cellLib = require("scripts.advanced_world_map.utils.cell")
 local dateLib = require("scripts.advanced_world_map.utils.date")
 
 local commonData = require("scripts.advanced_world_map.common")
+local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
@@ -98,10 +99,21 @@ function this.updateDiscovered(newDiscovered)
             local userData = handler:getUserData()
             if userData and userData.type == commonData.cityRegionMarkerType then
                 updateVisibility(handler)
-                handler:setColor(config.data.ui.worldDefaultLightColor)
+                local visited = discoveredLocs.isVisited(name)
+                if visited then
+                    handler:setColor(config.data.ui.worldDefaultLightColor)
+                else
+                    handler:setColor(config.data.ui.worldDefaultColor)
+                end
+
                 if config.data.legend.worldMarkerShadow then
-                    handler._params.shadowColor = config.data.ui.worldMarkerShadowColor
-                    handler._elemLayout.props.textShadowColor = config.data.ui.worldMarkerShadowColor
+                    if visited then
+                        handler._params.shadowColor = config.data.ui.worldMarkerShadowColor
+                        handler._elemLayout.props.textShadowColor = config.data.ui.worldMarkerShadowColor
+                    else
+                        handler._params.shadowColor = config.data.ui.worldMarkerShadowLightColor
+                        handler._elemLayout.props.textShadowColor = config.data.ui.worldMarkerShadowLightColor
+                    end
                 end
             end
         end
@@ -199,11 +211,14 @@ local function createWorldMarkers(widget)
         return
     end
 
+    local playerJournal = not localStorage.data[commonData.disableDialogueMarkersFieldId] and types.Player.journal and
+        types.Player.journal(playerRef) or nil
+
     for _, dt in pairs(mapDataHandler.cellNameData or {}) do
         local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
 
         local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name) or
-            types.Player.journal and types.Player.journal(playerRef).topics[dt.name] and true or false
+            playerJournal and playerJournal.topics[dt.name] and true or false
 
         this.markersByName[dt.name] = this.markersByName[dt.name] or {}
 

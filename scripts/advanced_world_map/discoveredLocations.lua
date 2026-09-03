@@ -5,7 +5,10 @@ local dateLib = require("scripts.advanced_world_map.utils.date")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
 local commonData = require("scripts.advanced_world_map.common")
+local scriptLib = require("scripts.advanced_world_map.utils.script")
+local dialogueLib = require("scripts.advanced_world_map.utils.dialogue")
 
+local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
 
 local this = {}
@@ -15,6 +18,8 @@ local this = {}
 this.visited = {}
 ---@type table<string, boolean> by cell id or cell name
 this.discovered = {}
+---@type table<string, any>
+this.pending = {}
 
 this.blockDiscovery = false
 
@@ -30,7 +35,10 @@ function this.addVisitedCell(cell)
             if cell.isExterior then
                 this.visited[cellName] = timeStamp
                 table.insert(res, cellName)
-            elseif cellName:find(",") then
+                local name = stringLib.getBeforeComma(cellName)
+                this.visited[name] = timeStamp
+                table.insert(res, name)
+            elseif cellName:find(",", 1, true) or cellName:find("，", 1, true) then
                 local name = stringLib.getBeforeComma(cellName)
                 this.visited[name] = timeStamp
                 table.insert(res, name)
@@ -73,7 +81,7 @@ function this.addDiscoveredCell(cell, addNearbyExteriors)
         newDiscovered[cell.id] = true
 
         local cellName = cell.displayName or cell.name
-        if cellName:find(",") then
+        if cellName:find(",", 1, true) or cellName:find("，", 1, true) then
             local name = stringLib.getBeforeComma(cellName)
             this.discovered[name] = true
             newDiscovered[name] = true
@@ -84,6 +92,69 @@ function this.addDiscoveredCell(cell, addNearbyExteriors)
         eventSys.triggerEvent(eventSys.EVENT.onDiscover, {discoveredMap = newDiscovered})
         return tableLib.keys(newDiscovered)
     end
+end
+
+
+function this.addPending(names)
+    tableLib.copy(names, this.pending)
+end
+
+
+local function discoverNames(names)
+    local newDiscovered = {}
+
+    for _, name in pairs(names) do
+        if not this.discovered[name] then
+            this.discovered[name] = true
+            newDiscovered[name] = true
+        end
+    end
+
+    if next(newDiscovered) then
+        eventSys.triggerEvent(eventSys.EVENT.onDiscover, {discoveredMap = newDiscovered})
+        return tableLib.keys(newDiscovered)
+    end
+end
+
+
+function this.addFromDialogueScript(diaId, infoId)
+    local diaInfo = dialogueLib.getDialogueTopicInfo(diaId, infoId)
+    if not diaInfo or not diaInfo.resultScript then return end
+
+    local places = scriptLib.getShowMapPlaces(diaInfo.resultScript)
+    if not places then return end
+
+    if not mapDataHandler.isInitialized() then
+        tableLib.copy(places, this.pending)
+        return
+    end
+
+    local names = {}
+    for place, _ in pairs(places) do
+        local name = mapDataHandler.worldNameById[place]
+        if name then
+            table.insert(names, name)
+        end
+    end
+
+    return discoverNames(names)
+end
+
+
+function this.updatePending()
+    if not mapDataHandler.isInitialized() or not next(this.pending) then return end
+
+    local names = {}
+    for id, _ in pairs(this.pending) do
+        local name = mapDataHandler.worldNameById[id]
+        if name then
+            table.insert(names, name)
+        end
+
+        this.pending[id] = nil
+    end
+
+    return discoverNames(names)
 end
 
 
@@ -99,6 +170,11 @@ function this.init()
         localStorage.data[commonData.discoveredLocsFieldId] = {}
     end
     this.discovered = localStorage.data[commonData.discoveredLocsFieldId]
+
+    if not localStorage.data[commonData.pendingDiscoveredLocsFieldId] then
+        localStorage.data[commonData.pendingDiscoveredLocsFieldId] = {}
+    end
+    this.pending = localStorage.data[commonData.pendingDiscoveredLocsFieldId]
 end
 
 
