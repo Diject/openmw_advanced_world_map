@@ -779,9 +779,6 @@ function menuMeta:close()
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
 
-    eventSys.triggerEvent(eventSys.EVENT.onMenuClosed, {menu = self})
-    this.activeMenuMeta = nil
-
     I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
     I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
 
@@ -1768,9 +1765,89 @@ eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     I.DijectKeyBindings.action.register(commonData.togglePinKeyId, togglePinActionFunc)
 end, 10000)
 
+
+---@param mWidget advancedWorldMap.ui.mapWidgetMeta
+local function saveZoom(mWidget)
+    if mWidget.cellId then
+        localStorage.data[commonData.localMapZoomFieldId] = mWidget.zoom * mWidget.eScale
+    else
+        localStorage.data[commonData.worldMapZoomFieldId] = mWidget.zoom * mWidget.eScale
+    end
+end
+
+local function blockZoomingFunc()
+    return nil, true
+end
+
+eventSys.registerHandler(eventSys.EVENT.onZoomed, function (e)
+    if not this.activeMenuMeta then return end
+    if not config.data.main.centerOnPlayer then return end
+
+    local menu = this.activeMenuMeta
+    local mWidget = e.mapWidget
+    local cellId = mWidget.cellId
+    local zoom = e.zoom
+
+    if menu.userData.saveZoomTimer then
+        menu.userData.saveZoomTimer()
+        menu.userData.saveZoomTimer = nil
+    end
+
+    local blockZooming = false
+    if cellId and zoom == mWidget.minZoom then
+        this.activeMenuMeta:updateMapWidgetCell()
+        blockZooming = true
+    elseif not cellId and zoom == mWidget.maxZoom and not playerRef.cell.isExterior then
+        this.activeMenuMeta:updateMapWidgetCell(playerRef.cell.id)
+        blockZooming = true
+    end
+
+    if blockZooming then
+        if menu.userData.blockZoomingTimer then
+            menu.userData.blockZoomingTimer()
+            menu.userData.blockZoomingTimer = nil
+        end
+        eventSys.registerHandler(eventSys.EVENT.onZoom, blockZoomingFunc)
+
+        menu.userData.blockZoomingTimer = realTimer.newTimer(1, function ()
+            menu.userData.blockZoomingTimer = nil
+            if menu.userData.saveZoomTimer then
+                menu.userData.saveZoomTimer()
+                menu.userData.saveZoomTimer = nil
+            end
+            eventSys.unregisterHandler(eventSys.EVENT.onZoom, blockZoomingFunc)
+        end)
+    else
+        menu.userData.saveZoomTimer = realTimer.newTimer(2, function ()
+            saveZoom(mWidget)
+            menu.userData.saveZoomTimer = nil
+        end)
+    end
+end, 10000)
+
+
+eventSys.registerHandler(eventSys.EVENT.onMarkerClick, function (e)
+    if not this.activeMenuMeta then return end
+    local marker = e.marker
+    local mWidget = marker._parent
+
+    if mWidget then
+        saveZoom(mWidget)
+        if this.activeMenuMeta.userData.saveZoomTimer then
+            this.activeMenuMeta.userData.saveZoomTimer()
+        end
+    end
+end)
+
+
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
     I.DijectKeyBindings.action.unregister(commonData.togglePinKeyId, togglePinActionFunc)
     localStorage.data[commonData.inMinimapModeKeyId] = nil
+    saveZoom(e.menu.mapWidget)
+    if e.menu.userData.saveZoomTimer then
+        e.menu.userData.saveZoomTimer()
+        e.menu.userData.saveZoomTimer = nil
+    end
 end, 10000)
 
 eventSys.registerHandler(eventSys.EVENT.onMapClosed, function (e)

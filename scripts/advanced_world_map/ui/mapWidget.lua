@@ -567,12 +567,6 @@ local function setZoom(self, zoom, relativePos, force, skipRounding)
 
     self:updateMarkersScale()
 
-    if self.cellId then
-        localStorage.data[commonData.localMapZoomFieldId] = zoom * self.eScale
-    else
-        localStorage.data[commonData.worldMapZoomFieldId] = zoom * self.eScale
-    end
-
     if oldZoom ~= zoom then
         eventSys.triggerEvent(eventSys.EVENT.onZoomed, {mapWidget = self, zoom = zoom})
     end
