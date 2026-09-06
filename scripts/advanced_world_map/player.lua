@@ -41,6 +41,7 @@ local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 local disabledActors = require("scripts.advanced_world_map.disabledActors")
+local northMarker = require("scripts.advanced_world_map.northMarker")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
@@ -1002,5 +1003,9 @@ return {
 
             menu.userData.advWMapSetSearchResults(results)
         end,
+
+        ["AdvWMap:northMarkerData"] = function (data)
+            northMarker.set(data.cellId, data.yaw)
+        end
     },
 }

@@ -40,12 +40,23 @@ local function getPlayer(id)
 end
 
 
+local function sendToPlayers(id, data)
+    for _, pl in pairs(world.players) do
+        pl:sendEvent(id, data)
+    end
+end
+
+
 
 local function onObjectActive(ref)
     if types.Actor.objectIsInstance(ref) then
         if not ref:hasScript("scripts/advanced_world_map/actor.lua") then
             ref:addScript("scripts/advanced_world_map/actor.lua")
         end
+    elseif ref.recordId == "northmarker" then
+        local yaw = ref.rotation:getYaw()
+        local cellId = ref.cell.id
+        sendToPlayers("AdvWMap:northMarkerData", {yaw = yaw, cellId = cellId})
     end
 end
 
