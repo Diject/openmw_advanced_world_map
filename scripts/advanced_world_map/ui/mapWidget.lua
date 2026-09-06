@@ -504,6 +504,12 @@ end
 
 ---@param self advancedWorldMap.ui.mapWidgetMeta
 local function setZoom(self, zoom, relativePos, force, skipRounding)
+    local eventData = {mapWidget = self, zoom = zoom}
+    if eventSys.triggerEvent(eventSys.EVENT.onZoom, eventData) then
+        return
+    end
+    zoom = eventData.zoom
+
     local widget = self:getMapLayersLayout()
 
     local oldZoom = self.zoom

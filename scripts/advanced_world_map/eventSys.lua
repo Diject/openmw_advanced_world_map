@@ -28,6 +28,7 @@ this.EVENT = {
     onMouseMove = "onMouseMove",
     onRightMouseMenu = "onRightMouseMenu",
     onResized = "onResized",
+    onZoom = "onZoom",
     onZoomed = "onZoomed",
     onZoomMarkersUpdate = "onZoomMarkersUpdate",
     onZoomMarkersUpdated = "onZoomMarkersUpdated",
@@ -75,6 +76,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onMouseMove", handlerFunc: fun(e : {marker : advancedWorldMap.ui.mapElementMeta?, offset : any, position : any}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onRightMouseMenu", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, marker : advancedWorldMap.ui.mapElementMeta, content : any, relPos : any}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onResized", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, size : any, mapWidgetSize : any}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onZoom", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, zoom : number}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onZoomed", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, zoom : number}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onZoomMarkersUpdate", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, region : any}) : (boolean?, boolean?), priority : number?)
 ---@overload fun(eventId : "onZoomMarkersUpdated", handlerFunc: fun(e : {mapWidget : advancedWorldMap.ui.mapWidgetMeta, region : any}) : (boolean?), priority : number?)
