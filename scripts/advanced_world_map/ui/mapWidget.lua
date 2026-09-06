@@ -19,6 +19,7 @@ local playerMarker = require("scripts.advanced_world_map.ui.playerMarker")
 local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
+local northMarker = require("scripts.advanced_world_map.northMarker")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -604,7 +605,8 @@ function mapWidgetMeta:updateMarkersScale()
     local playerMarkerImageSize = self.SCALE_FUNCTION.playerMarker(playerMarkerLayout.content[1].userData.size, self.zoom)
 
     playerMarkerLayout.content[1].props.size = playerMarkerImageSize
-    playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(self.northDirectionAngle) or playerMarkerTexture
+    playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(not self.cellId and not playerRef.cell.isExterior and northMarker.get(playerRef.cell.id) or
+        self.northDirectionAngle or 0) or playerMarkerTexture
 
     local isInZoomInMode = self:isInZoomInMode()
 
@@ -1701,7 +1703,7 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
     local playerMarkerLayout = lay.content[1]
     local playerCell = playerRef.cell
 
-    if self.cellId and self.cellId ~= (not playerCell.isExterior and playerRef.cell.id) then
+    if self.cellId and self.cellId ~= (not playerCell.isExterior and playerCell.id) then
         local visible = playerMarkerLayout.props.visible
         playerMarkerLayout.props.visible = false
         return visible ~= false
@@ -1727,7 +1729,8 @@ function mapWidgetMeta:updatePlayerMarker(focusOnPlayer, forceUpdate)
 
     local playerRelPos = self:getRelativePositionByWorldPosition(pos)
     playerMarkerLayout.props.relativePosition = playerRelPos
-    playerMarkerLayout.props.resource = playerMarker.getTexture(self.northDirectionAngle, yaw) or playerMarkerTexture
+    local northOffset = not self.cellId and not playerCell.isExterior and northMarker.get(playerCell.id) or self.northDirectionAngle or 0
+    playerMarkerLayout.props.resource = playerMarker.getTexture(northOffset, yaw) or playerMarkerTexture
     if dist > 4096 or commonData.distance2D(playerMarkerLayout.userData.lastLayPos, mapLayerPosition) > 1000 then
         self._updatePlayerTiles = true
     end
@@ -2246,7 +2249,8 @@ function this.new(params)
                     type = ui.TYPE.Image,
                     props = {
                         relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
-                        resource = playerMarker.getTexture(meta.northDirectionAngle) or playerMarkerTexture,
+                        resource = playerMarker.getTexture(not meta.cellId and not playerRef.cell.isExterior and northMarker.get(playerRef.cell.id) or
+                            meta.northDirectionAngle or 0) or playerMarkerTexture,
                         size = util.vector2(1, 1) * config.data.legend.playerMarkerSize,
                         anchor = util.vector2(0.5, 0.5),
                         color = config.data.ui.defaultColor,
@@ -2258,7 +2262,8 @@ function this.new(params)
                         lastPos = playerPos.gexExteriorPos(),
                         lastYaw = playerRef.rotation:getYaw(),
                         lastLayPos = util.vector2(0, 0),
-                        lastNorthAngle = meta.northDirectionAngle or 0,
+                        lastNorthAngle = not meta.cellId and not playerRef.cell.isExterior and northMarker.get(playerRef.cell.id) or
+                            meta.northDirectionAngle or 0,
                     },
                 },
             },
