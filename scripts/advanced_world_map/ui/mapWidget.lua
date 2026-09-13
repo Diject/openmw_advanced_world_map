@@ -20,6 +20,7 @@ local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local northMarker = require("scripts.advanced_world_map.northMarker")
+local markerSelector = require("scripts.advanced_world_map.ui.markerSelector")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -1765,7 +1766,7 @@ function mapWidgetMeta:openRightMouseMenu()
             self.layout.userData.contextMenu = nil
         end
 
-         if not menuMode.isMenuInteractive() then
+        if not menuMode.isMenuInteractive() then
             return
         end
 
@@ -1930,6 +1931,16 @@ end
 
 function mapWidgetMeta:isInFocus()
     return self.layout.userData.inFocus == true
+end
+
+
+function mapWidgetMeta:focusOn()
+    self.layout.userData.inFocus = true
+end
+
+
+function mapWidgetMeta:setMousePos(pos)
+    self.layout.userData.mousePos = pos
 end
 
 
@@ -2290,6 +2301,7 @@ function this.new(params)
             meta.layout.userData.inFocus = false
             local userData = layout.userData
             userData.pressed = {}
+            userData.inFocus = false
             if userData.events.focusLoss then userData.events.focusLoss(e, layout) end
             meta.layout.events.focusLoss(e, layout, userData.markerElement)
             tooltip.destroy(layout)
@@ -2297,16 +2309,18 @@ function this.new(params)
 
         mouseMove = async:callback(function(e, layout)
             meta.layout.userData.inFocus = true
-            if layout.userData.pressed[1] and meta.layout.userData.lastDraggedMousePos then
-                layout.userData.movedDistance = layout.userData.movedDistance +
+            local userData = layout.userData
+            userData.inFocus = true
+            if userData.pressed[1] and meta.layout.userData.lastDraggedMousePos then
+                userData.movedDistance = layout.userData.movedDistance +
                     (e.position - meta.layout.userData.lastDraggedMousePos):length()
             end
 
-            if layout.userData.events.mouseMove then layout.userData.events.mouseMove(e, layout) end
-            meta.layout.events.mouseMove({offset = e.offset, position = e.position}, layout, layout.userData.markerElement)
+            if userData.events.mouseMove then userData.events.mouseMove(e, layout) end
+            meta.layout.events.mouseMove({offset = e.offset, position = e.position, keepSelectedMarker = e.keepSelectedMarker}, layout, userData.markerElement)
 
-            if not layout.userData.params.tooltipContent then return end
-            tooltip.createOrMove(e, layout, layout.userData.params.tooltipContent)
+            if not userData.params.tooltipContent then return end
+            tooltip.createOrMove(e, layout, userData.params.tooltipContent)
         end),
 
         mousePress = async:callback(function(e, layout)
@@ -2441,6 +2455,10 @@ function this.new(params)
                     main.userData.mainMouseOffset = e.offset
                 end
                 main.userData.inFocus = true
+
+                if markerElement and markerElement ~= markerSelector.lastSelected then
+                    markerSelector.resetLastSelected()
+                end
 
                 e.mapWidget = meta
                 if eventSys.triggerEvent(eventSys.EVENT["onMouseMove"], {

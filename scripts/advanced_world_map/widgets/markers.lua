@@ -243,6 +243,7 @@ local function createWorldMarkers(widget)
                 type = commonData.cityRegionMarkerType,
                 searchText = stringLib.utf8_lower(dt.name),
                 allowSearchFilter = true,
+                selectable = true,
             },
         }
         if textMarkerHandler then
@@ -980,6 +981,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
             color = config.data.ui.defaultDarkColor
         end
 
+        local isIsolated = textMarkerHandler and textMarkerHandler:getUserData().isIsolated or false
+
         local userData = imageMarkerHandler and imageMarkerHandler:getUserData() or {
             type = commonData.doorMarkerType,
             cellId = dt.dCId,
@@ -989,13 +992,13 @@ local function createMarkers(widget, cellId, allowedCells, region)
             textMarker = textMarkerHandler,
             name = dt.name,
             fullName = dt.fName,
-            sPref = doGroupToName and dt.ppN or nil
+            sPref = doGroupToName and dt.ppN or nil,
+            selectable = isIsolated or not doGroupToName
         }
 
         userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
         userData.isTileDiscovered = isTileDiscovered
 
-        local isIsolated = textMarkerHandler and textMarkerHandler:getUserData().isIsolated or false
         local markerSize = isIsolated and isolatedImageMarkerSize or unisolatedImageMarkerSize
 
         ---@diagnostic disable-next-line: cast-local-type
@@ -1298,6 +1301,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     searchText = stringLib.utf8_lower(dt.name),
                     allowSearchFilter = true,
                     useWorldColor = not hasTexture,
+                    selectable = true,
                 }
             }
             temporaryMarkers[dt.name] = nil

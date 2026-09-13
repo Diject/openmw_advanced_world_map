@@ -157,7 +157,7 @@ local function drawMarkers(mapWidget, markerType, color, skipWorld, skipLocal)
 
             local linkedPos = linkedNodeData.p
             local distance = commonData.distance2D(pos, linkedPos)
-            local angle = math.atan2(linkedPos.y - pos.y, linkedPos.x - pos.x) ---@diagnostic disable-line: deprecated
+            local angle = (math.atan2 or math.atan)(linkedPos.y - pos.y, linkedPos.x - pos.x) ---@diagnostic disable-line: deprecated
             local texture, lineTexture = this.getTexture(math.pi / 2, angle)
 
             local isClose = distance < 25000

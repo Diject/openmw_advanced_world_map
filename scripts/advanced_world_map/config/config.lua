@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 20,
+    version = 21,
     main = {
         menuKey = "M",
         relativeSize = {
@@ -122,7 +122,7 @@ this.default = {
         altExMapAlpha = 6,
     },
     input = {
-        version = 2,
+        version = 3,
         gamepadControls = true,
         gamepadControlsBumperMode = false,
         togglePinHotkey = nil,
@@ -130,8 +130,12 @@ this.default = {
         contextMenuHotkey = "C_Y",
         moveHistoryBackHotkey = "MB4",
         moveHistoryForwardHotkey = "MB5",
-        toggleTransportHotkey = "C_DPadUp",
-        cycleTransportHotkey = "C_DPadRight",
+        toggleTransportHotkey = "C_DPadUp + C_X",
+        cycleTransportHotkey = "C_DPadRight + C_X",
+        topMarkerHotkey = "C_DPadUp",
+        rightMarkerHotkey = "C_DPadRight",
+        bottomMarkerHotkey = "C_DPadDown",
+        leftMarkerHotkey = "C_DPadLeft",
         validateMHotkey = nil, -- temporary
     },
     ui = {
@@ -186,6 +190,10 @@ this.keyToTrigger = {
     ["input.moveHistoryForwardHotkey"] = commonData.moveHistoryForwardKeyId,
     ["input.toggleTransportHotkey"] = commonData.toggleTransportKeyId,
     ["input.cycleTransportHotkey"] = commonData.cycleTransportKeyId,
+    ["input.topMarkerHotkey"] = commonData.topMarkerKeyId,
+    ["input.rightMarkerHotkey"] = commonData.rightMarkerKeyId,
+    ["input.bottomMarkerHotkey"] = commonData.bottomMarkerKeyId,
+    ["input.leftMarkerHotkey"] = commonData.leftMarkerKeyId,
 }
 
 

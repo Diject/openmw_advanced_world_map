@@ -34,6 +34,10 @@ this.moveHistoryForwardKeyId = "AdvWMap:moveHistoryForwardKey"
 this.toggleTransportKeyId = "AdvWMap:toggleTransportKey"
 this.cycleTransportKeyId = "AdvWMap:cycleTransportKey"
 this.inMinimapModeKeyId = "AdvWMap:inMinimapModeKey"
+this.topMarkerKeyId = "AdvWMap:topMarkerKey"
+this.rightMarkerKeyId = "AdvWMap:rightMarkerKey"
+this.bottomMarkerKeyId = "AdvWMap:bottomMarkerKey"
+this.leftMarkerKeyId = "AdvWMap:leftMarkerKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 
