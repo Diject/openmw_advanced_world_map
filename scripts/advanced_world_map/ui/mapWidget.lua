@@ -350,7 +350,7 @@ function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
 
         if self.northDirectionAngle and self.northDirectionAngle ~= 0 then
             local pivot = self:getRotationPivot(self.zoom)
-            pos = (pos - pivot):rotate(-self.northDirectionAngle) + pivot
+            pos = (pos - pivot):rotate(self.northDirectionAngle) + pivot
         end
 
         pos = util.vector2(pos.x - paddingScaled.x, pos.y - paddingScaled.y)
@@ -358,10 +358,15 @@ function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
         return util.vector2((pos.x + xOffset) * pixelSize, (-pos.y + yOffset) * pixelSize)
     end
 
-    local left = toWorld(rect.left, 0).x
-    local top = toWorld(0, rect.top).y
-    local right = toWorld(rect.right, 0).x
-    local bottom = toWorld(0, rect.bottom).y
+    local topLeft = toWorld(rect.left, rect.top)
+    local topRight = toWorld(rect.right, rect.top)
+    local bottomLeft = toWorld(rect.left, rect.bottom)
+    local bottomRight = toWorld(rect.right, rect.bottom)
+
+    local left = math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x)
+    local top = math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y)
+    local right = math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x)
+    local bottom = math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y)
 
     return { left = left, top = top, right = right, bottom = bottom }, rect
 end
