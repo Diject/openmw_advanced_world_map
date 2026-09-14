@@ -1495,14 +1495,15 @@ function this.create(params)
 
 
     if config.data.input.gamepadControls then
-        local gamepadControlsRealTimer
-
         local function updateRealTimerCallback()
             if not meta.menu.layout then return end
+
+            local hasAxisInput = false
+            local hasTriggerInput = false
+
             if not menuMode.isMenuInteractive() or
                     (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
                 goto continue
-
             end
 
             do
@@ -1521,8 +1522,8 @@ function this.create(params)
                     rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
                 end
 
-                local hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
-                local hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25
+                hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
+                hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25
 
                 if not hasAxisInput and not hasTriggerInput then
                     goto continue
@@ -1532,7 +1533,10 @@ function this.create(params)
 
                 if hasAxisInput then
                     local centerPos = meta.mapWidget:getWorldPositionOfVisibleCenter()
-                    local moveVector = util.vector2(rAxisX * 16384 / zoom, -rAxisY * 16384 / zoom)
+                    local moveVector = util.vector2(
+                        rAxisX * 8192 / zoom * core.getRealFrameDuration() * 20,
+                        -rAxisY * 8192 / zoom * core.getRealFrameDuration() * 20
+                    )
 
                     if meta.mapWidget.northDirectionAngle and meta.mapWidget.northDirectionAngle ~= 0 then
                         moveVector = moveVector:rotate(-meta.mapWidget.northDirectionAngle)
@@ -1544,20 +1548,24 @@ function this.create(params)
 
                 if hasTriggerInput then
                     if lTrigger > 0.25 then
-                        zoom = zoom / (1 + (config.data.main.zoomingMul - 1) * lTrigger)
+                        zoom = zoom / (1 + (config.data.main.zoomingMul - 1) * lTrigger * core.getRealFrameDuration() * 10)
                         meta.mapWidget:setZoom(zoom)
                     elseif rTrigger > 0.25 then
-                        zoom = zoom * (1 + (config.data.main.zoomingMul - 1) * rTrigger)
+                        zoom = zoom * (1 + (config.data.main.zoomingMul - 1) * rTrigger * core.getRealFrameDuration() * 10)
                         meta.mapWidget:setZoom(zoom)
                     end
                 end
 
-                meta.mapWidget:refreshVisibleArea()
-                meta.update()
+                if hasAxisInput or hasTriggerInput then
+                    meta.mapWidget:closeRightMouseMenu()
+                    tooltip.destroyLast()
+                    meta.mapWidget:refreshVisibleArea()
+                    meta.update()
+                end
             end
 
             ::continue::
-            gamepadControlsRealTimer = realTimer.newTimer(0.1, updateRealTimerCallback)
+            realTimer.newTimer((hasAxisInput or hasTriggerInput) and core.getRealFrameDuration() or 0.1, updateRealTimerCallback)
         end
         updateRealTimerCallback()
     end
@@ -1754,6 +1762,8 @@ local togglePinActionFunc
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     togglePinActionFunc = function ()
+        if not menuMode.isActive() then return end
+
         e.menu:togglePin()
         if not localStorage.data[commonData.pinnedStateFieldId] and not menuMode.isMenuInteractive() then
             menuHandler.destroyMenu(commonData.mapMenuId)
