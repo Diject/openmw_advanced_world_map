@@ -95,6 +95,7 @@ function this.centerOnNextMarker(params)
 
     if best then
         this.resetMenuState()
+        mapWidget:closeRightMouseMenu()
         mapWidget:focusOnWorldPosition(best:getPosition())
         mapWidget:updateMarkers()
         mapWidget:update()

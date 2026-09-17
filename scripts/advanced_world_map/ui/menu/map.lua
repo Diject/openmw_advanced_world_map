@@ -34,6 +34,7 @@ local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local button = require("scripts.advanced_world_map.ui.button")
 local resizerEvents = require("scripts.advanced_world_map.ui.resizerEvents")
+local contextMenu = require("scripts.advanced_world_map.ui.menu.contextMenu")
 
 
 local this = {}
@@ -373,7 +374,11 @@ local function controllerYCallback()
     if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
     if not menuMode.isMenuInteractive() or not self.mapWidget:isInFocus() then return end
 
-    self.mapWidget:openRightMouseMenu()
+    if self.mapWidget:hasRightMouseMenu() then
+        self.mapWidget:closeRightMouseMenu()
+    else
+        self.mapWidget:openRightMouseMenu()
+    end
 end
 
 
@@ -1015,6 +1020,7 @@ function this.create(params)
                 if mapWidget.playerMarkerMenu then
                     mapWidget.playerMarkerMenu:update()
                 end
+                contextMenu.update()
             end)
             coroutine.resume(co)
             updateCDTimer = realTimer.newTimer(0, function ()

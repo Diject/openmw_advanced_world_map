@@ -21,6 +21,7 @@ local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local northMarker = require("scripts.advanced_world_map.northMarker")
 local markerSelector = require("scripts.advanced_world_map.ui.markerSelector")
+local contextMenu = require("scripts.advanced_world_map.ui.menu.contextMenu")
 
 local stringLib = require("scripts.advanced_world_map.utils.string")
 local tableLib = require("scripts.advanced_world_map.utils.table")
@@ -28,6 +29,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local cellLib = require("scripts.advanced_world_map.utils.cell")
 local log = require("scripts.advanced_world_map.utils.log")
 
+local templates = require("scripts.advanced_world_map.ui.templates")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local interval = require("scripts.advanced_world_map.ui.interval")
 
@@ -1765,56 +1767,18 @@ end
 
 function mapWidgetMeta:openRightMouseMenu()
     realTimer.newTimer(0.05, function ()
-        local menu = self.layout.userData.contextMenu
-        if menu and menu.layout then
-            menu:destroy()
-            self.layout.userData.contextMenu = nil
-        end
-
-        if not menuMode.isMenuInteractive() then
-            return
-        end
-
-        if eventSys.isContainsHandler(eventSys.EVENT["onRightMouseMenu"]) then
-            local layersLayout = self.layout.content[2]
-            uiUtils.removeFromContent(layersLayout.content, commonData.rightClickMenuId)
-
-            local pos = self:getScreenPositionOfCursor()
-            local lay = {
-                layer = commonData.messageLayer,
-                name = commonData.rightClickMenuId,
-                type = ui.TYPE.Flex,
-                props = {
-                    autoSize = true,
-                    position = pos,
-                    anchor = util.vector2(0, 0),
-                    propagateEvents = false,
-                },
-                content = ui.content{
-
-                },
-            }
-            local layContent = lay.content
-            eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
-                mapWidget = self,
-                relPos = self:getRelativePositionOfCursor(),
-                content = layContent,
-                marker = self.layout.userData.lastMarkerElement,
-            })
-
-            if #layContent > 0 then
-                self.layout.userData.contextMenu = ui.create(lay)
-            end
-        end
+        contextMenu.openMenu(self)
     end)
 end
 
 
 function mapWidgetMeta:closeRightMouseMenu()
-    local menu = self.layout.userData.contextMenu
-    if not menu or not menu.layout then return end
-    menu:destroy()
-    self.layout.userData.contextMenu = nil
+    contextMenu.closeMenu()
+end
+
+
+function mapWidgetMeta:hasRightMouseMenu()
+    return contextMenu.hasMenu()
 end
 
 
@@ -2365,12 +2329,12 @@ function this.new(params)
         local tm = core.getRealTime()
         local tmDiff = tm - this.lastMouseWheelTimestamp
         this.lastMouseWheelTimestamp = tm
-        if tmDiff < 0.1 then
+        if tmDiff < 0.1 or this.mouseWheelTimer then
             if this.mouseWheelTimer then
                 this.mouseWheelTimer()
             end
             this.mouseWheelCount = this.mouseWheelCount + value
-            this.mouseWheelTimer = realTimer.newTimer(0.12, function ()
+            this.mouseWheelTimer = realTimer.newTimer(0.1, function ()
                 setWheelZoom()
                 this.mouseWheelTimer = nil
             end)
@@ -2410,6 +2374,8 @@ function this.new(params)
                 if markerElement then
                     e.offset = e.position - meta.screenPosition
                     main.userData.mainMouseOffset = e.offset
+                else
+                    tooltip.destroyLast()
                 end
 
                 if eventSys.triggerEvent(eventSys.EVENT["onMousePress"], e) then
@@ -2486,9 +2452,10 @@ function this.new(params)
                 newPos = clampAndCenterPosition(newPos, mapSize, mainSize)
                 props.position = newPos
 
-                meta:refreshVisibleArea()
-
-                meta:update()
+                realTimer.newTimer(0, function ()
+                    meta:refreshVisibleArea()
+                    meta:update()
+                end)
 
                 main.userData.lastDraggedMousePos = e.position
             end),

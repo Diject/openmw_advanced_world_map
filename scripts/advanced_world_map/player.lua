@@ -476,13 +476,6 @@ end
 local function updateTimer()
     playerPos.checkPos()
 
-    local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
-    if rAxisY > 0.5 then
-        menuHandler.onMouseWheelCallback(-1, true)
-    elseif rAxisY < -0.5 then
-        menuHandler.onMouseWheelCallback(1, true)
-    end
-
     realTimer.newTimer(0.2, function ()
         updateTimer()
     end)
