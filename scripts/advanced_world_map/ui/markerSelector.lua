@@ -6,6 +6,7 @@ local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local config = require("scripts.advanced_world_map.config.config")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
@@ -209,14 +210,19 @@ end
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     this.activeMenuMeta = e.menu
-    registerHotkeys()
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerMarkerSelector,
+        priority = 100,
+        activateFun = registerHotkeys,
+        deactivateFun = unregisterHotkeys,
+    }
 end, 10001)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
     this.resetMenuState()
     this.activeMenuMeta = nil
-    unregisterHotkeys()
+    hotkeyLayers.unregister(commonData.hotkeyLayerMarkerSelector)
 end, 10001)
 
 
