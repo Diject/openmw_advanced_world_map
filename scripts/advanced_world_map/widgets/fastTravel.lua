@@ -183,6 +183,7 @@ local function create(menu)
                 event = function (layout)
                     fastTravel(menu, menu.mapWidget.cellId, e.relPos)
                     menu.mapWidget:closeRightMouseMenu()
+                    menu:closeQuickMenu()
                 end
             }
         )

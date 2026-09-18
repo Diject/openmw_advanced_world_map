@@ -34,6 +34,7 @@ this.moveHistoryForwardKeyId = "AdvWMap:moveHistoryForwardKey"
 this.toggleTransportKeyId = "AdvWMap:toggleTransportKey"
 this.cycleTransportKeyId = "AdvWMap:cycleTransportKey"
 this.inMinimapModeKeyId = "AdvWMap:inMinimapModeKey"
+this.quickMenuKeyId = "AdvWMap:quickMenuKey"
 this.topMarkerKeyId = "AdvWMap:topMarkerKey"
 this.rightMarkerKeyId = "AdvWMap:rightMarkerKey"
 this.bottomMarkerKeyId = "AdvWMap:bottomMarkerKey"
@@ -81,6 +82,7 @@ this.disableDialogueMarkersFieldId = "disableDialogueMarkers"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
+this.quickMenuId = "__MAP:QUICKMENU__"
 this.mapWidgetHeaderLayoutId = "__MAP:WIDGETHEADERLAYOUT__"
 this.mapWidgetWindowLayoutId = "__MAP:WIDGETWINDOWLAYOUT__"
 
@@ -97,7 +99,10 @@ this.widgetPriorityField = "AdvWMap:widgetPriority"
 this.headerCloseBtnLayoutName = "closeBtn"
 this.headerCloseBtnIntervalLayoutName = "closeBtnInterval"
 
+this.hotkeyLayerMainMenu = "mainMenu"
 this.hotkeyLayerMarkerSelector = "markerSelector"
+this.hotkeyLayerQuickMenu = "quickMenu"
+this.hotkeyLayerBlank = "blank"
 
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])

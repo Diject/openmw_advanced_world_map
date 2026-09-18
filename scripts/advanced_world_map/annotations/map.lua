@@ -57,6 +57,16 @@ function AdvancedWorldMapMenuMap:isWidgetActive(id) end
 ---@return boolean hasActive True if any widget is currently active/open
 function AdvancedWorldMapMenuMap:hasActiveWidget() end
 
+---Creates a quick menu.
+function AdvancedWorldMapMenuMap:createQuickMenu() end
+
+---Destroys the quick menu if it exists.
+function AdvancedWorldMapMenuMap:destroyQuickMenu() end
+
+---Checks if the quick menu currently exists.
+---@return boolean exists true if the quick menu exists
+function AdvancedWorldMapMenuMap:isQuickMenuExists() end
+
 ---Gets or creates a map widget for a specific cell.
 ---Uses cached widgets if available. Creates new widget if needed.
 ---@param cellId string? Cell identifier (nil for exterior/world map)

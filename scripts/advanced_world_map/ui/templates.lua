@@ -277,6 +277,126 @@ this.inactiveSelection = {
 }
 
 
+this.quickMenuSelectedItem = {
+    type = ui.TYPE.Container,
+    content = ui.content{
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                color = config.data.ui.defaultColor,
+                relativeSize = util.vector2(1, 1),
+                position = util.vector2(8, 2),
+                size = util.vector2(4, 0),
+                alpha = 0.05,
+            },
+        },
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                tileH = true,
+                tileV = false,
+                color = config.data.ui.defaultColor,
+                relativeSize = util.vector2(1, 0),
+                position = util.vector2(8, 0),
+                size = util.vector2(4, 2),
+                alpha = 0.8,
+            },
+        },
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                tileH = true,
+                tileV = false,
+                color = config.data.ui.defaultColor,
+                relativeSize = util.vector2(1, 0),
+                relativePosition = util.vector2(0, 1),
+                position = util.vector2(8, 2),
+                size = util.vector2(4, 2),
+                alpha = 0.8,
+            },
+        },
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                tileH = false,
+                tileV = true,
+                color = config.data.ui.defaultColor,
+                relativeSize = util.vector2(0, 1),
+                size = util.vector2(8, 4),
+                alpha = 0.8,
+            },
+        },
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                tileH = false,
+                tileV = true,
+                color = config.data.ui.defaultColor,
+                relativePosition = util.vector2(1, 0),
+                position = util.vector2(12, 0),
+                relativeSize = util.vector2(0, 1),
+                size = util.vector2(8, 4),
+                alpha = 0.8,
+            },
+        },
+        {
+            external = { slot = true },
+            props = {
+                position = util.vector2(10, 2),
+                relativeSize = util.vector2(1, 1),
+                size = util.vector2(0, 0),
+            }
+        }
+    },
+}
+
+
+this.quickMenuItem = {
+    type = ui.TYPE.Container,
+    content = ui.content{
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                tileH = true,
+                tileV = false,
+                color = config.data.ui.defaultColor,
+                relativeSize = util.vector2(1, 0),
+                size = util.vector2(20, 1),
+                alpha = 0.6,
+            },
+        },
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = whiteTexture,
+                tileH = true,
+                tileV = false,
+                color = config.data.ui.defaultColor,
+                relativeSize = util.vector2(1, 0),
+                relativePosition = util.vector2(0, 1),
+                position = util.vector2(0, 2),
+                size = util.vector2(20, 2),
+                alpha = 0.6,
+            },
+        },
+        {
+            external = { slot = true },
+            props = {
+                position = util.vector2(10, 2),
+                relativeSize = util.vector2(1, 1),
+                size = util.vector2(10, 0),
+            }
+        }
+    },
+}
+
+
 this.roundedBackground = {
     type = ui.TYPE.Container,
     content = ui.content{

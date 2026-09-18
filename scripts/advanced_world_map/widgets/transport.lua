@@ -460,7 +460,7 @@ I.DijectKeyBindings.action.register(commonData.cycleTransportKeyId, function ()
 end)
 
 
-I.DijectKeyBindings.action.register(commonData.toggleTransportKeyId, function ()
+function this.toggleTransport()
     ---@type advancedWorldMap.ui.menu.map?
     local menu = menuHandler.getMenu(commonData.mapMenuId)
     if not menu or not menuMode.isActive() or menu.mapWidget.cellId then return end
@@ -479,4 +479,19 @@ I.DijectKeyBindings.action.register(commonData.toggleTransportKeyId, function ()
     end
 
     menu:update()
-end)
+end
+
+
+I.DijectKeyBindings.action.register(commonData.toggleTransportKeyId, this.toggleTransport)
+
+eventSys.registerHandler(eventSys.EVENT.onQuickMenu, function (e)
+    local mapWidget = e.menu.mapWidget
+    if not mapWidget.cellId then
+        table.insert(e.items, {
+            text = config.data.legend.visibility.transport and l10n("QuickMenuHideTransport") or l10n("QuickMenuShowTransport"),
+            onClick = function ()
+                this.toggleTransport()
+            end
+        })
+    end
+end, 10010)

@@ -21,6 +21,8 @@ local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler"
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
+local keysModule = require("scripts.advanced_world_map.input.keys")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -35,6 +37,7 @@ local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local button = require("scripts.advanced_world_map.ui.button")
 local resizerEvents = require("scripts.advanced_world_map.ui.resizerEvents")
 local contextMenu = require("scripts.advanced_world_map.ui.menu.contextMenu")
+local quickMenu = require("scripts.advanced_world_map.ui.menu.quickMenu")
 
 
 local this = {}
@@ -294,6 +297,32 @@ function menuMeta:hasActiveWidget()
 end
 
 
+function menuMeta:createQuickMenu()
+    quickMenu.create(self)
+end
+
+function menuMeta:closeQuickMenu()
+    quickMenu.destroy()
+end
+
+function menuMeta:isQuickMenuExists()
+    return quickMenu.isExists()
+end
+
+
+local function toggleQuickMenu()
+    if not menuMode.isMenuInteractive() then return end
+
+    if not quickMenu.isExists() then
+        if this.activeMenuMeta then
+            quickMenu.create(this.activeMenuMeta)
+        end
+    else
+        quickMenu.destroy()
+    end
+end
+
+
 ---@param cellId string?
 ---@return table? layout
 ---@return advancedWorldMap.ui.mapWidgetMeta? meta
@@ -381,6 +410,20 @@ local function controllerYCallback()
     end
 end
 
+local function registerHotkeys()
+    I.DijectKeyBindings.action.register(commonData.contextMenuKeyId, controllerYCallback)
+    if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
+        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
+    end
+    I.DijectKeyBindings.action.register(commonData.quickMenuKeyId, toggleQuickMenu)
+end
+
+local function unregisterHotkeys()
+    I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
+    I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
+    I.DijectKeyBindings.action.unregister(commonData.quickMenuKeyId, toggleQuickMenu)
+end
+
 
 ---@param cellId string?
 ---@return boolean changed
@@ -397,6 +440,7 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
         self.mapWidget:closeRightMouseMenu()
     end
+    self:closeQuickMenu()
 
     lay.props.position = util.vector2(self.borderSize + self:getWidgetWindowWidth(), self.borderSize)
     self.mainLayout.content[1].content[2] = lay
@@ -620,6 +664,7 @@ function menuMeta:updateInteractiveElements(params)
         self.layout.layer = "Windows"
 
         self:updateCloseBtnState()
+        hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
 
         local defaultMainSize = self.isInCharacterMenuMode and self.characterMenuMainSize or self.defaultMainSize
 
@@ -652,6 +697,8 @@ function menuMeta:updateInteractiveElements(params)
         if self.mapWidget then
             self.mapWidget:closeRightMouseMenu()
         end
+        self:closeQuickMenu()
+        hotkeyLayers.register{id = commonData.hotkeyLayerBlank, priority = 10000}
 
         self.layout.layer = commonData.HUDLayer
 
@@ -783,9 +830,12 @@ function menuMeta:close()
         self.mapWidget:closeRightMouseMenu()
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
+    self:closeQuickMenu()
 
     I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
+    I.DijectKeyBindings.action.unregister(commonData.quickMenuKeyId, toggleQuickMenu)
     I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
+    hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
 
     if config.data.main.clearCacheOnClose then
         for id, _ in pairs(this.cachedMapWidgetLayout) do
@@ -1315,6 +1365,7 @@ function this.create(params)
                     meta.mapWidget.screenPosition = meta.screenPosition + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
                         util.vector2(meta.borderSize, meta.borderSize)
                     meta.mapWidget:closeRightMouseMenu()
+                    meta:closeQuickMenu()
                     meta:update()
                 end
 
@@ -1564,6 +1615,7 @@ function this.create(params)
 
                 if hasAxisInput or hasTriggerInput then
                     meta.mapWidget:closeRightMouseMenu()
+                    meta:closeQuickMenu()
                     tooltip.destroyLast()
                     meta.mapWidget:refreshVisibleArea()
                     meta.update()
@@ -1590,8 +1642,11 @@ function this.create(params)
 
     I.DijectKeyBindings.action.register(commonData.contextMenuKeyId, controllerYCallback)
     if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
-        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
+        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback)
     end
+    I.DijectKeyBindings.action.register(commonData.quickMenuKeyId, toggleQuickMenu)
+
+    hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
 
     eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 
@@ -1854,6 +1909,21 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerClick, function (e)
         end
     end
 end)
+
+
+eventSys.registerHandler(eventSys.EVENT.onQuickMenu, function (e)
+    table.insert(e.items, {
+        text = localStorage.data[commonData.pinnedStateFieldId] and l10n("QuickMenuUnpinMap") or l10n("QuickMenuPinMap"),
+        onClick = function ()
+            if keysModule.isGamepad and not localStorage.data[commonData.pinnedStateFieldId] and
+                    not config.data.main.minimap.enabled then
+                config.setValue("main.minimap.enabled", true)
+            end
+            e.menu:togglePin()
+            e.menu:update()
+        end
+    })
+end, 10020)
 
 
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)

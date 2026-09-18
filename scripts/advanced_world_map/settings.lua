@@ -191,6 +191,9 @@ if inputModuleVersion < 3 and I.DijectKeyBindings then
     I.DijectKeyBindings.registerKey(commonData.leftMarkerKeyId, config.default.input.leftMarkerHotkey)
     I.DijectKeyBindings.registerKey(commonData.rightMarkerKeyId, config.default.input.rightMarkerHotkey)
 end
+if inputModuleVersion < 4 and I.DijectKeyBindings then
+    I.DijectKeyBindings.registerKey(commonData.quickMenuKeyId, config.default.input.quickMenuHotkey)
+end
 defaultStorage:set("input.version", config.data.input.version)
 
 
@@ -272,7 +275,7 @@ end
 registerHotkeyListener()
 
 
-if configVersion < 21 then
+if configVersion < 22 then
     inputSettingsSection:set("input.toggleTransportHotkey", config.default.input.toggleTransportHotkey)
     inputSettingsSection:set("input.cycleTransportHotkey", config.default.input.cycleTransportHotkey)
 end
@@ -419,6 +422,7 @@ I.Settings.registerGroup{
         inputKey{key = "input.togglePinHotkey", name = "SettingInputTogglePinKey", description = "SettingInputTogglePinKeyDescription", action = commonData.togglePinKeyId, default = config.default.input.togglePinHotkey},
         inputKey{key = "input.toggleTransportHotkey", name = "SettingInputToggleTransportKey", description = "SettingInputToggleTransportKeyDescription", action = commonData.toggleTransportKeyId, default = config.default.input.toggleTransportHotkey},
         inputKey{key = "input.cycleTransportHotkey", name = "SettingInputCycleTransportKey", description = "SettingInputCycleTransportKeyDescription", action = commonData.cycleTransportKeyId, default = config.default.input.cycleTransportHotkey},
+        inputKey{key = "input.quickMenuHotkey", name = "SettingInputQuickMenuKey", description = "SettingInputQuickMenuKeyDescription", action = commonData.quickMenuKeyId, default = config.default.input.quickMenuHotkey},
         inputKey{key = "input.topMarkerHotkey", name = "SettingInputTopMarkerKey", description = "SettingInputTopMarkerKeyDescription", action = commonData.topMarkerKeyId, default = config.default.input.topMarkerHotkey},
         inputKey{key = "input.bottomMarkerHotkey", name = "SettingInputBottomMarkerKey", description = "SettingInputBottomMarkerKeyDescription", action = commonData.bottomMarkerKeyId, default = config.default.input.bottomMarkerHotkey},
         inputKey{key = "input.leftMarkerHotkey", name = "SettingInputLeftMarkerKey", description = "SettingInputLeftMarkerKeyDescription", action = commonData.leftMarkerKeyId, default = config.default.input.leftMarkerHotkey},

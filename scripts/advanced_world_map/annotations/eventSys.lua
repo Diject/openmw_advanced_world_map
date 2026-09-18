@@ -251,6 +251,15 @@
 ---@class AdvancedWorldMap.Event.OnDiscoverEvent
 ---@field discoveredMap table<string, boolean> Table of newly discovered location ids
 
+---@class AdvancedWorldMap.QuickMenuItem
+---@field text string Display text for the quick menu item
+---@field onClick function? Optional callback function to be executed when the item is clicked
+
+---Event data for quick menu event
+---@class AdvancedWorldMap.Event.OnQuickMenuEvent
+---@field menu AdvancedWorldMap.Menu.Map Map menu instance
+---@field items AdvancedWorldMap.QuickMenuItem[] List of quick menu items
+
 ---Advanced World Map event system
 ---@class AdvancedWorldMap.Event
 ---@field EVENT AdvancedWorldMap.Event.EVENT Table containing event identifiers
@@ -299,6 +308,7 @@ AdvancedWorldMapEvent.EVENT = {
     onWorldMapLocalTextureGet = "onWorldMapLocalTextureGet", -- Event triggered when the map widget is trying to get a local map texture path. You can change the path to load custom local map textures.
     onWorldMapTextureGet = "onWorldMapTextureGet", -- Event triggered when the map widget is trying to get a world map version 2 texture path. You can change the path to load a custom world map texture for specific coordinates.
     onWorldMapOverlayTextureGet = "onWorldMapOverlayTextureGet", -- Event triggered when the map widget is trying to get a world map overlay texture path
+    onQuickMenu = "onQuickMenu", -- Event triggered when the quick menu is opened. You can use this event to add custom content to the quick menu.
 }
 
 ---Registers an event handler in the event system.
@@ -347,6 +357,7 @@ AdvancedWorldMapEvent.EVENT = {
 ---@overload fun(eventId: "onWorldMapLocalTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapLocalTextureGetEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWorldMapTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapTextureGetEvent): (boolean?), priority: number?)
 ---@overload fun(eventId: "onWorldMapOverlayTextureGet", handlerFunc: fun(e: AdvancedWorldMap.Event.OnWorldMapOverlayTextureGetEvent): (boolean?), priority: number?)
+---@overload fun(eventId: "onQuickMenu", handlerFunc: fun(e: AdvancedWorldMap.Event.OnQuickMenuEvent): (boolean?), priority: number?)
 function AdvancedWorldMapEvent.registerHandler(eventId, handlerFunc, priority) end
 
 ---Removes a registered event handler from the event system

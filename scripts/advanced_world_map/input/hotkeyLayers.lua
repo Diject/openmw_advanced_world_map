@@ -9,8 +9,8 @@ this.currentId = nil
 ---@class advancedWorldMap.input.hotkeyLayers.register.params
 ---@field id string
 ---@field priority number?
----@field activateFun fun()
----@field deactivateFun fun()
+---@field activateFun fun()?
+---@field deactivateFun fun()?
 
 
 ---@param params advancedWorldMap.input.hotkeyLayers.register.params

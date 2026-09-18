@@ -104,6 +104,16 @@ eventSys.registerHandler(eventSys.EVENT.onMapShown, function (e)
     updateLabel(e.mapWidget)
 end)
 
+eventSys.registerHandler(eventSys.EVENT.onQuickMenu, function (e)
+    table.insert(e.items, {
+        text = e.menu.mapWidget:isInZoomInMode() and l10n("QuickMenuSwitchToWorld") or l10n("QuickMenuSwitchToLocal"),
+        onClick = function ()
+            toggleMap(e.menu)
+            e.menu:update()
+        end
+    })
+end, 10030)
+
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     create(e.menu)
 

@@ -46,6 +46,7 @@ this.EVENT = {
     onWorldMapLocalTextureGet = "onWorldMapLocalTextureGet",
     onWorldMapTextureGet = "onWorldMapTextureGet",
     onWorldMapOverlayTextureGet = "onWorldMapOverlayTextureGet",
+    onQuickMenu = "onQuickMenu",
 }
 
 
@@ -94,6 +95,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onWorldMapLocalTextureGet", handlerFunc: fun(e : {gridX : integer, gridY : integer, path : string}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onWorldMapTextureGet", handlerFunc: fun(e : {x : integer, y : integer, path : string, mapInfo : advancedWorldMap.mapImageInfo?, internal : boolean}) : (boolean?, string?), priority : number?)
 ---@overload fun(eventId : "onWorldMapOverlayTextureGet", handlerFunc: fun(e : {x : integer, y : integer, path : string, mapInfo : advancedWorldMap.mapImageInfo?, internal : boolean}) : (boolean?, string?), priority : number?)
+---@overload fun(eventId : "onQuickMenu", handlerFunc: fun(e : {menu : advancedWorldMap.ui.menu.map, items: advancedWorldMap.ui.quickMenu.item[]}) : (boolean?), priority : number?)
 function this.registerHandler(eventId, handlerFunc, priority)
     if type(handlerFunc) ~= "function" then return end
     this.handlers[eventId] = this.handlers[eventId] or {}

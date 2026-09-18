@@ -151,6 +151,13 @@ SearchBtnPatternMatchingInfo: |
     ald%- — matches 'Ald-' using escape character
 
 dateFormat: "%d %B 3E %Y"
+QuickMenuSwitchToWorld: "Switch to world"
+QuickMenuSwitchToLocal: "Switch to local"
+QuickMenuPinMap: "Pin map"
+QuickMenuUnpinMap: "Unpin map"
+QuickMenuShowTransport: "Show transport"
+QuickMenuHideTransport: "Hide transport"
+QuickMenuBack: "Back"
 
 "types.NPC": "NPC"
 "types.Creature": "Creature"
@@ -304,6 +311,8 @@ SettingInputToggleTransportKey: "Toggle transport map key"
 SettingInputToggleTransportKeyDescription: "The key used to toggle the transport layer on the map."
 SettingInputCycleTransportKey: "Cycle transport types key"
 SettingInputCycleTransportKeyDescription: "The key used to cycle through different transport types on the map."
+SettingInputQuickMenuKey: "Quick menu key"
+SettingInputQuickMenuKeyDescription: "The key used to open the quick menu with map options."
 SettingInputTopMarkerKey: "Select marker above key"
 SettingInputTopMarkerKeyDescription: "The key used to select the next marker above the visible center of the map."
 SettingInputRightMarkerKey: "Select marker to the right key"
