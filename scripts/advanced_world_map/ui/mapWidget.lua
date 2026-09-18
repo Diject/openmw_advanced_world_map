@@ -621,18 +621,8 @@ function mapWidgetMeta:updateMarkersScale()
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
 
-        -- Some markers may be stuck after zooming out and I don't know why.
-        -- TODO: Investigate why this happens and fix it properly. For now, just remove the stucked markers.
-        local stuckedMarkers = {}
-
         for i, elem in ipairs(layout.content) do
             if not elem.userData or not elem.userData.params then goto continue end
-
-            if elem.name and (elem.userData.params.showWhenZoomedIn or false) ~= isInZoomInMode and
-                    (elem.userData.params.showWhenZoomedOut or false) ~= not isInZoomInMode then
-                stuckedMarkers[elem.name] = elem.userData.params.layerId
-                goto continue
-            end
 
             if elem.userData and elem.userData.autoScale then
                 local props = elem.userData.inContainer and elem.content[1].props or elem.props
@@ -648,10 +638,6 @@ function mapWidgetMeta:updateMarkersScale()
             end
 
             ::continue::
-        end
-
-        for id, layerId in pairs(stuckedMarkers) do
-            self:removeMarker(id, layerId)
         end
     end
 end
@@ -808,25 +794,32 @@ local function createMarker(self, params, onlyInitialize)
         self.zoomMarkersCellIdById[markerId] = nil
     end
 
-    if params.id and uiUtils.isExistsInContent(content, params.id) then
-        local handler = content[params.id].userData.markerElement
-        if params.update then
-            local oldCellId = self.zoomMarkersCellIdById[params.id]
-            if oldCellId then
-                local cellId = self.cellId or cellLib.getCellIdByPos(params.pos)
-                if oldCellId ~= cellId then
-                    removeZoomInOutData(oldCellId, params.id)
-                    addZoomInOutData(params.id, handler._container, cellId)
-                end
-            end
-            updateZoomInOutDataParams(params.id, params)
-            handler._elemLayout.userData.userData = params.userData
-            handler._params = params
-            handler:restoreLayout()
-            params.update = nil
-            eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
+    if params.id then
+        local elemLayout = uiUtils.getFromContent(content, params.id)
+        if not elemLayout and self.hiddenElements[params.layerId] then
+            elemLayout = self.hiddenElements[params.layerId][params.id]
         end
-        return params.id, params.layerId, handler, content[params.id]
+
+        if elemLayout then
+            local handler = elemLayout.userData.markerElement
+            if params.update then
+                local oldCellId = self.zoomMarkersCellIdById[params.id]
+                if oldCellId then
+                    local cellId = self.cellId or cellLib.getCellIdByPos(params.pos)
+                    if oldCellId ~= cellId then
+                        removeZoomInOutData(oldCellId, params.id)
+                        addZoomInOutData(params.id, handler._container, cellId)
+                    end
+                end
+                updateZoomInOutDataParams(params.id, params)
+                handler._elemLayout.userData.userData = params.userData
+                handler._params = params
+                handler:restoreLayout()
+                params.update = nil
+                eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
+            end
+            return params.id, params.layerId, handler, elemLayout
+        end
     end
 
     params.pos = params.pos or util.vector3(0, 0, 0)
