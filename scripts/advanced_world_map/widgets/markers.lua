@@ -765,8 +765,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
                 -- if the text marker already exists and has the same grouping and clustering settings,and the tile discovery state is the same,
                 -- update its anchor lock status; otherwise, create a new text marker with the appropriate parameters
-                if userData and (userData.grouped == doGroup or userData.clustered == doGroupToName) and
-                        isTileDiscoveredStateEqual then
+                if userData and userData.grouped == (doGroup and not doGroupToName) and
+                        userData.clustered == doGroupToName and isTileDiscoveredStateEqual then
                     userData.anchorLocked = lockAnchor
                     local params = textMarkerHandler._params ---@diagnostic disable-line: need-check-nil
                     local anchor = params.anchor or util.vector2(0, 0)
