@@ -42,6 +42,7 @@ local discoveredLocs = require("scripts.advanced_world_map.discoveredLocations")
 local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 local disabledActors = require("scripts.advanced_world_map.disabledActors")
 local northMarker = require("scripts.advanced_world_map.northMarker")
+local keysModule = require("scripts.advanced_world_map.input.keys")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
@@ -793,6 +794,7 @@ return {
         end,
         onMouseWheel = onMouseWheel,
         onKeyPress = function (key)
+            keysModule.isGamepad = false
             if key.code == input.KEY.Escape and menuHandler.hasActiveMenus() then
                 realTimer.newTimer(0, function ()
                     hotkeyCloseMenu()
@@ -800,6 +802,7 @@ return {
             end
         end,
         onControllerButtonPress = function (buttonId)
+            keysModule.isGamepad = true
             if buttonId == input.CONTROLLER_BUTTON.B and menuHandler.hasActiveMenus() then
                 realTimer.newTimer(0, function ()
                     hotkeyCloseMenu()
