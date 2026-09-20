@@ -256,6 +256,15 @@ if configVersion < config.default.version then
             mainSettingsSection:set("main.charMenu.relativePosition.y", (mainSettingsSection:get("main.relativePosition.y") or config.default.main.relativePosition.y) / 100)
         end
     end
+    if configVersion < 22 then
+        local bottomHeader = mainSettingsSection:get("main.minimap.bottomHeader")
+        local minimapRelSizeX = mainSettingsSection:get("main.minimap.relativeSize.x") or config.default.main.minimap.relativeSize.x
+        local minimapRelSizeY = mainSettingsSection:get("main.minimap.relativeSize.y") or config.default.main.minimap.relativeSize.y
+        if not bottomHeader and minimapRelSizeX == config.default.main.minimap.relativeSize.x and
+                minimapRelSizeY == config.default.main.minimap.relativeSize.y then
+            mainSettingsSection:set("main.minimap.bottomHeader", true)
+        end
+    end
 end
 
 
