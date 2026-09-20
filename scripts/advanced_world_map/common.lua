@@ -102,6 +102,7 @@ this.headerCloseBtnIntervalLayoutName = "closeBtnInterval"
 this.hotkeyLayerMainMenu = "mainMenu"
 this.hotkeyLayerMarkerSelector = "markerSelector"
 this.hotkeyLayerQuickMenu = "quickMenu"
+this.hotkeyLayerContextMenu = "contextMenu"
 this.hotkeyLayerBlank = "blank"
 
 this.defaultColorData = {202/255, 165/255, 96/255}

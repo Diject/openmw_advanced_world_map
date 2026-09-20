@@ -1,11 +1,16 @@
 local util = require("openmw.util")
 local ui = require("openmw.ui")
+local I = require("openmw.interfaces")
 
 local commonData = require("scripts.advanced_world_map.common")
 local eventSys = require("scripts.advanced_world_map.eventSys")
+local config = require("scripts.advanced_world_map.config.config")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
+local menuHandler = require("scripts.advanced_world_map.menuHandler")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
+local keysModule = require("scripts.advanced_world_map.input.keys")
 
 local templates = require("scripts.advanced_world_map.ui.templates")
 
@@ -14,6 +19,46 @@ local this = {}
 
 this.menu = nil
 this.selectedItemIndex = 0
+
+
+local directionHotkeyFuncs = {}
+for i = 1, 2 do
+    directionHotkeyFuncs[i] = function ()
+        if not menuMode.isMenuInteractive() or not menuHandler.getMenu(commonData.mapMenuId) then return end
+
+        if i == 1 then
+            this.selectItem(this.selectedItemIndex - 1)
+        else
+            this.selectItem(this.selectedItemIndex + 1)
+        end
+    end
+end
+
+
+local function registerHotkeys()
+    I.DijectKeyBindings.action.register(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
+    if I.DijectKeyBindings.getActionKey(commonData.topMarkerKeyId) == config.default.input.topMarkerHotkey then
+        I.DijectKeyBindings.keybind.register("UpArrow", directionHotkeyFuncs[1])
+    end
+    I.DijectKeyBindings.action.register(commonData.bottomMarkerKeyId, directionHotkeyFuncs[2])
+    if I.DijectKeyBindings.getActionKey(commonData.bottomMarkerKeyId) == config.default.input.bottomMarkerHotkey then
+        I.DijectKeyBindings.keybind.register("DownArrow", directionHotkeyFuncs[2])
+    end
+
+    I.DijectKeyBindings.keybind.register("C_A", this.clickOnSelectedItem)
+    I.DijectKeyBindings.keybind.register("Enter", this.clickOnSelectedItem)
+end
+
+local function unregisterHotkeys()
+    I.DijectKeyBindings.action.unregister(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
+    I.DijectKeyBindings.action.unregister(commonData.bottomMarkerKeyId, directionHotkeyFuncs[2])
+
+    I.DijectKeyBindings.keybind.unregister("UpArrow", directionHotkeyFuncs[1])
+    I.DijectKeyBindings.keybind.unregister("DownArrow", directionHotkeyFuncs[2])
+
+    I.DijectKeyBindings.keybind.unregister("C_A", this.clickOnSelectedItem)
+    I.DijectKeyBindings.keybind.unregister("Enter", this.clickOnSelectedItem)
+end
 
 
 ---@param mapWidget advancedWorldMap.ui.mapWidgetMeta
@@ -59,9 +104,19 @@ function this.openMenu(mapWidget)
                 }
             end
             this.menu = ui.create(lay)
+
+            hotkeyLayers.register{
+                id = commonData.hotkeyLayerContextMenu,
+                priority = 300,
+                activateFun = registerHotkeys,
+                deactivateFun = unregisterHotkeys,
+            }
         end
 
         this.selectedItemIndex = 0
+        if keysModule.isGamepad and this.menu then
+            this.selectItem(1)
+        end
     end
 end
 
@@ -71,6 +126,7 @@ function this.closeMenu()
     this.menu:destroy()
     this.menu = nil
     this.selectedItemIndex = 0
+    hotkeyLayers.unregister(commonData.hotkeyLayerContextMenu)
 end
 
 
