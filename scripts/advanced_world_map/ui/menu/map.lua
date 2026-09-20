@@ -1518,7 +1518,7 @@ function this.create(params)
                 dt.userData.onMouseWheel(value, dt)
             end
 
-            if dt.content then
+            if dt.content and dt.name ~= "mapWidget" then
                 onMouseWheelCallback(dt.content, value)
             end
 

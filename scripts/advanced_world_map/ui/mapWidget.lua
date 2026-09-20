@@ -2349,6 +2349,7 @@ function this.new(params)
     local main
     main = {
         type = ui.TYPE.Widget,
+        name = "mapWidget",
         props = {
             size = params.size,
             position = util.vector2(0, 0),
