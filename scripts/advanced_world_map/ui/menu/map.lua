@@ -1823,7 +1823,7 @@ local togglePinActionFunc
 
 eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     togglePinActionFunc = function ()
-        if not menuMode.isActive() then return end
+        if not menuMode.isMenuInteractive() then return end
 
         e.menu:togglePin()
         if not localStorage.data[commonData.pinnedStateFieldId] and not menuMode.isMenuInteractive() then

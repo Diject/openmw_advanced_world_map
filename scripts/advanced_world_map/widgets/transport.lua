@@ -401,7 +401,7 @@ end)
 I.DijectKeyBindings.action.register(commonData.cycleTransportKeyId, function ()
     ---@type advancedWorldMap.ui.menu.map?
     local menu = menuHandler.getMenu(commonData.mapMenuId)
-    if not menu or not menuMode.isActive() or menu.mapWidget.cellId then return end
+    if not menu or not menuMode.isMenuInteractive() or menu.mapWidget.cellId then return end
 
     if config.data.message.transportFeatureInfoShown == 0 then
         config.setValue("message.transportFeatureInfoShown", 1)
@@ -463,7 +463,7 @@ end)
 function this.toggleTransport()
     ---@type advancedWorldMap.ui.menu.map?
     local menu = menuHandler.getMenu(commonData.mapMenuId)
-    if not menu or not menuMode.isActive() or menu.mapWidget.cellId then return end
+    if not menu or not menuMode.isMenuInteractive() or menu.mapWidget.cellId then return end
 
     if config.data.message.transportFeatureInfoShown == 0 then
         config.setValue("message.transportFeatureInfoShown", 1)

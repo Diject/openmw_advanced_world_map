@@ -12,6 +12,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local cellHelper = require("scripts.advanced_world_map.helpers.cell")
+local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 
 
 local l10n = core.l10n(commonData.l10nKey)
@@ -118,6 +119,8 @@ eventSys.registerHandler(eventSys.EVENT.onMenuOpened, function (e)
     create(e.menu)
 
     toogleMapTypeActionFunc = function ()
+        if not menuMode.isMenuInteractive() then return end
+
         toggleMap(e.menu)
         updateLabel(e.menu.mapWidget)
         e.menu:update()
