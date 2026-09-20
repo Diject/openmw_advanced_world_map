@@ -26,6 +26,7 @@ this.configMiscSectionName = "Settings:AdvWMap:Misc"
 this.gridmapSettingSectionName = "Settings:advWMap_gridmap"
 
 this.menuKeyId = "AdvWMap:menuKey"
+this.menuKeyAltId = "AdvWMap:menuKeyAlt"
 this.toggleMapTypeKeyId = "AdvWMap:toggleMapTypeKey"
 this.togglePinKeyId = "AdvWMap:togglePinKey"
 this.contextMenuKeyId = "AdvWMap:contextMenuKey"

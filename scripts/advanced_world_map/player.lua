@@ -455,6 +455,9 @@ if I.DijectKeyBindings then
     I.DijectKeyBindings.action.register(commonData.menuKeyId, function ()
         core.sendGlobalEvent("AdvWMap:toggleMenuCheck", self.object)
     end)
+    I.DijectKeyBindings.action.register(commonData.menuKeyAltId, function ()
+        core.sendGlobalEvent("AdvWMap:toggleMenuCheck", self.object)
+    end)
 
     I.DijectKeyBindings.action.register(commonData.moveHistoryBackKeyId, function ()
         if not menuMode.isMenuInteractive() then return end

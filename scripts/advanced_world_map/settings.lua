@@ -278,6 +278,8 @@ registerHotkeyListener()
 if configVersion < 22 then
     inputSettingsSection:set("input.toggleTransportHotkey", config.default.input.toggleTransportHotkey)
     inputSettingsSection:set("input.cycleTransportHotkey", config.default.input.cycleTransportHotkey)
+
+    inputSettingsSection:set("main.menuKeyAlt", config.default.main.menuKeyAlt)
 end
 
 
@@ -290,6 +292,7 @@ I.Settings.registerGroup{
     order = 0,
     settings = {
         inputKey{key = "main.menuKey", name = "SettingMainMenuKey", description = "SettingMainMenuKeyDescription", action = commonData.menuKeyId, default = config.default.main.menuKey},
+        inputKey{key = "main.menuKeyAlt", name = "SettingMainMenuKeyAlt", description = "SettingMainMenuKeyAltDescription", action = commonData.menuKeyAltId, default = config.default.main.menuKeyAlt},
         numberSetting{key = "main.updateFrequency", name = "SettingUpdateFrequency", description = "SettingUpdateFrequencyDescription", default = config.default.main.updateFrequency, min = 1},
         numberSetting{key = "main.discoveryRadius", name = "SettingDiscoveryRadius", description = "SettingDiscoveryRadiusDescription", default = config.default.main.discoveryRadius, min = 500, max = 10000, integer = true},
         numberSetting{key = "main.zoomingMul", name = "SettingZoomingMul", description = "SettingZoomingMulDescription", default = config.default.main.zoomingMul, min = 1.1, max = 3, integer = false},

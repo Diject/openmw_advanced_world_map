@@ -187,6 +187,9 @@ SettingMainMenuKeyDescription: |
   Key combination to open the map menu. Can contain multiple keys (e.g. Ctrl+M+N+...).
   To set, click the field showing the current key combination, then press the desired keys.
   To reset, right-click the field, or press the gamepad 'B' button while assigning.
+SettingMainMenuKeyAlt: "Hotkey (alternative)"
+SettingMainMenuKeyAltDescription: |
+  Alternative key combination to open the map menu.
 SettingDiscoveryRadius: "Discovery Radius"
 SettingDiscoveryRadiusDescription: "The radius (in game units) around the player within which locations will be automatically discovered on the map."
 SettingZoomingMul: "Zoom speed"

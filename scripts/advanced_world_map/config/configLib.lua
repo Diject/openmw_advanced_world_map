@@ -54,6 +54,8 @@ for _, section in pairs(this.storageSections) do
 
             if key == "main.menuKey" then
                 I.DijectKeyBindings.registerKey(commonData.menuKeyId, value)
+            elseif key == "main.menuKeyAlt" then
+                I.DijectKeyBindings.registerKey(commonData.menuKeyAltId, value)
             end
         else
             this.loadFromStorage(section)

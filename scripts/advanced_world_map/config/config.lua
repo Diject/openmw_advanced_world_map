@@ -11,6 +11,7 @@ this.default = {
     version = 22,
     main = {
         menuKey = "M",
+        menuKeyAlt = "C_RightShoulder + C_Back",
         relativeSize = {
             x = 70,
             y = 70,
