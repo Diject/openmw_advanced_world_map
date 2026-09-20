@@ -101,11 +101,16 @@ function this.centerOnNextMarker(params)
         mapWidget:updateMarkers()
         mapWidget:update()
 
+        local halfSize = mapWidget.layout.props.size:emul(util.vector2(0.5, 0.5))
         if best._container.events and best._container.events.mouseMove then
-            local halfSize = mapWidget.layout.props.size:emul(util.vector2(0.5, 0.5))
             best._container.events.mouseMove(
                 {position = mapWidget.screenPosition + halfSize, offset = halfSize, keepSelectedMarker = true},
                 best._container
+            )
+        else
+            mapWidget.layout.events.mouseMove(
+                {position = mapWidget.screenPosition + halfSize, offset = halfSize, keepSelectedMarker = true},
+                mapWidget.layout
             )
         end
 
@@ -191,6 +196,7 @@ local function registerHotkeys()
     end
 
     I.DijectKeyBindings.keybind.register("C_A", this.clickOnSelected)
+    I.DijectKeyBindings.keybind.register("Enter", this.clickOnSelected)
 end
 
 local function unregisterHotkeys()
@@ -205,6 +211,7 @@ local function unregisterHotkeys()
     I.DijectKeyBindings.keybind.unregister("LeftArrow", directionHotkeyFuncs[4])
 
     I.DijectKeyBindings.keybind.unregister("C_A", this.clickOnSelected)
+    I.DijectKeyBindings.keybind.unregister("Enter", this.clickOnSelected)
 end
 
 
