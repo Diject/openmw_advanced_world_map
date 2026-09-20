@@ -2265,7 +2265,9 @@ function this.new(params)
             userData.pressed = {}
             userData.inFocus = false
             if userData.events.focusLoss then userData.events.focusLoss(e, layout) end
-            meta.layout.events.focusLoss(e, layout, userData.markerElement)
+            e = e or {}
+            e.markerElement = userData.markerElement
+            meta.layout.events.focusLoss(e, layout)
             tooltip.destroy(layout)
         end),
 
@@ -2279,7 +2281,10 @@ function this.new(params)
             end
 
             if userData.events.mouseMove then userData.events.mouseMove(e, layout) end
-            meta.layout.events.mouseMove({offset = e.offset, position = e.position, keepSelectedMarker = e.keepSelectedMarker}, layout, userData.markerElement)
+            meta.layout.events.mouseMove(
+                {offset = e.offset, position = e.position, keepSelectedMarker = e.keepSelectedMarker, markerElement = userData.markerElement},
+                layout
+            )
 
             if not userData.params.tooltipContent then return end
             tooltip.createOrMove(e, layout, userData.params.tooltipContent)
@@ -2292,7 +2297,8 @@ function this.new(params)
             end
 
             if layout.userData.events.mousePress then layout.userData.events.mousePress(e, layout) end
-            meta.layout.events.mousePress(e, layout, layout.userData.markerElement)
+            e.markerElement = layout.userData.markerElement
+            meta.layout.events.mousePress(e, layout)
         end),
 
         mouseRelease = async:callback(function(e, layout)
@@ -2300,7 +2306,8 @@ function this.new(params)
                 layout.userData.events.mouseRelease(e, layout, layout.userData.pressed[e.button] and layout.userData.movedDistance < 30 and true or false)
             end
             layout.userData.pressed[e.button] = false
-            meta.layout.events.mouseRelease(e, layout, layout.userData.markerElement)
+            e.markerElement = layout.userData.markerElement
+            meta.layout.events.mouseRelease(e, layout)
         end),
     }
 
@@ -2358,7 +2365,8 @@ function this.new(params)
             lastMarkerElement = nil
         },
         events = {
-            mousePress = async:callback(function(e, layout, markerElement)
+            mousePress = async:callback(function(e, layout)
+                local markerElement = e.markerElement
                 meta:closeRightMouseMenu()
 
                 main.userData.lastMarkerElement = markerElement
@@ -2381,7 +2389,8 @@ function this.new(params)
                 end
             end),
 
-            mouseRelease = async:callback(function(e, layout, markerElement)
+            mouseRelease = async:callback(function(e, layout)
+                local markerElement = e.markerElement
                 main.userData.lastMarkerElement = markerElement
                 e.marker = markerElement
                 e.mapWidget = meta
@@ -2399,7 +2408,8 @@ function this.new(params)
                 end
             end),
 
-            focusLoss = async:callback(function(_, layout, markerElement)
+            focusLoss = async:callback(function(e, layout)
+                local markerElement = e and e.markerElement
                 main.userData.lastMarkerElement = markerElement
                 main.userData.lastDraggedMousePos = nil
                 main.userData.inFocus = false
@@ -2409,7 +2419,8 @@ function this.new(params)
                 end
             end),
 
-            mouseMove = async:callback(function(e, layout, markerElement)
+            mouseMove = async:callback(function(e, layout)
+                local markerElement = e.markerElement
                 main.userData.lastMarkerElement = markerElement
                 main.userData.mousePos = e.position
                 if not markerElement then
