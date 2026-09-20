@@ -67,6 +67,8 @@ include("scripts.advanced_world_map.fixes.TotSP")
 local l10n = core.l10n(commonData.l10nKey)
 
 local hasAttemptedToGetData = false
+local lastUiModeTimestamp = 0
+local lastUiModeId = ""
 
 local openMenu
 
@@ -368,11 +370,14 @@ end
 
 
 local function toggleMenu()
+    local timestamp = core.getRealTime()
+
     local menu = menuHandler.getMenu(commonData.mapMenuId)
     local isInCharacterMenu = I.UI.getMode() == "Interface"
     local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault
     local isHiddenInMinimapMode = menu and menu.isInMinimapMode
     local isRegularMode = menu and not menu.isInCharacterMenuMode and not menu.isInMinimapMode and not config.data.main.overrideDefault
+    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 0.25
 
     if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) or
             isRegularMode then
@@ -394,6 +399,9 @@ local function toggleMenu()
             if not initDataForMenu({toggleMenu = true}) then return end
 
             if not menuMode.isMenuInteractive() then
+                menuMode.activate()
+            elseif replacePreviousMode and #I.UI.modes == 1 then
+                I.UI.removeMode(lastUiModeId)
                 menuMode.activate()
             end
 
@@ -869,6 +877,11 @@ return {
             elseif mapDataHandler.isInitialized() and e.oldMode ~= nil and e.newMode == nil and not menuHandler.getMenu(commonData.mapMenuId) and
                     (localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId]) then
                 openMenu(false, true, config.data.main.overrideDefault)
+            end
+
+            if e.newMode then
+                lastUiModeTimestamp = core.getRealTime()
+                lastUiModeId = e.newMode
             end
         end,
 
