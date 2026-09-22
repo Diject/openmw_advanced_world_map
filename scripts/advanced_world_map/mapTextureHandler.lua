@@ -122,68 +122,70 @@ end
 local function initMapImage(initializerType)
     local imagePath, mapInfo, dirPath
 
-    if initializerType == commonData.dataInitializerTypes[2] then
-        imagePath, mapInfo, dirPath = getMapImage(commonData.customMapDir)
-    elseif initializerType == commonData.dataInitializerTypes[3] then
-        imagePath, mapInfo, dirPath = getMapImage(commonData.questDataMapDir)
-    elseif initializerType == commonData.dataInitializerTypes[4] then
-        imagePath, mapInfo, dirPath = getMapImage(commonData.defaultTRMapDir)
-    elseif initializerType == commonData.dataInitializerTypes[5] then
-        imagePath, mapInfo, dirPath = getMapImage(commonData.defaultBaseMapDir)
-    elseif initializerType == commonData.dataInitializerTypes[1] then
-        local mapGridArea = 1
-        if mapData.grid then
-            mapGridArea = (mapData.grid.max.x - mapData.grid.min.x) * (mapData.grid.max.y - mapData.grid.min.y)
-        end
+    local function doWork()
+        if initializerType == commonData.dataInitializerTypes[2] then
+            imagePath, mapInfo, dirPath = getMapImage(commonData.customMapDir)
+        elseif initializerType == commonData.dataInitializerTypes[3] then
+            imagePath, mapInfo, dirPath = getMapImage(commonData.questDataMapDir)
+        elseif initializerType == commonData.dataInitializerTypes[4] then
+            imagePath, mapInfo, dirPath = getMapImage(commonData.defaultTRMapDir)
+        elseif initializerType == commonData.dataInitializerTypes[5] then
+            imagePath, mapInfo, dirPath = getMapImage(commonData.defaultBaseMapDir)
+        elseif initializerType == commonData.dataInitializerTypes[1] then
+            local mapGridArea = 1
+            if mapData.grid then
+                mapGridArea = (mapData.grid.max.x - mapData.grid.min.x) * (mapData.grid.max.y - mapData.grid.min.y)
+            end
 
-        do
-            local path, info = getMapImage(commonData.customMapDir)
-            if info then
-                local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
-                local v = area / mapGridArea
-                if v > 0.9 and v < 1.1 then
-                    imagePath = path
-                    mapInfo = info
-                    dirPath = commonData.customMapDir
-                    goto next
+            do
+                local path, info = getMapImage(commonData.customMapDir)
+                if info then
+                    local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
+                    local v = area / mapGridArea
+                    if v > 0.9 and v < 1.1 then
+                        imagePath = path
+                        mapInfo = info
+                        dirPath = commonData.customMapDir
+                        return
+                    end
                 end
             end
-        end
 
-        local data = {}
-        for id, dir in pairs(directories) do
-            local path, info = getMapImage(dir)
-            if info then
-                local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
-                table.insert(data, {path, info, area / mapGridArea, dir})
+            local data = {}
+            for id, dir in pairs(directories) do
+                local path, info = getMapImage(dir)
+                if info then
+                    local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
+                    table.insert(data, {path, info, area / mapGridArea, dir})
+                end
             end
-        end
 
-        table.sort(data, function (a, b)
-            return (a[3] < b[3]) or (a[3] == b[3] and (a[2].time or 0) > (b[2].time or 0))
-        end)
+            table.sort(data, function (a, b)
+                return (a[3] < b[3]) or (a[3] == b[3] and (a[2].time or 0) > (b[2].time or 0))
+            end)
 
-        for _, dt in ipairs(data) do
-            local v = dt[3] or 0
-            if v > 0.9 then
-                imagePath = dt[1]
-                mapInfo = dt[2]
-                dirPath = dt[4]
-                break
+            for _, dt in ipairs(data) do
+                local v = dt[3] or 0
+                if v > 0.9 then
+                    imagePath = dt[1]
+                    mapInfo = dt[2]
+                    dirPath = dt[4]
+                    break
+                end
             end
-        end
 
-        if not mapInfo then
-            if next(data) then
-                local dt = data[#data]
-                imagePath = dt[1]
-                mapInfo = dt[2]
-                dirPath = dt[4]
+            if not mapInfo then
+                if next(data) then
+                    local dt = data[#data]
+                    imagePath = dt[1]
+                    mapInfo = dt[2]
+                    dirPath = dt[4]
+                end
             end
         end
     end
 
-    ::next::
+    doWork()
 
     return setWorldMapInfo(mapInfo, dirPath, imagePath, true)
 end
@@ -306,19 +308,13 @@ function this.getLocalCellMapTextures(cellId)
                 local pathPng = path..".png"
                 local pathTga = path..".tga"
 
-                local foundPath
-                if vfs.fileExists(pathPng) then
-                    foundPath = pathPng
-                elseif vfs.fileExists(pathTga) then
-                    foundPath = pathTga
-                else
-                    goto continue
+                local foundPath = vfs.fileExists(pathPng) and pathPng or
+                    vfs.fileExists(pathTga) and pathTga or nil
+
+                if foundPath then
+                    local texture = ui.texture{ path = foundPath }
+                    arr[x] = texture
                 end
-
-                local texture = ui.texture{ path = foundPath }
-                arr[x] = texture
-
-                ::continue::
             end
             res[y] = arr
         end

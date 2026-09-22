@@ -514,20 +514,18 @@ end)
 
 local function discoverNearby()
     for _, ref in pairs(nearbyDoors) do
-        if not types.Door.isTeleport(ref)
-                or (ref.position - self.position):length() > configLib.data.main.discoveryRadius then
-            goto continue
-        end
+        local cont = not types.Door.isTeleport(ref)
+            or (ref.position - self.position):length() > configLib.data.main.discoveryRadius
 
-        local cell = pDoor.destCell(ref)
-        if cell and not discoveredLocs.isDiscovered(cell.id) then
-            local newDiscovered = discoveredLocs.addDiscoveredCell(cell)
-            if newDiscovered then
-                markers.updateDiscovered(newDiscovered)
+        if not cont then
+            local cell = pDoor.destCell(ref)
+            if cell and not discoveredLocs.isDiscovered(cell.id) then
+                local newDiscovered = discoveredLocs.addDiscoveredCell(cell)
+                if newDiscovered then
+                    markers.updateDiscovered(newDiscovered)
+                end
             end
         end
-
-        ::continue::
     end
 end
 

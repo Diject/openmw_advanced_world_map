@@ -247,34 +247,32 @@ local function init()
         local cellId = userData.cellId
         local addedCount = 0
         for _, mId, data in widgetData.getCellIterator(cellId) do
-            if data.plName and ((not config.data.notes.markerVisibility.personal and data.plName == playerName) or
-                    (not config.data.notes.markerVisibility.global and data.plName ~= playerName)) then
-                goto continue
-            end
+            local cont = data.plName and ((not config.data.notes.markerVisibility.personal and data.plName == playerName) or
+                (not config.data.notes.markerVisibility.global and data.plName ~= playerName))
 
-            if addedCount >= 2 then
-                layout.content:add{
-                    type = ui.TYPE.Text,
-                    props = {
-                        text = "...",
-                        textColor = config.data.ui.defaultColor,
-                        textSize = config.data.ui.fontSize,
+            if not cont then
+                if addedCount >= 2 then
+                    layout.content:add{
+                        type = ui.TYPE.Text,
+                        props = {
+                            text = "...",
+                            textColor = config.data.ui.defaultColor,
+                            textSize = config.data.ui.fontSize,
+                        }
                     }
-                }
-                break
-            end
-
-            local tooltipContLay = widgetMarker.getTooltipContentLayout(data, false, false)
-            if tooltipContLay then
-                if addedCount ~= 0 then
-                    layout.content:add(interval(0, config.data.ui.fontSize / 3))
+                    break
                 end
-                layout.content:add(tooltipContLay[1])
 
-                addedCount = addedCount + 1
+                local tooltipContLay = widgetMarker.getTooltipContentLayout(data, false, false)
+                if tooltipContLay then
+                    if addedCount ~= 0 then
+                        layout.content:add(interval(0, config.data.ui.fontSize / 3))
+                    end
+                    layout.content:add(tooltipContLay[1])
+
+                    addedCount = addedCount + 1
+                end
             end
-
-            ::continue::
         end
 
         if addedCount > 0 then

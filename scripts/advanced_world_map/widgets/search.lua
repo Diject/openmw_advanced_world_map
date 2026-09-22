@@ -336,23 +336,22 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
         if inInteriors then
             if isExterior then
                 for _, dt in pairs(doors or {}) do
-                    if checked[dt.dCId] then goto continue end
-                    checked[dt.dCId] = true
+                    if not checked[dt.dCId] then
+                        checked[dt.dCId] = true
 
-                    local destNameLower = stringLib.utf8_lower(dt.name)
-                    if (destNameLower:find(str, 1, true) or usePatternSearch and destNameLower:find(str)) and
-                            (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
-                        table.insert(res, {
-                            text = dt.fName,
-                            cellId = not dt.isEx and dt.cId or nil,
-                            pos = dt.pos,
-                            priority = 0,
-                            color = config.data.ui.foundMarkerColor
-                        })
-                        targetCells[dt.dCId] = true
+                        local destNameLower = stringLib.utf8_lower(dt.name)
+                        if (destNameLower:find(str, 1, true) or usePatternSearch and destNameLower:find(str)) and
+                                (showUnrevealed or discoveredLocations.isDiscovered(dt.dCId)) then
+                            table.insert(res, {
+                                text = dt.fName,
+                                cellId = not dt.isEx and dt.cId or nil,
+                                pos = dt.pos,
+                                priority = 0,
+                                color = config.data.ui.foundMarkerColor
+                            })
+                            targetCells[dt.dCId] = true
+                        end
                     end
-
-                    ::continue::
                 end
             end
 
@@ -368,13 +367,9 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
             processCell(mapWidget.cellId, false, true)
         else
             for cellId, list in pairs(entrances) do
-                if not cellId:find(commonData.exteriorCellLabel, 1, true) then
-                    goto continue
+                if cellId:find(commonData.exteriorCellLabel, 1, true) then
+                    processCell(cellId, true, true)
                 end
-
-                processCell(cellId, true, true)
-
-                ::continue::
             end
 
             local names = mapDataHandler.cellNameData
@@ -395,14 +390,13 @@ local function getResults(menu, str, showUnrevealed, searchAllLocations)
     else
         local interiors = {}
         for cellId, list in pairs(entrances) do
+
             if not cellId:find(commonData.exteriorCellLabel, 1, true) then
                 table.insert(interiors, cellId)
-                goto continue
+            else
+                processCell(cellId, true, true)
             end
 
-            processCell(cellId, true, true)
-
-            ::continue::
         end
 
         for _, cellId in pairs(interiors) do

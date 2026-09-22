@@ -45,21 +45,21 @@ function this.centerOnNextMarker(params)
     local best
     local bestForward
 
-    for _, m in pairs(mapWidget:getActiveMarkers()) do
-        if not m:getVisibility() or m:getAlpha() <= 0.01 then goto continue end
+    local function processMarker(m)
+        if not m:getVisibility() or m:getAlpha() <= 0.01 then return end
 
         local userData = m:getUserData()
         if not userData or not (m._layerId == mapWidget.LAYER.marker and userData.selectable ~= false and
                 (m._params.tooltipContent or m._container.userData.events.mouseRelease) or userData.selectable == true or
                 (userData.type == commonData.doorMarkerType and userData.textMarker and userData.textMarker:getUserData().clustered ~= true)) then
-            goto continue
+            return
         end
 
         local pos = m:getPosition()
-        if not mapWidget.isPointInRegion(rect, pos.x, pos.y) or commonData.distance2D(pos, center) < 1 then goto continue end
+        if not mapWidget.isPointInRegion(rect, pos.x, pos.y) or commonData.distance2D(pos, center) < 1 then return end
 
         local relPos = m._container.props.relativePosition
-        if not relPos then goto continue end
+        if not relPos then return end
 
         local dx = relPos.x - centerRel.x
         local dy = centerRel.y - relPos.y
@@ -78,10 +78,10 @@ function this.centerOnNextMarker(params)
             forward = -dx
             perpendicular = math.abs(dy)
         else
-            goto continue
+            return
         end
 
-        if not isInValidRect(perpendicular, forward, util.vector2(perpendicular * 0.3, 0), coneV) then goto continue end
+        if not isInValidRect(perpendicular, forward, util.vector2(perpendicular * 0.3, 0), coneV) then return end
 
         local angle = (math.atan2 or math.atan)(perpendicular, forward)
         local effectiveForward = forward * (1 + angle / 0.52) -- 30 deg
@@ -90,8 +90,10 @@ function this.centerOnNextMarker(params)
             best = m
             bestForward = effectiveForward
         end
+    end
 
-        ::continue::
+    for _, m in pairs(mapWidget:getActiveMarkers()) do
+        processMarker(m)
     end
 
     if best then

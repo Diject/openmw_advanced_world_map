@@ -622,22 +622,22 @@ function mapWidgetMeta:updateMarkersScale()
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
 
         for i, elem in ipairs(layout.content) do
-            if not elem.userData or not elem.userData.params then goto continue end
+            if elem.userData and elem.userData.params then
 
-            if elem.userData and elem.userData.autoScale then
-                local props = elem.userData.inContainer and elem.content[1].props or elem.props
-                if props.text then
-                    local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
-                    props.textSize = math.max(1, tSizeVal)
-                    if props.size then
+                if elem.userData and elem.userData.autoScale then
+                    local props = elem.userData.inContainer and elem.content[1].props or elem.props
+                    if props.text then
+                        local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
+                        props.textSize = math.max(1, tSizeVal)
+                        if props.size then
+                            props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
+                        end
+                    elseif props.resource then
                         props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                     end
-                elseif props.resource then
-                    props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
-            end
 
-            ::continue::
+            end
         end
     end
 end
@@ -1354,20 +1354,20 @@ function mapWidgetMeta:placeGroundTextures(region)
             for y = 1, self.localCellInfo.height do
                 for x = 1, self.localCellInfo.width do
                     local texture = (self.mapTexture[y] or {})[x]
-                    if not texture then goto continue end
+                    if texture then
 
-                    local pos = util.vector2(startingPos.x + tileHeight * (x - 1), startingPos.y - tileHeight * (y - 1))
+                        local pos = util.vector2(startingPos.x + tileHeight * (x - 1), startingPos.y - tileHeight * (y - 1))
 
-                    mapLayout.content:add{
-                        type = ui.TYPE.Image,
-                        props = {
-                            resource = texture,
-                            size = tileSize,
-                            position = pos
+                        mapLayout.content:add{
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = texture,
+                                size = tileSize,
+                                position = pos
+                            }
                         }
-                    }
 
-                    ::continue::
+                    end
                 end
             end
         end
@@ -1401,20 +1401,18 @@ function mapWidgetMeta:placeGroundTextures(region)
                     local pos = util.vector2(xPr, yPr)
                     local sz = util.vector2(xS, yS)
 
-                    if not texture then goto continue end
-
-                    mapLayout.content:add{
-                        type = ui.TYPE.Image,
-                        props = {
-                            resource = texture,
-                            size = sz,
-                            position = pos,
-                            anchor = util.vector2(0, 1),
-                            alpha = alpha,
+                    if texture then
+                        mapLayout.content:add{
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = texture,
+                                size = sz,
+                                position = pos,
+                                anchor = util.vector2(0, 1),
+                                alpha = alpha,
+                            }
                         }
-                    }
-
-                    ::continue::
+                    end
                 end
             end
         end
@@ -1500,26 +1498,24 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local pos = util.vector2(xPr, yPr)
                 local sz = util.vector2(xS, yS)
 
-                if not isValid then goto continue end
-
-                if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) then
-                    local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
-                    if texture then
-                        mapLayout.content:add{
-                            type = ui.TYPE.Image,
-                            props = {
-                                resource = texture,
-                                size = sz,
-                                position = pos,
-                                anchor = util.vector2(0, 1)
+                if isValid then
+                    if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) then
+                        local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
+                        if texture then
+                            mapLayout.content:add{
+                                type = ui.TYPE.Image,
+                                props = {
+                                    resource = texture,
+                                    size = sz,
+                                    position = pos,
+                                    anchor = util.vector2(0, 1)
+                                }
                             }
-                        }
+                        end
+                    else
+                        table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz})
                     end
-                else
-                    table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz})
                 end
-
-                ::continue::
             end
         end
 
@@ -1528,22 +1524,21 @@ function mapWidgetMeta:placeGroundTextures(region)
             local cnt = 0
             for i, dt in pairs(queue) do
                 local texture = mapTextureHandler.getLocalMapTexture(dt.grx, dt.gry)
-                if not texture then goto continue end
-
-                mapLayout.content:add{
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = texture,
-                        size = dt.sz,
-                        position = dt.pos,
-                        anchor = util.vector2(0, 1)
+                if texture then
+                    mapLayout.content:add{
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = texture,
+                            size = dt.sz,
+                            position = dt.pos,
+                            anchor = util.vector2(0, 1)
+                        }
                     }
-                }
-                cnt = cnt + 1
-                if cnt % maxTilesPerFrame == 0 then
-                    coroutine.yield()
+                    cnt = cnt + 1
+                    if cnt % maxTilesPerFrame == 0 then
+                        coroutine.yield()
+                    end
                 end
-                ::continue::
             end
         end
 
@@ -1918,17 +1913,15 @@ function mapWidgetMeta:setInActiveMode(active)
     if modeChanged then
         for _, mrk in pairs(self:getActiveMarkers()) do
             local userData = mrk._elemLayout.userData
-            if not userData then goto continue end
-
-            if active then
-                mrk._container.events = mrk._container.userData._events or mrk._container.events
-                mrk._container.userData._events = nil
-            else
-                mrk._container.userData._events = mrk._container.events or mrk._container.userData._events
-                mrk._container.events = nil
+            if userData then
+                if active then
+                    mrk._container.events = mrk._container.userData._events or mrk._container.events
+                    mrk._container.userData._events = nil
+                else
+                    mrk._container.userData._events = mrk._container.events or mrk._container.userData._events
+                    mrk._container.events = nil
+                end
             end
-
-            ::continue::
         end
     end
 

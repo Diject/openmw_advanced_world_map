@@ -21,16 +21,18 @@ function this.findExitPoss(cellId, dataTable, checked, res, depth)
     end
     checked[cellId] = math.min(checked[cellId] or depth, depth)
 
-    for _, door in pairs(doors) do
-        if checked[door.dCId] and checked[door.dCId] < depth + 1 then goto continue end
+    local processDoor = function (door)
+        if checked[door.dCId] and checked[door.dCId] < depth + 1 then return end
 
         if door.isDEx then
             res[door] = depth
         else
             this.findExitPoss(door.dCId, dataTable, checked, res, depth + 1)
         end
+    end
 
-        ::continue::
+    for _, door in pairs(doors) do
+        processDoor(door)
     end
 
     if depth == 1 then

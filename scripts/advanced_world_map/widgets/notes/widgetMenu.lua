@@ -280,26 +280,24 @@ local function fill(menu, sb, filter)
     local noteData = {}
 
     for cellId, _, dt in widgetData.getIterator() do
-        if not config.data.notes.listForAllCharacters and (not dt.plName or dt.plName ~= playerName) then
-            goto continue
+        local cont =  not config.data.notes.listForAllCharacters and (not dt.plName or dt.plName ~= playerName)
+
+        if not cont then
+            local tags = ""
+            local isEx = false
+
+            if cellId == widgetCellId then
+                tags = tags..":here:"
+            end
+            if cellId == commonData.exteriorMapId then
+                tags = tags..":world:"
+                isEx = true
+            else
+                tags = tags..":local:"
+            end
+
+            table.insert(noteData, {dt, tags, isEx, commonData.distance2D(isEx and playerExPos or playerRef.position, dt.pos)})
         end
-
-        local tags = ""
-        local isEx = false
-
-        if cellId == widgetCellId then
-            tags = tags..":here:"
-        end
-        if cellId == commonData.exteriorMapId then
-            tags = tags..":world:"
-            isEx = true
-        else
-            tags = tags..":local:"
-        end
-
-        table.insert(noteData, {dt, tags, isEx, commonData.distance2D(isEx and playerExPos or playerRef.position, dt.pos)})
-
-        ::continue::
     end
 
     -- Sort first by location type (exterior/interior), then by distance to the player

@@ -46,16 +46,16 @@ function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCell
 
     checked[cell.id] = depth
 
-    for _, door in pairs(cell:getAll(types.Door)) do
+    local function processDoor (door)
         if not types.Door.isTeleport(door) or not door.enabled or
                 (filterNotAvailable and (disabledDoors.contains(door) or types.Lockable.isLocked(door))) then
-            goto continue
+            return
         end
 
         local destCell = pDoor.destCell(door)
         local destPos = pDoor.destPosition(door)
 
-        if not destCell or not destPos then goto continue end
+        if not destCell or not destPos then return end
 
         if destCell.isExterior then
             table.insert(res, {pos = commonData.copyVector3(destPos), cell = destCell, depth = depth + 1})
@@ -64,8 +64,10 @@ function this.findExitPositions(cell, filterNotAvailable, checked, res, exitCell
         else
             this.findExitPositions(destCell, filterNotAvailable, checked, res, exitCells, depth + 1)
         end
+    end
 
-        ::continue::
+    for _, door in pairs(cell:getAll(types.Door)) do
+        processDoor(door)
     end
 
     local lowestDepth = math.huge

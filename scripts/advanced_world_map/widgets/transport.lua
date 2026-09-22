@@ -109,9 +109,9 @@ local function drawMarkers(mapWidget, markerType, color, skipWorld, skipLocal)
     local bitMask = markerType == -1 and 4 or markerType
     bitMask = 2 ^ (bitMask - 1)
 
-    for _, nodeId in ipairs(nodeList) do
+    local function processNode(nodeId)
         local nodeData = mapDataHandler.transport.nodes[nodeId]
-        if not nodeData then goto continue end
+        if not nodeData then return end
 
         local linkedNodes
         if nodeData.ars then
@@ -125,19 +125,22 @@ local function drawMarkers(mapWidget, markerType, color, skipWorld, skipLocal)
 
             if shouldRebuild then
                 linkedNodes = {}
-                for _, recId in pairs(nodeData.ars) do
-                    if disabledActors.contains(recId) then goto continue end
+
+                local function processActor(recId)
+                    if disabledActors.contains(recId) then return end
                     local actorData = mapDataHandler.transport.actors[recId]
-                    if not actorData then goto continue end
+                    if not actorData then return end
 
                     for _, nId in pairs(actorData.ns or {}) do
                         linkedNodes[nId] = true
                     end
-
-                    ::continue::
                 end
 
-                if not next(linkedNodes) then goto continue end
+                for _, recId in pairs(nodeData.ars) do
+                    processActor(recId)
+                end
+
+                if not next(linkedNodes) then return end
                 linkedNodes = tableLib.keys(linkedNodes)
             else
                 linkedNodes = nodeData.ls
@@ -153,75 +156,76 @@ local function drawMarkers(mapWidget, markerType, color, skipWorld, skipLocal)
 
         for _, linkedNodeId in pairs(linkedNodes) do
             local linkedNodeData = mapDataHandler.transport.nodes[linkedNodeId]
-            if not linkedNodeData then goto continue end
+            if linkedNodeData then
 
-            local linkedPos = linkedNodeData.p
-            local distance = commonData.distance2D(pos, linkedPos)
-            local angle = (math.atan2 or math.atan)(linkedPos.y - pos.y, linkedPos.x - pos.x) ---@diagnostic disable-line: deprecated
-            local texture, lineTexture = this.getTexture(math.pi / 2, angle)
+                local linkedPos = linkedNodeData.p
+                local distance = commonData.distance2D(pos, linkedPos)
+                local angle = (math.atan2 or math.atan)(linkedPos.y - pos.y, linkedPos.x - pos.x) ---@diagnostic disable-line: deprecated
+                local texture, lineTexture = this.getTexture(math.pi / 2, angle)
 
-            local isClose = distance < 25000
+                local isClose = distance < 25000
 
-            local linkedCellId = cellLib.getCellIdByPos(linkedPos)
-            local isDiscovered = not config.data.legend.transportOnlyDiscovered or discoveredLocs.isDiscovered(linkedCellId)
-            local hide = not isNodeDiscovered and not isDiscovered
+                local linkedCellId = cellLib.getCellIdByPos(linkedPos)
+                local isDiscovered = not config.data.legend.transportOnlyDiscovered or discoveredLocs.isDiscovered(linkedCellId)
+                local hide = not isNodeDiscovered and not isDiscovered
 
-            if hide then
-                this.trackedCells[linkedCellId] = util.bitOr(this.trackedCells[linkedCellId] or 0, bitMask)
-                this.trackedCells[nodeCellId] = util.bitOr(this.trackedCells[nodeCellId] or 0, bitMask)
-            end
+                if hide then
+                    this.trackedCells[linkedCellId] = util.bitOr(this.trackedCells[linkedCellId] or 0, bitMask)
+                    this.trackedCells[nodeCellId] = util.bitOr(this.trackedCells[nodeCellId] or 0, bitMask)
+                end
 
-            local function createMarkers(zoomIn)
-                local size = zoomIn and util.vector2(12, 12) or isClose and util.vector2(40, 40) or util.vector2(60, 60)
+                local function createMarkers(zoomIn)
+                    local size = zoomIn and util.vector2(12, 12) or isClose and util.vector2(40, 40) or util.vector2(60, 60)
 
-                local mrk = mapWidget:createImageMarker{
-                    texture = texture,
-                    layerId = mapWidget.LAYER.transport,
-                    scaleFunc = mapWidget.SCALE_FUNCTION.linear,
-                    size = size,
-                    pos = pos,
-                    showWhenZoomedOut = not zoomIn,
-                    showWhenZoomedIn = zoomIn or false,
-                    anchor = util.vector2(0.5, 0.5),
-                    color = color or util.color.rgb(1, 1, 1),
-                    alpha = config.data.legend.alpha.transport / 100,
-                    visible = not hide,
-                    userData = {
-                        type = commonData.travelDirectionMarkerType,
+                    local mrk = mapWidget:createImageMarker{
+                        texture = texture,
+                        layerId = mapWidget.LAYER.transport,
+                        scaleFunc = mapWidget.SCALE_FUNCTION.linear,
+                        size = size,
+                        pos = pos,
+                        showWhenZoomedOut = not zoomIn,
+                        showWhenZoomedIn = zoomIn or false,
+                        anchor = util.vector2(0.5, 0.5),
+                        color = color or util.color.rgb(1, 1, 1),
+                        alpha = config.data.legend.alpha.transport / 100,
+                        visible = not hide,
+                        userData = {
+                            type = commonData.travelDirectionMarkerType,
+                        }
                     }
-                }
 
-                if mrk then
-                    this.markers[markerType] = this.markers[markerType] or {}
-                    table.insert(this.markers[markerType], mrk)
+                    if mrk then
+                        this.markers[markerType] = this.markers[markerType] or {}
+                        table.insert(this.markers[markerType], mrk)
+                    end
+
+                    local arr = zoomIn and connectedNodesZIn or connectedNodesZOut
+
+                    local linkedPosHash = getPosHash(linkedPos)
+                    if zoomIn or (not arr[posHash] or not arr[posHash][linkedPosHash]) then
+                        arr[posHash] = arr[posHash] or {}
+                        arr[posHash][linkedPosHash] = true
+                        arr[linkedPosHash] = arr[linkedPosHash] or {}
+                        arr[linkedPosHash][posHash] = true
+
+                        drawLine(mapWidget, markerType, lineTexture, pos, linkedPos,
+                            zoomIn and util.vector2(8, 8) or nil, zoomIn and 4000 or 16000, zoomIn, color, hide)
+                    end
                 end
 
-                local arr = zoomIn and connectedNodesZIn or connectedNodesZOut
+                if not skipWorld then
+                    createMarkers()
+                end
 
-                local linkedPosHash = getPosHash(linkedPos)
-                if zoomIn or (not arr[posHash] or not arr[posHash][linkedPosHash]) then
-                    arr[posHash] = arr[posHash] or {}
-                    arr[posHash][linkedPosHash] = true
-                    arr[linkedPosHash] = arr[linkedPosHash] or {}
-                    arr[linkedPosHash][posHash] = true
-
-                    drawLine(mapWidget, markerType, lineTexture, pos, linkedPos,
-                        zoomIn and util.vector2(8, 8) or nil, zoomIn and 4000 or 16000, zoomIn, color, hide)
+                if isClose and not skipLocal then
+                    createMarkers(true)
                 end
             end
-
-            if not skipWorld then
-                createMarkers()
-            end
-
-            if isClose and not skipLocal then
-                createMarkers(true)
-            end
-
-            ::continue::
         end
+    end
 
-        ::continue::
+    for _, nodeId in ipairs(nodeList) do
+        processNode(nodeId)
     end
 end
 

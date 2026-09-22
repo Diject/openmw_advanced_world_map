@@ -123,16 +123,18 @@ local function getNearbyCells(cellId)
         local gridY = startingCell.gridY
         fillDestinationCells(startingCell, destCells)
 
+        local function processCell(i, j)
+            if i == 0 and j == 0 then return end
+            local cell = world.getExteriorCell(gridX + i, gridY + j)
+            if not cell then return end
+
+            table.insert(res, cell)
+            fillDestinationCells(cell, destCells)
+        end
+
         for i = -1, 1 do
             for j = -1, 1 do
-                if i == 0 and j == 0 then goto continue end
-                local cell = world.getExteriorCell(gridX, gridY)
-                if not cell then goto continue end
-
-                table.insert(res, cell)
-                fillDestinationCells(cell, destCells)
-
-                ::continue::
+                processCell(i, j)
             end
         end
 
@@ -238,8 +240,8 @@ function this.objectPositions(params)
             local inventoryFunc = params.inInventory and (tp == NPC and NPC.inventory or
                 tp == Creature and Creature.inventory or tp == Container and Container.inventory) or nil
 
-            for _, ref in pairs(cell:getAll(tp)) do
-                if not ref.enabled then goto continue end
+            local function processRef(ref)
+                if not ref.enabled then return end
 
                 if inventoryFunc then
                     local inventory = inventoryFunc(ref)
@@ -277,13 +279,15 @@ function this.objectPositions(params)
                     end
                 end
 
-                if not objectNames[ref.recordId] then goto continue end
+                if not objectNames[ref.recordId] then return end
 
                 if not addToRes(ref.recordId, supportedTypes[tp], ref.position) then
                     removeSearchId(ref.recordId, tp)
                 end
+            end
 
-                ::continue::
+            for _, ref in pairs(cell:getAll(tp)) do
+                processRef(ref)
             end
         end
     end

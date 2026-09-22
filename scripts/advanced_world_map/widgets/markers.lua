@@ -290,34 +290,30 @@ local function gridClustering(grid)
         for x = dt.x - 1, dt.x + 1 do
             for y = dt.y - 1, dt.y + 1 do
                 local nKey = string.format("%d_%d", x, y)
-                if checked[nKey] then goto continue end
-
-                local nDt = grid[nKey]
-                checked[nKey] = true
-                if nDt then
-                    tableLib.addValues(nDt.m, arr)
-                    addNearby(nKey, arr)
+                if not checked[nKey] then
+                    local nDt = grid[nKey]
+                    checked[nKey] = true
+                    if nDt then
+                        tableLib.addValues(nDt.m, arr)
+                        addNearby(nKey, arr)
+                    end
                 end
-
-                ::continue::
             end
         end
     end
 
 
     for key, arr in pairs(grid) do
-        if checked[key] then goto continue end
+        if not checked[key] then
+            local cluster = {}
+            addNearby(key, cluster)
 
-        local cluster = {}
-        addNearby(key, cluster)
-
-        table.insert(clusters, {
-            c = cluster,
-            cnt = #cluster,
-            bb = mapDataHandler.getClusterBoundingBox(cluster)
-        })
-
-        ::continue::
+            table.insert(clusters, {
+                c = cluster,
+                cnt = #cluster,
+                bb = mapDataHandler.getClusterBoundingBox(cluster)
+            })
+        end
     end
 
     return clusters
@@ -498,18 +494,16 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local _, eDt = next(listDt.entries)
             dt = eDt
         end
-        if not dt then goto continue end
+        if dt then
+            for _, d in pairs(listDt.entries) do
+                dataForTextMarkers[d] = listDt
+            end
+            dataForTextMarkers[dt] = listDt
 
-        for _, d in pairs(listDt.entries) do
-            dataForTextMarkers[d] = listDt
+            local line = math.floor(dt.pos.y / lineHeight)
+            entranceByLine[line] = entranceByLine[line] or {}
+            table.insert(entranceByLine[line], { line = line, dt = dt, mInfo = listDt, notParent = notFoundParent })
         end
-        dataForTextMarkers[dt] = listDt
-
-        local line = math.floor(dt.pos.y / lineHeight)
-        entranceByLine[line] = entranceByLine[line] or {}
-        table.insert(entranceByLine[line], { line = line, dt = dt, mInfo = listDt, notParent = notFoundParent })
-
-        ::continue::
     end
 
     local groupClusters
@@ -642,145 +636,141 @@ local function createMarkers(widget, cellId, allowedCells, region)
         ---@type table<advancedWorldMap.ui.mapElementMeta, table<advancedWorldMap.ui.mapElementMeta, boolean>>
         local markerCollusions = {}
 
-        -- create text markers for each entrance, determining their anchor positions and visibility based on discovery status and grouping settings
-        for _, lineDt in pairs(entranceByLine) do
+        local function processLineElem(data)
+            local dt = data.dt
+            local mInfo = data.mInfo
 
-            for j, data in ipairs(lineDt) do
-                local dt = data.dt
-                local mInfo = data.mInfo
+            local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
+            local isIsolated = dt.isIsl == true
 
-                local textId = this.getMarkerId(cellId, dt.pos.x, dt.pos.y, "markerText")
-                local isIsolated = dt.isIsl == true
+            local textMarkerHandler = this.markerById[textId]
 
-                local textMarkerHandler = this.markerById[textId]
+            local isTileDiscovered = cellId ~= nil or not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(dt.cId)
+            local isTileDiscoveredStateEqual = textMarkerHandler and isTileDiscovered == textMarkerHandler:getUserData().isTileDiscovered or false
 
-                local isTileDiscovered = cellId ~= nil or not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(dt.cId)
-                local isTileDiscoveredStateEqual = textMarkerHandler and isTileDiscovered == textMarkerHandler:getUserData().isTileDiscovered or false
+            local text = "  "..dt.name.."  "
 
-                local text = "  "..dt.name.."  "
+            if textMarkerHandler then
+                textMarkerHandler:setVisibility(textMarkerHandler:getVisibility())
+            end
 
-                if textMarkerHandler then
-                    textMarkerHandler:setVisibility(textMarkerHandler:getVisibility())
-                end
+            -- if grouping is enabled and the text marker already exists and is not ungrouped, use the existing text marker;
+            -- otherwise, create a new text marker with the appropriate anchor position and visibility settings
+            if doGroup and textMarkerHandler and not ungrouped[dt] and not isIsolated and isTileDiscoveredStateEqual and
+                    text == textMarkerHandler._params.text then
+                mInfo.textMarker = textMarkerHandler
+                lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
+                return
+            end
 
-                -- if grouping is enabled and the text marker already exists and is not ungrouped, use the existing text marker;
-                -- otherwise, create a new text marker with the appropriate anchor position and visibility settings
-                if doGroup and textMarkerHandler and not ungrouped[dt] and not isIsolated and isTileDiscoveredStateEqual and
-                        text == textMarkerHandler._params.text then
-                    mInfo.textMarker = textMarkerHandler
-                    lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
-                    goto continue
-                end
+            local textAnchor = entranceAnchors[1]
+            local textWidth = charHeight * stringLib.length(dt.name) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
+            local textHeight = charHeight * (isIsolated and isolatedMarkerMul or 1)
 
-                local textAnchor = entranceAnchors[1]
-                local textWidth = charHeight * stringLib.length(dt.name) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
-                local textHeight = charHeight * (isIsolated and isolatedMarkerMul or 1)
+            local bestAnchorData
+            local lockAnchor = false
+            local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(dt.pos)
 
-                local bestAnchorData
-                local lockAnchor = false
-                local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(dt.pos)
-
-                -- if we can use the cache and have a cached anchor for this textId, use it; otherwise, find the best anchor by checking overlaps with existing markers
-                if canUseCache and bestAnchorCache[textId] then
-                    bestAnchorData = {
-                        bestAnchorCache[textId],
-                        getAnchorOverlap(bestAnchorCache[textId], dt, textWidth, textHeight),
-                    }
-                else
-                    if not isExterior or not textMarkerHandler or not widget.isPointInRegion(lastExRect, dt.pos.x, dt.pos.y) then
-                        for k, anchor in ipairs(entranceAnchors) do
-                            local d = {
-                                anchor,
-                                getAnchorOverlap(anchor, dt, textWidth, textHeight),
-                            }
-                            if not bestAnchorData then
-                                bestAnchorData = d
-                            end
-
-                            if d[2] == 0 then
-                                bestAnchorData = d
-                                break
-                            elseif d[2] < bestAnchorData[2] then
-                                bestAnchorData = d
-                            end
-                        end
-                    else
-                        local anchor = textMarkerHandler._params.anchor or util.vector2(0, 0)
-                        bestAnchorData = {
+            -- if we can use the cache and have a cached anchor for this textId, use it; otherwise, find the best anchor by checking overlaps with existing markers
+            if canUseCache and bestAnchorCache[textId] then
+                bestAnchorData = {
+                    bestAnchorCache[textId],
+                    getAnchorOverlap(bestAnchorCache[textId], dt, textWidth, textHeight),
+                }
+            else
+                if not isExterior or not textMarkerHandler or not widget.isPointInRegion(lastExRect, dt.pos.x, dt.pos.y) then
+                    for k, anchor in ipairs(entranceAnchors) do
+                        local d = {
                             anchor,
                             getAnchorOverlap(anchor, dt, textWidth, textHeight),
                         }
-                        lockAnchor = true
-                    end
+                        if not bestAnchorData then
+                            bestAnchorData = d
+                        end
 
-                    if canUseCache and not lockAnchor then
-                        bestAnchorCache[textId] = bestAnchorData[1]
-                    end
-                end
-                textAnchor = bestAnchorData[1]
-
-                -- if the best anchor has at least 2 collusions, shorten the text to fit within the available space
-                if not lockAnchor and #bestAnchorData[7] >= 2 then
-                    text = stringLib.utf8_sub(text, 2, 14)..((stringLib.length(text) - 2) > 14 and "..." or "")
-                    textWidth = charHeight * (stringLib.length(text) - 2) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
-                end
-
-                local cId = dt.dCId
-                this.markersByName[dt.name] = this.markersByName[dt.name] or {}
-
-                local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
-
-                -- determine the color and background color of the text marker based on whether it is in an exterior cell,
-                -- whether the destination cell is discovered or visited, and whether there is a local texture for the world map
-                local color, backgroundColor, hasLocalTexture
-                if isExterior then
-                    color, backgroundColor, hasLocalTexture = getWorldMarkerColor(dt.cId, cId, dt.pos)
-                elseif discoveredLocs.isDiscovered(dt.dCId) then
-                    if discoveredLocs.isVisited(dt.dCId) then
-                        color = config.data.ui.defaultLightColor
-                    else
-                        color = config.data.ui.markerDefaultColor
+                        if d[2] == 0 then
+                            bestAnchorData = d
+                            break
+                        elseif d[2] < bestAnchorData[2] then
+                            bestAnchorData = d
+                        end
                     end
                 else
-                    color = config.data.ui.defaultDarkColor
-                end
-                backgroundColor = backgroundColor or config.data.ui.markerBackgroundColor
-                local backgroundAlpha = hasLocalTexture and config.data.legend.alpha.background * 0.01 or
-                    (config.data.legend.alpha.backgroundAlt or config.data.legend.alpha.background) * 0.01
-
-                if not isTileDiscoveredStateEqual and config.data.legend.localMarkerBackground and textMarkerHandler then
-                    local mBgColor = textMarkerHandler._params.textBackgroundColor
-                    local mBgAlpha = textMarkerHandler._params.textBackgroundAlpha
-                    if backgroundAlpha ~= mBgAlpha or backgroundColor.r ~= mBgColor.r or backgroundColor.g ~= mBgColor.g
-                            or backgroundColor.b ~= mBgColor.b then
-                        textMarkerHandler:destroy()
-                        textMarkerHandler = nil ---@diagnostic disable-line: cast-local-type
-                    end
+                    local anchor = textMarkerHandler._params.anchor or util.vector2(0, 0)
+                    bestAnchorData = {
+                        anchor,
+                        getAnchorOverlap(anchor, dt, textWidth, textHeight),
+                    }
+                    lockAnchor = true
                 end
 
-                local fontSize = isIsolated and isolatedFontSize or markerFontSize
-                local pos = dt.pos
-                local alpha = config.data.legend.alpha.entrance * 0.01
-                local userData = textMarkerHandler and textMarkerHandler:getUserData()
-
-                -- if the text marker already exists and has the same grouping and clustering settings,and the tile discovery state is the same,
-                -- update its anchor lock status; otherwise, create a new text marker with the appropriate parameters
-                if userData and userData.grouped == (doGroup and not doGroupToName) and
-                        userData.clustered == doGroupToName and isTileDiscoveredStateEqual then
-                    userData.anchorLocked = lockAnchor
-                    local params = textMarkerHandler._params ---@diagnostic disable-line: need-check-nil
-                    local anchor = params.anchor or util.vector2(0, 0)
-                    local isEqual = params.text == text and
-                        anchor.x == textAnchor.x and anchor.y == textAnchor.y and
-                        params.alpha == alpha and
-                        params.fontSize == fontSize and
-                        params.visible == isCellDiscovered and
-                        params.pos.x == pos.x and params.pos.y == pos.y
-                    if isEqual then
-                        goto nextStep
-                    end
+                if canUseCache and not lockAnchor then
+                    bestAnchorCache[textId] = bestAnchorData[1]
                 end
+            end
+            textAnchor = bestAnchorData[1]
 
+            -- if the best anchor has at least 2 collusions, shorten the text to fit within the available space
+            if not lockAnchor and #bestAnchorData[7] >= 2 then
+                text = stringLib.utf8_sub(text, 2, 14)..((stringLib.length(text) - 2) > 14 and "..." or "")
+                textWidth = charHeight * (stringLib.length(text) - 2) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
+            end
+
+            local cId = dt.dCId
+            this.markersByName[dt.name] = this.markersByName[dt.name] or {}
+
+            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
+
+            -- determine the color and background color of the text marker based on whether it is in an exterior cell,
+            -- whether the destination cell is discovered or visited, and whether there is a local texture for the world map
+            local color, backgroundColor, hasLocalTexture
+            if isExterior then
+                color, backgroundColor, hasLocalTexture = getWorldMarkerColor(dt.cId, cId, dt.pos)
+            elseif discoveredLocs.isDiscovered(dt.dCId) then
+                if discoveredLocs.isVisited(dt.dCId) then
+                    color = config.data.ui.defaultLightColor
+                else
+                    color = config.data.ui.markerDefaultColor
+                end
+            else
+                color = config.data.ui.defaultDarkColor
+            end
+            backgroundColor = backgroundColor or config.data.ui.markerBackgroundColor
+            local backgroundAlpha = hasLocalTexture and config.data.legend.alpha.background * 0.01 or
+                (config.data.legend.alpha.backgroundAlt or config.data.legend.alpha.background) * 0.01
+
+            if not isTileDiscoveredStateEqual and config.data.legend.localMarkerBackground and textMarkerHandler then
+                local mBgColor = textMarkerHandler._params.textBackgroundColor
+                local mBgAlpha = textMarkerHandler._params.textBackgroundAlpha
+                if backgroundAlpha ~= mBgAlpha or backgroundColor.r ~= mBgColor.r or backgroundColor.g ~= mBgColor.g
+                        or backgroundColor.b ~= mBgColor.b then
+                    textMarkerHandler:destroy()
+                    textMarkerHandler = nil ---@diagnostic disable-line: cast-local-type
+                end
+            end
+
+            local fontSize = isIsolated and isolatedFontSize or markerFontSize
+            local pos = dt.pos
+            local alpha = config.data.legend.alpha.entrance * 0.01
+            local userData = textMarkerHandler and textMarkerHandler:getUserData()
+
+            -- if the text marker already exists and has the same grouping and clustering settings,and the tile discovery state is the same,
+            -- update its anchor lock status; otherwise, create a new text marker with the appropriate parameters
+            local doNextStep = false
+            if userData and userData.grouped == (doGroup and not doGroupToName) and
+                    userData.clustered == doGroupToName and isTileDiscoveredStateEqual then
+                userData.anchorLocked = lockAnchor
+                local params = textMarkerHandler._params ---@diagnostic disable-line: need-check-nil
+                local anchor = params.anchor or util.vector2(0, 0)
+                doNextStep = params.text == text and
+                    anchor.x == textAnchor.x and anchor.y == textAnchor.y and
+                    params.alpha == alpha and
+                    params.fontSize == fontSize and
+                    params.visible == isCellDiscovered and
+                    params.pos.x == pos.x and params.pos.y == pos.y
+            end
+
+            if not doNextStep then
                 -- if the text marker already exists, update its userData; otherwise, create a new userData
                 userData = userData or {
                     type = commonData.doorDescrMarkerType,
@@ -822,7 +812,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     userData = userData,
                 }
 
-                if not textMarkerHandler then goto continue end
+                if not textMarkerHandler then return end
 
                 -- if the text marker was successfully created, update the relevant data structures to track it and its associated information
                 do
@@ -844,20 +834,25 @@ local function createMarkers(widget, cellId, allowedCells, region)
                         newTemporaryMarkers[textId] = textMarkerHandler
                     end
                 end
+            end
 
-                ::nextStep::
+            if not textMarkerHandler then return end
 
-                mInfo.textMarker = textMarkerHandler
-                lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
-                for k = bestAnchorData[3], bestAnchorData[4] do
-                    occupationIntervals[k] = occupationIntervals[k] or {}
-                    table.insert(occupationIntervals[k], {bestAnchorData[5], bestAnchorData[6], textMarkerHandler})
-                    if next(bestAnchorData[7]) then
-                        markerCollusions[textMarkerHandler] = bestAnchorData[7]
-                    end
+            mInfo.textMarker = textMarkerHandler
+            lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
+            for k = bestAnchorData[3], bestAnchorData[4] do
+                occupationIntervals[k] = occupationIntervals[k] or {}
+                table.insert(occupationIntervals[k], {bestAnchorData[5], bestAnchorData[6], textMarkerHandler})
+                if next(bestAnchorData[7]) then
+                    markerCollusions[textMarkerHandler] = bestAnchorData[7]
                 end
+            end
+        end
 
-                ::continue::
+        -- create text markers for each entrance, determining their anchor positions and visibility based on discovery status and grouping settings
+        for _, lineDt in pairs(entranceByLine) do
+            for j, data in ipairs(lineDt) do
+                processLineElem(data)
             end
         end
 
@@ -893,44 +888,45 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
             for _, colMarker in pairs(collusions) do
                 local isColludedLocked = colMarker:getUserData().anchorLocked
-                if isColludedLocked and isMainLocked then
-                    goto continue
-                end
-                local minX1, maxX1, minY1, maxY1 = getBounds(markerHandler, markerHandler._params.anchor)
-                local minX2, maxX2, minY2, maxY2 = getBounds(colMarker, colMarker._params.anchor)
+                local cont = isColludedLocked and isMainLocked
 
-                local currentArea = getOverlapArea(minX1, maxX1, minY1, maxY1, minX2, maxX2, minY2, maxY2)
-                local bestArea = currentArea
-                if currentArea > 0 then
-                    local bestAnchor1 = markerHandler._params.anchor
-                    local bestAnchor2 = colMarker._params.anchor
+                if not cont then
 
-                    for _, a1 in ipairs(entranceAnchors) do
-                        local mAnchor = isMainLocked and bestAnchor1 or a1
-                        local nx1, nx2, ny1, ny2 = getBounds(markerHandler, mAnchor)
-                        for _, a2 in ipairs(entranceAnchors) do
-                            local colAnchor = isColludedLocked and bestAnchor2 or a2
-                            local nox1, nox2, noy1, noy2 = getBounds(colMarker, colAnchor)
-                            local area = getOverlapArea(nx1, nx2, ny1, ny2, nox1, nox2, noy1, noy2)
-                            if area < bestArea then
-                                bestArea = area
-                                bestAnchor1 = mAnchor
-                                bestAnchor2 = colAnchor
-                                if bestArea == 0 then break end
+                    local minX1, maxX1, minY1, maxY1 = getBounds(markerHandler, markerHandler._params.anchor)
+                    local minX2, maxX2, minY2, maxY2 = getBounds(colMarker, colMarker._params.anchor)
+
+                    local currentArea = getOverlapArea(minX1, maxX1, minY1, maxY1, minX2, maxX2, minY2, maxY2)
+                    local bestArea = currentArea
+                    if currentArea > 0 then
+                        local bestAnchor1 = markerHandler._params.anchor
+                        local bestAnchor2 = colMarker._params.anchor
+
+                        for _, a1 in ipairs(entranceAnchors) do
+                            local mAnchor = isMainLocked and bestAnchor1 or a1
+                            local nx1, nx2, ny1, ny2 = getBounds(markerHandler, mAnchor)
+                            for _, a2 in ipairs(entranceAnchors) do
+                                local colAnchor = isColludedLocked and bestAnchor2 or a2
+                                local nox1, nox2, noy1, noy2 = getBounds(colMarker, colAnchor)
+                                local area = getOverlapArea(nx1, nx2, ny1, ny2, nox1, nox2, noy1, noy2)
+                                if area < bestArea then
+                                    bestArea = area
+                                    bestAnchor1 = mAnchor
+                                    bestAnchor2 = colAnchor
+                                    if bestArea == 0 then break end
+                                end
+                                if isColludedLocked then break end
                             end
-                            if isColludedLocked then break end
+                            if bestArea == 0 or isMainLocked then break end
                         end
-                        if bestArea == 0 or isMainLocked then break end
+
+                        markerHandler._params.anchor = bestAnchor1
+                        markerHandler._container.props.anchor = bestAnchor1
+
+                        colMarker._params.anchor = bestAnchor2
+                        colMarker._container.props.anchor = bestAnchor2
                     end
 
-                    markerHandler._params.anchor = bestAnchor1
-                    markerHandler._container.props.anchor = bestAnchor1
-
-                    colMarker._params.anchor = bestAnchor2
-                    colMarker._container.props.anchor = bestAnchor2
                 end
-
-                ::continue::
             end
         end
 
@@ -955,135 +951,133 @@ local function createMarkers(widget, cellId, allowedCells, region)
         -- if the image marker already exists and has the same tile discovery state, update its alpha; otherwise, create a new image marker
         if imageMarkerHandler and isTileDiscoveredStateEqual then
             imageMarkerHandler:setAlpha(imageMarkerHandler:getAlpha())
-            goto continue
-        end
-
-        local mInfo = dataForTextMarkers[dt]
-        local textMarkerHandler = mInfo and mInfo.textMarker or nil
-
-        local cId = dt.dCId
-        this.entranceMarkersByDestCellId[cId] = this.entranceMarkersByDestCellId[cId] or {}
-        this.markersByName[dt.name] = this.markersByName[dt.name] or {}
-        this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
-
-        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
-
-        local color, _, hasLocalTexture
-        if isExterior then
-            color, _, hasLocalTexture = getWorldMarkerColor(dt.cId, cId, dt.pos)
-        elseif discoveredLocs.isDiscovered(dt.dCId) then
-            if discoveredLocs.isVisited(dt.dCId) then
-                color = config.data.ui.defaultLightColor
-            else
-                color = config.data.ui.markerDefaultColor
-            end
         else
-            color = config.data.ui.defaultDarkColor
-        end
 
-        local isIsolated = textMarkerHandler and textMarkerHandler:getUserData().isIsolated or false
+            local mInfo = dataForTextMarkers[dt]
+            local textMarkerHandler = mInfo and mInfo.textMarker or nil
 
-        local userData = imageMarkerHandler and imageMarkerHandler:getUserData() or {
-            type = commonData.doorMarkerType,
-            cellId = dt.dCId,
-            hash = dt.dHash,
-            searchText = stringLib.utf8_lower(dt.name),
-            allowSearchFilter = true,
-            textMarker = textMarkerHandler,
-            name = dt.name,
-            fullName = dt.fName,
-            sPref = doGroupToName and dt.ppN or nil,
-            selectable = isIsolated or not doGroupToName
-        }
+            local cId = dt.dCId
+            this.entranceMarkersByDestCellId[cId] = this.entranceMarkersByDestCellId[cId] or {}
+            this.markersByName[dt.name] = this.markersByName[dt.name] or {}
+            this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
 
-        userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
-        userData.isTileDiscovered = isTileDiscovered
+            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
 
-        local markerSize = isIsolated and isolatedImageMarkerSize or unisolatedImageMarkerSize
+            local color, _, hasLocalTexture
+            if isExterior then
+                color, _, hasLocalTexture = getWorldMarkerColor(dt.cId, cId, dt.pos)
+            elseif discoveredLocs.isDiscovered(dt.dCId) then
+                if discoveredLocs.isVisited(dt.dCId) then
+                    color = config.data.ui.defaultLightColor
+                else
+                    color = config.data.ui.markerDefaultColor
+                end
+            else
+                color = config.data.ui.defaultDarkColor
+            end
 
-        ---@diagnostic disable-next-line: cast-local-type
-        imageMarkerHandler = widget:createImageMarker{
-            id = imId,
-            texture = dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
-            color = color,
-            useCache = true,
-            layerId = widget.LAYER.marker,
-            alpha = config.data.legend.alpha.entrance * 0.01,
-            anchor = util.vector2(0.5, 0.5),
-            size = markerSize,
-            pos = dt.pos,
-            showWhenZoomedIn = true,
-            update = true,
-            visible = isCellDiscovered,
-            userData = userData,
-            events = {
-                mouseRelease = function (e, layout, pressed)
-                    if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
-                    if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
-                        return
-                    end
+            local isIsolated = textMarkerHandler and textMarkerHandler:getUserData().isIsolated or false
 
-                    this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
-                    if this.activeMenuMeta.mapWidget and dt.dPos then
-                        this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
-                        this.activeMenuMeta.mapWidget:updateMarkers(true)
-                    end
+            local userData = imageMarkerHandler and imageMarkerHandler:getUserData() or {
+                type = commonData.doorMarkerType,
+                cellId = dt.dCId,
+                hash = dt.dHash,
+                searchText = stringLib.utf8_lower(dt.name),
+                allowSearchFilter = true,
+                textMarker = textMarkerHandler,
+                name = dt.name,
+                fullName = dt.fName,
+                sPref = doGroupToName and dt.ppN or nil,
+                selectable = isIsolated or not doGroupToName
+            }
 
-                    eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
-                    this.activeMenuMeta:update()
-                end,
+            userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
+            userData.isTileDiscovered = isTileDiscovered
 
-                mouseMove = function(e, layout)
-                    if not tooltip.isExists(layout) then
-                        local tooltipContent = ui.content{}
-                        if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
+            local markerSize = isIsolated and isolatedImageMarkerSize or unisolatedImageMarkerSize
+
+            ---@diagnostic disable-next-line: cast-local-type
+            imageMarkerHandler = widget:createImageMarker{
+                id = imId,
+                texture = dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
+                color = color,
+                useCache = true,
+                layerId = widget.LAYER.marker,
+                alpha = config.data.legend.alpha.entrance * 0.01,
+                anchor = util.vector2(0.5, 0.5),
+                size = markerSize,
+                pos = dt.pos,
+                showWhenZoomedIn = true,
+                update = true,
+                visible = isCellDiscovered,
+                userData = userData,
+                events = {
+                    mouseRelease = function (e, layout, pressed)
+                        if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
+                        if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
                             return
                         end
 
-                        if #tooltipContent > 0 then
-                            local newTooltipContent = ui.content{}
-                            for i = 1, #tooltipContent - 1 do
-                                local item = tooltipContent[i]
-                                newTooltipContent:add(item)
-                                newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
-                            end
-                            newTooltipContent:add(tooltipContent[#tooltipContent])
-
-                            layout.userData.tooltipContent = newTooltipContent
-                            tooltip.createOrMove(e, layout, newTooltipContent)
-                        else
-                            layout.userData.tooltipContent = nil
+                        this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
+                        if this.activeMenuMeta.mapWidget and dt.dPos then
+                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
+                            this.activeMenuMeta.mapWidget:updateMarkers(true)
                         end
-                    elseif tooltip.createOrMove(e, layout) then
-                        eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
-                            marker = imageMarkerHandler,
-                            content = layout.userData.tooltipContent,
-                            tooltip = tooltip.get(layout)
-                        })
+
+                        eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
+                        this.activeMenuMeta:update()
+                    end,
+
+                    mouseMove = function(e, layout)
+                        if not tooltip.isExists(layout) then
+                            local tooltipContent = ui.content{}
+                            if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
+                                return
+                            end
+
+                            if #tooltipContent > 0 then
+                                local newTooltipContent = ui.content{}
+                                for i = 1, #tooltipContent - 1 do
+                                    local item = tooltipContent[i]
+                                    newTooltipContent:add(item)
+                                    newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
+                                end
+                                newTooltipContent:add(tooltipContent[#tooltipContent])
+
+                                layout.userData.tooltipContent = newTooltipContent
+                                tooltip.createOrMove(e, layout, newTooltipContent)
+                            else
+                                layout.userData.tooltipContent = nil
+                            end
+                        elseif tooltip.createOrMove(e, layout) then
+                            eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
+                                marker = imageMarkerHandler,
+                                content = layout.userData.tooltipContent,
+                                tooltip = tooltip.get(layout)
+                            })
+                        end
+                    end,
+                },
+            }
+
+            if imageMarkerHandler then
+                this.entranceMarkersByDestCellId[cId][imId] = imageMarkerHandler
+                this.markersByName[dt.name][imId] = imageMarkerHandler
+                this.markersByDoorHash[dt.dHash][imId] = imageMarkerHandler
+                if disabledDoors.contains(dt.dHash) then
+                    updateDoorMarkerVisibility(imageMarkerHandler, false)
+                end
+                this.markerById[imId] = imageMarkerHandler
+
+                if textMarkerHandler then
+                    local userData = textMarkerHandler:getUserData()
+                    if userData then
+                        userData.imageMarker = imageMarkerHandler
+                        userData.linkedImageMarkers[imageMarkerHandler._id] = imageMarkerHandler
                     end
-                end,
-            },
-        }
-
-        if imageMarkerHandler then
-            this.entranceMarkersByDestCellId[cId][imId] = imageMarkerHandler
-            this.markersByName[dt.name][imId] = imageMarkerHandler
-            this.markersByDoorHash[dt.dHash][imId] = imageMarkerHandler
-            if disabledDoors.contains(dt.dHash) then
-                updateDoorMarkerVisibility(imageMarkerHandler, false)
-            end
-            this.markerById[imId] = imageMarkerHandler
-
-            if textMarkerHandler then
-                local userData = textMarkerHandler:getUserData()
-                if userData then
-                    userData.imageMarker = imageMarkerHandler
-                    userData.linkedImageMarkers[imageMarkerHandler._id] = imageMarkerHandler
                 end
             end
         end
-
-        ::continue::
     end
     end
 
@@ -1320,23 +1314,23 @@ local function createMarkers(widget, cellId, allowedCells, region)
             for _, dt in pairs(cluster.c) do
                 local mDt = dataForTextMarkers[dt]
                 local marker = mDt and mDt.textMarker
-                if not marker then goto continue end
+                if marker then
 
-                -- if the marker is not isolated, hide it and its linked image markers
-                hideMarker(marker)
+                    -- if the marker is not isolated, hide it and its linked image markers
+                    hideMarker(marker)
 
-                local pos = marker._params.pos
-                if pos.x >= cluster.bb.center.x and pos.y >= cluster.bb.center.y then
-                    quadrants[2][marker._params.text] = marker
-                elseif pos.x < cluster.bb.center.x and pos.y >= cluster.bb.center.y then
-                    quadrants[1][marker._params.text] = marker
-                elseif pos.x < cluster.bb.center.x and pos.y < cluster.bb.center.y then
-                    quadrants[3][marker._params.text] = marker
-                else
-                    quadrants[4][marker._params.text] = marker
+                    local pos = marker._params.pos
+                    if pos.x >= cluster.bb.center.x and pos.y >= cluster.bb.center.y then
+                        quadrants[2][marker._params.text] = marker
+                    elseif pos.x < cluster.bb.center.x and pos.y >= cluster.bb.center.y then
+                        quadrants[1][marker._params.text] = marker
+                    elseif pos.x < cluster.bb.center.x and pos.y < cluster.bb.center.y then
+                        quadrants[3][marker._params.text] = marker
+                    else
+                        quadrants[4][marker._params.text] = marker
+                    end
+
                 end
-
-                ::continue::
             end
 
             for qn, quadrant in ipairs(quadrants) do
@@ -1360,44 +1354,41 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
             -- determine the number of columns and the maximum text length for each quadrant based on the number of markers in the quadrant and the size of the quadrant
             for qn, quadrant in ipairs(quadrants) do
-                if not next(quadrant) then goto continue end
-                local c = #quadrant
-                local columns = c <= 5 and 1 or math.ceil((c * newFontWorldSize) / quadrantSize.y)
-                columns = util.clamp(columns, 1, 3)
-                local columnWidth = columns == 1 and 999999 or quadrantSize.x / columns
-                columnWidth = math.max(newFontWorldSize * 8 * config.data.ui.textHeightMul, columnWidth)
-                local textMaxLength = columns <= 1 and 99 or math.floor(columnWidth / (newFontWorldSize * config.data.ui.textHeightMul))
-                textMaxLength = math.max(8, textMaxLength)
+                if next(quadrant) then
+                    local c = #quadrant
+                    local columns = c <= 5 and 1 or math.ceil((c * newFontWorldSize) / quadrantSize.y)
+                    columns = util.clamp(columns, 1, 3)
+                    local columnWidth = columns == 1 and 999999 or quadrantSize.x / columns
+                    columnWidth = math.max(newFontWorldSize * 8 * config.data.ui.textHeightMul, columnWidth)
+                    local textMaxLength = columns <= 1 and 99 or math.floor(columnWidth / (newFontWorldSize * config.data.ui.textHeightMul))
+                    textMaxLength = math.max(8, textMaxLength)
 
-                local qAnchor = util.vector2(
-                    (qn == 1 or qn == 3) and 1 or 0,
-                    (qn > 2) and 1 or 0
-                )
-                local posMulY = (qn <= 2) and 1 or -1
-                local posMulX = (qn == 1 or qn == 3) and -1 or 1
-                for i, marker in ipairs(quadrant) do
+                    local qAnchor = util.vector2(
+                        (qn == 1 or qn == 3) and 1 or 0,
+                        (qn > 2) and 1 or 0
+                    )
+                    local posMulY = (qn <= 2) and 1 or -1
+                    local posMulX = (qn == 1 or qn == 3) and -1 or 1
+                    for i, marker in ipairs(quadrant) do
 
-                    local center = cluster.bb.center
-                    -- update the layout of the marker
-                    ---@diagnostic disable-next-line: missing-fields
-                    marker:updateLayout{
-                        anchor = qAnchor,
-                        pos = center + util.vector2((i % columns) * columnWidth * posMulX, (math.floor(i / columns)) *
-                            newFontWorldSize * posMulY),
-                        fontSize = newFontSize,
-                        alpha = marker:getAlpha(),
-                        text = stringLib.utf8_sub(marker._params.text, 2, textMaxLength) ..
-                            ((stringLib.length(marker._params.text) - 2) > textMaxLength and "..." or "")
-                    }
+                        local center = cluster.bb.center
+                        -- update the layout of the marker
+                        ---@diagnostic disable-next-line: missing-fields
+                        marker:updateLayout{
+                            anchor = qAnchor,
+                            pos = center + util.vector2((i % columns) * columnWidth * posMulX, (math.floor(i / columns)) *
+                                newFontWorldSize * posMulY),
+                            fontSize = newFontSize,
+                            alpha = marker:getAlpha(),
+                            text = stringLib.utf8_sub(marker._params.text, 2, textMaxLength) ..
+                                ((stringLib.length(marker._params.text) - 2) > textMaxLength and "..." or "")
+                        }
 
-                    marker:getUserData().grouped = true
-                    marker:getUserData().clustered = false
+                        marker:getUserData().grouped = true
+                        marker:getUserData().clustered = false
+                    end
                 end
-
-                ::continue::
             end
-
-            ::continue::
         end
     end
 

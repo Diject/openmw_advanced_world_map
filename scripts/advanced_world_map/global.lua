@@ -236,17 +236,18 @@ return {
             end
 
             if not cellId then
+                local function processItem (x, y)
+                    local c = world.getExteriorCell(x, y)
+                    if not c then return end
+                    if data.availableCells and not data.availableCells[c.id] then return end
+
+                    processCell(c)
+                end
+
                 local gridX, gridY = cellLib.getGridCoordinates(pos)
                 for x = gridX - 1, gridX + 1 do
                     for y = gridY - 1, gridY + 1 do
-                        local c = world.getExteriorCell(x, y)
-                        if not c then goto continue end
-
-                        if data.availableCells and not data.availableCells[c.id] then goto continue end
-
-                        processCell(c)
-
-                        ::continue::
+                        processItem(x, y)
                     end
                 end
             elseif cell then
@@ -434,9 +435,9 @@ return {
                 local halfSize = box.halfSize
                 local width = halfSize.x * 2
                 local height = halfSize.y * 2
-                if width < 128 or height < 128 then goto continue end
-                table.insert(res, {center.x, center.y, width, height})
-                ::continue::
+                if width >= 128 and height >= 128 then
+                    table.insert(res, {center.x, center.y, width, height})
+                end
             end
             data.player:sendEvent("AdvWMap:getMapStatics", {res = res})
         end,

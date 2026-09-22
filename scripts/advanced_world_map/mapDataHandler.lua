@@ -258,15 +258,15 @@ local function buildTransportData(entrances)
         return ind, nodes[ind]
     end
 
-    for _, rec in pairs(types.NPC.records) do
+    local function processRec (rec)
         if not rec.travelDestinations then
-            goto continue
+            return
         end
 
         local data = {tp = transportClass[rec.class or ""] or -1, ns = {}}
 
-        for _, destDt in pairs(rec.travelDestinations) do
-            if not destDt.cellId then goto continue end
+        local function processDest (destDt)
+            if not destDt.cellId then return end
             if destDt.cellId:find(commonData.exteriorCellLabel) then
                 local pos = destDt.position
                 local nodeId = getNodeId(pos, data.tp)
@@ -278,7 +278,7 @@ local function buildTransportData(entrances)
                     data.ns[cachedExitNode] = true
                 else
                     local exits = cellHelper.findExitPoss(destDt.cellId, entrances)
-                    if not exits or not exits[1] then goto continue end
+                    if not exits or not exits[1] then return end
 
                     local exit = exits[1]
                     local nodeId = getNodeId(exit, data.tp)
@@ -287,25 +287,30 @@ local function buildTransportData(entrances)
                     exitNodes[destDt.cellId] = nodeId
                 end
             end
+        end
 
-            ::continue::
+        for _, destDt in pairs(rec.travelDestinations) do
+            processDest(destDt)
         end
 
         if next(data.ns) then
             data.ns = tableLib.keys(data.ns)
             transportNpcs[rec.id] = data
         end
-
-        ::continue::
     end
 
-    for _, cell in pairs(world.cells) do
-        if not cell.id then goto continue end
 
-        local actors = cell:getAll(types.NPC)
-        for _, actor in pairs(actors) do
+    for _, rec in pairs(types.NPC.records) do
+        processRec(rec)
+    end
+
+
+    local function processCell (cell)
+        if not cell.id then return end
+
+        local processActor = function (actor)
             local transporterData = transportNpcs[actor.recordId]
-            if not transporterData then goto continue end
+            if not transporterData then return end
 
             local actorNodeId
             if cell.isExterior then
@@ -316,7 +321,7 @@ local function buildTransportData(entrances)
                     actorNodeId = cachedExitNode
                 else
                     local exits = cellHelper.findExitPoss(cell.id, entrances)
-                    if not exits or not exits[1] then goto continue end
+                    if not exits or not exits[1] then return end
 
                     local exit = exits[1]
                     local nodeId = getNodeId(exit, transporterData.tp)
@@ -335,25 +340,29 @@ local function buildTransportData(entrances)
                     for _, nodeId in pairs(transporterData.ns) do
                         if nodeId ~= actorNodeId then
                             local nDt = nodes[nodeId]
-                            if not nDt then goto continue end
+                            if nDt then
+                                if nDt.tp == -1 then
+                                    nDt.tp = actorNode.tp
+                                end
 
-                            if nDt.tp == -1 then
-                                nDt.tp = actorNode.tp
+                                actorNode.ls[nodeId] = true
                             end
-
-                            actorNode.ls[nodeId] = true
                         end
-
-                        ::continue::
                     end
 
                 end
             end
-
-            ::continue::
         end
 
-        ::continue::
+        local actors = cell:getAll(types.NPC)
+        for _, actor in pairs(actors) do
+            processActor(actor)
+        end
+    end
+
+
+    for _, cell in pairs(world.cells) do
+        processCell(cell)
     end
 
     for i, nodeDt in pairs(nodes) do
@@ -394,11 +403,12 @@ local function buildData(params)
     local occupied = {}
     local exCellSecondPrefixes = {}
     this.cellCount = #world.cells
-    for _, cell in pairs(world.cells) do
-        if not cell.isExterior or not cell.id then goto continue end
+
+    local function processCellInit (cell)
+        if not cell.isExterior or not cell.id then return end
 
         if cell.gridX > 1000 or cell.gridX < -1000 or cell.gridY > 1000 or cell.gridY < -1000 then
-            goto continue
+            return
         end
 
         minGridX = math.min(minGridX, cell.gridX)
@@ -426,7 +436,7 @@ local function buildData(params)
             occupied[cell.gridX][cell.gridY] = true
         end
 
-        if not cell.name or cell.name == "" then goto continue end
+        if not cell.name or cell.name == "" then return end
 
         local name, pName = stringLib.getBeforeAfterComma(cell.name)
         if cell.isExterior and pName then
@@ -471,8 +481,10 @@ local function buildData(params)
             regDt.maxY = math.max(cell.gridY, regDt.maxY)
             regDt.count = regDt.count + 1
         end
+    end
 
-        ::continue::
+    for _, cell in pairs(world.cells) do
+        processCellInit(cell)
     end
 
 
@@ -500,28 +512,28 @@ local function buildData(params)
     local cellNameLines = {}
     local cellNames = {}
     for _, dt in pairs(cellNameData) do
-        if dt.count < 1 then goto continue end
+        if dt.count >= 1 then
 
-        local posX = (dt.minX + (dt.maxX - dt.minX) / 2) * 8192 + 4096
-        local posY = (dt.minY + (dt.maxY - dt.minY) / 2) * 8192 + 4096
+            local posX = (dt.minX + (dt.maxX - dt.minX) / 2) * 8192 + 4096
+            local posY = (dt.minY + (dt.maxY - dt.minY) / 2) * 8192 + 4096
 
-        local cellDt = {
-            id = dt.id,
-            name = dt.name,
-            count = dt.count,
-            posX = posX,
-            posY = posY,
-        }
-        cellNames[dt.name] = cellDt
+            local cellDt = {
+                id = dt.id,
+                name = dt.name,
+                count = dt.count,
+                posX = posX,
+                posY = posY,
+            }
+            cellNames[dt.name] = cellDt
 
-        local hash = math.floor(posY / 6144)
-        for i = -1, 1 do
-            local h = hash + i
-            cellNameLines[h] = cellNameLines[h] or {}
-            table.insert(cellNameLines[h], cellDt)
+            local hash = math.floor(posY / 6144)
+            for i = -1, 1 do
+                local h = hash + i
+                cellNameLines[h] = cellNameLines[h] or {}
+                table.insert(cellNameLines[h], cellDt)
+            end
+
         end
-
-        ::continue::
     end
 
     ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
@@ -529,8 +541,8 @@ local function buildData(params)
     local populationMap = {}
     -- local exNames = {}
 
-    for _, cell in pairs(world.cells) do
-        if not cell.id then goto continue end
+    local function processCell (cell)
+        if not cell.id then return end
 
         local cellName = getCellName(cell)
         this.cellNameById[cell.id] = cellName
@@ -538,14 +550,13 @@ local function buildData(params)
             this.validCellsWithoutName[cell.id] = true
         end
 
-        local doors = cell:getAll(types.Door)
-        for _, door in pairs(doors) do
-            if not types.Door.isTeleport(door) then goto continue end
+        local processDoor = function (door)
+            if not types.Door.isTeleport(door) then return end
 
             local dest = pDoor.destCell(door)
             local destPos = pDoor.destPosition(door)
 
-            if not dest or not destPos then goto continue end
+            if not dest or not destPos then return end
 
             local exTypeCellName
             local name = getCellName(dest)
@@ -625,11 +636,17 @@ local function buildData(params)
                     end
                 end
             end
-
-            ::continue::
         end
 
-        ::continue::
+        local doors = cell:getAll(types.Door)
+        for _, door in pairs(doors) do
+            processDoor(door)
+        end
+    end
+
+
+    for _, cell in pairs(world.cells) do
+        processCell(cell)
     end
 
     for _, list in pairs(entrancesWithCellName) do
@@ -781,27 +798,27 @@ local function buildData(params)
     local regNameLines = {}
     local regNames = {}
     for _, dt in pairs(regionNameData) do
-        if dt.count < 1 then goto continue end
+        if dt.count >= 1 then
 
-        local posX = (dt.minX + (dt.maxX - dt.minX) / 2) * 8192 + 4096
-        local posY = (dt.minY + (dt.maxY - dt.minY) / 2) * 8192 + 4096
+            local posX = (dt.minX + (dt.maxX - dt.minX) / 2) * 8192 + 4096
+            local posY = (dt.minY + (dt.maxY - dt.minY) / 2) * 8192 + 4096
 
-        local cellDt = {
-            name = dt.name,
-            count = dt.count,
-            posX = posX,
-            posY = posY,
-        }
-        regNames[dt.name] = cellDt
+            local cellDt = {
+                name = dt.name,
+                count = dt.count,
+                posX = posX,
+                posY = posY,
+            }
+            regNames[dt.name] = cellDt
 
-        local hash = math.floor(posY / 8192)
-        for i = -1, 1 do
-            local h = hash + i
-            regNameLines[h] = regNameLines[h] or {}
-            table.insert(regNameLines[h], cellDt)
+            local hash = math.floor(posY / 8192)
+            for i = -1, 1 do
+                local h = hash + i
+                regNameLines[h] = regNameLines[h] or {}
+                table.insert(regNameLines[h], cellDt)
+            end
+
         end
-
-        ::continue::
     end
 
     processLines(regNameLines, 8192 * 12, 8192)

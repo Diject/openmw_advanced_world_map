@@ -128,17 +128,15 @@ function this.triggerEvent(eventId, e)
     local block = false
     for _, hData in ipairs(handlerData) do
         local ss, cl, bl = pcall(hData[1], e or {})
-        if not ss then
+        if ss then
+            block = bl or block
+
+            if cl then
+                break
+            end
+        else
             log("\nerror in \""..eventId.."\" callback:", cl)
-            goto continue
         end
-        block = bl or block
-
-        if cl then
-            break
-        end
-
-        ::continue::
     end
 
     return block

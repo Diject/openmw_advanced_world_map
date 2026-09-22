@@ -1513,16 +1513,15 @@ function this.create(params)
 
     local function onMouseWheelCallback(content, value)
         for _, dt in pairs(content) do
-            if not type(dt) == "table" then goto continue end
-            if dt.userData and dt.userData.onMouseWheel then
-                dt.userData.onMouseWheel(value, dt)
-            end
+            if type(dt) == "table" then
+                if dt.userData and dt.userData.onMouseWheel then
+                    dt.userData.onMouseWheel(value, dt)
+                end
 
-            if dt.content and dt.name ~= "mapWidget" then
-                onMouseWheelCallback(dt.content, value)
+                if dt.content and dt.name ~= "mapWidget" then
+                    onMouseWheelCallback(dt.content, value)
+                end
             end
-
-            ::continue::
         end
     end
 
@@ -1558,71 +1557,74 @@ function this.create(params)
             local hasAxisInput = false
             local hasTriggerInput = false
 
-            if not menuMode.isMenuInteractive() or
-                    (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
-                goto continue
+            local function process()
+                if not menuMode.isMenuInteractive() or
+                        (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
+                    return
+                end
+
+                do
+                    local rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
+                    local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
+                    local lTrigger
+                    if config.data.input.gamepadControlsBumperMode then
+                        lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and 0.75 or 0
+                    else
+                        lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
+                    end
+                    local rTrigger
+                    if config.data.input.gamepadControlsBumperMode then
+                        rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and 0.75 or 0
+                    else
+                        rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
+                    end
+
+                    hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
+                    hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25
+
+                    if not hasAxisInput and not hasTriggerInput then
+                        return
+                    end
+
+                    local zoom = meta.mapWidget.zoom
+
+                    if hasAxisInput then
+                        local centerPos = meta.mapWidget:getWorldPositionOfVisibleCenter()
+                        local moveVector = util.vector2(
+                            rAxisX * 8192 / zoom * core.getRealFrameDuration() * 20,
+                            -rAxisY * 8192 / zoom * core.getRealFrameDuration() * 20
+                        )
+
+                        if meta.mapWidget.northDirectionAngle and meta.mapWidget.northDirectionAngle ~= 0 then
+                            moveVector = moveVector:rotate(-meta.mapWidget.northDirectionAngle)
+                        end
+                        centerPos = util.vector2(centerPos.x + moveVector.x, centerPos.y + moveVector.y)
+
+                        meta.mapWidget:focusOnWorldPosition(centerPos)
+                    end
+
+                    if hasTriggerInput then
+                        if lTrigger > 0.25 then
+                            zoom = zoom / (1 + (config.data.main.zoomingMul - 1) * lTrigger * core.getRealFrameDuration() * 10)
+                            meta.mapWidget:setZoom(zoom)
+                        elseif rTrigger > 0.25 then
+                            zoom = zoom * (1 + (config.data.main.zoomingMul - 1) * rTrigger * core.getRealFrameDuration() * 10)
+                            meta.mapWidget:setZoom(zoom)
+                        end
+                    end
+
+                    if hasAxisInput or hasTriggerInput then
+                        meta.mapWidget:closeRightMouseMenu()
+                        meta:closeQuickMenu()
+                        tooltip.destroyLast()
+                        meta.mapWidget:refreshVisibleArea()
+                        meta.update()
+                    end
+                end
             end
 
-            do
-                local rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
-                local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
-                local lTrigger
-                if config.data.input.gamepadControlsBumperMode then
-                    lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and 0.75 or 0
-                else
-                    lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
-                end
-                local rTrigger
-                if config.data.input.gamepadControlsBumperMode then
-                    rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and 0.75 or 0
-                else
-                    rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
-                end
+            process()
 
-                hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
-                hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25
-
-                if not hasAxisInput and not hasTriggerInput then
-                    goto continue
-                end
-
-                local zoom = meta.mapWidget.zoom
-
-                if hasAxisInput then
-                    local centerPos = meta.mapWidget:getWorldPositionOfVisibleCenter()
-                    local moveVector = util.vector2(
-                        rAxisX * 8192 / zoom * core.getRealFrameDuration() * 20,
-                        -rAxisY * 8192 / zoom * core.getRealFrameDuration() * 20
-                    )
-
-                    if meta.mapWidget.northDirectionAngle and meta.mapWidget.northDirectionAngle ~= 0 then
-                        moveVector = moveVector:rotate(-meta.mapWidget.northDirectionAngle)
-                    end
-                    centerPos = util.vector2(centerPos.x + moveVector.x, centerPos.y + moveVector.y)
-
-                    meta.mapWidget:focusOnWorldPosition(centerPos)
-                end
-
-                if hasTriggerInput then
-                    if lTrigger > 0.25 then
-                        zoom = zoom / (1 + (config.data.main.zoomingMul - 1) * lTrigger * core.getRealFrameDuration() * 10)
-                        meta.mapWidget:setZoom(zoom)
-                    elseif rTrigger > 0.25 then
-                        zoom = zoom * (1 + (config.data.main.zoomingMul - 1) * rTrigger * core.getRealFrameDuration() * 10)
-                        meta.mapWidget:setZoom(zoom)
-                    end
-                end
-
-                if hasAxisInput or hasTriggerInput then
-                    meta.mapWidget:closeRightMouseMenu()
-                    meta:closeQuickMenu()
-                    tooltip.destroyLast()
-                    meta.mapWidget:refreshVisibleArea()
-                    meta.update()
-                end
-            end
-
-            ::continue::
             realTimer.newTimer((hasAxisInput or hasTriggerInput) and core.getRealFrameDuration() or 0.1, updateRealTimerCallback)
         end
         updateRealTimerCallback()
