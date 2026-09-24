@@ -323,9 +323,7 @@ end
 ---@param destCellId string
 local function getWorldMarkerColor(cellId, destCellId, pos)
     local hasTexture = mapTextureHandler.isWorldLocalMapTextureExists(cellLib.getGridCoordinates(pos))
-    if config.data.tileset.onlyDiscovered and not discoveredLocs.isDiscovered(cellId) then
-        hasTexture = false
-    end
+
     local color
     local shadowColor
     if discoveredLocs.isDiscovered(destCellId) then
@@ -1017,11 +1015,21 @@ local function createMarkers(widget, cellId, allowedCells, region)
                         if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
                             return
                         end
+                        local isDoorDiscovered = discoveredLocs.isPositionDiscovered(dt.cId, dt.pos)
 
                         this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
                         if this.activeMenuMeta.mapWidget and dt.dPos then
-                            this.activeMenuMeta.mapWidget:focusOnWorldPosition(dt.dPos)
-                            this.activeMenuMeta.mapWidget:updateMarkers(true)
+                            local mapWidget = this.activeMenuMeta.mapWidget
+                            mapWidget:focusOnWorldPosition(dt.dPos)
+                            mapWidget:updateMarkers(true)
+
+                            if isDoorDiscovered then
+                                local tempDiscovery = discoveredLocs.getSetDiscoveryInfoForPosition(dt.dCId, dt.isDEx, dt.dPos)
+                                if tempDiscovery then
+                                    mapWidget:updateFog(tempDiscovery)
+                                    mapWidget:update()
+                                end
+                            end
                         end
 
                         eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})

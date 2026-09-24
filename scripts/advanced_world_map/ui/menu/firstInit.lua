@@ -311,7 +311,7 @@ function this.new(params)
                     longHorizontalLineThin,
                     HoverToPreviewBlock(previewImageSize, {1, 2}, nil, checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingTilesetOnlyDiscoveredDescription"),
+                        text = l10n("firstInitFogOfWar"),
                         textSize = params.fontSize,
                         boxSize = checkboxSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
@@ -320,18 +320,6 @@ function this.new(params)
                         checked = config.data.tileset.onlyDiscovered,
                         event = function (checked, layout)
                             config.setValue("tileset.onlyDiscovered", checked)
-                        end
-                    }, util.vector2(160, params.fontSize)),
-                    longHorizontalLineThin,
-                    HoverToPreviewBlock(previewImageSize, {2, 3}, nil, checkBox{
-                        updateFunc = meta.update,
-                        text = l10n("SettingLegendOnlyDiscoveredDescription"),
-                        textSize = params.fontSize,
-                        boxSize = checkboxSize,
-                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
-                        textAlignV = ui.ALIGNMENT.Center,
-                        checked = config.data.legend.onlyDiscovered,
-                        event = function (checked, layout)
                             config.setValue("legend.onlyDiscovered", checked)
                         end
                     }, util.vector2(160, params.fontSize)),

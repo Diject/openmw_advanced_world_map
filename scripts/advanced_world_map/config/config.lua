@@ -84,7 +84,7 @@ this.default = {
         }
     },
     tileset = {
-        onlyDiscovered = true,
+        onlyDiscovered = true, -- fog
         visitedCellsOnWorldMap = false,
         zoomToShow = 3.5,
     },

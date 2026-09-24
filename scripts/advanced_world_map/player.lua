@@ -71,6 +71,7 @@ local lastUiModeTimestamp = 0
 local lastUiModeId = ""
 
 local openMenu
+local discoverNearby
 
 
 pcall(function ()
@@ -398,6 +399,8 @@ local function toggleMenu()
         local function registerMenu(useCharacterMenuParams)
             if not initDataForMenu({toggleMenu = true}) then return end
 
+            discoverNearby()
+
             if not menuMode.isMenuInteractive() then
                 menuMode.activate()
             elseif replacePreviousMode and #I.UI.modes == 1 then
@@ -512,7 +515,9 @@ async:newUnsavableSimulationTimer(0.25, function ()
 end)
 
 
-local function discoverNearby()
+discoverNearby = function()
+    if configLib.data.main.discoveryRadius == 0 then return end
+
     for _, ref in pairs(nearbyDoors) do
         local cont = not types.Door.isTeleport(ref)
             or (ref.position - self.position):length() > configLib.data.main.discoveryRadius
@@ -527,9 +532,14 @@ local function discoverNearby()
             end
         end
     end
+
+    local newPositions = discoveredLocs.discoverPosition(self.cell, self.position)
+    if newPositions and mapMenu.activeMenuMeta then
+        mapMenu.updateFog(self.cell, newPositions)
+    end
 end
 
-time.runRepeatedly(discoverNearby, 0.42)
+time.runRepeatedly(discoverNearby, 0.32)
 
 
 local function fastTravelMessageCallback(data)
@@ -987,7 +997,7 @@ return {
             local menu = menuHandler.getMenu(commonData.mapMenuId)
             if menu then
                 menu.mapWidget.cellStatics = data.res
-                menu.mapWidget:updateMarkers()
+                menu.mapWidget:updateOnZoomMarkers(true)
                 menu:update()
             end
         end,

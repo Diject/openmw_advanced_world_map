@@ -2,8 +2,7 @@ local async = require('openmw.async')
 local ui = require('openmw.ui')
 local util = require('openmw.util')
 local core = require('openmw.core')
-local input = require('openmw.input')
-local vfs = require('openmw.vfs')
+local auxui = require('openmw_aux.ui')
 
 local playerRef = require("openmw.self")
 
@@ -39,6 +38,8 @@ local l10n = core.l10n(commonData.l10nKey)
 
 
 local playerMarkerTexture = ui.texture{ path = commonData.playerMapMarkerPath }
+local fogCellTexture = ui.texture{ path = commonData.fogCellPath }
+local fogPartTexture = ui.texture{ path = commonData.fogPartPath }
 
 
 
@@ -66,12 +67,13 @@ end
 ---@class advancedWorldMap.ui.mapWidget.layerId
 this.layerId = {
     map = 1,
-    region = 2,
-    name = 3,
-    nonInteractive = 4,
-    transport = 5,
-    player = 6,
-    marker = 7,
+    fog = 2,
+    region = 3,
+    name = 4,
+    nonInteractive = 5,
+    transport = 6,
+    player = 7,
+    marker = 8,
 }
 
 
@@ -340,6 +342,15 @@ end
 function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
     local rect = self:getVisibleMapRect()
 
+    local res = self:convertAbsoluteRectToWorldRect(rect)
+
+    return res, rect
+end
+
+
+---@param rect advancedWorldMap.ui.mapWidget.region
+---@return advancedWorldMap.ui.mapWidget.region rectInWorldCoordinates
+function mapWidgetMeta:convertAbsoluteRectToWorldRect(rect)
     local cellSize = self.mapInfo.cellSize or 8192
     local zoomedPixPerCell = self.mapInfo.pixelsPerCell * self.zoom
     local pixelSize = cellSize / zoomedPixPerCell
@@ -360,17 +371,17 @@ function mapWidgetMeta:getVisibleMapRectInWorldCoordinates()
         return util.vector2((pos.x + xOffset) * pixelSize, (-pos.y + yOffset) * pixelSize)
     end
 
-    local topLeft = toWorld(rect.left, rect.top)
-    local topRight = toWorld(rect.right, rect.top)
-    local bottomLeft = toWorld(rect.left, rect.bottom)
-    local bottomRight = toWorld(rect.right, rect.bottom)
+    local topLeft = toWorld(rect.left, rect.bottom)
+    local topRight = toWorld(rect.right, rect.bottom)
+    local bottomLeft = toWorld(rect.left, rect.top)
+    local bottomRight = toWorld(rect.right, rect.top)
 
     local left = math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x)
     local top = math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y)
     local right = math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x)
     local bottom = math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y)
 
-    return { left = left, top = top, right = right, bottom = bottom }, rect
+    return { left = left, top = top, right = right, bottom = bottom }
 end
 
 
@@ -619,22 +630,21 @@ function mapWidgetMeta:updateMarkersScale()
     local isInZoomInMode = self:isInZoomInMode()
 
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
-            self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport)}) do
+            self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport),
+            self:getLayerLayout(this.layerId.fog) }) do
 
         for i, elem in ipairs(layout.content) do
-            if elem.userData and elem.userData.params then
+            if elem.userData and elem.userData.autoScale then
 
-                if elem.userData and elem.userData.autoScale then
-                    local props = elem.userData.inContainer and elem.content[1].props or elem.props
-                    if props.text then
-                        local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
-                        props.textSize = math.max(1, tSizeVal)
-                        if props.size then
-                            props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
-                        end
-                    elseif props.resource then
+                local props = elem.userData.inContainer and elem.content[1].props or elem.props
+                if props.text then
+                    local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
+                    props.textSize = math.max(1, tSizeVal)
+                    if props.size then
                         props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                     end
+                elseif props.resource then
+                    props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
                 end
 
             end
@@ -1282,6 +1292,252 @@ function mapWidgetMeta:removeGroundTextures()
     for i = #mapLayoutContent, 2, -1 do
         uiUtils.removeFromContent(mapLayoutContent, i)
     end
+    if not self.cellId then
+        self:getLayerLayout(self.LAYER.fog).content = ui.content{}
+    end
+end
+
+
+---@param self advancedWorldMap.ui.mapWidgetMeta
+local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
+    local cellMaskData = maskData or discoveredLocs.getDiscoveredMaskData(cellId)
+    if not cellMaskData then
+        cellMaskData = 0
+    elseif type(cellMaskData) ~= "number" then
+        return
+    end
+
+    local userData = {
+        size = sz,
+        pos = pos,
+        grx = grx,
+        gry = gry,
+    }
+    local padding = util.vector2(math.ceil(sz.x * 0.075), math.ceil(sz.y * 0.075))
+    if cellMaskData == 0 then
+        local szf = sz + padding * 2
+        self:getLayerLayout(self.LAYER.fog).content:add{
+            type = ui.TYPE.Image,
+            name = tostring(cellId),
+            userData = userData,
+            props = {
+                resource = fogCellTexture,
+                size = szf,
+                color = config.data.ui.backgroundColor,
+                position = pos - util.vector2(padding.x, -padding.y),
+                anchor = util.vector2(0, 1)
+            }
+        }
+
+        local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
+        if texture then
+            self:getMapLayout().content:add{
+                type = ui.TYPE.Image,
+                props = {
+                    resource = texture,
+                    size = sz,
+                    position = pos,
+                    anchor = util.vector2(0, 1)
+                }
+            }
+        end
+    else
+        for i = 0, 3 do
+            for j = 0, 3 do
+                local mask = 2 ^ (i + 4 * j)
+                if util.bitAnd(cellMaskData, mask) == 0 then
+                    local lay = {
+                        type = ui.TYPE.Image,
+                        name = tostring(cellId).."_"..tostring(i + j * 4),
+                        userData = userData,
+                        props = {
+                            resource = fogPartTexture,
+                            size = sz / 8 * 3,
+                            color = config.data.ui.backgroundColor,
+                            position = pos + util.vector2(i * sz.x / 4 - padding.x / 2, -j * sz.y / 4 + padding.x / 2),
+                            anchor = util.vector2(0, 1)
+                        }
+                    }
+                    if delayed then
+                        table.insert(delayed, lay)
+                    else
+                        self:getLayerLayout(self.LAYER.fog).content:add(lay)
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+---@param self advancedWorldMap.ui.mapWidgetMeta
+local function placeInFog(self, cellId)
+    if self._requestForCellStaticsSent and not self.cellStatics then return end
+    local fogContent = self:getLayerLayout(self.LAYER.fog).content
+
+    local minBlockX
+    local maxBlockX
+    local minBlockY
+    local maxBlockY
+
+    if self.cellStatics then
+        local maxX = -math.huge
+        local minX = math.huge
+        local maxY = -math.huge
+        local minY = math.huge
+
+        for _, dt in pairs(self.cellStatics) do
+            maxX = math.max(dt[1] + dt[3], maxX)
+            minX = math.min(dt[1] + dt[3], minX)
+            maxY = math.max(dt[2] + dt[4], maxY)
+            minY = math.min(dt[2] + dt[4], minY)
+        end
+
+        if minX == math.huge then return end
+
+        local h = (maxY - minY) / 8192 + 1
+        local w = (maxX - minX) / 8192 + 1
+        minBlockX = math.floor(minX / 8192)
+        maxBlockX = math.floor(maxX / 8192)
+        minBlockY = math.floor(minY / 8192)
+        maxBlockY = math.floor(maxY / 8192)
+    else
+        local localCellInfo = self.localCellInfo
+        local w = (localCellInfo.wT or localCellInfo.width or 1) * self.mapInfo.pixelsPerCell * self.zoom
+        local h = (localCellInfo.hT or localCellInfo.height or 1) * self.mapInfo.pixelsPerCell * self.zoom
+        local cellSize = self.mapInfo.cellSize or 8192
+        local startingPos = self:getAbsolutePositionByWorldPosition(
+            util.vector2(
+                self.mapInfo.gridX.min * cellSize,
+                self.mapInfo.gridY.max * cellSize
+            ),
+            true
+        )
+        ---@type advancedWorldMap.ui.mapWidget.region
+        local r = {
+            left = startingPos.x,
+            right = startingPos.x + w,
+            top = startingPos.y,
+            bottom = startingPos.y + h,
+        }
+        local rect = self:convertAbsoluteRectToWorldRect(r)
+        minBlockX = math.floor(rect.left / 8192)
+        maxBlockX = math.floor(rect.right / 8192)
+        minBlockY = math.floor(rect.bottom / 8192)
+        maxBlockY = math.floor(rect.top / 8192)
+    end
+
+
+    local discoveredData = discoveredLocs.getDiscoveredMaskData(cellId)
+    local fogPartWorldSize = 2048
+    local fogUnscaledSize = fogPartWorldSize / 8192 * self.mapInfo.pixelsPerCell * 2
+    fogUnscaledSize = util.vector2(fogUnscaledSize, fogUnscaledSize)
+    local fogSize = fogUnscaledSize * (self.zoom * self.eScale)
+
+    for blockX = minBlockX, maxBlockX do
+        for blockY = minBlockY, maxBlockY do
+            local blockId = (100 + blockX) + (100 + blockY) * 200
+            local mask = 0
+            if discoveredData then
+                if type(discoveredData) == "table" then
+                    mask = discoveredData[blockId] or 0
+                else
+                    mask = 0xffff
+                end
+            end
+
+            if mask ~= 0xffff then
+                local blockWorldX = blockX * 8192
+                local blockWorldY = blockY * 8192
+
+                for i = 0, 3 do
+                    for j = 0, 3 do
+                        local maskId = i + 4 * j
+                        local bitMask = 2 ^ maskId
+                        if util.bitAnd(mask, bitMask) == 0 then
+                            local centerX = blockWorldX + i * fogPartWorldSize + fogPartWorldSize / 2
+                            local centerY = blockWorldY + j * fogPartWorldSize + fogPartWorldSize / 2
+
+                            local pos = self:getRelativePositionByWorldPosition(util.vector2(centerX, centerY))
+
+                            fogContent:add{
+                                type = ui.TYPE.Image,
+                                name = tostring(blockId).."_"..tostring(maskId),
+                                userData = {
+                                    autoScale = true,
+                                    scaleFunc = self.SCALE_FUNCTION.linear,
+                                    size = fogUnscaledSize,
+                                },
+                                props = {
+                                    resource = fogPartTexture,
+                                    size = fogSize,
+                                    color = config.data.ui.defaultColor,
+                                    relativePosition = pos,
+                                    anchor = util.vector2(0.5, 0.5),
+                                }
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    self.isInteriorFogCreated = true
+end
+
+
+---@param positionMasks table<string|integer, integer>
+function mapWidgetMeta:updateFog(positionMasks)
+
+    local fogContent = self:getLayerLayout(self.LAYER.fog).content
+
+    if self.cellId then
+        for blockId, mask in pairs(positionMasks) do
+            for i = 0, 3 do
+                for j = 0, 3 do
+                    local maskId = i + 4 * j
+                    local m = 2 ^ maskId
+                    if util.bitAnd(mask, m) ~= 0 then
+                        uiUtils.removeFromContent(fogContent, tostring(blockId).."_"..tostring(maskId))
+                    end
+                end
+            end
+        end
+        return
+    end
+
+    for cId, mask in pairs(positionMasks) do
+        local fullBlock = uiUtils.getFromContent(fogContent, cId)
+        if fullBlock then
+            local userData = fullBlock.userData
+            uiUtils.removeFromContent(fogContent, tostring(cId))
+
+            placeExFog(self, cId, mask, userData.size, userData.pos)
+
+            local texture = mapTextureHandler.getLocalMapTexture(userData.grx, userData.gry)
+            if texture then
+                self:getMapLayout().content:add{
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = texture,
+                        size = userData.size,
+                        position = userData.pos,
+                        anchor = util.vector2(0, 1)
+                    }
+                }
+            end
+        else
+            for i = 0, 3 do
+                for j = 0, 3 do
+                    local m = 2 ^ (i + 4 * j)
+                    if util.bitAnd(mask, m) ~= 0 then
+                        uiUtils.removeFromContent(fogContent, cId.."_"..tostring(i + j * 4))
+                    end
+                end
+            end
+        end
+    end
 end
 
 
@@ -1306,6 +1562,10 @@ function mapWidgetMeta:placeGroundTextures(region)
                     scaleFunc = this.scaleFunction.linear,
                     anchor = util.vector2(0.5, 0.5)
                 })
+            end
+
+            if config.data.tileset.onlyDiscovered and not self.isInteriorFogCreated then
+                placeInFog(self, self.cellId)
             end
 
             return
@@ -1370,6 +1630,10 @@ function mapWidgetMeta:placeGroundTextures(region)
                     end
                 end
             end
+        end
+
+        if config.data.tileset.onlyDiscovered and not self.isInteriorFogCreated then
+            placeInFog(self, self.cellId)
         end
 
     else
@@ -1471,6 +1735,7 @@ function mapWidgetMeta:placeGroundTextures(region)
 
         local mapLayout = self:getMapLayout()
         local queue = {}
+        local partialFog = {}
 
         local xP = startPos.x + tileFullHeight * -2
         for x = -1, maxGridX - minGridX do
@@ -1498,8 +1763,15 @@ function mapWidgetMeta:placeGroundTextures(region)
                 local pos = util.vector2(xPr, yPr)
                 local sz = util.vector2(xS, yS)
 
+                local preloadTexture = false
+                if config.data.tileset.onlyDiscovered then
+                    local cellMaskData = discoveredLocs.getDiscoveredMaskData(cellId)
+                    placeExFog(self, cellId, cellMaskData, sz, pos, grx, gry)
+                    preloadTexture = cellMaskData == 0
+                end
+
                 if isValid then
-                    if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) then
+                    if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) and not preloadTexture then
                         local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
                         if texture then
                             mapLayout.content:add{
@@ -1513,10 +1785,14 @@ function mapWidgetMeta:placeGroundTextures(region)
                             }
                         end
                     else
-                        table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz})
+                        table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz, preload = preloadTexture})
                     end
                 end
             end
+        end
+
+        for _, lay in ipairs(partialFog) do
+            self:getLayerLayout(self.LAYER.fog).content:add(lay)
         end
 
         local maxTilesPerFrame = isZoomOut and 400 or 6
@@ -1524,7 +1800,7 @@ function mapWidgetMeta:placeGroundTextures(region)
             local cnt = 0
             for i, dt in pairs(queue) do
                 local texture = mapTextureHandler.getLocalMapTexture(dt.grx, dt.gry)
-                if texture then
+                if texture and not dt.preload then
                     mapLayout.content:add{
                         type = ui.TYPE.Image,
                         props = {
@@ -2035,6 +2311,7 @@ function this.new(params)
                 mY = -5120,
                 nA = 0,
             }
+            meta._requestForCellStaticsSent = true
             core.sendGlobalEvent("AdvWMap:getMapStatics", {cellId = params.cellId, player = playerRef.object})
         end
 
@@ -2148,12 +2425,15 @@ function this.new(params)
     ---@type advancedWorldMap.ui.mapWidget.region
     meta._markerRectLimited = {bottom = 0, top = 0, left = 0, right = 0}
 
+    meta.isInteriorFogCreated = false
+
     meta.update = function(self)
         params.updateFunc()
     end
 
     local mapLayers = {
         mapLayout,
+        auxui.deepLayoutCopy(mapLayout),
         -- for region names
         {
             type = ui.TYPE.Widget,

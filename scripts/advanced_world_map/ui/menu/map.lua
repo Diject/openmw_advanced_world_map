@@ -57,6 +57,17 @@ function this.clearMapWidgetCache()
 end
 
 
+---@param cell any
+---@param positionMasks table<string|integer, integer>
+function this.updateFog(cell, positionMasks)
+    local cellId = not cell.isExterior and cell.id or commonData.exteriorMapId
+    local mapWidg = this.cachedMapWidgetMetatable[cellId]
+    if mapWidg then
+        mapWidg:updateFog(positionMasks)
+    end
+end
+
+
 ---@type advancedWorldMap.ui.menu.map
 this.activeMenuMeta = nil
 

@@ -163,6 +163,8 @@ pcall(function ()
     this.whiteTexture = constants.whiteTexture
 end)
 
+this.fogCellPath = "textures/icons/advanced_world_map/fogCell.dds"
+this.fogPartPath = "textures/icons/advanced_world_map/fogPart.dds"
 this.mapMarkerPath = "textures/icons/advanced_world_map/squareMarker.dds"
 this.mapMarkerForExPath = "textures/icons/advanced_world_map/squareMarker45.dds"
 this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dds"

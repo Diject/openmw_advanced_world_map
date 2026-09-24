@@ -100,6 +100,7 @@ FirstInitGridmapPresetOff: "Off"
 FirstInitGridmapPresetTransparent: "Transparent"
 FirstInitGridmapPresetOpaque: "Opaque"
 firstInitOverrideDefaultMap: "Replace the default map menu. Requires a restart to disable. !!Does not work correctly with the controller menu!!"
+firstInitFogOfWar: "Fog of war"
 mapDataNotInitialized: "Map data is not available. Report this issue on the mod page on Nexus Mods."
 charGenNotFinished: "You cannot open the map until character generation is complete."
 HoverToPreview: "(Hover to preview)"
@@ -226,8 +227,8 @@ SettingSafeInitDescriptionFixed: "Only affects OpenMW versions before 0.52. Due 
 
 TilesetSettings: "Local map tiles"
 TilesetSettingsDescription: "Configure local tilesets of world map."
-SettingTilesetOnlyDiscovered: "Hide undiscovered tiles"
-SettingTilesetOnlyDiscoveredDescription: "Hide tiles of undiscovered cells on the local part of the world map."
+SettingTilesetOnlyDiscovered: "Fog of war"
+SettingTilesetOnlyDiscoveredDescription: "When enabled, undiscovered places will be hidden by a fog of war. Note: this option does not affect the visibility of legend markers and may negatively impact performance."
 SettingTilesetZoomToShow: "Zoom to show tiles"
 SettingTilesetZoomToShowDescription: "The zoom level at which local tiles will start to be shown on the world map."
 
