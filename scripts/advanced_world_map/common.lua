@@ -82,8 +82,10 @@ this.transportLocalFieldId = "transportLocal"
 this.disableDialogueMarkersFieldId = "disableDialogueMarkers"
 
 
+this.mapMenuId = "__MAP:MAINMENU__"
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
 this.quickMenuId = "__MAP:QUICKMENU__"
+this.gamepadInfoMenuId = "__MAP:GAMEPADINFO__"
 this.mapWidgetHeaderLayoutId = "__MAP:WIDGETHEADERLAYOUT__"
 this.mapWidgetWindowLayoutId = "__MAP:WIDGETWINDOWLAYOUT__"
 

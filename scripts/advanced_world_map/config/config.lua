@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 22,
+    version = 23,
     main = {
         menuKey = "M",
         menuKeyAlt = "C_RightShoulder + C_Back",
@@ -175,6 +175,7 @@ this.default = {
         thickBorders = true,
         coverHeader = true,
         headerSize = 18,
+        gamepadHotkeyOverlay = true,
     },
     message = {
         transportFeatureInfoShown = 0,

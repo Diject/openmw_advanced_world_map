@@ -452,6 +452,7 @@ I.Settings.registerGroup{
     order = 8,
     settings = {
         numberSetting{key = "ui.fontSize", name = "SettingUIFontSize", description = "SettingUIFontSizeDescription", default = config.default.ui.fontSize, min = 8, max = 48, integer = true},
+        boolSetting{key = "ui.gamepadHotkeyOverlay", name = "SettingUIGamepadHotkeyOverlay", description = "SettingUIGamepadHotkeyOverlayDescription", default = config.default.ui.gamepadHotkeyOverlay},
         boolSetting{key = "ui.coverHeader", name = "SettingUICoverHeader", description = "SettingUICoverHeaderDescription", default = config.default.ui.coverHeader},
         numberSetting{key = "ui.headerSize", name = "SettingUIHeaderSize", default = config.default.ui.headerSize, min = 12, max = 48, integer = true},
         boolSetting{key = "ui.thickBorders", name = "SettingUIThickBorders", description = "SettingUIThickBordersDescription", default = config.default.ui.thickBorders},

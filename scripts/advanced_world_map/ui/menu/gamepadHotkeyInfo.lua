@@ -1,0 +1,221 @@
+local util = require("openmw.util")
+local ui = require("openmw.ui")
+local vfs = require("openmw.vfs")
+local core = require("openmw.core")
+
+local commonData = require("scripts.advanced_world_map.common")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
+local keyModule = require("scripts.advanced_world_map.input.keys")
+local config = require("scripts.advanced_world_map.config.config")
+local menuMode = require("scripts.advanced_world_map.ui.menuMode")
+
+local interval = require("scripts.advanced_world_map.ui.interval")
+
+local l10n = core.l10n(commonData.l10nKey)
+
+
+local this = {}
+
+this.menu = nil
+
+local function addPlus(tb)
+    table.insert(tb, {
+        type = ui.TYPE.Text,
+        props = {
+            text = l10n("+"),
+            autoSize = true,
+            textSize = 16,
+            textColor = config.data.ui.defaultColor,
+            anchor = util.vector2(0.5, 0.5),
+        },
+    })
+end
+
+local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
+    if not keyModule.isKeyValidToShow(keyComb) then return end
+
+    local keys = keyModule.splitKeyCombination(keyComb)
+    local isSingle = #keys == 1
+
+    local btnsContent = {}
+    for _, key in ipairs(keys) do
+        local image = keyModule.keyImage[key]
+        if not image and keyModule.isDpadBtn(key) and isSingle then
+            image = keyModule.keyImage["C_DPAD"]
+        end
+
+        if image and vfs.fileExists(image) then
+            if not withoutPlus and next(btnsContent) then addPlus(btnsContent) end
+
+            table.insert(btnsContent, {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = ui.texture{ path = image },
+                    color = config.data.ui.defaultColor,
+                    size = util.vector2(1, 1) * math.floor(config.data.ui.fontSize * 1.5),
+                    anchor = util.vector2(0.5, 0.5),
+                },
+            })
+
+        else
+            local name = keyModule.keyCombinationToString(key)
+            if not withoutPlus and next(btnsContent) then addPlus(btnsContent) end
+
+            table.insert(btnsContent, {
+                type = ui.TYPE.Text,
+                props = {
+                    text = "["..name.."]",
+                    autoSize = true,
+                    textSize = 16,
+                    textColor = config.data.ui.defaultColor,
+                    anchor = util.vector2(0.5, 0.5),
+                },
+            })
+        end
+    end
+
+    local lay = {
+        type = ui.TYPE.Flex,
+        props = {
+            autoSize = true,
+            horizontal = true,
+            align = ui.ALIGNMENT.Center,
+            arrange = ui.ALIGNMENT.Center,
+            anchor = util.vector2(0.5, 0.5),
+        },
+        content = ui.content{
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    autoSize = true,
+                    horizontal = true,
+                    align = ui.ALIGNMENT.Center,
+                    arrange = ui.ALIGNMENT.Center,
+                    anchor = util.vector2(0.5, 0.5),
+                },
+                content = ui.content(btnsContent)
+            },
+            interval(4, 0),
+            {
+                type = ui.TYPE.Text,
+                props = {
+                    text = str,
+                    autoSize = true,
+                    textSize = config.data.ui.fontSize,
+                    textColor = config.data.ui.defaultColor,
+                    multiline = true,
+                    wordWrap = false,
+                    textAlignH = ui.ALIGNMENT.Start,
+                    textAlignV = ui.ALIGNMENT.Center,
+                    anchor = util.vector2(0.5, 0.5),
+                },
+            }
+        }
+    }
+
+    if next(tb) then table.insert(tb, interval(10, 0)) end
+    table.insert(tb, lay)
+end
+
+
+function this.create()
+    this.destroy()
+    if not keyModule.isGamepad or not config.data.input.gamepadControls or
+        not config.data.ui.gamepadHotkeyOverlay or not menuMode:isMenuInteractive() then return end
+
+    local contentTable = {}
+
+    do
+        addBtnInfoLay(contentTable, "C_RSTICK", l10n("GamepadActionPan"))
+    end
+
+    do
+        addBtnInfoLay(
+            contentTable,
+            config.data.input.gamepadControlsBumperMode and "C_LeftShoulder + C_RightShoulder" or "C_LT + C_RT",
+            l10n("GamepadActionZoom"), true
+        )
+    end
+
+    do
+        local dpadCount = 0
+        if keyModule.isDpadBtn(config.data.input.topMarkerHotkey or "") then
+            dpadCount = dpadCount + 1
+        end
+        if keyModule.isDpadBtn(config.data.input.rightMarkerHotkey or "") then
+            dpadCount = dpadCount + 1
+        end
+        if keyModule.isDpadBtn(config.data.input.bottomMarkerHotkey or "") then
+            dpadCount = dpadCount + 1
+        end
+        if keyModule.isDpadBtn(config.data.input.topMarkerHotkey or "") then
+            dpadCount = dpadCount + 1
+        end
+        if dpadCount >= 3 then
+            addBtnInfoLay(contentTable, "C_DPAD", l10n("GamepadActionSelect"))
+        end
+    end
+
+    addBtnInfoLay(contentTable, "C_A", l10n("Open"))
+
+    if config.data.input.contextMenuHotkey then
+        addBtnInfoLay(contentTable, config.data.input.contextMenuHotkey, l10n("GamepadActionContextMenu"))
+    end
+
+    if config.data.input.quickMenuHotkey then
+        addBtnInfoLay(contentTable, config.data.input.quickMenuHotkey, l10n("GamepadActionQuickMenu"))
+    end
+
+    addBtnInfoLay(contentTable, "C_B", l10n("GamepadActionBack"))
+
+
+    local layout = {
+        layer = ui.layers.indexOf("ControllerButtons") and "ControllerButtons" or commonData.messageLayer,
+        name = commonData.gamepadInfoMenuId,
+        props = {
+            anchor = util.vector2(0.5, 1),
+            relativePosition = util.vector2(0.5, 1),
+            relativeSize = util.vector2(1, 0),
+            size = util.vector2(0, 72),
+        },
+        content = ui.content{
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = uiUtils.whiteTexture,
+                    relativeSize = util.vector2(1, 1),
+                    color = config.data.ui.backgroundColor,
+                },
+            },
+            {
+                type = ui.TYPE.Flex,
+                props = {
+                    autoSize = true,
+                    horizontal = true,
+                    anchor = util.vector2(0.5, 0.5),
+                    relativePosition = util.vector2(0.5, 0.5),
+                    align = ui.ALIGNMENT.Center,
+                    arrange = ui.ALIGNMENT.Center,
+                },
+                content = ui.content(contentTable),
+            }
+        }
+    }
+
+    this.menu = ui.create(layout)
+end
+
+
+function this.destroy()
+    if not this.menu then return end
+    if not this.menu.layout then
+        this.menu = nil
+        return
+    end
+
+    this.menu:destroy()
+    this.menu = nil
+end
+
+
+return this

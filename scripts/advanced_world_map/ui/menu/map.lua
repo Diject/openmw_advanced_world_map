@@ -38,6 +38,7 @@ local button = require("scripts.advanced_world_map.ui.button")
 local resizerEvents = require("scripts.advanced_world_map.ui.resizerEvents")
 local contextMenu = require("scripts.advanced_world_map.ui.menu.contextMenu")
 local quickMenu = require("scripts.advanced_world_map.ui.menu.quickMenu")
+local gamepadHotkeyInfoMenu = require("scripts.advanced_world_map.ui.menu.gamepadHotkeyInfo")
 
 
 local this = {}
@@ -676,6 +677,7 @@ function menuMeta:updateInteractiveElements(params)
 
         self:updateCloseBtnState()
         hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
+        gamepadHotkeyInfoMenu.create()
 
         local defaultMainSize = self.isInCharacterMenuMode and self.characterMenuMainSize or self.defaultMainSize
 
@@ -709,6 +711,7 @@ function menuMeta:updateInteractiveElements(params)
             self.mapWidget:closeRightMouseMenu()
         end
         self:closeQuickMenu()
+        gamepadHotkeyInfoMenu.destroy()
         hotkeyLayers.register{id = commonData.hotkeyLayerBlank, priority = 10000}
 
         self.layout.layer = commonData.HUDLayer
@@ -842,6 +845,7 @@ function menuMeta:close()
         eventSys.triggerEvent(eventSys.EVENT.onMapClosed, {menu = self, mapWidget = self.mapWidget, cellId = self.mapWidget.cellId})
     end
     self:closeQuickMenu()
+    gamepadHotkeyInfoMenu.destroy()
 
     I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
     I.DijectKeyBindings.action.unregister(commonData.quickMenuKeyId, toggleQuickMenu)
@@ -1485,6 +1489,7 @@ function this.create(params)
 
     local layout = {
         type = ui.TYPE.Widget,
+        name = commonData.mapMenuId,
         layer = "Windows",
         props = {
             size = meta.size,
@@ -1521,6 +1526,7 @@ function this.create(params)
     meta.menu = ui.create(layout)
     this.activeMenuMeta = meta
 
+    gamepadHotkeyInfoMenu.create()
 
     local function onMouseWheelCallback(content, value)
         for _, dt in pairs(content) do
