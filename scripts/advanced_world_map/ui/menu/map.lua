@@ -696,6 +696,7 @@ function menuMeta:updateInteractiveElements(params)
         end
 
         localStorage.data[commonData.inMinimapModeKeyId] = false
+        self._becameActiveTimestamp = core.getRealTime()
     else
         if not localStorage.data[commonData.pinnedStateFieldId] then
             menuHandler.destroyMenu(commonData.mapMenuId)
@@ -915,6 +916,8 @@ function this.create(params)
     meta.params = params
 
     meta.userData = {}
+
+    meta._becameActiveTimestamp = core.getRealTime()
 
     meta.isActivatedExternally = false
     meta.isCreatedExternally = params.isCreatedExternally or false
@@ -1585,13 +1588,15 @@ function this.create(params)
                     local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
                     local lTrigger
                     if config.data.input.gamepadControlsBumperMode then
-                        lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and 0.75 or 0
+                        lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and
+                            core.getRealTime() - meta._becameActiveTimestamp > 1 and 0.75 or 0
                     else
                         lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
                     end
                     local rTrigger
                     if config.data.input.gamepadControlsBumperMode then
-                        rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and 0.75 or 0
+                        rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and
+                            core.getRealTime() - meta._becameActiveTimestamp > 1 and 0.75 or 0
                     else
                         rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
                     end
@@ -1671,6 +1676,7 @@ function this.create(params)
         deactivateFun = unregisterHotkeys,
     }
 
+    meta._becameActiveTimestamp = core.getRealTime()
     eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 
     return meta
