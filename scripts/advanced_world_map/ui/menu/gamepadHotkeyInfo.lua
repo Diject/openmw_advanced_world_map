@@ -19,6 +19,7 @@ local l10n = core.l10n(commonData.l10nKey)
 local this = {}
 
 this.menu = nil
+this.menuType = nil
 
 local function addPlus(tb)
     table.insert(tb, {
@@ -126,7 +127,7 @@ end
 local lastShowOpenMenuState = nil
 
 function this.create(showOpenMenu)
-    this.destroy()
+    this.destroy("main")
     if not keyModule.isGamepad or not config.data.input.gamepadControls or
         not config.data.ui.gamepadHotkeyOverlay or not menuMode:isMenuInteractive() or
         not menuHandler.getMenu(commonData.mapMenuId) then return end
@@ -226,8 +227,9 @@ function this.create(showOpenMenu)
     }
 
     this.menu = ui.create(layout)
+    this.menuType = "main"
 
-    realTimer.newTimer(0.1, function ()
+    realTimer.newTimer(0.25, function ()
         if this.menu and this.menu.layout then
             this.menu.layout.props.visible = true
             this.menu:update()
@@ -237,7 +239,7 @@ end
 
 
 function this.createNoteEdit(editMode)
-    this.destroy()
+    this.destroy("note")
     if not keyModule.isGamepad or not config.data.input.gamepadControls or
         not config.data.ui.gamepadHotkeyOverlay or not menuMode:isMenuInteractive() then return end
 
@@ -312,8 +314,9 @@ function this.createNoteEdit(editMode)
     }
 
     this.menu = ui.create(layout)
+    this.menuType = "note"
 
-    realTimer.newTimer(0.1, function ()
+    realTimer.newTimer(0.25, function ()
         if this.menu and this.menu.layout then
             this.menu.layout.props.visible = true
             this.menu:update()
@@ -322,8 +325,9 @@ function this.createNoteEdit(editMode)
 end
 
 
-function this.destroy()
+function this.destroy(tp)
     if not this.menu then return end
+    if tp and tp ~= this.menuType then return end
     if not this.menu.layout then
         this.menu = nil
         return

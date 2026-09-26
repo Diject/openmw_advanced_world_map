@@ -5,6 +5,7 @@ local this = {}
 
 
 local modeId = "Journal"
+this.modeId = modeId
 
 local activated = false
 

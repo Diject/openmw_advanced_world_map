@@ -296,12 +296,20 @@ end
 
 
 local function tryShowFirstInit(createMenuFunc, params)
+    local replacePreviousMode = (core.getRealTime() - lastUiModeTimestamp) < 1 and #I.UI.modes == 1
+
     if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
             configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent then
         menuHandler.destroyAllMenus()
 
+        if replacePreviousMode and lastUiModeId == menuMode.modeId and menuMode.isModeActive(lastUiModeId) then
+            I.UI.removeMode(lastUiModeId)
+        end
         if not menuMode.isMenuInteractive() then
             menuMode.activate()
+        end
+        if replacePreviousMode and lastUiModeId ~= menuMode.modeId and menuMode.isModeActive(lastUiModeId) then
+            I.UI.removeMode(lastUiModeId)
         end
 
         configLib.setValue("message.firstInitMenuShown", configLib.data.message.firstInitMenuShownCurrent)
@@ -315,7 +323,7 @@ local function tryShowFirstInit(createMenuFunc, params)
                 if fiMenu.settings.overrideDefault and not registeredAsDefault then
                     registerAsDefaultMap()
                     configLib.setValue("main.overrideDefault", true)
-                    menuMode.deactivate()
+                    -- menuMode.deactivate()
                 else
                     createMenuFunc(params and table.unpack(params) or nil)
                 end
@@ -415,9 +423,9 @@ local function toggleMenu()
     local isInCharacterMenu = I.UI.getMode() == "Interface"
     local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault and
         (not I.GamepadControls or not I.GamepadControls.isControllerMenusEnabled())
-    local isHiddenInMinimapMode = menu and menu.isInMinimapMode
+    local isHiddenInMinimapMode = menu and not menu.isInActiveMode
     local isRegularMode = menu and not menu.isInCharacterMenuMode and menu.isInActiveMode and not config.data.main.overrideDefault
-    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 1
+    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 1 and #I.UI.modes == 1
 
     if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) and
             not replacePreviousMode or isRegularMode then
@@ -442,9 +450,14 @@ local function toggleMenu()
 
             if not menuMode.isMenuInteractive() then
                 menuMode.activate()
-            elseif replacePreviousMode and menuMode.isModeActive(lastUiModeId) then
-                I.UI.removeMode(lastUiModeId)
+            elseif replacePreviousMode then
+                if lastUiModeId == menuMode.modeId and menuMode.isModeActive(lastUiModeId) then
+                    I.UI.removeMode(lastUiModeId)
+                end
                 menuMode.activate()
+                if lastUiModeId ~= menuMode.modeId and menuMode.isModeActive(lastUiModeId) then
+                    I.UI.removeMode(lastUiModeId)
+                end
             end
 
             local relPos, relSize
@@ -468,7 +481,9 @@ local function toggleMenu()
         if not menuMode.isMenuInteractive() then
             menuMode.activate()
         elseif replacePreviousMode and #I.UI.modes == 1 then
-            I.UI.removeMode(lastUiModeId)
+            if menuMode.isModeActive(lastUiModeId) then
+                I.UI.removeMode(lastUiModeId)
+            end
             menuMode.activate()
         end
 
