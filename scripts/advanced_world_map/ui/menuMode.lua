@@ -50,4 +50,16 @@ function this.isMenuInteractive()
 end
 
 
+---@param mode string?
+function this.isModeActive(mode)
+    if not mode then return false end
+    for _, md in pairs(UI.modes) do
+        if md == mode then
+            return true
+        end
+    end
+    return false
+end
+
+
 return this

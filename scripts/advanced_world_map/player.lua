@@ -71,6 +71,8 @@ local hasAttemptedToGetData = false
 local lastUiModeTimestamp = 0
 local lastUiModeId = ""
 
+local registeredAsDefault = false
+local registerAsDefaultMap
 local openMenu
 local discoverNearby
 
@@ -293,7 +295,42 @@ local function initDataForMenu(options)
 end
 
 
+local function tryShowFirstInit(createMenuFunc, params)
+    if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
+            configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent then
+        menuHandler.destroyAllMenus()
+
+        if not menuMode.isMenuInteractive() then
+            menuMode.activate()
+        end
+
+        configLib.setValue("message.firstInitMenuShown", configLib.data.message.firstInitMenuShownCurrent)
+
+        menuHandler.registerMenu(commonData.firstInitMenuId, firstInitMenu.new{
+            yesCallback = function (fiMenu)
+                if not configLib.data.data.hasSafeInitMessageBeenShown then
+                    configLib.setValue("data.hasSafeInitMessageBeenShown", true)
+                end
+                configLib.setValue("main.firstInitMenu", false)
+                if fiMenu.settings.overrideDefault and not registeredAsDefault then
+                    registerAsDefaultMap()
+                    configLib.setValue("main.overrideDefault", true)
+                    menuMode.deactivate()
+                else
+                    createMenuFunc(params and table.unpack(params) or nil)
+                end
+            end
+        })
+    else
+        return true
+    end
+end
+
+
 openMenu = function (inMenuMode, internal, hideCloseBtn, params)
+    if not tryShowFirstInit(openMenu, {inMenuMode, internal, hideCloseBtn, params}) then
+        return
+    end
     if not initDataForMenu({openMenu = true, openInMenuMode = inMenuMode}) then return end
 
     params = params or {}
@@ -337,8 +374,7 @@ local function closeMenu()
 end
 
 
-local registeredAsDefault = false
-local function registerAsDefaultMap()
+registerAsDefaultMap = function ()
     registeredAsDefault = true
     I.UI.registerWindow("Map",
         function()
@@ -377,13 +413,14 @@ local function toggleMenu()
 
     local menu = menuHandler.getMenu(commonData.mapMenuId)
     local isInCharacterMenu = I.UI.getMode() == "Interface"
-    local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault
+    local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault and
+        (not I.GamepadControls or not I.GamepadControls.isControllerMenusEnabled())
     local isHiddenInMinimapMode = menu and menu.isInMinimapMode
-    local isRegularMode = menu and not menu.isInCharacterMenuMode and not menu.isInMinimapMode and not config.data.main.overrideDefault
+    local isRegularMode = menu and not menu.isInCharacterMenuMode and menu.isInActiveMode and not config.data.main.overrideDefault
     local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 1
 
-    if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) or
-            isRegularMode then
+    if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) and
+            not replacePreviousMode or isRegularMode then
         if menuMode.isActive() then
             if localStorage.data[commonData.pinnedStateFieldId] then
                 menuMode.deactivate()
@@ -405,7 +442,7 @@ local function toggleMenu()
 
             if not menuMode.isMenuInteractive() then
                 menuMode.activate()
-            elseif replacePreviousMode and #I.UI.modes == 1 then
+            elseif replacePreviousMode and menuMode.isModeActive(lastUiModeId) then
                 I.UI.removeMode(lastUiModeId)
                 menuMode.activate()
             end
@@ -422,39 +459,20 @@ local function toggleMenu()
                 inCharacterMenu = useCharacterMenuParams,
                 hideCloseBtn = useCharacterMenuParams,
                 onClose = function ()
-                    menuMode.deactivate()
+                    -- menuMode.deactivate()
                 end
             })
             gamepadHotkeyInfoMenu.create(false)
         end
 
-        if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
-                configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent then
-            menuHandler.destroyAllMenus()
+        if not menuMode.isMenuInteractive() then
+            menuMode.activate()
+        elseif replacePreviousMode and #I.UI.modes == 1 then
+            I.UI.removeMode(lastUiModeId)
+            menuMode.activate()
+        end
 
-            if not menuMode.isMenuInteractive() then
-                menuMode.activate()
-            end
-
-            configLib.setValue("message.firstInitMenuShown", configLib.data.message.firstInitMenuShownCurrent)
-
-            menuHandler.registerMenu(commonData.firstInitMenuId, firstInitMenu.new{
-                yesCallback = function (fiMenu)
-                    if not configLib.data.data.hasSafeInitMessageBeenShown then
-                        configLib.setValue("data.hasSafeInitMessageBeenShown", true)
-                    end
-                    configLib.setValue("main.firstInitMenu", false)
-                    if fiMenu.settings.overrideDefault and not registeredAsDefault then
-                        registerAsDefaultMap()
-                        configLib.setValue("main.overrideDefault", true)
-                        menuMode.deactivate()
-                    else
-                        registerMenu()
-                    end
-                end
-            })
-
-        else
+        if tryShowFirstInit(registerMenu) then
             local useCharacterMenuParams = isInCharacterMenu and config.data.main.overrideDefault
             if menu and (istInCharacterMenuMode or isHiddenInMinimapMode) then
                 menuHandler.destroyMenu(commonData.mapMenuId)
@@ -758,7 +776,9 @@ return {
                     menuHandler.unregister(commonData.mapMenuId)
                 end
             end
-            if menuHandler.getMenu(commonData.firstInitMenuId) then
+            local fiMenu = menuHandler.getMenu(commonData.firstInitMenuId)
+            if fiMenu then
+                fiMenu.params.yesCallback = nil
                 menuHandler.destroyMenu(commonData.firstInitMenuId)
             end
         end,
