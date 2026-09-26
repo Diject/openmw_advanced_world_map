@@ -81,6 +81,10 @@ end
 local function create(params)
     this.destroy()
 
+    if config.data.message.transportFeatureInfoShown == 0 then
+        config.setValue("message.transportFeatureInfoShown", 1)
+    end
+
     local menu = params.menu
     local mapWidget = menu.mapWidget
 

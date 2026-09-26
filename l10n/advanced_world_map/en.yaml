@@ -120,7 +120,7 @@ MinimapModeSetupMessage: "Set the size and position of the map for minimap mode,
 MinimapFeatureInfo: "You can set up minimap mode to have a separate size and position in the HUD while pinned. Configure it in the Legend widget."
 CellLabelVisibilityCB: "Location name"
 BottomCellLabelCB: "Bottom header"
-TransportFeatureInfo: "The map can display transport routes. To toggle them, right-click the legend widget or press [{toggleTransportKey}]. To switch between transport types, press [{cycleTransportKey}].\nUse any of these controls to dismiss this message."
+TransportFeatureInfo: "The map can display transport routes. To toggle them, right-click the legend widget or press [X] on the gamepad. Use any of these to dismiss this message."
 LegendWidgetTooltip: "Map legend.\nRight-click to toggle transport routes.\nLeft-click to open."
 SearchWidgetTooltip: "Search"
 NotesWidgetTooltip: "Notes"
