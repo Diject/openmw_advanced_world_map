@@ -9,6 +9,7 @@ local keyModule = require("scripts.advanced_world_map.input.keys")
 local config = require("scripts.advanced_world_map.config.config")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
+local realTimer = require("scripts.advanced_world_map.realTimer")
 
 local interval = require("scripts.advanced_world_map.ui.interval")
 
@@ -198,6 +199,7 @@ function this.create(showOpenMenu)
             relativePosition = util.vector2(0.5, 1),
             relativeSize = util.vector2(1, 0),
             size = util.vector2(0, math.max(48, config.data.ui.fontSize * 2)),
+            visible = false,
         },
         content = ui.content{
             {
@@ -224,6 +226,13 @@ function this.create(showOpenMenu)
     }
 
     this.menu = ui.create(layout)
+
+    realTimer.newTimer(0.1, function ()
+        if this.menu and this.menu.layout then
+            this.menu.layout.props.visible = true
+            this.menu:update()
+        end
+    end)
 end
 
 
@@ -275,7 +284,8 @@ function this.createNoteEdit(editMode)
             anchor = util.vector2(0.5, 1),
             relativePosition = util.vector2(0.5, 1),
             relativeSize = util.vector2(1, 0),
-            size = util.vector2(0, 72),
+            size = util.vector2(0, math.max(48, config.data.ui.fontSize * 2)),
+            visible = false,
         },
         content = ui.content{
             {
@@ -302,6 +312,13 @@ function this.createNoteEdit(editMode)
     }
 
     this.menu = ui.create(layout)
+
+    realTimer.newTimer(0.1, function ()
+        if this.menu and this.menu.layout then
+            this.menu.layout.props.visible = true
+            this.menu:update()
+        end
+    end)
 end
 
 

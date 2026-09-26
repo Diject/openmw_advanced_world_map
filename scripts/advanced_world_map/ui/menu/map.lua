@@ -681,7 +681,7 @@ function menuMeta:updateInteractiveElements(params)
     else
         layout.props.visible = params.visible
     end
-
+    self._isVisibilityInitialized = true
     updatePlayerMarkerLayer()
 
     local header = self.headerLayout
@@ -1522,6 +1522,7 @@ function this.create(params)
         props = {
             size = meta.size,
             relativePosition = params.relativePosition,
+            visible = false,
             -- alpha = config.data.ui.alpha * 0.01,
         },
         userData = {
@@ -1532,6 +1533,15 @@ function this.create(params)
             mainLayout,
         }
     }
+    meta._isVisibilityInitialized = false
+
+    realTimer.newTimer(0.1, function ()
+        if not meta._isVisibilityInitialized then
+            layout.props.visible = true
+            meta._isVisibilityInitialized = true
+            meta:update()
+        end
+    end)
 
     meta.layout = layout
 
