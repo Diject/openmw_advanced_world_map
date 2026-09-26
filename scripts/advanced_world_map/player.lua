@@ -380,7 +380,7 @@ local function toggleMenu()
     local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault
     local isHiddenInMinimapMode = menu and menu.isInMinimapMode
     local isRegularMode = menu and not menu.isInCharacterMenuMode and not menu.isInMinimapMode and not config.data.main.overrideDefault
-    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 0.5
+    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 1
 
     if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) or
             isRegularMode then
@@ -833,6 +833,9 @@ return {
                     hotkeyCloseMenu()
                 end)
             end
+        end,
+        onMouseButtonPress = function ()
+            keysModule.isGamepad = false
         end,
         onMouseButtonRelease = function (buttonId)
             menuHandler.onMouseReleaseCallback(buttonId)

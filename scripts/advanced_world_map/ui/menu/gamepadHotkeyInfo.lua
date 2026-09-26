@@ -197,7 +197,7 @@ function this.create(showOpenMenu)
             anchor = util.vector2(0.5, 1),
             relativePosition = util.vector2(0.5, 1),
             relativeSize = util.vector2(1, 0),
-            size = util.vector2(0, 72),
+            size = util.vector2(0, math.max(48, config.data.ui.fontSize * 2)),
         },
         content = ui.content{
             {
