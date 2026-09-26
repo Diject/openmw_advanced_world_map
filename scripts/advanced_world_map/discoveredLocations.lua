@@ -31,6 +31,9 @@ this.pending = {}
 
 this.blockDiscovery = false
 
+---@type table<string, any>
+local processedDialogues = {}
+
 
 function this.addVisitedCell(cell)
     local timeStamp = dateLib.getGlobalTimestamp()
@@ -130,6 +133,10 @@ end
 
 
 function this.addFromDialogueScript(diaId, infoId)
+    local hash = tostring(diaId).."_"..tostring(infoId)
+    if processedDialogues[hash] then return end
+    processedDialogues[hash] = true
+
     local diaInfo = dialogueLib.getDialogueTopicInfo(diaId, infoId)
     if not diaInfo or not diaInfo.resultScript then return end
 
