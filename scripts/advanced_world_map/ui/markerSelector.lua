@@ -152,7 +152,8 @@ end
 
 function this.clickOnSelected()
     if not menuMode.isMenuInteractive() then return end
-    if not this.lastSelected or not this.lastSelected._container.userData.inFocus then return end
+    if not this.lastSelected or not this.lastSelected._container.userData.inFocus or
+        not this.lastSelected:isValid() then return end
 
     local mapWidget = this.lastSelected._parent
     local userData = this.lastSelected._container.userData
@@ -181,24 +182,24 @@ end
 
 local function registerHotkeys()
     I.DijectKeyBindings.action.register(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
-    if I.DijectKeyBindings.getActionKey(commonData.topMarkerKeyId) == config.default.input.topMarkerHotkey then
-        I.DijectKeyBindings.keybind.register("UpArrow", directionHotkeyFuncs[1])
-    end
+    -- if I.DijectKeyBindings.getActionKey(commonData.topMarkerKeyId) == config.default.input.topMarkerHotkey then
+    --     I.DijectKeyBindings.keybind.register("UpArrow", directionHotkeyFuncs[1])
+    -- end
     I.DijectKeyBindings.action.register(commonData.rightMarkerKeyId, directionHotkeyFuncs[2])
-    if I.DijectKeyBindings.getActionKey(commonData.rightMarkerKeyId) == config.default.input.rightMarkerHotkey then
-        I.DijectKeyBindings.keybind.register("RightArrow", directionHotkeyFuncs[2])
-    end
+    -- if I.DijectKeyBindings.getActionKey(commonData.rightMarkerKeyId) == config.default.input.rightMarkerHotkey then
+    --     I.DijectKeyBindings.keybind.register("RightArrow", directionHotkeyFuncs[2])
+    -- end
     I.DijectKeyBindings.action.register(commonData.bottomMarkerKeyId, directionHotkeyFuncs[3])
-    if I.DijectKeyBindings.getActionKey(commonData.bottomMarkerKeyId) == config.default.input.bottomMarkerHotkey then
-        I.DijectKeyBindings.keybind.register("DownArrow", directionHotkeyFuncs[3])
-    end
+    -- if I.DijectKeyBindings.getActionKey(commonData.bottomMarkerKeyId) == config.default.input.bottomMarkerHotkey then
+    --     I.DijectKeyBindings.keybind.register("DownArrow", directionHotkeyFuncs[3])
+    -- end
     I.DijectKeyBindings.action.register(commonData.leftMarkerKeyId, directionHotkeyFuncs[4])
-    if I.DijectKeyBindings.getActionKey(commonData.leftMarkerKeyId) == config.default.input.leftMarkerHotkey then
-        I.DijectKeyBindings.keybind.register("LeftArrow", directionHotkeyFuncs[4])
-    end
+    -- if I.DijectKeyBindings.getActionKey(commonData.leftMarkerKeyId) == config.default.input.leftMarkerHotkey then
+    --     I.DijectKeyBindings.keybind.register("LeftArrow", directionHotkeyFuncs[4])
+    -- end
 
     I.DijectKeyBindings.keybind.register("C_A", this.clickOnSelected)
-    I.DijectKeyBindings.keybind.register("Enter", this.clickOnSelected)
+    -- I.DijectKeyBindings.keybind.register("Enter", this.clickOnSelected)
 end
 
 local function unregisterHotkeys()
@@ -207,13 +208,13 @@ local function unregisterHotkeys()
     I.DijectKeyBindings.action.unregister(commonData.bottomMarkerKeyId, directionHotkeyFuncs[3])
     I.DijectKeyBindings.action.unregister(commonData.leftMarkerKeyId, directionHotkeyFuncs[4])
 
-    I.DijectKeyBindings.keybind.unregister("UpArrow", directionHotkeyFuncs[1])
-    I.DijectKeyBindings.keybind.unregister("RightArrow", directionHotkeyFuncs[2])
-    I.DijectKeyBindings.keybind.unregister("DownArrow", directionHotkeyFuncs[3])
-    I.DijectKeyBindings.keybind.unregister("LeftArrow", directionHotkeyFuncs[4])
+    -- I.DijectKeyBindings.keybind.unregister("UpArrow", directionHotkeyFuncs[1])
+    -- I.DijectKeyBindings.keybind.unregister("RightArrow", directionHotkeyFuncs[2])
+    -- I.DijectKeyBindings.keybind.unregister("DownArrow", directionHotkeyFuncs[3])
+    -- I.DijectKeyBindings.keybind.unregister("LeftArrow", directionHotkeyFuncs[4])
 
     I.DijectKeyBindings.keybind.unregister("C_A", this.clickOnSelected)
-    I.DijectKeyBindings.keybind.unregister("Enter", this.clickOnSelected)
+    -- I.DijectKeyBindings.keybind.unregister("Enter", this.clickOnSelected)
 end
 
 

@@ -1120,6 +1120,7 @@ function mapWidgetMeta:removeMarker(id, layer)
             self.zoomOutMarkers[cellId][id] = nil
         end
         self.zoomMarkersCellIdById[id] = nil
+        self.activeZoomMarkers[string.format("%s_%d", id or "", layer)] = nil
     end
 
     local cacheId = getMarkerCacheId(id, layer)
@@ -2174,6 +2175,11 @@ end
 
 function mapWidgetMeta:setMousePos(pos)
     self.layout.userData.mousePos = pos
+end
+
+
+function mapWidgetMeta:centerMousePos()
+    self.layout.userData.mousePos = self.screenPosition + util.vector2(self.layout.props.size.x / 2, self.layout.props.size.y / 2)
 end
 
 

@@ -477,6 +477,11 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
         self.mapWidget:updateMarkers()
     end
 
+    if keysModule.isGamepad then
+        self.mapWidget:centerMousePos()
+        self.mapWidget:focusOn()
+    end
+
     local currentHistoryCellId = self.history.list[self.history.index]
     if not skipHistory and (not currentHistoryCellId or currentHistoryCellId ~= (cellId or commonData.exteriorMapId)) then
         self.history.index = self.history.index + 1
@@ -846,10 +851,7 @@ function menuMeta:close()
     end
     self:closeQuickMenu()
     gamepadHotkeyInfoMenu.destroy()
-
-    I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
-    I.DijectKeyBindings.action.unregister(commonData.quickMenuKeyId, toggleQuickMenu)
-    I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
+    hotkeyLayers.unregister(commonData.hotkeyLayerMainMenu)
     hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
 
     if config.data.main.clearCacheOnClose then
@@ -1526,8 +1528,6 @@ function this.create(params)
     meta.menu = ui.create(layout)
     this.activeMenuMeta = meta
 
-    gamepadHotkeyInfoMenu.create()
-
     local function onMouseWheelCallback(content, value)
         for _, dt in pairs(content) do
             if type(dt) == "table" then
@@ -1618,6 +1618,9 @@ function this.create(params)
                         centerPos = util.vector2(centerPos.x + moveVector.x, centerPos.y + moveVector.y)
 
                         meta.mapWidget:focusOnWorldPosition(centerPos)
+
+                        meta.mapWidget:centerMousePos()
+                        meta.mapWidget:focusOn()
                     end
 
                     if hasTriggerInput then
@@ -1659,13 +1662,14 @@ function this.create(params)
     end
     async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
 
-    I.DijectKeyBindings.action.register(commonData.contextMenuKeyId, controllerYCallback)
-    if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
-        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback)
-    end
-    I.DijectKeyBindings.action.register(commonData.quickMenuKeyId, toggleQuickMenu)
-
     hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerMainMenu,
+        priority = 0,
+        group = "main",
+        activateFun = registerHotkeys,
+        deactivateFun = unregisterHotkeys,
+    }
 
     eventSys.triggerEvent(eventSys.EVENT["onMenuOpened"], {menu = meta})
 

@@ -86,26 +86,84 @@ function this.splitKeyCombination(comb)
 end
 
 
+local function removeCPrefix(key)
+    if key:sub(1, 2) == "C_" then
+        return key:sub(3)
+    end
+    return key
+end
+
+
+function this.splitKeyCombinationSorted(comb)
+    if not comb then return end
+
+    local keys = this.splitKeyCombination(comb)
+    local keyNameData = {}
+    for _, key in ipairs(keys) do
+        local id = -1
+        local isKey, keyId = pcall(function ()
+            return input.KEY[key]
+        end)
+        if isKey and keyId then
+            id = type(keyId) =="number" and keyId or -1
+        else
+            local nm = removeCPrefix(key)
+            local isBtn, cid = pcall(function ()
+                return input.CONTROLLER_BUTTON[nm]
+            end)
+            id = isBtn and type(cid) == "number" and 1000 - cid or -1
+        end
+
+        table.insert(keyNameData, {id, key})
+    end
+
+    local keyIds = {}
+    table.sort(keyNameData, function (a, b)
+        return a[1] > b[1]
+    end)
+    for _, dt in ipairs(keyNameData) do
+        table.insert(keyIds, dt[2])
+    end
+
+    return keyIds
+end
+
+
 ---@param combination string?
 ---@return string?
 function this.keyCombinationToString(combination)
     if not combination then return end
 
     local keys = this.splitKeyCombination(combination)
-    local keyNames = {}
+    local keyNameData = {}
     for _, key in ipairs(keys) do
         local name
+        local id = -1
         local isKey, keyId = pcall(function ()
             return input.KEY[key]
         end)
         if isKey and keyId then
             name = input.getKeyName(keyId)
+            id = type(keyId) =="number" and keyId or -1
         else
             name = this.keyName[key]
+            local nm = removeCPrefix(key)
+            local isBtn, cid = pcall(function ()
+                return input.CONTROLLER_BUTTON[nm]
+            end)
+            id = isBtn and type(cid) == "number" and 1000 - cid or -1
         end
         name = name or key
 
-        table.insert(keyNames, name)
+        table.insert(keyNameData, {id, name})
+    end
+
+    local keyNames = {}
+    table.sort(keyNameData, function (a, b)
+        return a[1] > b[1]
+    end)
+    for _, dt in ipairs(keyNameData) do
+        table.insert(keyNames, dt[2])
     end
 
     return table.concat(keyNames, " + ")

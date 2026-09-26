@@ -46,6 +46,7 @@ local keysModule = require("scripts.advanced_world_map.input.keys")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
+local gamepadHotkeyInfoMenu = require("scripts.advanced_world_map.ui.menu.gamepadHotkeyInfo")
 
 local messageBox = require("scripts.advanced_world_map.ui.menu.messageBox")
 
@@ -321,6 +322,7 @@ openMenu = function (inMenuMode, internal, hideCloseBtn, params)
             end
         end
     })
+    gamepadHotkeyInfoMenu.create(true)
 
     local menu = menuHandler.getMenu(commonData.mapMenuId)
     if menu and menu:updateInteractiveElements{visible = not internal and true or nil} then
@@ -378,7 +380,7 @@ local function toggleMenu()
     local istInCharacterMenuMode = menu and menu.isInCharacterMenuMode and isInCharacterMenu and config.data.main.overrideDefault
     local isHiddenInMinimapMode = menu and menu.isInMinimapMode
     local isRegularMode = menu and not menu.isInCharacterMenuMode and not menu.isInMinimapMode and not config.data.main.overrideDefault
-    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 0.25
+    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 0.5
 
     if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) or
             isRegularMode then
@@ -423,6 +425,7 @@ local function toggleMenu()
                     menuMode.deactivate()
                 end
             })
+            gamepadHotkeyInfoMenu.create(false)
         end
 
         if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or

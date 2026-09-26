@@ -37,27 +37,27 @@ end
 
 local function registerHotkeys()
     I.DijectKeyBindings.action.register(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
-    if I.DijectKeyBindings.getActionKey(commonData.topMarkerKeyId) == config.default.input.topMarkerHotkey then
-        I.DijectKeyBindings.keybind.register("UpArrow", directionHotkeyFuncs[1])
-    end
+    -- if I.DijectKeyBindings.getActionKey(commonData.topMarkerKeyId) == config.default.input.topMarkerHotkey then
+    --     I.DijectKeyBindings.keybind.register("UpArrow", directionHotkeyFuncs[1])
+    -- end
     I.DijectKeyBindings.action.register(commonData.bottomMarkerKeyId, directionHotkeyFuncs[2])
-    if I.DijectKeyBindings.getActionKey(commonData.bottomMarkerKeyId) == config.default.input.bottomMarkerHotkey then
-        I.DijectKeyBindings.keybind.register("DownArrow", directionHotkeyFuncs[2])
-    end
+    -- if I.DijectKeyBindings.getActionKey(commonData.bottomMarkerKeyId) == config.default.input.bottomMarkerHotkey then
+    --     I.DijectKeyBindings.keybind.register("DownArrow", directionHotkeyFuncs[2])
+    -- end
 
     I.DijectKeyBindings.keybind.register("C_A", this.clickOnSelectedItem)
-    I.DijectKeyBindings.keybind.register("Enter", this.clickOnSelectedItem)
+    -- I.DijectKeyBindings.keybind.register("Enter", this.clickOnSelectedItem)
 end
 
 local function unregisterHotkeys()
     I.DijectKeyBindings.action.unregister(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
     I.DijectKeyBindings.action.unregister(commonData.bottomMarkerKeyId, directionHotkeyFuncs[2])
 
-    I.DijectKeyBindings.keybind.unregister("UpArrow", directionHotkeyFuncs[1])
-    I.DijectKeyBindings.keybind.unregister("DownArrow", directionHotkeyFuncs[2])
+    -- I.DijectKeyBindings.keybind.unregister("UpArrow", directionHotkeyFuncs[1])
+    -- I.DijectKeyBindings.keybind.unregister("DownArrow", directionHotkeyFuncs[2])
 
     I.DijectKeyBindings.keybind.unregister("C_A", this.clickOnSelectedItem)
-    I.DijectKeyBindings.keybind.unregister("Enter", this.clickOnSelectedItem)
+    -- I.DijectKeyBindings.keybind.unregister("Enter", this.clickOnSelectedItem)
 end
 
 
@@ -88,12 +88,16 @@ function this.openMenu(mapWidget)
 
             },
         }
+
+        local marker = mapWidget.layout.userData.lastMarkerElement
+        marker = marker and marker:isValid() and marker or nil
+
         local layContent = lay.content
         eventSys.triggerEvent(eventSys.EVENT["onRightMouseMenu"], {
             mapWidget = mapWidget,
             relPos = mapWidget:getRelativePositionOfCursor(),
             content = layContent,
-            marker = mapWidget.layout.userData.lastMarkerElement,
+            marker = marker,
         })
 
         if #layContent > 0 then

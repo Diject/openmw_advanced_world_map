@@ -3,11 +3,13 @@ local this = {}
 
 
 this.data = {}
-this.currentId = nil
+---@type table<string, advancedWorldMap.input.hotkeyLayers.register.params> by id
+this.current = {}
 
 
 ---@class advancedWorldMap.input.hotkeyLayers.register.params
 ---@field id string
+---@field group string?
 ---@field priority number?
 ---@field activateFun fun()?
 ---@field deactivateFun fun()?
@@ -18,41 +20,52 @@ function this.register(params)
     this.deactivate(params.id)
 
     params.priority = params.priority or 0
+    params.group = params.group or "_default_"
     this.data[params.id] = params
 
-    this.update()
+    this.update(params.group)
 end
 
 
 ---@param id string
 function this.unregister(id)
-    this.deactivate(id)
+    local dt = this.deactivate(id)
 
-    this.data[id] = nil
+    if dt then
+        this.data[id] = nil
 
-    this.update()
+        this.update(dt.group)
+    end
 end
 
 
-function this.update()
+local function deactivateGroup(group)
+    for id, dt in pairs(this.current) do
+        if dt.group == group then
+            this.deactivate(id)
+            this.current[id] = nil
+        end
+    end
+end
+
+
+function this.update(group)
     local maxV = -math.huge
-    local maxId
     for id, dt in pairs(this.data) do
-        if maxV < dt.priority then
-            maxId = id
+        if dt.group == group and maxV < dt.priority then
             maxV = dt.priority
         end
     end
 
-    if this.currentId == maxId then return end
+    deactivateGroup(group)
 
-    if this.currentId then
-        this.deactivate(this.currentId)
-        this.currentId = nil
-    end
-    if maxId then
-        this.currentId = maxId
-        this.activate(maxId)
+    if maxV == -math.huge then return end
+
+    for id, dt in pairs(this.data) do
+        if dt.group == group and maxV == dt.priority then
+            this.current[id] = dt
+            this.activate(dt.id)
+        end
     end
 end
 
@@ -61,22 +74,27 @@ function this.activate(id)
     local dt = this.data[id]
     if dt and dt.activateFun then
         dt.activateFun()
+        this.current[id] = dt
     end
 end
 
 
 function this.deactivate(id)
     local dt = this.data[id]
-    if dt and id == this.currentId and dt.deactivateFun then
-        dt.deactivateFun()
+    if dt and this.current[id] then
+        if dt.deactivateFun then
+            dt.deactivateFun()
+        end
+        this.current[id] = nil
     end
+    return dt
 end
 
 
 function this.reset()
-    if this.currentId then
-        this.deactivate(this.currentId)
-        this.currentId = nil
+    for id, dt in pairs(this.current) do
+        this.deactivate(id)
+        this.current[id] = nil
     end
     for id, dt in pairs(this.data) do
         this.data[id] = nil

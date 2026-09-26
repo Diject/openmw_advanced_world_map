@@ -43,7 +43,7 @@ this.leftMarkerKeyId = "AdvWMap:leftMarkerKey"
 
 this.localDataName = "AdvancedWorldMap:playerData"
 
-this.mapMenuId = "__MAP__"
+this.mapMenuId = "__MAP:MAINMENU__"
 this.firstInitMenuId = "__FIRSTINIT__"
 this.messageBoxMenuId = "__MESSAGEBOX__"
 
@@ -82,7 +82,6 @@ this.transportLocalFieldId = "transportLocal"
 this.disableDialogueMarkersFieldId = "disableDialogueMarkers"
 
 
-this.mapMenuId = "__MAP:MAINMENU__"
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"
 this.quickMenuId = "__MAP:QUICKMENU__"
 this.gamepadInfoMenuId = "__MAP:GAMEPADINFO__"
@@ -103,9 +102,14 @@ this.headerCloseBtnLayoutName = "closeBtn"
 this.headerCloseBtnIntervalLayoutName = "closeBtnInterval"
 
 this.hotkeyLayerMainMenu = "mainMenu"
+this.hotkeyLayerFirstInitMenu = "firstInit"
 this.hotkeyLayerMarkerSelector = "markerSelector"
 this.hotkeyLayerQuickMenu = "quickMenu"
 this.hotkeyLayerContextMenu = "contextMenu"
+this.hotkeyLayerMessageBox = "messageBox"
+this.hotkeyLayerMessageBoxAlt = "messageBoxAlt"
+this.hotkeyLayerNoteEditorMenu = "noteEditor"
+this.hotkeyLayerNoteEditorMenuAlt = "noteEditorAlt"
 this.hotkeyLayerBlank = "blank"
 
 this.defaultColorData = {202/255, 165/255, 96/255}

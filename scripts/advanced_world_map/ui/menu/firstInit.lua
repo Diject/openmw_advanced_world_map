@@ -14,6 +14,8 @@ local realTimer = require("scripts.advanced_world_map.realTimer")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local eventSys = require("scripts.advanced_world_map.eventSys")
+local keyModule = require("scripts.advanced_world_map.input.keys")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local borders = require("scripts.advanced_world_map.ui.borders")
@@ -157,8 +159,7 @@ function this.new(params)
         if not self.menu then return end
         if params.yesCallback then params.yesCallback(meta) end
         self.menu:destroy()
-        I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerBCallback, 100)
-        I.DijectKeyBindings.keybind.unregister("Y", meta.controllerBCallback, 100)
+        hotkeyLayers.unregister(commonData.hotkeyLayerFirstInitMenu)
     end
 
 
@@ -360,7 +361,7 @@ function this.new(params)
                             button{
                                 updateFunc = meta.update,
                                 textSize = params.fontSize,
-                                text = l10n("YesY"),
+                                text = keyModule.isGamepad and l10n("YesY") or core.getGMST("sYes"),
                                 anchor = util.vector2(0.5, 0.5),
                                 relativePosition = util.vector2(0.5, 0.5),
                                 event = function (layout)
@@ -537,8 +538,23 @@ function this.new(params)
         meta:close()
     end
 
-    I.DijectKeyBindings.keybind.register("C_Y", meta.controllerBCallback, 100)
-    I.DijectKeyBindings.keybind.register("Y", meta.controllerBCallback, 100)
+    local function registerHotkeys()
+        I.DijectKeyBindings.keybind.register("C_Y", meta.controllerBCallback, -100)
+        I.DijectKeyBindings.keybind.register("Y", meta.controllerBCallback, -100)
+    end
+
+    local function unregisterHotkeys()
+        I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerBCallback, -100)
+        I.DijectKeyBindings.keybind.unregister("Y", meta.controllerBCallback, -100)
+    end
+
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerFirstInitMenu,
+        group = "main",
+        priority = 500,
+        activateFun = registerHotkeys,
+        deactivateFun = unregisterHotkeys
+    }
 
     meta.menu = ui.create(layout)
 

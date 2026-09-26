@@ -3,7 +3,8 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local core = require("openmw.core")
 local time = require("openmw_aux.time")
-local UI = require("openmw.interfaces").UI
+local I = require("openmw.interfaces")
+local UI = I.UI
 local plRef = require("openmw.self")
 local types = require("openmw.types")
 local vfs = require("openmw.vfs")
@@ -14,6 +15,9 @@ local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
+local keyModule = require("scripts.advanced_world_map.input.keys")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
+local realTimer = require("scripts.advanced_world_map.realTimer")
 
 local widgetData = require("scripts.advanced_world_map.widgets.notes.data")
 
@@ -21,6 +25,8 @@ local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
+local gamepadHotkeyInfoMenu = require("scripts.advanced_world_map.ui.menu.gamepadHotkeyInfo")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -49,6 +55,7 @@ local this = {}
 
 ---@param params advancedWorldMap.widget.notes.editorMenu.params
 function this.create(params)
+    tooltip.destroyLast()
     if not params then params = {} end
     ---@class advancedWorldMap.widget.notes.editorMenu.params
     params = params
@@ -79,6 +86,9 @@ function this.create(params)
 
     function meta:close()
         if not self.menu then return end
+        hotkeyLayers.unregister(commonData.hotkeyLayerNoteEditorMenu)
+        hotkeyLayers.unregister(commonData.hotkeyLayerNoteEditorMenuAlt)
+        gamepadHotkeyInfoMenu.create()
         self.menu:destroy()
     end
 
@@ -104,6 +114,15 @@ function this.create(params)
         meta:close()
     end
 
+    local registerBinds = function ()
+        I.DijectKeyBindings.keybind.register("C_Y", yesCallback, -100)
+        I.DijectKeyBindings.keybind.register("C_X", params.removeCallback and removeCallback or noCallback, -100)
+    end
+
+    local unregisterBinds = function ()
+        I.DijectKeyBindings.keybind.unregister("C_Y", yesCallback, -100)
+        I.DijectKeyBindings.keybind.unregister("C_X", params.removeCallback and removeCallback or noCallback, -100)
+    end
 
 
     local moveEvents = {
@@ -211,14 +230,14 @@ function this.create(params)
             button{
                 updateFunc = meta.update,
                 textSize = params.fontSize,
-                text = core.getGMST("sYes"),
+                text = keyModule.isGamepad and l10n("YesY") or core.getGMST("sYes"),
                 event = yesCallback,
             },
             interval(params.fontSize * 2, 0),
             button{
                 updateFunc = meta.update,
                 textSize = params.fontSize,
-                text = core.getGMST("sNo"),
+                text = keyModule.isGamepad and not params.removeCallback and l10n("NoX") or core.getGMST("sNo"),
                 event = noCallback,
             },
         }
@@ -229,7 +248,7 @@ function this.create(params)
         buttonLayout.content:add(button{
             updateFunc = meta.update,
             textSize = params.fontSize,
-            text = l10n("Remove"),
+            text = keyModule.isGamepad and params.removeCallback and l10n("RemoveX") or l10n("Remove"),
             event = removeCallback,
         })
     end
@@ -239,6 +258,17 @@ function this.create(params)
         widgetData.colors[params.data.nameColorId] or config.data.ui.defaultColor
 
     local nameEditLayout
+
+    local function changeSize()
+        params.data.size = params.data.size or 2
+        params.data.size = params.data.size + 1
+        if params.data.size > #widgetData.markerSizeNames then params.data.size = 1 end
+
+        nameEditLayout.content[3].content[1].props.text = widgetData.markerSizeNames[params.data.size]
+
+        meta:update()
+    end
+
     nameEditLayout = {
         type = ui.TYPE.Flex,
         props = {
@@ -349,13 +379,7 @@ function this.create(params)
                         if e.button ~= 1 then return end
 
                         if layout.userData.pressed then
-                            params.data.size = params.data.size or 2
-                            params.data.size = params.data.size + 1
-                            if params.data.size > #widgetData.markerSizeNames then params.data.size = 1 end
-
-                            layout.content[1].props.text = widgetData.markerSizeNames[params.data.size]
-
-                            meta:update()
+                            changeSize()
                         end
 
                         layout.userData.pressed = false
@@ -392,6 +416,7 @@ function this.create(params)
             uiUtils.removeFromContent(lastIcon.content, i)
         end
         lastIcon.content[1].props.color = util.color.rgb(1, 1, 1)
+        lastIcon.userData.selected = false
     end
 
     local dirFile = vfs.open(commonData.widgetIconsDir.."dir.txt")
@@ -469,7 +494,32 @@ function this.create(params)
                     },
                 }
             },
-            userData = {},
+            userData = {
+                selected = isSelected,
+                select = function (layout)
+                    params.data.icon = path
+
+                    if lastIcon ~= layout then
+                        clearLastIconParams()
+                        for _, border in pairs({borders()}) do
+                            layout.content:add(border)
+                        end
+
+                        layout.content[1].props.color = widgetData.colors[params.data.colorId or 1] or config.data.ui.defaultColor
+
+                        lastIcon = layout
+                    else
+                        params.data.colorId = params.data.colorId or 1
+                        params.data.colorId = params.data.colorId + 1
+                        if params.data.colorId > #widgetData.colors then params.data.colorId = 1 end
+
+                        layout.content[1].props.color = widgetData.colors[params.data.colorId] or config.data.ui.defaultColor
+                    end
+                    layout.userData.selected = true
+
+                    meta:update()
+                end,
+            },
             events = {
                 mousePress = async:callback(function(e, layout)
                     if e.button ~= 1 then return end
@@ -479,26 +529,7 @@ function this.create(params)
                     if e.button ~= 1 then return end
 
                     if layout.userData.pressed then
-                        params.data.icon = path
-
-                        if lastIcon ~= layout then
-                            clearLastIconParams()
-                            for _, border in pairs({borders()}) do
-                                layout.content:add(border)
-                            end
-
-                            layout.content[1].props.color = widgetData.colors[params.data.colorId or 1] or config.data.ui.defaultColor
-
-                            lastIcon = layout
-                        else
-                            params.data.colorId = params.data.colorId or 1
-                            params.data.colorId = params.data.colorId + 1
-                            if params.data.colorId > #widgetData.colors then params.data.colorId = 1 end
-
-                            layout.content[1].props.color = widgetData.colors[params.data.colorId] or config.data.ui.defaultColor
-                        end
-
-                        meta:update()
+                        layout.userData.select(layout)
                     end
 
                     layout.userData.pressed = false
@@ -530,59 +561,208 @@ function this.create(params)
 
 
     local lastStartIndex = 1
+
+    local function loadLeftIcons()
+        local startIndex = math.max(lastStartIndex - maxIcons, 1)
+        local endIndex = startIndex + maxIcons - 1
+
+        if lastStartIndex == startIndex and iconEndIndexes[1] then
+            endIndex = iconEndIndexes[1]
+        end
+        lastStartIndex = startIndex
+
+        clearIcons()
+        clearLastIconParams()
+
+        for i = startIndex, endIndex do
+            if not placeIcon(icons[i]) then
+                break
+            else
+                lastIconIndex = i
+            end
+        end
+
+        meta:update()
+    end
+
     local btnLeftLayout = button{
         updateFunc = meta.update,
         iconTexture = arrowLeftTexture,
         iconSize = util.vector2(params.fontSize * 1.25 - 6, params.fontSize * 1.25 - 6),
         anchor = util.vector2(0.5, 0.5),
-        event = function ()
-            local startIndex = math.max(lastStartIndex - maxIcons, 1)
-            local endIndex = startIndex + maxIcons - 1
-
-            if lastStartIndex == startIndex and iconEndIndexes[1] then
-                endIndex = iconEndIndexes[1]
-            end
-            lastStartIndex = startIndex
-
-            clearIcons()
-            clearLastIconParams()
-
-            for i = startIndex, endIndex do
-                if not placeIcon(icons[i]) then
-                    break
-                else
-                    lastIconIndex = i
-                end
-            end
-
-            meta:update()
-        end,
+        event = loadLeftIcons,
     }
+
+    local function loadRightIcons()
+        local endIndex = math.min(lastIconIndex + maxIcons, #icons)
+        local startIndex = endIndex - maxIcons + 1
+        lastStartIndex = startIndex
+
+        clearIcons()
+        clearLastIconParams()
+
+        for i = startIndex, endIndex do
+            if not placeIcon(icons[i]) then
+                break
+            else
+                lastIconIndex = i
+            end
+        end
+
+        meta:update()
+    end
 
     local btnRightLayout = button{
         updateFunc = meta.update,
         iconTexture = arrowRightTexture,
         iconSize = util.vector2(params.fontSize * 1.25 - 6, params.fontSize * 1.25 - 6),
         anchor = util.vector2(0.5, 0.5),
-        event = function ()
-            local endIndex = math.min(lastIconIndex + maxIcons, #icons)
-            local startIndex = endIndex - maxIcons + 1
-            lastStartIndex = startIndex
+        event = loadRightIcons,
+    }
 
-            clearIcons()
-            clearLastIconParams()
-
-            for i = startIndex, endIndex do
-                if not placeIcon(icons[i]) then
-                    break
-                else
-                    lastIconIndex = i
+    local function findSelectedIndex()
+        for i, line in ipairs(iconsLay.content) do
+            for j, elem in ipairs(line.content) do
+                if elem.userData and elem.userData.selected then
+                    return i, j
                 end
             end
+        end
+    end
 
-            meta:update()
-        end,
-    }
+    local function clampIndex(current, max)
+        if current > max then return 1
+        elseif current < 1 then return max end
+        return current
+    end
+
+    local function selectFirst()
+        local line = #iconsLay.content > 0 and iconsLay.content[1] or nil
+        if not line then return end
+        local elem = #line.content > 0 and line.content[1] or nil
+        if not elem or not elem.userData or not elem.userData.select then return end
+        elem.userData.select(elem)
+    end
+
+    local function selectLast()
+        local line = #iconsLay.content > 0 and iconsLay.content[#iconsLay.content] or nil
+        if not line then return end
+        local elem = #line.content > 0 and line.content[#line.content] or nil
+        if not elem or not elem.userData or not elem.userData.select then return end
+        elem.userData.select(elem)
+    end
+
+    local function selectNext(direction)
+        local ind1, ind2 = findSelectedIndex()
+        if not ind1 then
+            ind1, ind2 = 1, 1
+        end
+
+        local lineCount = #iconsLay.content
+        if ind1 > lineCount then return end
+
+        local line = iconsLay.content[ind1]
+        local elemCount = #line.content
+        if ind2 > elemCount then return end
+
+        if direction == 1 then
+            ind1 = clampIndex(ind1 + 1, lineCount)
+        elseif direction == 2 then
+            if ind2 == elemCount and ind1 == lineCount then
+                loadRightIcons()
+                selectFirst()
+                return
+            elseif ind2 == elemCount then
+                ind1 = clampIndex(ind1 + 1, lineCount)
+                ind2 = 1
+            else
+                ind2 = clampIndex(ind2 + 1, elemCount)
+            end
+        elseif direction == 3 then
+            ind1 = clampIndex(ind1 - 1, lineCount)
+        elseif direction == 4 then
+            if ind2 == 1 and ind1 == 1 then
+                loadLeftIcons()
+                selectLast()
+                return
+            elseif ind2 == 1 then
+                ind1 = clampIndex(ind1 - 1, lineCount)
+                ind2 = clampIndex(ind2 - 1, elemCount)
+            else
+                ind2 = clampIndex(ind2 - 1, elemCount)
+            end
+        else
+            return
+        end
+
+        local new = iconsLay.content[ind1].content[ind2]
+        if not new or not new.userData or not new.userData.select then return end
+
+        new.userData.select(new)
+    end
+
+    local function clickOnSelected()
+        local i1, i2 = findSelectedIndex()
+        if not i1 then return end
+
+        local lineCount = #iconsLay.content
+        if i1 > lineCount then return end
+
+        local line = iconsLay.content[i1]
+        local elemCount = #line.content
+        if i2 > elemCount then return end
+
+        local elem = iconsLay.content[i1].content[i2]
+        if not elem or not elem.userData or not elem.userData.select then return end
+
+        elem.userData.select(elem)
+    end
+
+    local directionHotkeyFuncs = {}
+    local directionHotkeys = {[1] = commonData.bottomMarkerKeyId, [2] = commonData.rightMarkerKeyId,
+        [3] = commonData.topMarkerKeyId, [4] = commonData.leftMarkerKeyId}
+    for i = 1, 4 do
+        local keyHoldCount = 0
+        local timer
+        directionHotkeyFuncs[i] = function ()
+            if timer then timer() end
+            selectNext(i)
+            if I.DijectKeyBindings.version >= 4 then
+                local function timerFunc()
+                    keyHoldCount = keyHoldCount + 1
+
+                    if I.DijectKeyBindings.action.isPressed(directionHotkeys[i]) then
+                        if keyHoldCount > 10 then
+                            selectNext(i)
+                        end
+                    else
+                        timer = nil
+                        keyHoldCount = 0
+                        return
+                    end
+
+                    timer = realTimer.newTimer(0.06, timerFunc)
+                end
+                timer = realTimer.newTimer(0.06, timerFunc)
+            end
+        end
+    end
+
+    local function registerBindsAlt()
+        for i = 1, 4 do
+            I.DijectKeyBindings.action.register(directionHotkeys[i], directionHotkeyFuncs[i])
+        end
+        I.DijectKeyBindings.keybind.register("C_A", clickOnSelected)
+        I.DijectKeyBindings.keybind.register("C_RightStick", changeSize)
+    end
+
+    local function unregisterBindsAlt()
+        for i = 1, 4 do
+            I.DijectKeyBindings.action.unregister(directionHotkeys[i], directionHotkeyFuncs[i])
+        end
+        I.DijectKeyBindings.keybind.unregister("C_A", clickOnSelected)
+        I.DijectKeyBindings.keybind.unregister("C_RightStick", changeSize)
+    end
 -- ######################################################################################
 
 
@@ -827,6 +1007,21 @@ function this.create(params)
     }
 
     meta.menu = ui.create(layout)
+
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerNoteEditorMenu,
+        group = "main",
+        priority = 900,
+        activateFun = registerBinds,
+        deactivateFun = unregisterBinds
+    }
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerNoteEditorMenuAlt,
+        priority = 400,
+        activateFun = registerBindsAlt,
+        deactivateFun = unregisterBindsAlt
+    }
+    gamepadHotkeyInfoMenu.createNoteEdit(params.removeCallback ~= nil)
 
     if core.isWorldPaused() then
         local timer = async:newUnsavableSimulationTimer(0.1, function ()

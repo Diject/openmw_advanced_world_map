@@ -9,10 +9,13 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
+local keyModule = require("scripts.advanced_world_map.input.keys")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
+local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -33,6 +36,7 @@ local this = {}
 
 ---@param params UI.messageBox.newSimple.params
 function this.newSimple(params)
+    tooltip.destroyLast()
     if not params then params = {} end
 
     local screenSize = uiUtils.getScaledScreenSize()
@@ -59,9 +63,9 @@ function this.newSimple(params)
 
     function meta:close()
         if not self.menu then return end
+        hotkeyLayers.unregister(commonData.hotkeyLayerMessageBox)
+        hotkeyLayers.unregister(commonData.hotkeyLayerMessageBoxAlt)
         self.menu:destroy()
-        I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerYCallback, 100)
-        I.DijectKeyBindings.keybind.unregister("C_X", meta.controllerXCallback, 100)
     end
 
     local headerSize = util.vector2(params.size.x, params.fontSize)
@@ -128,7 +132,7 @@ function this.newSimple(params)
                     button{
                         updateFunc = meta.update,
                         textSize = params.fontSize,
-                        text = l10n("YesY"),
+                        text = keyModule.isGamepad and l10n("YesY") or core.getGMST("sYes"),
                         event = function (layout)
                             meta:close()
                             if params.yesCallback then params.yesCallback() end
@@ -138,7 +142,7 @@ function this.newSimple(params)
                     button{
                         updateFunc = meta.update,
                         textSize = params.fontSize,
-                        text = l10n("NoX"),
+                        text = keyModule.isGamepad and l10n("NoX") or core.getGMST("sNo"),
                         event = function (layout)
                             meta:close()
                             if params.noCallback then params.noCallback() end
@@ -171,13 +175,34 @@ function this.newSimple(params)
     meta.controllerYCallback = function ()
         meta:close()
         if params.yesCallback then params.yesCallback() end
+        return false
     end
     meta.controllerXCallback = function ()
         meta:close()
         if params.noCallback then params.noCallback() end
+        return false
     end
-    I.DijectKeyBindings.keybind.register("C_Y", meta.controllerYCallback, 100)
-    I.DijectKeyBindings.keybind.register("C_X", meta.controllerXCallback, 100)
+    meta.registerBinds = function ()
+        I.DijectKeyBindings.keybind.register("C_Y", meta.controllerYCallback, -100)
+        I.DijectKeyBindings.keybind.register("C_X", meta.controllerXCallback, -100)
+    end
+    meta.unregisterBinds = function ()
+        I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerYCallback, -100)
+        I.DijectKeyBindings.keybind.unregister("C_X", meta.controllerXCallback, -100)
+    end
+
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerMessageBox,
+        group = "main",
+        priority = 1000,
+        activateFun = meta.registerBinds,
+        deactivateFun = meta.unregisterBinds,
+    }
+
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerMessageBoxAlt,
+        priority = 1000
+    }
 
 
     return meta
