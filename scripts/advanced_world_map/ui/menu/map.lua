@@ -687,6 +687,7 @@ function menuMeta:updateInteractiveElements(params)
     local header = self.headerLayout
 
     if params.fullMode == true or isMenuMode and params.fullMode == nil then
+        self._becameActiveTimestamp = core.getRealTime()
         header.props.visible = true
         header.content[1].props.alpha = config.data.ui.headerBackgroundAlpha / 100
         header.content[2] = self.widgetActiveHeaderLayout
@@ -715,7 +716,6 @@ function menuMeta:updateInteractiveElements(params)
         end
 
         localStorage.data[commonData.inMinimapModeKeyId] = false
-        self._becameActiveTimestamp = core.getRealTime()
     else
         if not localStorage.data[commonData.pinnedStateFieldId] then
             menuHandler.destroyMenu(commonData.mapMenuId)
@@ -1261,6 +1261,7 @@ function this.create(params)
             setCloseBtnState(layout, false)
             if layout.userData.pressed and movedDist <= 25 then
                 menuHandler.destroyMenu(commonData.mapMenuId)
+                menuMode.deactivate()
             end
             layout.userData.pressed = false
         end),
@@ -1604,6 +1605,9 @@ function this.create(params)
 
 
     if config.data.input.gamepadControls then
+        local rsTick = 0
+        local lsTick = 0
+
         local function updateRealTimerCallback()
             if not meta.menu.layout then return end
 
@@ -1619,23 +1623,39 @@ function this.create(params)
                 do
                     local rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
                     local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
-                    local lTrigger
+                    local lTrigger = 0
+                    local rTrigger = 0
+                    hasAxisInput = false
+                    hasTriggerInput = false
                     if config.data.input.gamepadControlsBumperMode then
-                        lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and
-                            core.getRealTime() - meta._becameActiveTimestamp > 1 and 0.75 or 0
+                        if input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) then
+                            hasTriggerInput = true
+                            lsTick = lsTick + 1
+                            if lsTick > 2 then
+                                lTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) and
+                                    core.getRealTime() - meta._becameActiveTimestamp > 1 and 0.75 or 0
+                            end
+                        else
+                            lsTick = 0
+                        end
+
+                        if input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) then
+                            hasTriggerInput = true
+                            rsTick = rsTick + 1
+                            if rsTick > 2 then
+                                rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and
+                                    core.getRealTime() - meta._becameActiveTimestamp > 1 and 0.75 or 0
+                            end
+                        else
+                            rsTick = 0
+                        end
                     else
                         lTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerLeft)
-                    end
-                    local rTrigger
-                    if config.data.input.gamepadControlsBumperMode then
-                        rTrigger = input.isControllerButtonPressed(input.CONTROLLER_BUTTON.RightShoulder) and
-                            core.getRealTime() - meta._becameActiveTimestamp > 1 and 0.75 or 0
-                    else
                         rTrigger = input.getAxisValue(input.CONTROLLER_AXIS.TriggerRight)
                     end
 
-                    hasAxisInput = math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
-                    hasTriggerInput = lTrigger > 0.25 or rTrigger >= 0.25
+                    hasAxisInput = hasAxisInput or math.abs(rAxisX) > 0.25 or math.abs(rAxisY) > 0.25
+                    hasTriggerInput = hasTriggerInput or lTrigger > 0.25 or rTrigger >= 0.25
 
                     if not hasAxisInput and not hasTriggerInput then
                         return
