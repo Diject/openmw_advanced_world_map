@@ -470,6 +470,7 @@ end
 
 function mapWidgetMeta:updateOnZoomMarkers(force)
     local visibleRect = self:getVisibleMapRectInWorldCoordinates()
+    local visibleRectOrig = tableLib.copy(visibleRect)
 
     local isInZoomInMode = self:isInZoomInMode()
     local size = self:getSize()
@@ -509,11 +510,11 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
 
     if isInZoomInMode then
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
-        self:placeGroundTextures(visibleRect)
+        self:placeGroundTextures(visibleRect, visibleRectOrig, force)
         self:createZoomInMarkers(visibleRect, nil, not updateOnlyRect or force)
     else
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
-        self:placeGroundTextures(visibleRect)
+        self:placeGroundTextures(visibleRect, visibleRectOrig, force)
         self:createZoomOutMarkers(visibleRect, nil, force)
     end
     self._lastOnZoomZoom = self.zoom
@@ -1543,7 +1544,12 @@ end
 
 
 ---@param region advancedWorldMap.ui.mapWidget.region
-function mapWidgetMeta:placeGroundTextures(region)
+function mapWidgetMeta:placeGroundTextures(region, eRect, force)
+    if not force and eRect and self.isRegionEqual(self._groundTextureRect, eRect) then
+        return
+    end
+    self._groundTextureRect = region
+
     self:removeGroundTextures()
 
     if eventSys.triggerEvent(eventSys.EVENT.onGroundTexturesPlace, {mapWidget = self, region = region}) then
@@ -2430,6 +2436,8 @@ function this.new(params)
 
     ---@type advancedWorldMap.ui.mapWidget.region
     meta._markerRectLimited = {bottom = 0, top = 0, left = 0, right = 0}
+    ---@type advancedWorldMap.ui.mapWidget.region
+    meta._groundTextureRect = {bottom = 0, top = 0, left = 0, right = 0}
 
     meta.isInteriorFogCreated = false
 
