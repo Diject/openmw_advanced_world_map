@@ -194,6 +194,9 @@ end
 if inputModuleVersion < 4 and I.DijectKeyBindings then
     I.DijectKeyBindings.registerKey(commonData.quickMenuKeyId, config.default.input.quickMenuHotkey)
 end
+if inputModuleVersion < 5 then
+    I.DijectKeyBindings.registerKey(commonData.menuKeyAltId, config.default.main.menuKeyAlt)
+end
 defaultStorage:set("input.version", config.data.input.version)
 
 
@@ -265,6 +268,11 @@ if configVersion < config.default.version then
             mainSettingsSection:set("main.minimap.bottomHeader", true)
         end
     end
+    if configVersion < 24 then
+        if (mainSettingsSection:get("main.discoveryRadius") or 0) < 2048 then
+            mainSettingsSection:set("main.discoveryRadius", 2048)
+        end
+    end
 end
 
 
@@ -288,8 +296,6 @@ if configVersion < 23 then
     inputSettingsSection:set("input.toggleTransportHotkey", config.default.input.toggleTransportHotkey)
     inputSettingsSection:set("input.cycleTransportHotkey", config.default.input.cycleTransportHotkey)
     inputSettingsSection:set("input.gamepadControlsBumperMode", true)
-
-    inputSettingsSection:set("main.menuKeyAlt", config.default.main.menuKeyAlt)
 end
 
 

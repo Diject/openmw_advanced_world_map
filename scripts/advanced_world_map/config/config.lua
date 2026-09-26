@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 23,
+    version = 24,
     main = {
         menuKey = "M",
         menuKeyAlt = "C_RightShoulder + C_Back",
@@ -44,7 +44,7 @@ this.default = {
             },
         },
         centerOnPlayer = true,
-        discoveryRadius = 1500,
+        discoveryRadius = 2048,
         updateFrequency = 30,
         firstInitMenu = true,
         fastClose = true, -- used only for initializing the pinned state
@@ -123,7 +123,7 @@ this.default = {
         altExMapAlpha = 6,
     },
     input = {
-        version = 4,
+        version = 5,
         gamepadControls = true,
         gamepadControlsBumperMode = true,
         togglePinHotkey = nil,
