@@ -1473,7 +1473,7 @@ local function placeInFog(self, cellId)
                                 props = {
                                     resource = fogPartTexture,
                                     size = fogSize,
-                                    color = config.data.ui.defaultColor,
+                                    color = config.data.ui.backgroundColor,
                                     relativePosition = pos,
                                     anchor = util.vector2(0.5, 0.5),
                                 }
