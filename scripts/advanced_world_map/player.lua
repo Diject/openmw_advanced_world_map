@@ -43,6 +43,7 @@ local disabledDoors = require("scripts.advanced_world_map.disabledDoors")
 local disabledActors = require("scripts.advanced_world_map.disabledActors")
 local northMarker = require("scripts.advanced_world_map.northMarker")
 local keysModule = require("scripts.advanced_world_map.input.keys")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 
 local mapMenu = require("scripts.advanced_world_map.ui.menu.map")
 local firstInitMenu = require("scripts.advanced_world_map.ui.menu.firstInit")
@@ -743,6 +744,29 @@ local function hotkeyCloseMenu()
 end
 
 
+local function deactivateHotkeys()
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerDeactivateDefault,
+        priority = 9999999,
+    }
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerDeactivateMain,
+        group = "main",
+        priority = 9999999,
+    }
+end
+
+local function restoreHotkeys()
+    hotkeyLayers.unregister(commonData.hotkeyLayerDeactivateDefault)
+    hotkeyLayers.unregister(commonData.hotkeyLayerDeactivateMain)
+end
+
+local function areHotkeysDeactivated()
+    return not hotkeyLayers.isActive(commonData.hotkeyLayerDeactivateDefault) and
+        not hotkeyLayers.isActive(commonData.hotkeyLayerDeactivateMain) or false
+end
+
+
 
 local lastPlayerCellId
 local menuStateUpdateTimer
@@ -783,6 +807,16 @@ return {
         end,
         toggleMapMenu = toggleMenu,
         getMapMenu = getMenu,
+        setHotkeysActive = function (active)
+            if active then
+                restoreHotkeys()
+            else
+                deactivateHotkeys()
+            end
+        end,
+        isHotkeysActive = function ()
+            return areHotkeysDeactivated()
+        end,
         isDiscovered = function (cellId)
             return discoveredLocs.isDiscovered(cellId)
         end,

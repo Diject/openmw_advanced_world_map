@@ -91,6 +91,11 @@ function this.deactivate(id)
 end
 
 
+function this.isActive(id)
+    return this.current[id] ~= nil
+end
+
+
 function this.reset()
     for id, dt in pairs(this.current) do
         this.deactivate(id)

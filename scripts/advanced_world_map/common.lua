@@ -112,6 +112,8 @@ this.hotkeyLayerMessageBoxAlt = "messageBoxAlt"
 this.hotkeyLayerNoteEditorMenu = "noteEditor"
 this.hotkeyLayerNoteEditorMenuAlt = "noteEditorAlt"
 this.hotkeyLayerBlank = "blank"
+this.hotkeyLayerDeactivateMain = "deactivateMain"
+this.hotkeyLayerDeactivateDefault = "deactivateDefault"
 
 this.defaultColorData = {202/255, 165/255, 96/255}
 this.defaultColor = util.color.rgb(this.defaultColorData[1], this.defaultColorData[2], this.defaultColorData[3])

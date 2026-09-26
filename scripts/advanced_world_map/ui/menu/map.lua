@@ -1701,7 +1701,9 @@ function this.create(params)
                 end
             end
 
-            process()
+            if config.data.input.gamepadControls then
+                process()
+            end
 
             realTimer.newTimer((hasAxisInput or hasTriggerInput) and core.getRealFrameDuration() or 0.1, updateRealTimerCallback)
         end
