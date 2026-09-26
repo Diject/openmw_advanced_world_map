@@ -155,6 +155,8 @@ function this.clickOnSelected()
     if not this.lastSelected or not this.lastSelected._container.userData.inFocus or
         not this.lastSelected:isValid() then return end
 
+    tooltip.destroyLast()
+
     local mapWidget = this.lastSelected._parent
     local userData = this.lastSelected._container.userData
 
