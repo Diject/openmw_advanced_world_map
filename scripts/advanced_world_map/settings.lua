@@ -284,9 +284,10 @@ end
 registerHotkeyListener()
 
 
-if configVersion < 22 then
+if configVersion < 23 then
     inputSettingsSection:set("input.toggleTransportHotkey", config.default.input.toggleTransportHotkey)
     inputSettingsSection:set("input.cycleTransportHotkey", config.default.input.cycleTransportHotkey)
+    inputSettingsSection:set("input.gamepadControlsBumperMode", true)
 
     inputSettingsSection:set("main.menuKeyAlt", config.default.main.menuKeyAlt)
 end
