@@ -422,18 +422,36 @@ local function controllerYCallback()
     end
 end
 
+local function historyBackCallback()
+    if not menuMode.isMenuInteractive() then return end
+    if this.activeMenuMeta then
+        this.activeMenuMeta:moveHistory(-1)
+    end
+end
+
+local function hostoryForvardCallback()
+    if not menuMode.isMenuInteractive() then return end
+    if this.activeMenuMeta then
+        this.activeMenuMeta:moveHistory(1)
+    end
+end
+
 local function registerHotkeys()
     I.DijectKeyBindings.action.register(commonData.contextMenuKeyId, controllerYCallback)
     if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
         I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
     end
     I.DijectKeyBindings.action.register(commonData.quickMenuKeyId, toggleQuickMenu)
+    I.DijectKeyBindings.action.register(commonData.moveHistoryBackKeyId, historyBackCallback)
+    I.DijectKeyBindings.action.register(commonData.moveHistoryForwardKeyId, hostoryForvardCallback)
 end
 
 local function unregisterHotkeys()
     I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
     I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
     I.DijectKeyBindings.action.unregister(commonData.quickMenuKeyId, toggleQuickMenu)
+    I.DijectKeyBindings.action.unregister(commonData.moveHistoryBackKeyId, historyBackCallback)
+    I.DijectKeyBindings.action.unregister(commonData.moveHistoryForwardKeyId, hostoryForvardCallback)
 end
 
 
