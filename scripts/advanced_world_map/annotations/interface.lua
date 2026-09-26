@@ -60,6 +60,7 @@
 ---@field getConfig fun() : table gets the current configuration
 ---@field setConfigValue fun(path: string, value: any) sets a configuration value at the given path. Like setConfigValue("main.updateFrequency", 25)
 ---@field isDiscovered fun(cellId: string) : boolean checks if the cell with the given ID is discovered
+---@field isPositionDiscovered fun(cellId: string, pos: any) : boolean checks if the position in the cell with the given ID is discovered
 ---@field isVisited fun(cellId: string) : number? checks if the cell with the given ID is visited. Returns timestamp or nil
 ---@field isMapDataInitialized fun() : boolean checks if the map data is initialized
 ---@field getCellNameById fun(cellId: string) : string? gets the cell name by its ID
