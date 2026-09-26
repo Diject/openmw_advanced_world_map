@@ -41,7 +41,8 @@ function this.loadFromStorage(section)
     end
 end
 
-for _, section in pairs(this.storageSections) do
+for i = #this.storageSections, 1, -1 do
+    local section = this.storageSections[i]
     section:subscribe(async:callback(function(s, key)
         if key then
             local value = section:get(key)
