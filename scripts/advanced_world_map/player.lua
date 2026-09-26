@@ -743,12 +743,23 @@ return {
             configLib.setValue(valuePath, value)
         end,
         openMapMenu = openMenu,
-        closeMapMenu = function ()
+        closeMapMenu = function (force)
             local menu = menuHandler.getMenu(commonData.mapMenuId)
             if menu then
-                if menu:close() then
-                    return
+                if force then
+                    menuHandler.destroyMenu(commonData.mapMenuId)
+                elseif localStorage.data[commonData.pinnedStateFieldId] and not menu.isInActiveMode then
+                    if menu.isInActiveMode then
+                        menuMode.deactivate()
+                        menu:updateInteractiveElements()
+                        menu:update()
+                    end
+                elseif not menu:close() then
+                    menuHandler.unregister(commonData.mapMenuId)
                 end
+            end
+            if menuHandler.getMenu(commonData.firstInitMenuId) then
+                menuHandler.destroyMenu(commonData.firstInitMenuId)
             end
         end,
         toggleMapMenu = toggleMenu,

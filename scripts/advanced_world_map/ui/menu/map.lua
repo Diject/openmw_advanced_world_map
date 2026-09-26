@@ -677,6 +677,7 @@ function menuMeta:updateInteractiveElements(params)
         self:updateHeaderPosition()
 
         self.isInMinimapMode = false
+        self.isInActiveMode = true
         self.isInCharacterMenuMode = config.data.main.overrideDefault and I.UI.getMode() == "Interface"
         self.layout.layer = "Windows"
 
@@ -709,6 +710,7 @@ function menuMeta:updateInteractiveElements(params)
         self:setBorders(false, false)
 
         self.isInCharacterMenuMode = false
+        self.isInActiveMode = false
 
         if not params.init and #self.widgetInactiveHeaderLayout.content[1].content == 0 then
             header.props.visible = false
@@ -834,6 +836,8 @@ end
 function menuMeta:close()
     tooltip.destroyLast()
     mapWidget.destroyPlayerMarkerMenu()
+    menuHandler.destroyMenu(commonData.messageBoxMenuId)
+    menuHandler.destroyMenu(commonData.noteEditorMenuId)
     if not self.menu then return end
 
     if self.isActivatedExternally then
@@ -923,6 +927,7 @@ function this.create(params)
     meta.isCreatedExternally = params.isCreatedExternally or false
 
     meta.isInMinimapMode = false
+    meta.isInActiveMode = true
 
     if not params.fontSize then params.fontSize = config.data.ui.fontSize end
     if not params.relativeSize then

@@ -46,6 +46,7 @@ this.localDataName = "AdvancedWorldMap:playerData"
 this.mapMenuId = "__MAP:MAINMENU__"
 this.firstInitMenuId = "__FIRSTINIT__"
 this.messageBoxMenuId = "__MESSAGEBOX__"
+this.noteEditorMenuId = "__NOTEEDITOR__"
 
 this.mapDataStorageName = "AdvancedWorldMap:mapDataStorage"
 this.notesStorageName = "AdvancedWorldMap:notes"

@@ -54,7 +54,7 @@
 ---@field version integer version of the interface
 ---@field events AdvancedWorldMap.Event event system
 ---@field openMapMenu fun(inMenuMode: boolean): AdvancedWorldMap.Menu.Map opens the world map menu
----@field closeMapMenu fun() closes the world map menu
+---@field closeMapMenu fun(force: boolean?) closes the world map menu
 ---@field toggleMapMenu fun() toggles the world map menu
 ---@field getMapMenu fun() : AdvancedWorldMap.Menu.Map gets the world map menu
 ---@field getConfig fun() : table gets the current configuration

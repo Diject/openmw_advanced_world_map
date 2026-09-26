@@ -6,7 +6,7 @@ this.activeMenus = {}
 
 
 function this.registerMenu(menuId, menu)
-    if this.activeMenus[menuId] then
+    if this.activeMenus[menuId] and this.activeMenus[menuId] ~= menu then
         this.activeMenus[menuId]:close()
     end
 
@@ -25,6 +25,11 @@ function this.destroyMenu(menuId)
     else
         this.activeMenus[menuId] = nil
     end
+end
+
+
+function this.unregister(menuId)
+    this.activeMenus[menuId] = nil
 end
 
 

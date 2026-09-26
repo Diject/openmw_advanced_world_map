@@ -11,6 +11,7 @@ local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local keyModule = require("scripts.advanced_world_map.input.keys")
 local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
+local menuHandler = require("scripts.advanced_world_map.menuHandler")
 
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
@@ -21,6 +22,9 @@ local l10n = core.l10n(commonData.l10nKey)
 
 
 local this = {}
+
+---@type UI.messageBox.simple.meta?
+this.active = nil
 
 
 ---@class UI.messageBox.newSimple.params
@@ -65,7 +69,9 @@ function this.newSimple(params)
         if not self.menu then return end
         hotkeyLayers.unregister(commonData.hotkeyLayerMessageBox)
         hotkeyLayers.unregister(commonData.hotkeyLayerMessageBoxAlt)
+        this.active = nil
         self.menu:destroy()
+        menuHandler.unregister(commonData.messageBoxMenuId)
     end
 
     local headerSize = util.vector2(params.size.x, params.fontSize)
@@ -156,6 +162,7 @@ function this.newSimple(params)
 
     local layout = {
         template = customTemplates.boxSolid,
+        name = commonData.messageBoxMenuId,
         layer = commonData.messageLayer,
         props = {
             relativePosition = params.relativePosition,
@@ -204,8 +211,18 @@ function this.newSimple(params)
         priority = 1000
     }
 
+    this.active = meta
+
+    menuHandler.registerMenu(commonData.messageBoxMenuId, meta)
 
     return meta
+end
+
+
+function this.destroy()
+    if this.active then
+        this.active:close()
+    end
 end
 
 

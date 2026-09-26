@@ -18,6 +18,7 @@ local config = require("scripts.advanced_world_map.config.configLib")
 local keyModule = require("scripts.advanced_world_map.input.keys")
 local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 local realTimer = require("scripts.advanced_world_map.realTimer")
+local menuHandler = require("scripts.advanced_world_map.menuHandler")
 
 local widgetData = require("scripts.advanced_world_map.widgets.notes.data")
 
@@ -43,6 +44,9 @@ local borderTextures = {
 
 local this = {}
 
+---@type advancedWorldMap.widget.notes.editorMenu.meta?
+this.active = nil
+
 
 ---@class advancedWorldMap.widget.notes.editorMenu.meta
 
@@ -55,6 +59,7 @@ local this = {}
 
 ---@param params advancedWorldMap.widget.notes.editorMenu.params
 function this.create(params)
+    this.destroy()
     tooltip.destroyLast()
     if not params then params = {} end
     ---@class advancedWorldMap.widget.notes.editorMenu.params
@@ -89,7 +94,9 @@ function this.create(params)
         hotkeyLayers.unregister(commonData.hotkeyLayerNoteEditorMenu)
         hotkeyLayers.unregister(commonData.hotkeyLayerNoteEditorMenuAlt)
         gamepadHotkeyInfoMenu.create()
+        this.active = nil
         self.menu:destroy()
+        menuHandler.unregister(commonData.noteEditorMenuId)
     end
 
     local headerSize = util.vector2(params.size.x, params.fontSize * 1.6)
@@ -945,6 +952,7 @@ function this.create(params)
     local layout
     layout = {
         type = ui.TYPE.Flex,
+        name = commonData.noteEditorMenuId,
         layer = commonData.messageLayer,
         props = {
             autoSize = true,
@@ -1037,7 +1045,18 @@ function this.create(params)
         end, 0.2)
     end
 
+    this.active = meta
+
+    menuHandler.registerMenu(commonData.noteEditorMenuId, meta)
+
     return meta
+end
+
+
+function this.destroy()
+    if this.active then
+        this.active:close()
+    end
 end
 
 
