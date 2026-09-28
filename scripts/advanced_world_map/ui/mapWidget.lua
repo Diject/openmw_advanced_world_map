@@ -1290,10 +1290,9 @@ function mapWidgetMeta:removeGroundTextures()
         self._groundTexturesCoroutine = nil
     end
 
-    local mapLayoutContent = self:getMapLayout().content
-    for i = #mapLayoutContent, 2, -1 do
-        uiUtils.removeFromContent(mapLayoutContent, i)
-    end
+    local content = ui.content{self._defaultMapLayoutContent[1]}
+    self:getMapLayout().content = content
+
     if not self.cellId then
         self:getLayerLayout(self.LAYER.fog).content = ui.content{}
     end
@@ -2446,7 +2445,7 @@ function this.new(params)
     end
 
     local mapLayers = {
-        mapLayout,
+        auxui.deepLayoutCopy(mapLayout),
         auxui.deepLayoutCopy(mapLayout),
         -- for region names
         {
@@ -2542,6 +2541,7 @@ function this.new(params)
         },
     }
 
+    meta._defaultMapLayoutContent = mapLayout.content
     meta.layers = mapLayers
 
 
