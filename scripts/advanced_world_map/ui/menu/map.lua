@@ -230,10 +230,7 @@ function menuMeta:addWidget(params)
     self.widgets[params.id] = {layout = params.layout, params = params}
 
     local function addWidget(content)
-        local removedIndex = uiUtils.removeFromContent(content, params.id)
-        if removedIndex then
-            uiUtils.removeFromContent(content, removedIndex)
-        end
+        uiUtils.removeFromContent(content, params.id)
 
         local index = #content + 1
         for i, el in ipairs(content) do
