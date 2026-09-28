@@ -2009,6 +2009,34 @@ eventSys.registerHandler(eventSys.EVENT.onQuickMenu, function (e)
     })
 end, 10020)
 
+eventSys.registerHandler(eventSys.EVENT.onQuickMenu, function (e)
+    if (e.menu.history.index or 0) <= 1 then return end
+
+    table.insert(e.items, {
+        text = l10n("QuickMenuPrevious"),
+        onClick = function ()
+            e.menu:moveHistory(-1)
+        end
+    })
+end, 10025)
+
+eventSys.registerHandler(eventSys.EVENT.onQuickMenu, function (e)
+    table.insert(e.items, {
+        text = l10n("QuickMenuCenterOnPlayer"),
+        onClick = function ()
+            local playerCell = not playerRef.cell.isExterior and playerRef.cell.id or nil
+            if e.menu.mapWidget.cellId ~= playerCell then
+                e.menu:updateMapWidgetCell(playerCell)
+            end
+            if not playerCell then
+                e.menu.mapWidget:updatePlayerMarker(true, true)
+                e.menu.mapWidget:updateMarkers()
+            end
+            e.menu:update()
+        end
+    })
+end, 10023)
+
 
 eventSys.registerHandler(eventSys.EVENT.onMenuClosed, function (e)
     I.DijectKeyBindings.action.unregister(commonData.togglePinKeyId, togglePinActionFunc)

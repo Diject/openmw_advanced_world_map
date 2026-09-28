@@ -89,6 +89,7 @@ local function create(params)
     local mapWidget = menu.mapWidget
 
     local pos = mapWidget.screenPosition + util.vector2(0, mapWidget.layout.props.size.y)
+    local itemHeight = math.floor(config.data.ui.fontSize * 0.8) * 2 + 4
 
     local content = ui.content{}
 
@@ -129,7 +130,7 @@ local function create(params)
                         textSize = math.floor(config.data.ui.fontSize * 0.7) * 2,
                         textColor = config.data.ui.defaultColor,
                         autoSize = false,
-                        size = util.vector2(250, math.floor(config.data.ui.fontSize * 0.8) * 2 + 4),
+                        size = util.vector2(250, itemHeight),
                         multiline = true,
                         wordWrap = true,
                         textAlignH = ui.ALIGNMENT.Center,
@@ -140,6 +141,11 @@ local function create(params)
         }
 
         content:add(lay)
+    end
+
+    local height = #content * (itemHeight + 4) + 2
+    if height > pos.y then
+        pos = util.vector2(pos.x, height)
     end
 
     local lay = {
