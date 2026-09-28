@@ -159,6 +159,7 @@ function this.new(params)
         if not self.menu then return end
         if params.yesCallback then params.yesCallback(meta) end
         self.menu:destroy()
+        menuHandler.unregister(commonData.firstInitMenuId)
         hotkeyLayers.unregister(commonData.hotkeyLayerFirstInitMenu)
     end
 

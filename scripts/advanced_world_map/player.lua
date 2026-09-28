@@ -233,7 +233,8 @@ local function onLoad(data)
             not (configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
                 configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent) then
         async:newUnsavableSimulationTimer(1, function ()
-            if localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId] then
+            if (localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId]) and
+                    not menuHandler.getMenu(commonData.mapMenuId) then
                 openMenu(false, true, config.data.main.overrideDefault)
             end
         end)
@@ -296,11 +297,20 @@ local function initDataForMenu(options)
 end
 
 
-local function tryShowFirstInit(createMenuFunc, params)
-    local replacePreviousMode = (core.getRealTime() - lastUiModeTimestamp) < 1 and #I.UI.modes == 1
+local function isShouldShowFirstInit()
+    return configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
+        configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent
+end
 
-    if configLib.data.main.firstInitMenu or not configLib.data.data.hasSafeInitMessageBeenShown or
-            configLib.data.message.firstInitMenuShown < configLib.data.message.firstInitMenuShownCurrent then
+local function isShouldReplacePrevous()
+    return (core.getRealTime() - lastUiModeTimestamp) < 1 and #I.UI.modes == 1 and not menuMode.essentialModes[lastUiModeId] and
+        not menuMode.isActivated()
+end
+
+local function tryShowFirstInit(createMenuFunc, params)
+    local replacePreviousMode = isShouldReplacePrevous()
+
+    if isShouldShowFirstInit() then
         menuHandler.destroyAllMenus()
 
         if replacePreviousMode and lastUiModeId == menuMode.modeId and menuMode.isModeActive(lastUiModeId) then
@@ -426,7 +436,7 @@ local function toggleMenu()
         (not I.GamepadControls or not I.GamepadControls.isControllerMenusEnabled())
     local isHiddenInMinimapMode = menu and not menu.isInActiveMode
     local isRegularMode = menu and not menu.isInCharacterMenuMode and menu.isInActiveMode and not config.data.main.overrideDefault
-    local replacePreviousMode = (timestamp - lastUiModeTimestamp) < 1 and #I.UI.modes == 1
+    local replacePreviousMode = isShouldReplacePrevous()
 
     if menu and not istInCharacterMenuMode and not isHiddenInMinimapMode and not (isInCharacterMenu and not istInCharacterMenuMode) and
             not replacePreviousMode or isRegularMode then
@@ -473,7 +483,7 @@ local function toggleMenu()
                 inCharacterMenu = useCharacterMenuParams,
                 hideCloseBtn = useCharacterMenuParams,
                 onClose = function ()
-                    -- menuMode.deactivate()
+                    menuMode.deactivate()
                 end
             })
             gamepadHotkeyInfoMenu.create(false)
@@ -957,7 +967,9 @@ return {
                 discoveredLocs.updateVisited(self.cell)
             elseif mapDataHandler.isInitialized() and e.oldMode ~= nil and e.newMode == nil and not menuHandler.getMenu(commonData.mapMenuId) and
                     (localStorage.data[commonData.inMinimapModeKeyId] == true or localStorage.data[commonData.pinnedStateFieldId]) then
-                openMenu(false, true, config.data.main.overrideDefault)
+                if not isShouldShowFirstInit() then
+                    openMenu(false, true, config.data.main.overrideDefault)
+                end
             end
 
             if e.newMode then
