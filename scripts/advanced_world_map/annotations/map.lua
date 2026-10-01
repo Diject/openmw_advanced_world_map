@@ -115,10 +115,17 @@ function AdvancedWorldMapMenuMap:updateMapWidgetWidth() end
 ---@return boolean isVisible True if the map menu is visible
 function AdvancedWorldMapMenuMap:isVisible() end
 
+---Checks if the map menu is currently in active mode (interactive).
+---@return boolean isActive True if the map menu is in active mode
+function AdvancedWorldMapMenuMap:isActiveMode() end
+
 ---Triggers a UI update/refresh
 function AdvancedWorldMapMenuMap:update() end
 
 ---Requests a map update on the next update cycle.
 function AdvancedWorldMapMenuMap:requestUpdate() end
+
+---@type table
+AdvancedWorldMapMenuMap.userData = {}
 
 return AdvancedWorldMapMenuMap

@@ -157,6 +157,10 @@ function mapElementMeta:updateLayout(data)
     props.wordWrap = data.autoHeight and true or props.wordWrap
     props.readOnly = data.autoHeight and true or props.readOnly
 
+    if data.template and self._container ~= self._elemLayout and not (self._params.text and self._params.textBackground) then
+        self._container.template = data.template
+    end
+
     self._elemLayout.userData.forceChanged = true
 end
 
@@ -186,6 +190,9 @@ function mapElementMeta:updateParams(data)
     end
     self._params.textAlignH = data.textAlignH or self._params.textAlignH
     self._params.textAlignV = data.textAlignV or self._params.textAlignV
+    if data.template and self._container ~= self._elemLayout and not (self._params.text and self._params.textBackground) then
+        self._params.template = data.template
+    end
 end
 
 
@@ -220,6 +227,10 @@ function mapElementMeta:restoreLayout()
     containerProps.relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos)
     containerProps.alpha = self._params.alpha or 1
     containerProps.visible = self._params.visible
+
+    if self._container.template and self._container ~= self._elemLayout and not (self._params.text and self._params.textBackground) then
+        self._container.template = self._params.template or nil
+    end
 
     self._elemLayout.userData.forceChanged = false
 

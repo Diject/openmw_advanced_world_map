@@ -55,6 +55,7 @@
 ---@field layerId integer Target layer for the marker
 ---@field id string? Unique identifier (auto-generated if not provided)
 ---@field pos Vector2|Vector3 World position (vector3 or vector2)
+---@field template Layout? Optional layout template for the marker. Must be of Container type. Incompatible with textBackground. The template cannot be added or removed dynamically after creation - it can only be changed.
 ---@field texture TextureResource UI texture resource
 ---@field events AdvancedWorldMap.MapWidget.CreateMarker.Events? Event handlers table
 ---@field tooltipContent Content? Content to display in tooltip
@@ -74,6 +75,7 @@
 ---@field layerId integer Target layer for the marker
 ---@field id string? Unique identifier (auto-generated if not provided)
 ---@field pos Vector2|Vector3 World position (vector3 or vector2)
+---@field template Layout? Optional layout template for the marker. Must be of Container type. Incompatible with textBackground. The template cannot be added or removed dynamically after creation - it can only be changed.
 ---@field text string Text content to display
 ---@field events AdvancedWorldMap.MapWidget.CreateMarker.Events? Event handlers table
 ---@field tooltipContent Content? Content to display in tooltip

@@ -698,6 +698,7 @@ end
 ---@field searchLabel string?
 ---@field userData table?
 ---@field update boolean?
+---@field template any? uiTemplate
 
 ---@class advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params
 ---@field layerId integer
@@ -728,6 +729,7 @@ end
 ---@field searchLabel string?
 ---@field userData table?
 ---@field update boolean?
+---@field template any? uiTemplate
 
 
 ---@param params advancedWorldMap.ui.mapWidgetMeta.createTextMarker.params|advancedWorldMap.ui.mapWidgetMeta.createImageMarker.params
@@ -959,7 +961,7 @@ local function createMarker(self, params, onlyInitialize)
             cellId = self.cellId,
             pressed = {},
             movedDistance = 0,
-            inContainer = params.text and params.textBackground,
+            inContainer = (params.template or params.text and params.textBackground) and true or nil,
             onMouseWheel = isLayerInteractive and self.mouseWheelEvent or nil,
             _events = not self.inActiveMode and layoutEvents or nil,
         },
@@ -974,44 +976,52 @@ local function createMarker(self, params, onlyInitialize)
         layout.props.visible = nil
         local ev = layout.events
 
-        local bgColor = params.textBackgroundColor or config.data.ui.backgroundColor
-        local bgAlpha = params.textBackgroundAlpha
-        local templateId = string.format("%s_%s", bgColor, bgAlpha)
-        local template = self._markerTemplateCache[templateId]
-        if not template then
-            template = {
-                type = ui.TYPE.Container,
-                content = ui.content{
-                    {
-                        type = ui.TYPE.Image,
-                        props = {
-                            resource = uiUtils.whiteTexture,
-                            color = bgColor,
-                            relativeSize = util.vector2(1, 1),
-                            alpha = bgAlpha,
-                        }
-                    },
+        local template = params.template
+        if not template and params.text and params.textBackground then
+            local bgColor = params.textBackgroundColor or config.data.ui.backgroundColor
+            local bgAlpha = params.textBackgroundAlpha
+            local templateId = string.format("%s_%s", bgColor, bgAlpha)
+            template = self._markerTemplateCache[templateId]
+            if not template then
+                template = {
+                    type = ui.TYPE.Container,
+                    content = ui.content{
+                        {
+                            type = ui.TYPE.Image,
+                            props = {
+                                resource = uiUtils.whiteTexture,
+                                color = bgColor,
+                                relativeSize = util.vector2(1, 1),
+                                alpha = bgAlpha,
+                            }
+                        },
+                    }
                 }
-            }
-            self._markerTemplateCache[templateId] = template
+                self._markerTemplateCache[templateId] = template
+            end
         end
 
-        marker = {
-            template = template,
-            name = layout.name,
-            props = {
-                anchor = anchor,
-                relativePosition = relPos,
-                visible = params.visible,
-                alpha = alpha,
-            },
-            userData = layout.userData,
-            events = ev,
-            content = ui.content{
-                layout,
+        if template then
+            marker = {
+                template = template,
+                type = ui.TYPE.Container,
+                name = layout.name,
+                props = {
+                    anchor = anchor,
+                    relativePosition = relPos,
+                    visible = params.visible,
+                    alpha = alpha,
+                },
+                userData = layout.userData,
+                events = ev,
+                content = ui.content{
+                    layout,
+                }
             }
-        }
-        layout.userData.container = marker
+            layout.userData.container = marker
+        else
+            marker = layout
+        end
     else
         marker = layout
     end

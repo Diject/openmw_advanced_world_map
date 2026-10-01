@@ -682,6 +682,7 @@ function menuMeta:updateInteractiveElements(params)
     updatePlayerMarkerLayer()
 
     local header = self.headerLayout
+    local shouldUpdateMarkers = false
 
     if params.fullMode == true or isMenuMode and params.fullMode == nil then
         self._becameActiveTimestamp = core.getRealTime()
@@ -734,6 +735,7 @@ function menuMeta:updateInteractiveElements(params)
             self.mapWidget:closeRightMouseMenu()
         end
         self:closeQuickMenu()
+        self:closeActiveWidget()
         gamepadHotkeyInfoMenu.destroy()
         hotkeyLayers.register{id = commonData.hotkeyLayerBlank, priority = 10000}
 
@@ -751,7 +753,6 @@ function menuMeta:updateInteractiveElements(params)
                 }
             end
             local mapCenter = self.mapWidget:getWorldPositionOfVisibleCenter()
-            self:closeActiveWidget()
             self:setMinimapModeParams(relPos, relSize)
             if self.centerOnPlayer and not (not self.mapWidget.cellId and playerRef.cell.isExterior or
                     self.mapWidget.cellId == playerRef.cell.id) then
@@ -760,7 +761,8 @@ function menuMeta:updateInteractiveElements(params)
             else
                 self.mapWidget:focusOnWorldPosition(mapCenter)
             end
-            self.mapWidget:updateMarkers(true)
+
+            shouldUpdateMarkers = true
 
             localStorage.data[commonData.inMinimapModeKeyId] = true
         end
@@ -773,6 +775,10 @@ function menuMeta:updateInteractiveElements(params)
     self.mapWidget:setInActiveMode(isMenuMode)
     self.mapWidget:updatePlayerMarker(self.centerOnPlayer)
 
+    if shouldUpdateMarkers then
+        self.mapWidget:updateMarkers(true)
+    end
+
     return true
 end
 
@@ -780,6 +786,12 @@ end
 ---@return boolean
 function menuMeta:isVisible()
     return self.menu and self.menu.layout and self.menu.layout.props.visible or false
+end
+
+
+---@return boolean
+function menuMeta:isActiveMode()
+    return self.isInActiveMode
 end
 
 
