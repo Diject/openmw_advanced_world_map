@@ -203,7 +203,6 @@ SettingMainMenuKey: "Hotkey"
 SettingMainMenuKeyDescription: |
   Key combination to open the map menu. Can contain multiple keys (e.g. Ctrl+M+N+...).
   To set, click the field showing the current key combination, then press the desired keys.
-  To reset, right-click the field, or press the gamepad 'B' button while assigning.
 SettingMainMenuKeyAlt: "Hotkey (alternative)"
 SettingMainMenuKeyAltDescription: |
   Alternative key combination to open the map menu.
@@ -313,6 +312,7 @@ SettingSearchInInventory: "Search in inventories"
 SettingSearchInInventoryDescription: "Include items stored inside containers, NPCs, and creatures in the search results."
 
 InputSettings: "Input"
+InputSettingsDescription: "----------\nNote: Bindings support key combinations (e.g. Ctrl+M+N+...).\nThe keys can be pressed in any order.\n----------"
 SettingInputGamepadControls: "Improved gamepad controls"
 SettingInputGamepadControlsDescription: "When enabled, allows using gamepad to pan and zoom the map. Right analog stick to pan, right and left triggers to zoom in and out."
 SettingInputGamepadControlsBumperMode: "Gamepad bumper mode"

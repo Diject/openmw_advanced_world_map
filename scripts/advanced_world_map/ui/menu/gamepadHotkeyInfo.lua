@@ -15,6 +15,8 @@ local interval = require("scripts.advanced_world_map.ui.interval")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+local fontSize = 18
+local imageSize = 24
 
 local this = {}
 
@@ -41,14 +43,12 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
 
     local keys = keyModule.splitKeyCombinationSorted(keyComb)
     if not keys then return end
-    local isSingle = #keys == 1
 
     local btnsContent = {}
     for _, key in ipairs(keys) do
         local image = keyModule.keyImage[key]
-        if not image and keyModule.isDpadBtn(key) and isSingle then
-            image = keyModule.keyImage["C_DPAD"]
-        end
+        local imOffest = keyModule.keyTextureOffset[key]
+        local imSize = keyModule.keyTextureSize[key]
 
         if image and vfs.fileExists(image) then
             if not withoutPlus and next(btnsContent) then addPlus(btnsContent) end
@@ -56,9 +56,9 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
             table.insert(btnsContent, {
                 type = ui.TYPE.Image,
                 props = {
-                    resource = ui.texture{ path = image },
+                    resource = ui.texture{ path = image, offset = imOffest, size = imSize },
                     color = config.data.ui.defaultColor,
-                    size = util.vector2(1, 1) * math.floor(config.data.ui.fontSize * 1.5),
+                    size = (imSize and (imSize / math.max(imSize.x, imSize.y)) or util.vector2(1, 1)) * imageSize,
                     anchor = util.vector2(0.5, 0.5),
                 },
             })
@@ -107,7 +107,7 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
                 props = {
                     text = str,
                     autoSize = true,
-                    textSize = config.data.ui.fontSize,
+                    textSize = fontSize,
                     textColor = config.data.ui.defaultColor,
                     multiline = true,
                     wordWrap = false,

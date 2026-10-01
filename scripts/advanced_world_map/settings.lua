@@ -429,6 +429,7 @@ I.Settings.registerGroup{
     page = commonData.settingPage,
     l10n = commonData.l10nKey,
     name = "InputSettings",
+    description = "InputSettingsDescription",
     permanentStorage = true,
     order = 7,
     settings = {

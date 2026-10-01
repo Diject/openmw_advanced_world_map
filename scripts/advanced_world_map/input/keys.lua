@@ -1,5 +1,6 @@
 local input = require("openmw.input")
 local core = require("openmw.core")
+local util = require("openmw.util")
 
 local common = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.config")
@@ -26,8 +27,8 @@ this.keyName = {
     ["C_Back"] = "Back",
     ["C_Guide"] = "Guide",
     ["C_Start"] = "Start",
-    ["C_LeftStick"] = "Left Stick Btn",
-    ["C_RightStick"] = "Right Stick Btn",
+    ["C_LeftStick"] = "L-Stick Btn",
+    ["C_RightStick"] = "R-Stick Btn",
     ["C_LeftShoulder"] = "LB",
     ["C_RightShoulder"] = "RB",
     ["C_DPadUp"] = "D-pad Up",
@@ -37,8 +38,8 @@ this.keyName = {
     ["C_DPAD"] = "D-pad",
     ["C_RT"] = "RT",
     ["C_LT"] = "LT",
-    ["C_LSTICK"] = "Left Stick",
-    ["C_RSTICK"] = "Right Stick",
+    ["C_LSTICK"] = "L-Stick",
+    ["C_RSTICK"] = "R-Stick",
 }
 
 this.keyImage = {
@@ -52,16 +53,29 @@ this.keyImage = {
     ["C_RightStick"] = "textures/omw_steam_button_r3.dds",
     ["C_LeftShoulder"] = "textures/omw_xbox_button_lb.dds",
     ["C_RightShoulder"] = "textures/omw_xbox_button_rb.dds",
-    -- ["C_DPadUp"] = "textures/omw_steam_button_dpad.dds",
-    -- ["C_DPadDown"] = "textures/omw_steam_button_dpad.dds",
-    -- ["C_DPadLeft"] = "textures/omw_steam_button_dpad.dds",
-    -- ["C_DPadRight"] = "textures/omw_steam_button_dpad.dds",
+    ["C_DPadUp"] = "textures/omw_steam_button_dpad.dds",
+    ["C_DPadDown"] = "textures/omw_steam_button_dpad.dds",
+    ["C_DPadLeft"] = "textures/omw_steam_button_dpad.dds",
+    ["C_DPadRight"] = "textures/omw_steam_button_dpad.dds",
 
     ["C_DPAD"] = "textures/omw_steam_button_dpad.dds",
     ["C_RT"] = "textures/omw_xbox_button_rt.dds",
     ["C_LT"] = "textures/omw_xbox_button_lt.dds",
     ["C_LSTICK"] = "textures/omw_steam_button_lstick.dds",
     ["C_RSTICK"] = "textures/omw_steam_button_rstick.dds",
+}
+
+this.keyTextureOffset = {
+    ["C_DPadUp"] = util.vector2(0, 0),
+    ["C_DPadDown"] = util.vector2(0, 64),
+    ["C_DPadLeft"] = util.vector2(0, 0),
+    ["C_DPadRight"] = util.vector2(64, 0),
+}
+this.keyTextureSize = {
+    ["C_DPadUp"] = util.vector2(128, 64),
+    ["C_DPadDown"] = util.vector2(128, 64),
+    ["C_DPadLeft"] = util.vector2(64, 128),
+    ["C_DPadRight"] = util.vector2(64, 128),
 }
 
 
