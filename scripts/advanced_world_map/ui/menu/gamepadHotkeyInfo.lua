@@ -149,13 +149,14 @@ function this.create(showOpenMenu)
     end
 
     do
-        addBtnInfoLay(contentTable, "C_RSTICK", l10n("GamepadActionPan"))
+        addBtnInfoLay(contentTable, config.data.input.leftStickMode and "C_LSTICK" or "C_RSTICK", l10n("GamepadActionPan"))
     end
 
     do
         addBtnInfoLay(
             contentTable,
-            config.data.input.gamepadControlsBumperMode and "C_LeftShoulder + C_RightShoulder" or "C_LT + C_RT",
+            config.data.input.leftStickMode and "C_RSTICK" or
+                config.data.input.gamepadControlsBumperMode and "C_LeftShoulder + C_RightShoulder" or "C_LT + C_RT",
             l10n("GamepadActionZoom"), true
         )
     end

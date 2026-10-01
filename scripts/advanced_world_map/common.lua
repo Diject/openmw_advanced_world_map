@@ -112,6 +112,7 @@ this.hotkeyLayerMessageBoxAlt = "messageBoxAlt"
 this.hotkeyLayerNoteEditorMenu = "noteEditor"
 this.hotkeyLayerNoteEditorMenuAlt = "noteEditorAlt"
 this.hotkeyLayerBlank = "blank"
+this.hotkeyLayerBlankMain = "blankMain"
 this.hotkeyLayerDeactivateMain = "deactivateMain"
 this.hotkeyLayerDeactivateDefault = "deactivateDefault"
 

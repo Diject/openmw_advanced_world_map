@@ -593,6 +593,10 @@ local function setZoom(self, zoom, relativePos, force, skipRounding)
     tooltip.destroyLast()
 end
 
+function mapWidgetMeta:_setZoom(zoom, relativePos, useScale, skipRounding)
+    setZoom(self, zoom, relativePos, useScale, skipRounding)
+end
+
 ---@param zoom number
 function mapWidgetMeta:setZoom(zoom, relativePos, useScale, skipRounding)
     if useScale then
@@ -2607,7 +2611,7 @@ function this.new(params)
         end
         this.mouseWheelCount = 0
         if zoomMul == 0 then return end
-        setZoom(meta, zoom, nil, true)
+        setZoom(meta, zoom)
         meta:update()
     end
 

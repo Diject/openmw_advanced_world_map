@@ -434,6 +434,7 @@ I.Settings.registerGroup{
     settings = {
         boolSetting{key = "input.gamepadControls", name = "SettingInputGamepadControls", description = "SettingInputGamepadControlsDescription", default = config.default.input.gamepadControls},
         boolSetting{key = "input.gamepadControlsBumperMode", name = "SettingInputGamepadControlsBumperMode", description = "SettingInputGamepadControlsBumperModeDescription", default = config.default.input.gamepadControlsBumperMode},
+        boolSetting{key = "input.leftStickMode", name = "SettingInputLeftStickMode", description = "SettingInputLeftStickModeDescription", default = config.default.input.leftStickMode},
         inputKey{key = "input.contextMenuHotkey", name = "SettingInputContextMenuKey", description = "SettingInputContextMenuKeyDescription", action = commonData.contextMenuKeyId, default = config.default.input.contextMenuHotkey},
         inputKey{key = "input.moveHistoryBackHotkey", name = "SettingInputMoveHistoryBackKey", description = "SettingInputMoveHistoryBackKeyDescription", action = commonData.moveHistoryBackKeyId, default = config.default.input.moveHistoryBackHotkey},
         inputKey{key = "input.moveHistoryForwardHotkey", name = "SettingInputMoveHistoryForwardKey", description = "SettingInputMoveHistoryForwardKeyDescription", action = commonData.moveHistoryForwardKeyId, default = config.default.input.moveHistoryForwardHotkey},
