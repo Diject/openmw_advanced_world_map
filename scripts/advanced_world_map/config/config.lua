@@ -126,6 +126,7 @@ this.default = {
         version = 5,
         gamepadControls = true,
         gamepadControlsBumperMode = true,
+        leftStickMode = false,
         togglePinHotkey = nil,
         toggleMapTypeHotkey = nil,
         contextMenuHotkey = "C_Y",

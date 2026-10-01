@@ -7,6 +7,7 @@ local input = require("openmw.input")
 local auxUi = require("openmw_aux.ui")
 local I = require("openmw.interfaces")
 local UI = I.UI
+local gamepadControls = I.GamepadControls
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
@@ -700,6 +701,7 @@ function menuMeta:updateInteractiveElements(params)
 
         self:updateCloseBtnState()
         hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
+        hotkeyLayers.unregister(commonData.hotkeyLayerBlankMain)
         gamepadHotkeyInfoMenu.create()
 
         local defaultMainSize = self.isInCharacterMenuMode and self.characterMenuMainSize or self.defaultMainSize
@@ -738,6 +740,7 @@ function menuMeta:updateInteractiveElements(params)
         self:closeActiveWidget()
         gamepadHotkeyInfoMenu.destroy()
         hotkeyLayers.register{id = commonData.hotkeyLayerBlank, priority = 10000}
+        hotkeyLayers.register{id = commonData.hotkeyLayerBlankMain, group = "main", priority = 10000}
 
         self.layout.layer = commonData.HUDLayer
 
@@ -885,6 +888,7 @@ function menuMeta:close()
     gamepadHotkeyInfoMenu.destroy()
     hotkeyLayers.unregister(commonData.hotkeyLayerMainMenu)
     hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
+    hotkeyLayers.unregister(commonData.hotkeyLayerBlankMain)
 
     if config.data.main.clearCacheOnClose then
         for id, _ in pairs(this.cachedMapWidgetLayout) do
@@ -1624,7 +1628,7 @@ function this.create(params)
             local hasTriggerInput = false
 
             local function process()
-                if not menuMode.isMenuInteractive() or
+                if not menuMode.isMenuInteractive() or not meta:isVisible() or
                         (meta:hasActiveWidget() and not meta.mapWidget:isInFocus()) then
                     return
                 end
@@ -1632,11 +1636,27 @@ function this.create(params)
                 do
                     local rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
                     local rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
+                    if config.data.input.leftStickMode then
+                        if not gamepadControls or not gamepadControls.isGamepadCursorActive() then
+                            rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.LeftX)
+                            rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.LeftY)
+                        else
+                            rAxisX = 0
+                            rAxisY = 0
+                        end
+                    else
+                        rAxisX = input.getAxisValue(input.CONTROLLER_AXIS.RightX)
+                        rAxisY = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
+                    end
                     local lTrigger = 0
                     local rTrigger = 0
                     hasAxisInput = false
                     hasTriggerInput = false
-                    if config.data.input.gamepadControlsBumperMode then
+                    if config.data.input.leftStickMode then
+                        local val = input.getAxisValue(input.CONTROLLER_AXIS.RightY)
+                        lTrigger = val > 0 and val or 0
+                        rTrigger = val < 0 and -val or 0
+                    elseif config.data.input.gamepadControlsBumperMode then
                         if input.isControllerButtonPressed(input.CONTROLLER_BUTTON.LeftShoulder) then
                             hasTriggerInput = true
                             lsTick = lsTick + 1
@@ -1672,6 +1692,10 @@ function this.create(params)
 
                     local zoom = meta.mapWidget.zoom
 
+                    local isCursorActive = config.data.input.leftStickMode and
+                        (not gamepadControls or gamepadControls.isGamepadCursorActive()) and
+                        meta.mapWidget:isInFocus()
+
                     if hasAxisInput then
                         local centerPos = meta.mapWidget:getWorldPositionOfVisibleCenter()
                         local moveVector = util.vector2(
@@ -1693,9 +1717,12 @@ function this.create(params)
                     if hasTriggerInput then
                         if lTrigger > 0.25 then
                             zoom = zoom / (1 + (config.data.main.zoomingMul - 1) * lTrigger * core.getRealFrameDuration() * 10)
-                            meta.mapWidget:setZoom(zoom)
                         elseif rTrigger > 0.25 then
                             zoom = zoom * (1 + (config.data.main.zoomingMul - 1) * rTrigger * core.getRealFrameDuration() * 10)
+                        end
+                        if isCursorActive then
+                            meta.mapWidget:_setZoom(zoom)
+                        else
                             meta.mapWidget:setZoom(zoom)
                         end
                     end
@@ -1732,6 +1759,7 @@ function this.create(params)
     async:newUnsavableSimulationTimer(1 / config.data.main.updateFrequency, func)
 
     hotkeyLayers.unregister(commonData.hotkeyLayerBlank)
+    hotkeyLayers.unregister(commonData.hotkeyLayerBlankMain)
     hotkeyLayers.register{
         id = commonData.hotkeyLayerMainMenu,
         priority = 0,
