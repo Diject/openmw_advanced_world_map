@@ -321,12 +321,10 @@ end
 
 
 local function toggleQuickMenu()
-    if not menuMode.isMenuInteractive() then return end
+    if not menuMode.isMenuInteractive() or not this.activeMenuMeta or not this.activeMenuMeta:isVisible() then return end
 
     if not quickMenu.isExists() then
-        if this.activeMenuMeta then
-            quickMenu.create(this.activeMenuMeta)
-        end
+        quickMenu.create(this.activeMenuMeta)
     else
         quickMenu.destroy()
     end
@@ -411,7 +409,7 @@ end
 local function controllerYCallback()
     local self = this.activeMenuMeta
     if not self or not self.menu or not self.menu.layout or not self.mapWidget then return end
-    if not menuMode.isMenuInteractive() or not self.mapWidget:isInFocus() then return end
+    if not menuMode.isMenuInteractive() or not self.mapWidget:isInFocus() or not self:isVisible() then return end
 
     if self.mapWidget:hasRightMouseMenu() then
         self.mapWidget:closeRightMouseMenu()
@@ -421,17 +419,13 @@ local function controllerYCallback()
 end
 
 local function historyBackCallback()
-    if not menuMode.isMenuInteractive() then return end
-    if this.activeMenuMeta then
-        this.activeMenuMeta:moveHistory(-1)
-    end
+    if not this.activeMenuMeta or not menuMode.isMenuInteractive() or not this.activeMenuMeta:isVisible() then return end
+    this.activeMenuMeta:moveHistory(-1)
 end
 
 local function hostoryForvardCallback()
-    if not menuMode.isMenuInteractive() then return end
-    if this.activeMenuMeta then
-        this.activeMenuMeta:moveHistory(1)
-    end
+    if not this.activeMenuMeta or not menuMode.isMenuInteractive() or not this.activeMenuMeta:isVisible() then return end
+    this.activeMenuMeta:moveHistory(1)
 end
 
 local function registerHotkeys()
