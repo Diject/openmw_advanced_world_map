@@ -785,7 +785,7 @@ return {
     interfaceName = "AdvancedWorldMap",
     ---@type AdvancedWorldMap.Interface
     interface = {
-        version = 22,
+        version = 23,
         events = require("scripts.advanced_world_map.eventSys"),
         getConfig = function ()
             return configLib.data
@@ -826,6 +826,9 @@ return {
         end,
         isHotkeysActive = function ()
             return areHotkeysDeactivated()
+        end,
+        hasActiveMenus = function ()
+            return menuHandler.hasActiveMenus()
         end,
         isDiscovered = function (cellId)
             return discoveredLocs.isDiscovered(cellId)

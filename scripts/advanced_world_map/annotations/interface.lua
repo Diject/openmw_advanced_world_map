@@ -57,6 +57,7 @@
 ---@field closeMapMenu fun(force: boolean?) closes the world map menu
 ---@field toggleMapMenu fun() toggles the world map menu
 ---@field getMapMenu fun() : AdvancedWorldMap.Menu.Map gets the world map menu
+---@field hasActiveMenus fun() : boolean checks if there are any active menus
 ---@field getConfig fun() : table gets the current configuration
 ---@field setConfigValue fun(path: string, value: any) sets a configuration value at the given path. Like setConfigValue("main.updateFrequency", 25)
 ---@field setHotkeysActive fun(active: boolean) enables or disables the hotkeys for the map.
