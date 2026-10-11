@@ -104,12 +104,18 @@ local configDataSection = storage.playerSection(commonData.configDataSectionName
 configDataSection:subscribe(async:callback(function(_, id)
     mapTextureHandler.init()
     mapMenu.clearMapWidgetCache()
-    if id == "data.initializer" then
-        if configDataSection:get(id) == commonData.dataInitializerTypes[6] then
+    local isInitializerTrigger =  id == "data.initializer"
+    local isForceUpdateTrigger = id == "data.forceUpdateData"
+    if isInitializerTrigger or isForceUpdateTrigger then
+        if isInitializerTrigger and configDataSection:get(id) == commonData.dataInitializerTypes[6] or
+                isForceUpdateTrigger and configDataSection:get(id) == true then
             if not isDataStorageTimerRunning then
                 isDataStorageTimerRunning = true
                 async:newUnsavableSimulationTimer(0.1, function ()
                     if isDataStorageTimerRunning then
+                        if config.data.data.forceUpdateData then
+                            configLib.setValue("data.forceUpdateData", false)
+                        end
                         core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = {force = true}})
                         isDataStorageTimerRunning = false
                     end
@@ -221,8 +227,16 @@ local function onLoad(data)
     disabledDoors.init()
     disabledActors.init()
     if config.data.data.hasSafeInitMessageBeenShown then
-        hasAttemptedToGetData = true
-        core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object})
+        if config.data.data.autoDataUpdate or config.data.data.forceUpdateData then
+            hasAttemptedToGetData = true
+            local force = config.data.data.forceUpdateData
+            if config.data.data.forceUpdateData then
+                configLib.setValue("data.forceUpdateData", false)
+            end
+            core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = {force = force}})
+        else
+            core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = {skipRebuild = true}})
+        end
     end
     -- must be after localStorage init
     notesWidgetData.loadData()
@@ -284,6 +298,8 @@ local function initDataForMenu(options)
             if menuMode.isMenuInteractive() then
                 menuMode.deactivate()
             end
+            options = options or {}
+            options.skipRebuild = not config.data.data.autoDataUpdate
             core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = options})
             return false
         else

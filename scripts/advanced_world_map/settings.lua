@@ -330,6 +330,8 @@ I.Settings.registerGroup{
     settings = {
         selectSetting{key = "data.initializer", name = "SettingDataInitializer", description = "SettingDataInitializerDescription", default = config.default.data.initializer, l10n = commonData.l10nKey, items = commonData.dataInitializerTypes},
         boolSetting{key = "data.useTilemap", name = "SettingUseTilemap", description = "SettingUseTilemapDescription", default = config.default.data.useTilemap},
+        boolSetting{key = "data.autoDataUpdate", name = "SettingAutoDataUpdate", description = "SettingAutoDataUpdateDescription", default = config.default.data.autoDataUpdate},
+        boolSetting{key = "data.forceUpdateData", name = "SettingForceUpdateData", description = "SettingForceUpdateDataDescription", default = config.default.data.forceUpdateData},
         boolSetting{key = "data.safeInit", name = "SettingSafeInit", description = commonData.isSaveBloatFixed() and "SettingSafeInitDescriptionFixed" or "SettingSafeInitDescription", default = config.default.data.safeInit},
     },
 }

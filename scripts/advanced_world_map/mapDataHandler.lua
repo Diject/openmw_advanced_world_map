@@ -950,8 +950,13 @@ function this.playerInit(playerRef, cellCount, options)
     options = options or {}
     local stor = storage.playerSection(commonData.mapDataStorageName)
 
-    local shouldRebuild = options.force or stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
-        stor:get("contentFileCount") ~= #core.contentFiles.list
+    local shouldRebuild
+    if not options.skipRebuild then
+        shouldRebuild = options.force or stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
+            stor:get("contentFileCount") ~= #core.contentFiles.list
+    else
+        shouldRebuild = false
+    end
 
     if shouldRebuild then
         local dataSettingStorage = storage.playerSection(commonData.configDataSectionName)

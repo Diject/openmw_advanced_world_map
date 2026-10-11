@@ -116,6 +116,8 @@ this.default = {
         initializer = commonData.dataInitializerTypes[1],
         useTilemap = false,
         safeInit = true,
+        autoDataUpdate = true,
+        forceUpdateData = false,
         hasSafeInitMessageBeenShown = false,
         altExMapPath = nil,
         ---@type advancedWorldMap.mapImageInfo
