@@ -799,33 +799,72 @@ local function buildData(params)
     end
 
 
-    local function processLines(lines, xPosDiff, heightDiff)
+    local function processLines(lines, xPosMul, heightMul)
+        local xLim = xPosMul * 20
+        local xOverlapMul = 0
+        local maxShift = heightMul
+
+        local function applyShift(el, mx, my)
+            local nx = el.posX + mx
+            local ny = el.posY + my
+            if nx - el.origX > maxShift then nx = el.origX + maxShift end
+            if nx - el.origX < -maxShift then nx = el.origX - maxShift end
+            if ny - el.origY > maxShift then ny = el.origY + maxShift end
+            if ny - el.origY < -maxShift then ny = el.origY - maxShift end
+            el.posX = nx
+            el.posY = ny
+        end
+
         for _, lineElems in pairs(lines) do
-
-            table.sort(lineElems, function (a, b)
-                return a.posX < b.posX
-            end)
-
-            for j = 2, #lineElems do
-                local el1 = lineElems[j - 1]
-                local el2 = lineElems[j]
-                local xDiff = el2.posX - el1.posX
-                local yDiff = math.abs(el2.posY - el1.posY)
-                if xDiff < xPosDiff and yDiff < heightDiff then
-                    local heightDiffHalf = (heightDiff - yDiff) * 0.5
-                    if el1.posY > el2.posY then
-                        el1.posY = el1.posY + heightDiffHalf
-                        el2.posY = el2.posY - heightDiffHalf
-                    else
-                        el1.posY = el1.posY - heightDiffHalf
-                        el2.posY = el2.posY + heightDiffHalf
+            local elemCount = #lineElems
+            if elemCount > 1 then
+                for _, el in pairs(lineElems) do
+                    if el.origX == nil then
+                        el.origX = el.posX
+                        el.origY = el.posY
+                        el.len = math.max(6, stringLib.length(el.name))
                     end
+                end
+
+                table.sort(lineElems, function(a, b) return a.posX < b.posX end)
+
+                for _ = 1, 8 do
+                    local moved = false
+                    for i = 1, elemCount - 1 do
+                        local el1 = lineElems[i]
+                        local xLim2 = el1.posX + xLim
+                        for j = i + 1, elemCount do
+                            local el2 = lineElems[j]
+                            if el2.posX > xLim2 then break end
+
+                            local xPosDiff = (el1.len * 0.5 + el2.len * 0.5) * xPosMul
+                            local heightDiff = heightMul * (1 + 0.05 * (el1.count + el2.count - 2))
+                            local xDiff = math.abs(el2.posX - el1.posX)
+                            local yDiff = math.abs(el2.posY - el1.posY)
+
+                            if xDiff < xPosDiff and yDiff < heightDiff then
+                                local overlapX = xPosDiff - xDiff
+                                local overlapY = heightDiff - yDiff
+
+                                local dx = overlapX * xOverlapMul * 0.5
+                                local dy = overlapY * (1 - xOverlapMul) * 0.5
+
+                                local sx = (el2.posX >= el1.posX) and 1 or -1
+                                local sy = (el2.posY >= el1.posY) and 1 or -1
+
+                                applyShift(el1, -sx * dx, -sy * dy)
+                                applyShift(el2, sx * dx, sy * dy)
+                                moved = true
+                            end
+                        end
+                    end
+                    if not moved then break end
+                    table.sort(lineElems, function(a, b) return a.posX < b.posX end)
                 end
             end
         end
     end
-
-    processLines(cellNameLines, 8192 * 8, 4096)
+    processLines(cellNameLines, 4096, 4096)
 
     this.cellNameData = cellNames
 
@@ -856,7 +895,7 @@ local function buildData(params)
         end
     end
 
-    processLines(regNameLines, 8192 * 12, 8192)
+    processLines(regNameLines, 8192, 8192)
 
     this.regionNameData = regNames
 
