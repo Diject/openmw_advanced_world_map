@@ -1263,9 +1263,6 @@ local function createMarkers(widget, cellId, allowedCells, region)
         -- create text markers for each prefix line
         for _, dt in ipairs(prefixList) do
             local hasTexture = mapTextureHandler.isWorldLocalMapTextureExists(cellLib.getGridCoordinates(dt.pos))
-            if config.data.tileset.onlyDiscovered and not discoveredLocs.isDiscovered(cellLib.getCellIdByPos(dt.pos)) then
-                hasTexture = false
-            end
 
             local color
             local shadowColor
