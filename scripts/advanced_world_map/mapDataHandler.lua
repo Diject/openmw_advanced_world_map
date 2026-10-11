@@ -895,7 +895,15 @@ end
 function this.globalInit(playerRef, options)
     if not playerRef then return end
     local cells = require("openmw.world").cells
-    playerRef:sendEvent("AdvWMap:initMapData", {cellCount = #cells, options = options})
+    local localStorage = require("scripts.advanced_world_map.storage.localStorage")
+    local nonContentCells = localStorage.data[commonData.globalNonContentCellsFieldId] or {}
+    local cellCount = 0
+    for _, c in pairs(cells) do
+        if not c.id or not nonContentCells[c.id] then
+            cellCount = cellCount + 1
+        end
+    end
+    playerRef:sendEvent("AdvWMap:initMapData", {cellCount = cellCount, options = options})
 end
 
 

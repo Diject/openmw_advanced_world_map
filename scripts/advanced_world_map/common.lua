@@ -81,6 +81,7 @@ this.transportGuildGuidesFieldId = "transportGuildGuides"
 this.transportOtherFieldId = "transportOther"
 this.transportLocalFieldId = "transportLocal"
 this.disableDialogueMarkersFieldId = "disableDialogueMarkers"
+this.globalNonContentCellsFieldId = "nonContentCells"
 
 
 this.rightClickMenuId = "__MAP:RIGHTCLICKMENU__"

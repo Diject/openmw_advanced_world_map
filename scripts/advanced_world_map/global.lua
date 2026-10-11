@@ -68,6 +68,18 @@ local function objectInactive(ref)
 end
 
 
+local function onNewExterior(cell)
+    if not cell then return end
+
+    local doors = cell:getAll(types.Door) or {}
+
+    if #doors == 0 then
+        saveStorage.data[common.globalNonContentCellsFieldId] = saveStorage.data[common.globalNonContentCellsFieldId] or {}
+        saveStorage.data[common.globalNonContentCellsFieldId][cell.id] = 1
+    end
+end
+
+
 local function checkDoor(ref, player)
     if Door.objectIsInstance(ref) and Door.isTeleport(ref) then
         local wasDisabled = disabledDoors.contains(ref)
@@ -148,6 +160,7 @@ return {
     },
     engineHandlers = {
         onObjectActive = onObjectActive,
+        onNewExterior = onNewExterior,
         onLoad = function (data)
             saveStorage.initPlayerStorage(data)
             disabledDoors.init()
