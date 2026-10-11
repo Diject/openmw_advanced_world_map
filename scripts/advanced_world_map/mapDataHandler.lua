@@ -407,18 +407,21 @@ local function buildData(params)
     local function processCellInit (cell)
         if not cell.isExterior or not cell.id then return end
 
-        if cell.gridX > 1000 or cell.gridX < -1000 or cell.gridY > 1000 or cell.gridY < -1000 then
+        local gridX = cell.gridX
+        local gridY = cell.gridY
+
+        if gridX > 1000 or gridX < -1000 or gridY > 1000 or gridY < -1000 then
             return
         end
 
-        minGridX = math.min(minGridX, cell.gridX)
-        maxGridX = math.max(maxGridX, cell.gridX)
-        minGridY = math.min(minGridY, cell.gridY)
-        maxGridY = math.max(maxGridY, cell.gridY)
+        minGridX = math.min(minGridX, gridX)
+        maxGridX = math.max(maxGridX, gridX)
+        minGridY = math.min(minGridY, gridY)
+        maxGridY = math.max(maxGridY, gridY)
 
         if isPrecizeOccupied and core.land then
-            local posX = cell.gridX * 8192
-            local posY = cell.gridY * 8192
+            local posX = gridX * 8192
+            local posY = gridY * 8192
             local aboveWater = 0
             for i = 1024, 8192, 2048 do
                 for j = 1024, 8192, 2048 do
@@ -428,12 +431,12 @@ local function buildData(params)
                 end
             end
             if aboveWater > 8 then
-                occupied[cell.gridX] = occupied[cell.gridX] or {}
-                occupied[cell.gridX][cell.gridY] = true
+                occupied[gridX] = occupied[gridX] or {}
+                occupied[gridX][gridY] = true
             end
         else
-            occupied[cell.gridX] = occupied[cell.gridX] or {}
-            occupied[cell.gridX][cell.gridY] = true
+            occupied[gridX] = occupied[gridX] or {}
+            occupied[gridX][gridY] = true
         end
 
         if not cell.name or cell.name == "" then return end
@@ -446,22 +449,51 @@ local function buildData(params)
             end
         end
 
-        local cellDt = cellNameData[name]
-        if not cellDt then
-            cellDt = {
+        local function getInitCellData()
+            return {
                 name = stringLib.getBeforeComma(cell.displayName or cell.name),
                 id = stringLib.utf8_lower(name),
                 count = 0,
                 minX = math.huge, maxX = -math.huge,
                 minY = math.huge, maxY = -math.huge,
             }
-            cellNameData[name] = cellDt
         end
 
-        cellDt.minX = math.min(cell.gridX, cellDt.minX)
-        cellDt.minY = math.min(cell.gridY, cellDt.minY)
-        cellDt.maxX = math.max(cell.gridX, cellDt.maxX)
-        cellDt.maxY = math.max(cell.gridY, cellDt.maxY)
+        local cellDt = cellNameData[name]
+        if not cellDt then
+            cellDt = getInitCellData()
+            cellNameData[name] = cellDt
+        else
+            local cx = cellDt.maxX - cellDt.minX
+            local cy = cellDt.maxY - cellDt.minY
+
+            local function findNewName(name, x, y)
+                local n = name
+                for i = 1, 10 do
+                    local dt = cellNameData[n]
+                    if not dt or math.abs(dt.maxX - dt.minX - x) < 16 and math.abs(dt.maxY - dt.minY - y) < 16 then
+                        return n
+                    end
+                    n = " "..n.." "
+                end
+                return n
+            end
+
+            -- for cases when the same cell name is used for different locations, we will try to find a new name by adding spaces around the name
+            -- this method is used to avoid compatibility issues
+            if math.abs(cx - gridX) > 16 or math.abs(cy - gridY) > 16 then
+                local nn = findNewName(name, gridX, gridX)
+                if not cellNameData[nn] then
+                    cellNameData[nn] = getInitCellData()
+                end
+                cellDt = cellNameData[nn]
+            end
+        end
+
+        cellDt.minX = math.min(gridX, cellDt.minX)
+        cellDt.minY = math.min(gridY, cellDt.minY)
+        cellDt.maxX = math.max(gridX, cellDt.maxX)
+        cellDt.maxY = math.max(gridY, cellDt.maxY)
         cellDt.count = cellDt.count + 1
 
         if cell.region then
@@ -475,10 +507,10 @@ local function buildData(params)
                 regionNameData[cell.region] = regDt
             end
 
-            regDt.minX = math.min(cell.gridX, regDt.minX)
-            regDt.minY = math.min(cell.gridY, regDt.minY)
-            regDt.maxX = math.max(cell.gridX, regDt.maxX)
-            regDt.maxY = math.max(cell.gridY, regDt.maxY)
+            regDt.minX = math.min(gridX, regDt.minX)
+            regDt.minY = math.min(gridY, regDt.minY)
+            regDt.maxX = math.max(gridX, regDt.maxX)
+            regDt.maxY = math.max(gridY, regDt.maxY)
             regDt.count = regDt.count + 1
         end
     end
@@ -790,7 +822,7 @@ local function buildData(params)
         end
     end
 
-    processLines(cellNameLines, 8192 * 6, 4096)
+    processLines(cellNameLines, 8192 * 8, 4096)
 
     this.cellNameData = cellNames
 
