@@ -377,7 +377,7 @@ end
 local function buildData(params)
     local world = require("openmw.world")
 
-    local isPrecizeOccupied = params.isPrecizeOccupied
+    local buildCellWorldMapData = params.buildCellWorldMapData
 
     local function getRegionName(id)
         if not id then return "" end
@@ -391,6 +391,7 @@ local function buildData(params)
 
     this.cellNameById = {}
     this.validCellsWithoutName = {}
+    this.worldMapTileRectangles = {}
 
     local minGridX = math.huge
     local minGridY = math.huge
@@ -419,24 +420,26 @@ local function buildData(params)
         minGridY = math.min(minGridY, gridY)
         maxGridY = math.max(maxGridY, gridY)
 
-        if isPrecizeOccupied and core.land then
-            local posX = gridX * 8192
-            local posY = gridY * 8192
-            local aboveWater = 0
-            for i = 1024, 8192, 2048 do
-                for j = 1024, 8192, 2048 do
-                    if core.land.getHeightAt(util.vector3(posX + i, posY + j, 0), cell) > 0 then
-                        aboveWater = aboveWater + 1
+        if buildCellWorldMapData then
+            if core.land then
+                local posX = gridX * 8192
+                local posY = gridY * 8192
+                local aboveWater = 0
+                for i = 1024, 8192, 2048 do
+                    for j = 1024, 8192, 2048 do
+                        if core.land.getHeightAt(util.vector3(posX + i, posY + j, 0), cell) > 0 then
+                            aboveWater = aboveWater + 1
+                        end
                     end
                 end
-            end
-            if aboveWater > 8 then
+                if aboveWater > 8 then
+                    occupied[gridX] = occupied[gridX] or {}
+                    occupied[gridX][gridY] = true
+                end
+            else
                 occupied[gridX] = occupied[gridX] or {}
                 occupied[gridX][gridY] = true
             end
-        else
-            occupied[gridX] = occupied[gridX] or {}
-            occupied[gridX][gridY] = true
         end
 
         if not cell.name or cell.name == "" then return end
@@ -524,7 +527,7 @@ local function buildData(params)
         this.worldMapTileRectangles = worldCoverWithRectanglesFast(occupied)
     end
 
-    if not pcall(buildRectMapFast) then
+    if buildCellWorldMapData and not pcall(buildRectMapFast) then
         log("Error building world map tile rectangles")
         this.worldMapTileRectangles = {}
     end
@@ -905,7 +908,7 @@ function this.playerInit(playerRef, cellCount, options)
 
     if shouldRebuild then
         local dataSettingStorage = storage.playerSection(commonData.configDataSectionName)
-        options.isPrecizeOccupied = dataSettingStorage:get("data.initializer") == commonData.dataInitializerTypes[6]
+        options.buildCellWorldMapData = dataSettingStorage:get("data.initializer") == commonData.dataInitializerTypes[6]
 
         if not commonData.isSaveBloatFixed() and require("scripts.advanced_world_map.config.config").data.data.safeInit then
             types.Player.sendMenuEvent(playerRef, "AdvWMap:startDataRebuilding", {plId = playerRef.id, options = options})
