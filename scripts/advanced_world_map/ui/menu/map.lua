@@ -40,6 +40,7 @@ local resizerEvents = require("scripts.advanced_world_map.ui.resizerEvents")
 local contextMenu = require("scripts.advanced_world_map.ui.menu.contextMenu")
 local quickMenu = require("scripts.advanced_world_map.ui.menu.quickMenu")
 local gamepadHotkeyInfoMenu = require("scripts.advanced_world_map.ui.menu.gamepadHotkeyInfo")
+local cursors = require("scripts.advanced_world_map.ui.cursors")
 
 
 local this = {}
@@ -82,20 +83,28 @@ local mapBordersThin = auxUi.deepLayoutCopy(borders)
 local mapBordersThick = auxUi.deepLayoutCopy(thickBorders)
 mapBordersThick[1].events = resizerEvents
 mapBordersThick[1].userData = {getMeta = getMeta, left = true}
+mapBordersThick[1].props.cursor = cursors.moveHorizontal
 mapBordersThin[1].events = resizerEvents
 mapBordersThin[1].userData = {getMeta = getMeta, left = true}
+mapBordersThin[1].props.cursor = cursors.moveHorizontal
 mapBordersThick[2].events = resizerEvents
 mapBordersThick[2].userData = {getMeta = getMeta, right = true}
+mapBordersThick[2].props.cursor = cursors.moveHorizontal
 mapBordersThin[2].events = resizerEvents
 mapBordersThin[2].userData = {getMeta = getMeta, right = true}
+mapBordersThin[2].props.cursor = cursors.moveHorizontal
 mapBordersThick[3].events = resizerEvents
 mapBordersThick[3].userData = {getMeta = getMeta, top = true}
+mapBordersThick[3].props.cursor = cursors.moveVertical
 mapBordersThin[3].events = resizerEvents
 mapBordersThin[3].userData = {getMeta = getMeta, top = true}
+mapBordersThin[3].props.cursor = cursors.moveVertical
 mapBordersThick[4].events = resizerEvents
 mapBordersThick[4].userData = {getMeta = getMeta, bottom = true}
+mapBordersThick[4].props.cursor = cursors.moveVertical
 mapBordersThin[4].events = resizerEvents
 mapBordersThin[4].userData = {getMeta = getMeta, bottom = true}
+mapBordersThin[4].props.cursor = cursors.moveVertical
 
 
 ---@class advancedWorldMap.ui.menu.map
@@ -1506,6 +1515,7 @@ function this.create(params)
                     size = util.vector2(config.data.ui.resizerSize, config.data.ui.resizerSize),
                     anchor = util.vector2(1, 1),
                     relativePosition = util.vector2(1, 1),
+                    cursor = cursors.moveDiagonal45,
                 },
                 userData = {
                     getMeta = function ()

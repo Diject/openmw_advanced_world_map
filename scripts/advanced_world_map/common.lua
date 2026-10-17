@@ -249,4 +249,9 @@ function this.isSaveBloatFixed()
 end
 
 
+function this.isCursorAPIavailable()
+    return core.API_REVISION >= 163
+end
+
+
 return this
