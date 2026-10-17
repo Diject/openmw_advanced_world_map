@@ -81,8 +81,9 @@ local function menuOpened(menu)
         -- into which you should add your UI elements,
         -- but those elements must have a fixed size (not autoSize)
         onOpen = function (menu, content)
-            widgetMenu.create(menu, content)
-            iconLayout.props.color = config.data.ui.whiteColor
+            if widgetMenu.create(menu, content) then
+                iconLayout.props.color = config.data.ui.whiteColor
+            end
         end,
         -- Widget close event
         onClose = function (menu)

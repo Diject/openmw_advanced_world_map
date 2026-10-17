@@ -31,7 +31,22 @@ local defaultMarkerTexture = ui.texture{ path = commonData.noteMarkerPath }
 
 local this = {}
 
+this.lastListed = {}
+
 this.update = function () end
+
+
+---@param dt advancedWorldMap.widget.notes.data.markerData
+local function removeNote(dt)
+    widgetData.removeMarkerDataAlt(dt)
+    require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
+end
+
+---@param dt advancedWorldMap.widget.notes.data.markerData
+local function addNote(dt)
+    widgetData.addMarkerData(dt)
+    require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
+end
 
 
 ---@param menu AdvancedWorldMap.Menu.Map
@@ -47,7 +62,8 @@ local function fill(menu, sb, filter)
 
     ---@type Content
     local content = sb:getContent()
-    local contentHeight = 0
+    ---@type advancedWorldMap.widget.notes.data.markerData[]
+    local listedNotes = {}
 
 
     ---@param dt advancedWorldMap.widget.notes.data.markerData
@@ -60,6 +76,8 @@ local function fill(menu, sb, filter)
             local textLower = (filterTags or "")..stringLib.utf8_lower(text)
             if not textLower:find(filter, 1, true) then return end
         end
+
+        table.insert(listedNotes, dt)
 
         local textHeight = uiUtils.getTextHeight(text, config.data.ui.fontSize, sbSize.x, config.data.ui.textHeightMul, 1)
 
@@ -126,15 +144,13 @@ local function fill(menu, sb, filter)
                                     data = dt,
                                     yesCallback = function (dt)
                                         if dt.pos then
-                                            widgetData.addMarkerData(dt)
-                                            require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
+                                            addNote(dt)
                                             menu.mapWidget:updateMarkers()
                                             fill(menu, sb, filter)
                                         end
                                     end,
                                     removeCallback = function (dt)
-                                        widgetData.removeMarkerDataAlt(dt)
-                                        require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
+                                        removeNote(dt)
                                         menu.mapWidget:updateMarkers()
                                         fill(menu, sb, filter)
                                     end
@@ -243,15 +259,13 @@ local function fill(menu, sb, filter)
                                         data = dt,
                                         yesCallback = function (dt)
                                             if dt.pos then
-                                                widgetData.addMarkerData(dt)
-                                                require("scripts.advanced_world_map.widgets.notes.marker").create(dt, nil, true)
+                                                addNote(dt)
                                                 menu.mapWidget:updateMarkers()
                                                 fill(menu, sb, filter)
                                             end
                                         end,
                                         removeCallback = function (dt)
-                                            widgetData.removeMarkerDataAlt(dt)
-                                            require("scripts.advanced_world_map.widgets.notes.marker").remove(dt, true)
+                                            removeNote(dt)
                                             menu.mapWidget:updateMarkers()
                                             fill(menu, sb, filter)
                                         end
@@ -271,7 +285,6 @@ local function fill(menu, sb, filter)
         }
 
         content:add(layout)
-        contentHeight = contentHeight + height
     end
 
     local widgetCellId = menu.mapWidget.cellId or commonData.exteriorMapId
@@ -312,8 +325,10 @@ local function fill(menu, sb, filter)
         add(data[1], data[2])
     end
 
-    sb:setContentHeight(contentHeight)
+    sb:calcContentHeight()
     sb:updateContent()
+
+    this.lastListed = listedNotes
 end
 
 
@@ -323,6 +338,9 @@ function  this.create(menu, content)
     -- Get the size of the map widget to set our window size
     local mapWidgetSize = menu.mapWidget:getSize()
 
+    -- Don't show the notes menu if the map is too small
+    if mapWidgetSize.y < config.data.ui.fontSize * 5 then return end
+
     local size = util.vector2(
         math.max(mapWidgetSize.x / 3, 250),
         mapWidgetSize.y
@@ -331,7 +349,7 @@ function  this.create(menu, content)
 
     local scrollBoxContent = ui.content{}
 
-    local scrollBoxSize = util.vector2(size.x, size.y - (searchBarFontSize + config.data.ui.fontSize * 2 + 8))
+    local scrollBoxSize = util.vector2(size.x, size.y - (searchBarFontSize + config.data.ui.fontSize * 4 + 8))
 
     local scrollBoxLayout = scrollBox{
         updateFunc = menu.update,
@@ -416,6 +434,33 @@ function  this.create(menu, content)
         }
     }
 
+    local bottomLayout = {
+        type = ui.TYPE.Widget,
+        props = {
+            size = util.vector2(size.x, config.data.ui.fontSize * 2),
+        },
+        content = ui.content{
+            button{
+                updateFunc = menu.update,
+                text = l10n("NotesRemoveListed"),
+                size = util.vector2(100, config.data.ui.fontSize * 0.9),
+                textSize = config.data.ui.fontSize * 0.9,
+                anchor = util.vector2(0.5, 0.5),
+                relativePosition = util.vector2(0.5, 0.5),
+                event = function (layout)
+                    for _, dt in pairs(this.lastListed or {}) do
+                        removeNote(dt)
+                        menu.mapWidget:updateMarkers()
+                    end
+                    widgetData.saveData()
+                    fill(menu, scrollBoxMeta, textFilter)
+                    menu.mapWidget:updateMarkers()
+                    menu:update()
+                end
+            },
+        }
+    }
+
     local windowLayout = {
         type = ui.TYPE.Widget,
         props = {
@@ -451,6 +496,7 @@ function  this.create(menu, content)
                         }
                     },
                     scrollBoxLayout,
+                    bottomLayout,
                 }
             },
             borders()
@@ -465,6 +511,7 @@ function  this.create(menu, content)
 
 
     content:add(windowLayout)
+    return true
 end
 
 
