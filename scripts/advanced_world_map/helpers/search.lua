@@ -244,6 +244,8 @@ function this.objectPositions(params)
                 if not ref.enabled then return end
 
                 if inventoryFunc then
+                    local saveState = ref.saveState
+
                     local inventory = inventoryFunc(ref)
                     local isResolved = inventory:isResolved()
                     local objectItems = nil
@@ -276,6 +278,10 @@ function this.objectPositions(params)
                         if not next(objectItems) then ---@diagnostic disable-line: param-type-mismatch
                             inventoryMap[ref.recordId] = false
                         end
+                    end
+
+                    if saveState ~= ref.saveState then
+                        ref:setSaveState(saveState)
                     end
                 end
 
