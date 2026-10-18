@@ -783,6 +783,7 @@ local function create(menu)
                         wordWrap = true,
                         textShadow = true,
                         propagateEvents = false,
+                        textAlignV = ui.ALIGNMENT.Center,
                     },
                     userData = {
                         positionIndex = 0,
