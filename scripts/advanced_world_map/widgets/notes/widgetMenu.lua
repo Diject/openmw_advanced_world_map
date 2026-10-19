@@ -440,13 +440,25 @@ function  this.create(menu, content)
             size = util.vector2(size.x, config.data.ui.fontSize * 2),
         },
         content = ui.content{
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = thinLineTexture,
+                    tileH = true,
+                    tileV = false,
+                    size = util.vector2(0, 2),
+                    relativeSize = util.vector2(1, 0),
+                    anchor = util.vector2(0, 0),
+                    relativePosition = util.vector2(0, 0),
+                },
+            },
             button{
                 updateFunc = menu.update,
                 text = l10n("NotesRemoveListed"),
-                size = util.vector2(100, config.data.ui.fontSize * 0.9),
                 textSize = config.data.ui.fontSize * 0.9,
                 anchor = util.vector2(0.5, 0.5),
                 relativePosition = util.vector2(0.5, 0.5),
+                position = util.vector2(0, 2),
                 event = function (layout)
                     for _, dt in pairs(this.lastListed or {}) do
                         removeNote(dt)
