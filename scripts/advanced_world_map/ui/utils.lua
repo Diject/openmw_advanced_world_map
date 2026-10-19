@@ -10,22 +10,19 @@ local this = {}
 this.whiteTexture = ui.texture{ path = "white" }
 
 
-function this.removeFromContent(content, index)
+function this.removeFromContent(content, name)
     local ss, res = pcall(function ()
-        local elem = content[index]
-        if elem then
-            content[elem.name or index] = nil
-        end
+        content[name] = nil
     end)
-    return ss and index or nil
+    return ss and name or nil
 end
 
 
-function this.clearContent(content)
-    for i = #content, 1, -1 do
-        this.removeFromContent(content, i)
-    end
-end
+-- function this.clearContent(content)
+--     for i = #content, 1, -1 do
+--         this.removeFromContent(content, i)
+--     end
+-- end
 
 
 function this.getFromContent(content, index)

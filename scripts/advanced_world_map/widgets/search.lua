@@ -593,7 +593,8 @@ local function create(menu)
             temporaryMarkersData = {}
             temporaryCellMarkerLinks = {}
             targetCells = {}
-            uiUtils.clearContent(scrollBoxContent)
+            scrollBoxMeta:clearContent()
+            scrollBoxContent = scrollBoxMeta:getContent()
             scrollBoxMeta:setScrollPosition(0)
             scrollBoxMeta:setContentHeight(0)
             scrollBoxMeta:updateContent()
@@ -684,7 +685,8 @@ local function create(menu)
                 end
             end)
 
-            uiUtils.clearContent(scrollBoxContent)
+            scrollBoxMeta:clearContent()
+            scrollBoxContent = scrollBoxMeta:getContent()
 
             local height = 0
 

@@ -419,8 +419,10 @@ function this.create(params)
     local lastIcon
     local function clearLastIconParams()
         if not lastIcon then return end
-        for i = #lastIcon.content, 2, -1 do
-            uiUtils.removeFromContent(lastIcon.content, i)
+        local firstEl = uiUtils.getFromContent(lastIcon.content, 1)
+        lastIcon.content = ui.content{}
+        if firstEl then
+            lastIcon.content:add(firstEl)
         end
         lastIcon.content[1].props.color = util.color.rgb(1, 1, 1)
         lastIcon.userData.selected = false
@@ -453,9 +455,7 @@ function this.create(params)
     local lastIconIndex = 0
     local function clearIcons()
         lastIconIndex = 0
-        for i = #iconsLay.content, 1, -1 do
-            uiUtils.removeFromContent(iconsLay.content, i)
-        end
+        iconsLay.content = ui.content{}
         horizontalFlex = nil
     end
 

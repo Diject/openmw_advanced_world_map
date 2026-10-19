@@ -12,6 +12,7 @@ local gamepadControls = I.GamepadControls
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
 local localStorage = require("scripts.advanced_world_map.storage.localStorage")
+local getUniqueId = require("scripts.advanced_world_map.utils.uniqueId")
 
 local realTimer = require("scripts.advanced_world_map.realTimer")
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
@@ -105,6 +106,12 @@ mapBordersThick[4].props.cursor = cursors.moveVertical
 mapBordersThin[4].events = resizerEvents
 mapBordersThin[4].userData = {getMeta = getMeta, bottom = true}
 mapBordersThin[4].props.cursor = cursors.moveVertical
+for _, lay in ipairs(mapBordersThin) do
+    lay.name = tostring(getUniqueId())
+end
+for _, lay in ipairs(mapBordersThick) do
+    lay.name = tostring(getUniqueId())
+end
 
 
 ---@class advancedWorldMap.ui.menu.map
@@ -183,6 +190,7 @@ function menuMeta:addWidget(params)
 
     local origEvents = tableLib.copy(params.layout.events or {})
 
+    params.layout.name = tostring(params.id)
     params.layout.userData = params.layout.userData or {}
     params.layout.userData[commonData.widgetPriorityField] = params.priority
 
@@ -256,6 +264,7 @@ function menuMeta:addWidget(params)
         content:insert(index, params.layout)
         if index ~= 1 then
             content:insert(index, {
+                name = tostring(getUniqueId()),
                 props = {
                     size = util.vector2(self.params.fontSize * 0.6, 0),
                 },
@@ -287,7 +296,9 @@ function menuMeta:removeWidget(id)
             found = false
             for i, lay in ipairs(content) do
                 if lay == widgetData.layout or lay.userData and lay.userData.__parent == widgetData.layout then
-                    uiUtils.removeFromContent(content, i)
+                    if lay.name then
+                        uiUtils.removeFromContent(content, lay.name)
+                    end
                     found = true
                     break
                 end
@@ -549,7 +560,10 @@ function menuMeta:setBorders(thick, coverHeader)
     local content = self.mainLayout.content
     local contentCount = #content
     for i = contentCount, contentCount - 7, -1 do
-        uiUtils.removeFromContent(content, i)
+        local el = uiUtils.getFromContent(content, i)
+        if el and el.name then
+            uiUtils.removeFromContent(content, el.name)
+        end
     end
 
     self.borderSize = thick and 4 or 2
@@ -567,7 +581,10 @@ function menuMeta:setBorders(thick, coverHeader)
     local headerContentCount = #headerContent
     if headerContentCount == 8 then
         for i = headerContentCount, headerContentCount - 4, -1 do
-            uiUtils.removeFromContent(headerContent, i)
+            local el = uiUtils.getFromContent(headerContent, i)
+            if el and el.name then
+                uiUtils.removeFromContent(headerContent, el.name)
+            end
         end
     end
 

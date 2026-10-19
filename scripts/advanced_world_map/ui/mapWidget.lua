@@ -57,11 +57,8 @@ function this.destroyPlayerMarkerMenu()
     this.playerMarkerMenu = nil
 end
 
-local uniquesId = 0
-this.getUniqueId = function ()
-    uniquesId = uniquesId + 1
-    return uniquesId
-end
+
+this.getUniqueId = require("scripts.advanced_world_map.utils.uniqueId")
 
 
 ---@class advancedWorldMap.ui.mapWidget.layerId
@@ -1894,7 +1891,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
     self.displayMapSize = util.vector2(self.mapInfo.width + padding * 2, self.mapInfo.height + padding * 2)
 
     if oldMapLayout then
-        uiUtils.clearContent(oldMapLayout.content)
+        oldMapLayout.content = ui.content{}
     end
 
     local mapLayout = oldMapLayout or {
