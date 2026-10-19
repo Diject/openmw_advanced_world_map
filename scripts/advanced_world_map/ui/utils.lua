@@ -1,6 +1,7 @@
 local ui = require('openmw.ui')
 
 local isPropsAvailable = ui.props ~= nil
+local isExternalAvailable = ui.external ~= nil
 
 local this = {}
 
@@ -130,5 +131,8 @@ function this.props(tb)
     return isPropsAvailable and ui.props(tb) or tb
 end
 
+function this.external(tb)
+    return isExternalAvailable and ui.external(tb) or tb
+end
 
 return this

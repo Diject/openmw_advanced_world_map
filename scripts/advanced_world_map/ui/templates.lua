@@ -112,7 +112,7 @@ this.box = {
             },
         },
         {
-            external = { slot = true },
+            external = uiUtils.external{ slot = true },
             props = uiUtils.props{
                 position = util.vector2(2, 2),
                 relativeSize = util.vector2(1, 1),
@@ -226,7 +226,7 @@ this.boxSolidThick = {
             },
         },
         {
-            external = { slot = true },
+            external = uiUtils.external{ slot = true },
             props = uiUtils.props{
                 position = util.vector2(4, 4),
                 relativeSize = util.vector2(1, 1),
@@ -252,7 +252,7 @@ this.activeSelection = {
             },
         },
         {
-            external = { slot = true },
+            external = uiUtils.external{ slot = true },
             props = uiUtils.props{
                 position = util.vector2(20, 0),
                 relativeSize = util.vector2(1, 1),
@@ -267,7 +267,7 @@ this.inactiveSelection = {
     type = ui.TYPE.Container,
     content = ui.content{
         {
-            external = { slot = true },
+            external = uiUtils.external{ slot = true },
             props = uiUtils.props{
                 position = util.vector2(20, 0),
                 relativeSize = util.vector2(1, 1),
@@ -346,7 +346,7 @@ this.quickMenuSelectedItem = {
             },
         },
         {
-            external = { slot = true },
+            external = uiUtils.external{ slot = true },
             props = uiUtils.props{
                 position = util.vector2(10, 2),
                 relativeSize = util.vector2(1, 1),
@@ -387,7 +387,7 @@ this.quickMenuItem = {
             },
         },
         {
-            external = { slot = true },
+            external = uiUtils.external{ slot = true },
             props = uiUtils.props{
                 position = util.vector2(10, 2),
                 relativeSize = util.vector2(1, 1),

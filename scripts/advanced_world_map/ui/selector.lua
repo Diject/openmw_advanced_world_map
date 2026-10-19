@@ -76,7 +76,7 @@ return function(params)
             align = ui.ALIGNMENT.Center,
             arrange = ui.ALIGNMENT.Center,
         },
-        external = {
+        external = uiUtils.external{
             grow = 1,
         },
         userData = {
@@ -113,7 +113,7 @@ return function(params)
                 anchor = util.vector2(0.5, 0.5),
                 size = meta.btnSize,
             },
-            external = {
+            external = uiUtils.external{
                 grow = 1,
             },
             userData = {
