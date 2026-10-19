@@ -78,7 +78,7 @@ function this.openMenu(mapWidget)
             layer = commonData.messageLayer,
             name = commonData.rightClickMenuId,
             type = ui.TYPE.Flex,
-            props = {
+            props = uiUtils.props{
                 autoSize = true,
                 position = pos,
                 anchor = util.vector2(0, 0),

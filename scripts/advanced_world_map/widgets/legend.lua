@@ -30,7 +30,7 @@ local function create(menu)
     local tooltipContent = ui.content{
         {
             type = ui.TYPE.TextEdit,
-            props = {
+            props = uiUtils.props{
                 text = l10n("LegendWidgetTooltip"),
                 textColor = config.data.ui.defaultColor,
                 textSize = config.data.ui.fontSize,
@@ -48,7 +48,7 @@ local function create(menu)
 
     local iconLayout = {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = widgetIcon,
             anchor = util.vector2(0.5, 0.5),
             size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
@@ -142,7 +142,7 @@ local function create(menu)
 
         local windowLayout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = size,
             },
             userData = {
@@ -151,7 +151,7 @@ local function create(menu)
             content = ui.content {
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         relativeSize = util.vector2(1, 1),
                         color = config.data.ui.backgroundColor,
                         alpha = 1,
@@ -188,7 +188,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local function addVPadding(elem, padding)
         return {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(
                     e.size.x,
                     (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
@@ -229,7 +229,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
 
     local layerVisibilityLabel = {
         type = ui.TYPE.Text,
-        props = {
+        props = uiUtils.props{
             text = l10n("LayerVisibility"),
             textSize = config.data.ui.fontSize,
             textColor = config.data.ui.defaultColor,
@@ -273,7 +273,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
 
     local transportFlex = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = false,
             position = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize * 0.75),
         },
@@ -485,7 +485,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
 
     content:add{
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = false,
         },
         content = ui.content{
@@ -499,7 +499,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
             addVPadding(transportLayerCB),
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = true,
                 },
                 content = ui.content{

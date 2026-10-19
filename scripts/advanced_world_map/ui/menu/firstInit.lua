@@ -44,7 +44,7 @@ local function getPreviewTooltipContent(imSize, imageIds, labels)
     local content = ui.content{
         {
             type = ui.TYPE.Flex,
-            props = {
+            props = uiUtils.props{
                 horizontal = true,
             },
             content = ui.content{}
@@ -54,20 +54,20 @@ local function getPreviewTooltipContent(imSize, imageIds, labels)
     for i, imId in ipairs(imageIds) do
         content[1].content:add{
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(imSize, imSize)
             },
             content = ui.content{
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, imId) },
                         size = util.vector2(imSize, imSize),
                     }
                 },
                 {
                     type = ui.TYPE.Text,
-                    props = {
+                    props = uiUtils.props{
                         text = l10n(labels[i] or ""),
                         textSize = config.data.ui.fontSize * 1.75,
                         textColor = config.data.ui.whiteColor,
@@ -86,7 +86,7 @@ local function HoverToPreviewBlock(imSize, imageIds, labels, cbLayout, size)
     local tooltipContent = getPreviewTooltipContent(imSize, imageIds, labels)
     return {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = true,
             arrange = ui.ALIGNMENT.Center,
         },
@@ -94,7 +94,7 @@ local function HoverToPreviewBlock(imSize, imageIds, labels, cbLayout, size)
             cbLayout,
             {
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = l10n("HoverToPreview"),
                     textSize = config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -165,13 +165,13 @@ function this.new(params)
 
 
     local longHorizontalLineThin = {
-        props = {
+        props = uiUtils.props{
             size = util.vector2(mainSize.x, 9)
         },
         content = ui.content{
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = ui.texture{ path = "textures/menu_thin_border_top.dds" },
                     tileH = true,
                     tileV = false,
@@ -187,14 +187,14 @@ function this.new(params)
 
     local ftCurrencyLayout = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = true,
             align = ui.ALIGNMENT.Center,
         },
         content = ui.content {
             {
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = l10n("FirstInitFastTravelCurrency"),
                     textSize = params.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -241,7 +241,7 @@ function this.new(params)
     mainLayout = {
         template = customTemplates.boxSolidThick,
         type = ui.TYPE.Container,
-        props = {
+        props = uiUtils.props{
 
         },
         userData = {
@@ -250,14 +250,14 @@ function this.new(params)
         content = ui.content {
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = false,
                 },
                 userData = {},
                 content = ui.content{
                     {
                         type = ui.TYPE.Text,
-                        props = {
+                        props = uiUtils.props{
                             text = l10n("firstInitMenuMessage"),
                             textSize = params.fontSize,
                             autoSize = false,
@@ -355,7 +355,7 @@ function this.new(params)
                     ftCurrencyLayout,
                     longHorizontalLineThin,
                     {
-                        props = {
+                        props = uiUtils.props{
                             size = util.vector2(mainSize.x, params.fontSize * 2),
                         },
                         content = ui.content {
@@ -445,13 +445,13 @@ function this.new(params)
             {"FirstInitGridmapPresetOff", "FirstInitGridmapPresetTransparent", "FirstInitGridmapPresetOpaque"},
             {
                 type = ui.TYPE.Widget,
-                props = {
+                props = uiUtils.props{
                     size = util.vector2(mainSize.x - params.fontSize * 2 - 65, params.fontSize * 2),
                 },
                 content = ui.content{
                     {
                         type = ui.TYPE.Text,
-                        props = {
+                        props = uiUtils.props{
                             text = l10n("FirstInitGridmapMessage"),
                             textSize = params.fontSize,
                             textColor = config.data.ui.defaultColor,
@@ -501,7 +501,7 @@ function this.new(params)
     local layout = {
         type = ui.TYPE.Container,
         layer = commonData.messageLayer,
-        props = {
+        props = uiUtils.props{
             -- size = params.size,
             anchor = util.vector2(0.5, 0.5),
             relativePosition = params.relativePosition,

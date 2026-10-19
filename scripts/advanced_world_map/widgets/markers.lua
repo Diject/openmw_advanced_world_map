@@ -1473,7 +1473,7 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
 
     e.content:add{
         type = ui.TYPE.TextEdit,
-        props = {
+        props = uiUtils.props{
             text = text,
             textColor = config.data.ui.defaultColor,
             textSize = config.data.ui.fontSize * 1.1,
@@ -1510,7 +1510,7 @@ eventSys.registerHandler(eventSys.EVENT.onMarkerTooltipShow, function (e)
 
         e.content:add{
             type = ui.TYPE.TextEdit,
-            props = {
+            props = uiUtils.props{
                 text = l10n("LastVisited"):format(dateLib.getDateByTime(lastVisited)),
                 textColor = config.data.ui.defaultDarkColor,
                 textSize = config.data.ui.fontSize,

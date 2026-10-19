@@ -46,7 +46,7 @@ function this.getTooltipContentLayout(data, includeCellPos, insertLineBreaks)
         return {
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = text,
                     textSize = config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,

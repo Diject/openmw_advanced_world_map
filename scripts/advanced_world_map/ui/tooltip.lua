@@ -44,7 +44,7 @@ function this.create(coord, parent, layoutContent, delay, suppressNew)
         template = customTemplates.boxSolid,
         layer = "Notification",
         name = "AdvWMap:tooltip",
-        props = {
+        props = uiUtils.props{
             position = position,
             anchor = anchor,
             visible = delay == nil and true or false,
@@ -52,7 +52,7 @@ function this.create(coord, parent, layoutContent, delay, suppressNew)
         content = ui.content {
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = false,
                     align = ui.ALIGNMENT.Center,
                     arrange = ui.ALIGNMENT.Center,

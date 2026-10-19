@@ -1,6 +1,8 @@
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
+
 local borderTextures = {
     ui.texture{ path = "textures/menu_thick_border_left.dds" },
     ui.texture{ path = "textures/menu_thick_border_right.dds" },
@@ -17,7 +19,7 @@ return {
     borders = function ()
         return {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[1],
                     tileH = false,
                     tileV = true,
@@ -29,7 +31,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[2],
                     tileH = false,
                     tileV = true,
@@ -41,7 +43,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[3],
                     tileH = true,
                     tileV = false,
@@ -53,7 +55,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[4],
                     tileH = true,
                     tileV = false,
@@ -65,7 +67,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[5],
                     size = util.vector2(4, 4),
                     anchor = nil,
@@ -74,7 +76,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[6],
                     size = util.vector2(4, 4),
                     anchor = util.vector2(1, 0),
@@ -83,7 +85,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[7],
                     size = util.vector2(4, 4),
                     anchor = util.vector2(0, 1),
@@ -92,7 +94,7 @@ return {
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[8],
                     size = util.vector2(4, 4),
                     anchor = util.vector2(1, 1),

@@ -265,7 +265,7 @@ function menuMeta:addWidget(params)
         if index ~= 1 then
             content:insert(index, {
                 name = tostring(getUniqueId()),
-                props = {
+                props = uiUtils.props{
                     size = util.vector2(self.params.fontSize * 0.6, 0),
                 },
                 userData = {
@@ -635,7 +635,7 @@ function menuMeta:updateCloseBtnState(visible)
     if visible then
         self.headerRightBtnBlock.content:add{
             name = commonData.headerCloseBtnIntervalLayoutName,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(self.params.fontSize * 0.5, self.headerHeight)
             }
         }
@@ -1031,7 +1031,7 @@ function this.create(params)
                 content = ui.content{
                     {
                         type = ui.TYPE.Image,
-                        props = {
+                        props = uiUtils.props{
                             resource = uiUtils.whiteTexture,
                             color = config.data.ui.backgroundColor,
                             relativeSize = util.vector2(1, 1),
@@ -1039,7 +1039,7 @@ function this.create(params)
                     },
                 }
             },
-            props = {
+            props = uiUtils.props{
                 anchor = util.vector2(0, 0.5),
                 relativePosition = util.vector2(0, 0.5),
                 position = util.vector2(meta.borderSize + params.fontSize / 2, meta.headerOffset * 0.5)
@@ -1047,7 +1047,7 @@ function this.create(params)
             content = ui.content {
                 {
                     type = ui.TYPE.Flex,
-                    props = {
+                    props = uiUtils.props{
                         horizontal = true,
                         arrange = ui.ALIGNMENT.Center,
                     },
@@ -1056,7 +1056,7 @@ function this.create(params)
                     },
                     content = ui.content {
                         {
-                            props = {
+                            props = uiUtils.props{
                                 size = util.vector2(2, meta.headerFullHeight),
                             },
                             userData = {
@@ -1068,7 +1068,7 @@ function this.create(params)
 
                         interval(meta.params.fontSize * 0.6, 0),
                         {
-                            props = {
+                            props = uiUtils.props{
                                 size = util.vector2(2, meta.headerFullHeight),
                             },
                             userData = {
@@ -1083,7 +1083,7 @@ function this.create(params)
     else
         meta.widgetActiveHeaderLayout = {
             type = ui.TYPE.Flex,
-            props = {
+            props = uiUtils.props{
                 horizontal = true,
                 anchor = util.vector2(0, 0.5),
                 relativePosition = util.vector2(0, 0.5),
@@ -1098,7 +1098,7 @@ function this.create(params)
     meta.widgetInactiveHeaderLayout = {
         template = templates.roundedBackground,
         type = ui.TYPE.Container,
-        props = {
+        props = uiUtils.props{
             relativeSize = util.vector2(1, 1),
             anchor = util.vector2(0.5, 0.5),
             relativePosition = util.vector2(0.5, 0.5),
@@ -1108,7 +1108,7 @@ function this.create(params)
         content = ui.content{
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = true,
                     autoSize = true,
                     arrange = ui.ALIGNMENT.Center,
@@ -1121,7 +1121,7 @@ function this.create(params)
 
     meta.widgetWindowLayout = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = true,
             position = util.vector2(meta.borderSize, meta.borderSize),
             align = ui.ALIGNMENT.Center,
@@ -1165,7 +1165,7 @@ function this.create(params)
     local pinBtnTooltipContent = ui.content{
         {
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = l10n("PinUnpin"),
                 textSize = params.fontSize,
                 autoSize = true,
@@ -1191,7 +1191,7 @@ function this.create(params)
         pinnedBtnLayout = {
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = ui.texture{ path = commonData.pinIconPath },
                     alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
                     size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
@@ -1203,7 +1203,7 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = uiUtils.whiteTexture,
                     alpha = 0,
                     size = util.vector2(meta.headerHeight, meta.headerHeight),
@@ -1215,7 +1215,7 @@ function this.create(params)
 
     local pinBtnLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
             anchor = util.vector2(0.5, 0.5),
         },
@@ -1311,7 +1311,7 @@ function this.create(params)
     if meta.useDefaultHeader then
         closeBtnLayout = {
             name = commonData.headerCloseBtnLayoutName,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(meta.headerFullHeight - meta.borderSize, meta.headerFullHeight - meta.borderSize),
                 anchor = util.vector2(1, 0.5),
                 relativePosition = util.vector2(1, 0.5),
@@ -1324,7 +1324,7 @@ function this.create(params)
         closeBtnPressedLayout.content = ui.content(headerParts.pinnedBtn)
         local closeTextLayout = {
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = l10n("X"),
                 textSize = meta.headerHeight,
                 anchor = util.vector2(0.5, 0.5),
@@ -1339,7 +1339,7 @@ function this.create(params)
         closeBtnLayout = {
             type = ui.TYPE.Text,
             name = commonData.headerCloseBtnLayoutName,
-            props = {
+            props = uiUtils.props{
                 text = l10n("Close"),
                 textSize = meta.headerHeight,
                 autoSize = true,
@@ -1361,7 +1361,7 @@ function this.create(params)
     if meta.useDefaultHeader then
         headerBackground = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(meta.size.x - meta.borderSize * 2, meta.headerFullHeight - meta.borderSize),
                 position = util.vector2(meta.borderSize, meta.borderSize),
             },
@@ -1370,7 +1370,7 @@ function this.create(params)
     else
         headerBackground = {
             type = ui.TYPE.Image,
-            props = {
+            props = uiUtils.props{
                 resource = commonData.whiteTexture,
                 relativeSize = util.vector2(1, 1),
                 color = config.data.ui.backgroundColor,
@@ -1381,7 +1381,7 @@ function this.create(params)
 
     meta.headerRightBtnBlock = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = true,
             arrange = ui.ALIGNMENT.Center,
             relativePosition = util.vector2(1, 0.5),
@@ -1398,7 +1398,7 @@ function this.create(params)
 
     local headerLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = headerSize,
         },
         userData = {
@@ -1501,7 +1501,7 @@ function this.create(params)
     local mainLayout
     mainLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = mainSize,
             position = util.vector2(0, meta.headerFullHeight),
         },
@@ -1511,7 +1511,7 @@ function this.create(params)
         content = ui.content {
             {
                 type = ui.TYPE.Widget,
-                props = {
+                props = uiUtils.props{
                     size = mainSize,
                 },
                 userData = {
@@ -1526,7 +1526,7 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = uiUtils.whiteTexture,
                     alpha = 0.3,
                     size = util.vector2(config.data.ui.resizerSize, config.data.ui.resizerSize),
@@ -1554,7 +1554,7 @@ function this.create(params)
         type = ui.TYPE.Widget,
         name = commonData.mapMenuId,
         layer = "Windows",
-        props = {
+        props = uiUtils.props{
             size = meta.size,
             relativePosition = params.relativePosition,
             visible = false,
@@ -1813,7 +1813,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
     local function addVPadding(elem, padding)
         return {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(
                     e.size.x,
                     (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
@@ -1839,7 +1839,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         tooltipContent = ui.content{
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = l10n("MinimapModeCBTooltip"),
                     textColor = config.data.ui.defaultColor,
                     textSize = config.data.ui.fontSize,
@@ -1867,7 +1867,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         tooltipContent = ui.content{
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = l10n("MinimapModeSetupBtnTooltip"),
                     textColor = config.data.ui.defaultColor,
                     textSize = config.data.ui.fontSize,
@@ -1920,7 +1920,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
         tooltipContent = ui.content{
             {
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = l10n("RequiresReopen"),
                     textSize = config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -1935,7 +1935,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
 
     content:add{
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = false,
         },
         content = ui.content{
@@ -1944,7 +1944,7 @@ eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
             interval(0, config.data.ui.fontSize / 3),
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = true,
                 },
                 content = ui.content{

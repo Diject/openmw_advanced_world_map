@@ -353,7 +353,7 @@ eventSys.registerHandler(eventSys.EVENT.onMapInitialized, function (e)
             ui.content{
                 {
                     type = ui.TYPE.TextEdit,
-                    props = {
+                    props = uiUtils.props{
                         text = l10n("TransportFeatureInfo", {
                             toggleTransportKey = keys.keyCombinationToString(config.data.input.toggleTransportHotkey) or l10n("Undefined"),
                             cycleTransportKey = keys.keyCombinationToString(config.data.input.cycleTransportHotkey) or l10n("Undefined")

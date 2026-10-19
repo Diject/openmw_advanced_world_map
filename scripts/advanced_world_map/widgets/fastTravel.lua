@@ -100,7 +100,7 @@ local function create(menu)
     local tooltipContent = ui.content{
         {
             type = ui.TYPE.TextEdit,
-            props = {
+            props = uiUtils.props{
                 text = tooltipText,
                 textColor = config.data.ui.defaultColor,
                 textSize = config.data.ui.fontSize,
@@ -118,7 +118,7 @@ local function create(menu)
 
     local iconLayout = {
         type = ui.TYPE.Text,
-        props = {
+        props = uiUtils.props{
             text = l10n("Ft"),
             textSize = menu.headerHeight,
             textColor = config.data.ui.defaultColor,

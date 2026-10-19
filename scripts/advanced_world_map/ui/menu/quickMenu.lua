@@ -7,6 +7,7 @@ local I = require("openmw.interfaces")
 local commonData = require("scripts.advanced_world_map.common")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local config = require("scripts.advanced_world_map.config.configLib")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local templates = require("scripts.advanced_world_map.ui.templates")
 local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
 local keysModule = require("scripts.advanced_world_map.input.keys")
@@ -96,7 +97,7 @@ local function create(params)
     for i, item in ipairs(params.items) do
         local lay = {
             template = templates.quickMenuItem,
-            props = {
+            props = uiUtils.props{
                 inheritAlpha = false,
             },
             userData = item,
@@ -125,7 +126,7 @@ local function create(params)
             content = ui.content{
                 {
                     type = ui.TYPE.Text,
-                    props = {
+                    props = uiUtils.props{
                         text = item.text,
                         textSize = math.floor(config.data.ui.fontSize * 0.7) * 2,
                         textColor = config.data.ui.defaultColor,
@@ -152,7 +153,7 @@ local function create(params)
         template = templates.boxSolid,
         layer = commonData.messageLayer,
         name = commonData.quickMenuId,
-        props = {
+        props = uiUtils.props{
             position = pos,
             alpha = 0.75,
             inheritAlpha = false,
@@ -161,7 +162,7 @@ local function create(params)
         content = ui.content{
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     autoSize = true,
                 },
                 content = content,

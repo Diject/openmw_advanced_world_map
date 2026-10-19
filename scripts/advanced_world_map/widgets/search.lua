@@ -91,7 +91,7 @@ local function createTemporaryMarker(id, mapWidget, menu, loc, pos, color, textT
         tooltipContent = textTable and ui.content{
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = tooltipText,
                     textSize = config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -519,7 +519,7 @@ local function create(menu)
     local iconTooltipContent = ui.content{
         {
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = l10n("SearchWidgetTooltip"),
                 textColor = config.data.ui.defaultColor,
                 textSize = config.data.ui.fontSize,
@@ -530,7 +530,7 @@ local function create(menu)
 
     local iconLayout = {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = searchIcoTexture,
             anchor = util.vector2(0.5, 0.5),
             size = util.vector2(menu.headerHeight - 2, menu.headerHeight - 2),
@@ -608,7 +608,7 @@ local function create(menu)
 
             scrollBoxContent:add{
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = l10n("Loading"),
                     textSize = config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -761,7 +761,7 @@ local function create(menu)
                 local tooltipContent = isObjectSearchMode and ui.content {
                     {
                         type = ui.TYPE.Text,
-                        props = {
+                        props = uiUtils.props{
                             text = l10n("ObjectIdTooltipPattern", {id = dt.id or "???"}),
                             textSize = config.data.ui.fontSize,
                             textColor = config.data.ui.defaultColor,
@@ -775,7 +775,7 @@ local function create(menu)
                 local textLay
                 textLay = {
                     type = ui.TYPE.Text,
-                    props = {
+                    props = uiUtils.props{
                         text = text,
                         textSize = config.data.ui.fontSize,
                         textColor = config.data.ui.defaultColor,
@@ -933,7 +933,7 @@ local function create(menu)
             tooltipContent = ui.content {
                 {
                     type = ui.TYPE.TextEdit,
-                    props = {
+                    props = uiUtils.props{
                         text = l10n("SearchShowUnrevealedTooltip"),
                         textSize = config.data.ui.fontSize,
                         textColor = config.data.ui.defaultColor,
@@ -965,7 +965,7 @@ local function create(menu)
             tooltipContent = ui.content {
                 {
                     type = ui.TYPE.TextEdit,
-                    props = {
+                    props = uiUtils.props{
                         text = l10n("SearchAllLocationsTooltip"),
                         textSize = config.data.ui.fontSize,
                         textColor = config.data.ui.defaultColor,
@@ -997,7 +997,7 @@ local function create(menu)
             tooltipContent = ui.content {
                 {
                     type = ui.TYPE.TextEdit,
-                    props = {
+                    props = uiUtils.props{
                         text = l10n("searchNearbyTooltip"),
                         textSize = config.data.ui.fontSize,
                         textColor = config.data.ui.defaultColor,
@@ -1018,7 +1018,7 @@ local function create(menu)
 
         local checkboxesLayout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = checkboxesLayoutSize,
                 anchor = util.vector2(0.5, 0),
                 position = util.vector2(size.x / 2, searchBarSize.y + searchTypeSelectorSize.y + separatorSize),
@@ -1033,13 +1033,13 @@ local function create(menu)
         local searchBarLayout
         searchBarLayout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = searchBarSize,
             },
             content = ui.content {
                 {
                     type = ui.TYPE.TextEdit,
-                    props = {
+                    props = uiUtils.props{
                         text = "",
                         anchor = util.vector2(0, 0.5),
                         size = searchBarTextEditSize,
@@ -1079,7 +1079,7 @@ local function create(menu)
                     tooltipContent = ui.content {
                         {
                             type = ui.TYPE.TextEdit,
-                            props = {
+                            props = uiUtils.props{
                                 text = l10n("SearchBtnPatternMatchingInfo"),
                                 textSize = config.data.ui.fontSize,
                                 textColor = config.data.ui.defaultColor,
@@ -1104,7 +1104,7 @@ local function create(menu)
 
         local windowLayout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = size,
             },
             userData = {
@@ -1113,7 +1113,7 @@ local function create(menu)
             content = ui.content {
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         relativeSize = util.vector2(1, 1),
                         color = config.data.ui.backgroundColor,
                         resource = uiUtils.whiteTexture,
@@ -1123,7 +1123,7 @@ local function create(menu)
                 searchTypeSelectorLayout,
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         resource = ui.texture{ path = "textures/menu_thin_border_top.dds" },
                         tileH = true,
                         tileV = false,

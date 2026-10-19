@@ -68,7 +68,7 @@ return function(params)
 
     meta.layout = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             size = params.size,
             anchor = params.anchor,
             position = params.position,
@@ -94,7 +94,7 @@ return function(params)
         if #meta.layout.content > 0 then
             meta.layout.content:add{
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = separatorTexture,
                     tileH = false,
                     tileV = true,
@@ -109,7 +109,7 @@ return function(params)
 
         btnLayout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 anchor = util.vector2(0.5, 0.5),
                 size = meta.btnSize,
             },
@@ -127,7 +127,7 @@ return function(params)
             content = ui.content {
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         relativeSize = util.vector2(1, 1),
                         color = config.data.ui.defaultColor,
                         resource = uiUtils.whiteTexture,
@@ -137,7 +137,7 @@ return function(params)
                 },
                 {
                     type = ui.TYPE.Text,
-                    props = {
+                    props = uiUtils.props{
                         text = btnParams.text,
                         textSize = params.fontSize,
                         textColor = config.data.ui.defaultColor,

@@ -26,7 +26,7 @@ this.menuType = nil
 local function addPlus(tb)
     table.insert(tb, {
         type = ui.TYPE.Text,
-        props = {
+        props = uiUtils.props{
             text = l10n("+"),
             autoSize = true,
             textSize = 16,
@@ -55,7 +55,7 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
 
             table.insert(btnsContent, {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = ui.texture{ path = image, offset = imOffest, size = imSize },
                     color = config.data.ui.defaultColor,
                     size = (imSize and (imSize / math.max(imSize.x, imSize.y)) or util.vector2(1, 1)) * imageSize,
@@ -69,7 +69,7 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
 
             table.insert(btnsContent, {
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = "["..name.."]",
                     autoSize = true,
                     textSize = 16,
@@ -82,7 +82,7 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
 
     local lay = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             autoSize = true,
             horizontal = true,
             align = ui.ALIGNMENT.Center,
@@ -92,7 +92,7 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
         content = ui.content{
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     autoSize = true,
                     horizontal = true,
                     align = ui.ALIGNMENT.Center,
@@ -104,7 +104,7 @@ local function addBtnInfoLay(tb, keyComb, str, withoutPlus)
             interval(4, 0),
             {
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = str,
                     autoSize = true,
                     textSize = fontSize,
@@ -196,7 +196,7 @@ function this.create(showOpenMenu)
     local layout = {
         layer = ui.layers.indexOf("ControllerButtons") and "ControllerButtons" or commonData.messageLayer,
         name = commonData.gamepadInfoMenuId,
-        props = {
+        props = uiUtils.props{
             anchor = util.vector2(0.5, 1),
             relativePosition = util.vector2(0.5, 1),
             relativeSize = util.vector2(1, 0),
@@ -206,7 +206,7 @@ function this.create(showOpenMenu)
         content = ui.content{
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = uiUtils.whiteTexture,
                     relativeSize = util.vector2(1, 1),
                     color = config.data.ui.backgroundColor,
@@ -214,7 +214,7 @@ function this.create(showOpenMenu)
             },
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     autoSize = true,
                     horizontal = true,
                     anchor = util.vector2(0.5, 0.5),
@@ -283,7 +283,7 @@ function this.createNoteEdit(editMode)
     local layout = {
         layer = ui.layers.indexOf("ControllerButtons") and "ControllerButtons" or commonData.messageLayer,
         name = commonData.gamepadInfoMenuId,
-        props = {
+        props = uiUtils.props{
             anchor = util.vector2(0.5, 1),
             relativePosition = util.vector2(0.5, 1),
             relativeSize = util.vector2(1, 0),
@@ -293,7 +293,7 @@ function this.createNoteEdit(editMode)
         content = ui.content{
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = uiUtils.whiteTexture,
                     relativeSize = util.vector2(1, 1),
                     color = config.data.ui.backgroundColor,
@@ -301,7 +301,7 @@ function this.createNoteEdit(editMode)
             },
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     autoSize = true,
                     horizontal = true,
                     anchor = util.vector2(0.5, 0.5),
