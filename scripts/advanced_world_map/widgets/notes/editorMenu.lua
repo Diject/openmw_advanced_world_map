@@ -181,6 +181,7 @@ function this.create(params)
                     textSize = config.data.ui.fontSize * 1.5,
                     anchor = util.vector2(0, 0.5),
                     relativePosition = util.vector2(0, 0.5),
+                    position = util.vector2(4, 0),
                 }
             },
             {
