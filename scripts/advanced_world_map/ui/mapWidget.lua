@@ -1519,6 +1519,8 @@ function mapWidgetMeta:updateFog(positionMasks)
         return
     end
 
+    if not self:isInZoomInMode() then return end
+
     for cId, mask in pairs(positionMasks) do
         local fullBlock = uiUtils.getFromContent(fogContent, cId)
         if fullBlock then
@@ -1781,7 +1783,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 local sz = util.vector2(xS, yS)
 
                 local preloadTexture = false
-                if config.data.tileset.onlyDiscovered then
+                if config.data.tileset.onlyDiscovered and not isZoomOut then
                     local cellMaskData = discoveredLocs.getDiscoveredMaskData(cellId)
                     placeExFog(self, cellId, cellMaskData, sz, pos, grx, gry)
                     preloadTexture = cellMaskData == 0
