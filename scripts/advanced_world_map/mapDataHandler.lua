@@ -83,6 +83,21 @@ local forbiddenCellPrefixes = { -- lowercase
 ---@field ars string[]? list of actor record ids that are on this node
 
 
+function this.getCellCount()
+    local cells = require("openmw.world").cells
+    local localStorage = require("scripts.advanced_world_map.storage.localStorage")
+    local nonContentCells = localStorage.data[commonData.globalNonContentCellsFieldId] or {}
+    local cellCount = 0
+    for _, c in pairs(cells) do
+        if not c.id or not nonContentCells[c.id] then
+            cellCount = cellCount + 1
+        end
+    end
+
+    return cellCount
+end
+
+
 function this.getClusterBoundingBox(cluster)
     local fpos = cluster[1].pos
     local minX, maxX = fpos.x, fpos.x
@@ -403,7 +418,7 @@ local function buildData(params)
     local entrances = {}
     local occupied = {}
     local exCellSecondPrefixes = {}
-    this.cellCount = #world.cells
+    this.cellCount = this.getCellCount()
 
     local function processCellInit (cell)
         if not cell.isExterior or not cell.id then return end
@@ -933,16 +948,7 @@ end
 
 function this.globalInit(playerRef, options)
     if not playerRef then return end
-    local cells = require("openmw.world").cells
-    local localStorage = require("scripts.advanced_world_map.storage.localStorage")
-    local nonContentCells = localStorage.data[commonData.globalNonContentCellsFieldId] or {}
-    local cellCount = 0
-    for _, c in pairs(cells) do
-        if not c.id or not nonContentCells[c.id] then
-            cellCount = cellCount + 1
-        end
-    end
-    playerRef:sendEvent("AdvWMap:initMapData", {cellCount = cellCount, options = options})
+    playerRef:sendEvent("AdvWMap:initMapData", {cellCount = this.getCellCount(), options = options})
 end
 
 
