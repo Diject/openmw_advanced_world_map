@@ -5,6 +5,7 @@ local templates = require('openmw.interfaces').MWUI.templates
 
 local commonData = require("scripts.advanced_world_map.common")
 local configData = require("scripts.advanced_world_map.config.config")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local interval = require("scripts.advanced_world_map.ui.interval")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
@@ -46,7 +47,7 @@ return function(params)
 
     local contentData = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             autoSize = true,
             position = params.position,
             relativePosition = params.relativePosition,
@@ -109,13 +110,13 @@ return function(params)
             {
                 template = templates.boxThick,
                 type = ui.TYPE.Container,
-                props = {
+                props = uiUtils.props{
                     anchor = util.vector2(0, 0),
                 },
                 content = ui.content {
                     {
                         type = ui.TYPE.Image,
-                        props = {
+                        props = uiUtils.props{
                             resource = texture,
                             size = boxSize,
                             inheritAlpha = false,
@@ -133,7 +134,7 @@ return function(params)
 
         contentData.content:add({
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = params.text or "",
                 textColor = configData.data.ui.defaultColor,
                 textSize = params.textSize or 18,

@@ -84,7 +84,7 @@ local function fill(menu, sb, filter)
         local textLay
         textLay = {
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = text,
                 textSize = config.data.ui.fontSize,
                 textColor = config.data.ui.defaultColor,
@@ -107,13 +107,13 @@ local function fill(menu, sb, filter)
             config.data.ui.textHeightMul, 0)
         local posLay = {
             type = ui.TYPE.Flex,
-            props = {
+            props = uiUtils.props{
                 horizontal = true,
             },
             content = ui.content{
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         resource = dt.icon and vfs.fileExists(dt.icon) and ui.texture{ path = dt.icon } or defaultMarkerTexture,
                         size = util.vector2(config.data.ui.fontSize, config.data.ui.fontSize),
                         anchor = util.vector2(0, 0.5),
@@ -161,7 +161,7 @@ local function fill(menu, sb, filter)
                 },
                 {
                     type = ui.TYPE.Text,
-                    props = {
+                    props = uiUtils.props{
                         text = " "..posText,
                         textSize = config.data.ui.fontSize * 0.9,
                         size = util.vector2(sbSize.x - config.data.ui.fontSize, posTextHeight),
@@ -180,13 +180,13 @@ local function fill(menu, sb, filter)
 
         local layout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(sbSize.x, height + posTextHeight + 6),
             },
             content = ui.content{
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         resource = thinLineTexture,
                         tileH = true,
                         tileV = false,
@@ -198,7 +198,7 @@ local function fill(menu, sb, filter)
                 },
                 {
                     type = ui.TYPE.Flex,
-                    props = {
+                    props = uiUtils.props{
                         horizontal = false,
                         position = util.vector2(0, 4),
                         size = util.vector2(sbSize.x, height),
@@ -385,13 +385,13 @@ function  this.create(menu, content)
     local searchBarLayout
     searchBarLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = util.vector2(size.x, searchBarFontSize + 6),
         },
         content = ui.content {
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = inputText,
                     anchor = util.vector2(0, 0.5),
                     size = util.vector2(size.x - 114, searchBarFontSize),
@@ -436,13 +436,13 @@ function  this.create(menu, content)
 
     local bottomLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = util.vector2(size.x, config.data.ui.fontSize * 2),
         },
         content = ui.content{
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = thinLineTexture,
                     tileH = true,
                     tileV = false,
@@ -475,7 +475,7 @@ function  this.create(menu, content)
 
     local windowLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = size,
         },
         userData = {
@@ -484,7 +484,7 @@ function  this.create(menu, content)
         content = ui.content {
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     relativeSize = util.vector2(1, 1),
                     color = config.data.ui.backgroundColor,
                     resource = uiUtils.whiteTexture,
@@ -492,7 +492,7 @@ function  this.create(menu, content)
             },
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = false,
                     size = size,
                 },
@@ -500,7 +500,7 @@ function  this.create(menu, content)
                     searchBarLayout,
                     {
                         type = ui.TYPE.Widget,
-                        props = {
+                        props = uiUtils.props{
                             size = util.vector2(size.x, config.data.ui.fontSize * 2),
                         },
                         content = ui.content{

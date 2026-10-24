@@ -71,7 +71,7 @@ local function create(menu)
 
     btnLayout = {
         type = ui.TYPE.Text,
-        props = {
+        props = uiUtils.props{
             text = isMapTypeWorld(menu.mapWidget) and l10n("Local") or l10n("World"),
             textSize = menu.headerHeight,
             anchor = util.vector2(0.5, 0.5),

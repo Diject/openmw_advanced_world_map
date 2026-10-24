@@ -82,7 +82,7 @@ function this.newSimple(params)
     local mainLayout
     mainLayout = {
         type = ui.TYPE.Flex,
-        props = {},
+        props = uiUtils.props{},
         userData = {},
         events = {
             mousePress = async:callback(function(coord, layout)
@@ -109,7 +109,7 @@ function this.newSimple(params)
             interval(0, headerSize.y),
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = params.message,
                     textSize = params.fontSize,
                     size = util.vector2(mainSize.x, 0),
@@ -125,7 +125,7 @@ function this.newSimple(params)
             interval(0, headerSize.y),
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     autoSize = false,
                     horizontal = true,
                     anchor = util.vector2(0.5, 0),
@@ -164,7 +164,7 @@ function this.newSimple(params)
         template = customTemplates.boxSolid,
         name = commonData.messageBoxMenuId,
         layer = commonData.messageLayer,
-        props = {
+        props = uiUtils.props{
             relativePosition = params.relativePosition,
             anchor = util.vector2(0.5, 0.5),
         },

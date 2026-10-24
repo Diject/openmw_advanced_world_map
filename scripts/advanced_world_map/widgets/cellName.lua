@@ -5,6 +5,7 @@ local playerRef = require("openmw.self")
 
 local config = require("scripts.advanced_world_map.config.configLib")
 local mapDataHandler = require("scripts.advanced_world_map.mapDataHandler")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local eventSys = require("scripts.advanced_world_map.eventSys")
 
@@ -41,7 +42,7 @@ local function create(menu)
 
     nameLayout = {
         type = ui.TYPE.Text,
-        props = {
+        props = uiUtils.props{
             text = "",
             textSize = menu.headerHeight,
             anchor = util.vector2(0.5, 0.5),

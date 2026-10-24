@@ -8,6 +8,7 @@ local playerRef = require("openmw.self")
 
 local commonData = require("scripts.advanced_world_map.common")
 local config = require("scripts.advanced_world_map.config.configLib")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local button = require("scripts.advanced_world_map.ui.button")
@@ -38,7 +39,7 @@ local function menuOpened(menu)
     local tooltipContent = ui.content{
         {
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = l10n("NotesWidgetTooltip"),
                 textColor = config.data.ui.defaultColor,
                 textSize = config.data.ui.fontSize,
@@ -49,7 +50,7 @@ local function menuOpened(menu)
 
     local iconLayout = {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = iconTexture,
                 anchor = util.vector2(0.5, 0.5), -- All elements in the header should be centered
             size = util.vector2(headerHeight - 3, headerHeight - 3),
@@ -237,7 +238,7 @@ local function init()
 
         local layout = {
             type = ui.TYPE.Flex,
-            props = {
+            props = uiUtils.props{
                 horizontal = false,
                 anchor = util.vector2(0, 0.5),
                 arrange = ui.ALIGNMENT.Center,
@@ -255,7 +256,7 @@ local function init()
                 if addedCount >= 2 then
                     layout.content:add{
                         type = ui.TYPE.Text,
-                        props = {
+                        props = uiUtils.props{
                             text = "...",
                             textColor = config.data.ui.defaultColor,
                             textSize = config.data.ui.fontSize,
@@ -292,7 +293,7 @@ local function init()
         local function addVPadding(elem, padding)
             return {
                 type = ui.TYPE.Widget,
-                props = {
+                props = uiUtils.props{
                     size = util.vector2(
                         size.x,
                         (elem.props.textSize or elem.props.size and elem.props.size.y or config.data.ui.fontSize) * (padding or 1.5)
@@ -306,7 +307,7 @@ local function init()
 
         local label = {
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = l10n("Notes"),
                 textSize = config.data.ui.fontSize,
                 textColor = config.data.ui.defaultColor,
@@ -360,7 +361,7 @@ local function init()
 
         e.content:add{
             type = ui.TYPE.Flex,
-            props = {
+            props = uiUtils.props{
                 horizontal = false,
             },
             content = flexContent,

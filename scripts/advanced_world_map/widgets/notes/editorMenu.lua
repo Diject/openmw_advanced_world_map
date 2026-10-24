@@ -157,7 +157,7 @@ function this.create(params)
 
     local headerLayout = {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = headerSize,
             anchor = util.vector2(0.5, 0.5)
         },
@@ -165,7 +165,7 @@ function this.create(params)
         content = ui.content {
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = uiUtils.whiteTexture,
                     relativeSize = util.vector2(1, 1),
                     color = config.data.ui.backgroundColor,
@@ -175,7 +175,7 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = params.data.plName..":",
                     textColor = config.data.ui.defaultColor,
                     textSize = config.data.ui.fontSize * 1.5,
@@ -186,7 +186,7 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[1],
                     tileH = false,
                     tileV = true,
@@ -198,7 +198,7 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[2],
                     tileH = false,
                     tileV = true,
@@ -210,7 +210,7 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = borderTextures[3],
                     tileH = true,
                     tileV = false,
@@ -226,7 +226,7 @@ function this.create(params)
 
     local buttonLayout = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             autoSize = false,
             horizontal = true,
             anchor = util.vector2(0.5, 0.5),
@@ -279,7 +279,7 @@ function this.create(params)
 
     nameEditLayout = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = true,
             anchor = util.vector2(0.5, 0.5),
             arrange = ui.ALIGNMENT.Center,
@@ -288,14 +288,14 @@ function this.create(params)
         content = ui.content{
             {
                 type = ui.TYPE.Widget,
-                props = {
+                props = uiUtils.props{
                     size = util.vector2(params.fontSize * 1.75, params.fontSize* 1.25),
                     anchor = util.vector2(0.5, 0.5),
                 },
                 content = ui.content{
                     {
                         type = ui.TYPE.Image,
-                        props = {
+                        props = uiUtils.props{
                             resource = uiUtils.whiteTexture,
                             relativeSize = util.vector2(1, 1),
                             color = nameColor,
@@ -330,13 +330,13 @@ function this.create(params)
             },
             {
                 template = customTemplates.boxSolid,
-                props = {
+                props = uiUtils.props{
                     anchor = util.vector2(0.5, 0.5),
                 },
                 content = ui.content{
                     {
                         type = ui.TYPE.TextEdit,
-                        props = {
+                        props = uiUtils.props{
                             text = params.data.name or "",
                             anchor = util.vector2(0, 0),
                             size = util.vector2(params.size.x - screenSize.x * 0.075, config.data.ui.fontSize * 1.25),
@@ -357,14 +357,14 @@ function this.create(params)
             },
             {
                 type = ui.TYPE.Widget,
-                props = {
+                props = uiUtils.props{
                     size = util.vector2(params.fontSize * 1.75, params.fontSize * 1.25),
                     anchor = util.vector2(0.5, 0.5),
                 },
                 content = ui.content{
                     {
                         type = ui.TYPE.Text,
-                        props = {
+                        props = uiUtils.props{
                             text = widgetData.markerSizeNames[params.data.size or 2],
                             textSize = config.data.ui.fontSize,
                             textColor = config.data.ui.defaultColor,
@@ -402,7 +402,7 @@ function this.create(params)
     local maxRows = 3
     local iconsLay = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             anchor = util.vector2(0.5, 0.5),
             align = ui.ALIGNMENT.Center,
             arrange = ui.ALIGNMENT.Center,
@@ -471,7 +471,7 @@ function this.create(params)
 
             horizontalFlex = {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     anchor = util.vector2(0.5, 0.5),
                     align = ui.ALIGNMENT.Center,
                     arrange = ui.ALIGNMENT.Center,
@@ -488,13 +488,13 @@ function this.create(params)
 
         horizontalFlex.content:add{
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 size = util.vector2(params.fontSize, params.fontSize) * 1.8
             },
             content = ui.content{
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         position = util.vector2(params.fontSize * 0.9, params.fontSize * 0.9),
                         anchor = util.vector2(0.5, 0.5),
                         size = util.vector2(params.fontSize, params.fontSize) * 1.25,
@@ -776,13 +776,13 @@ function this.create(params)
 
     local descriptionLayout = {
         template = customTemplates.boxSolid,
-        props = {
+        props = uiUtils.props{
             anchor = util.vector2(0.5, 0.5),
         },
         content = ui.content{
             {
                 type = ui.TYPE.TextEdit,
-                props = {
+                props = uiUtils.props{
                     text = params.data.descr or "",
                     size = util.vector2(params.size.x - 12, config.data.ui.fontSize * 5),
                     multiline = true,
@@ -873,7 +873,7 @@ function this.create(params)
     local namePosLayout
     namePosLayout = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             horizontal = false,
             anchor = util.vector2(0.5, 0.5),
             arrange = ui.ALIGNMENT.Center,
@@ -884,7 +884,7 @@ function this.create(params)
             interval(params.fontSize / 2, params.fontSize / 2),
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = true,
                     anchor = util.vector2(0.5, 0.5),
                     arrange = ui.ALIGNMENT.Center,
@@ -893,7 +893,7 @@ function this.create(params)
                 content = ui.content{
                     {
                         type = ui.TYPE.Flex,
-                        props = {
+                        props = uiUtils.props{
                             horizontal = false,
                             arrange = ui.ALIGNMENT.Center,
                             align = ui.ALIGNMENT.Center,
@@ -901,7 +901,7 @@ function this.create(params)
                         content = ui.content{
                             {
                                 type = ui.TYPE.Flex,
-                                props = {
+                                props = uiUtils.props{
                                     size = util.vector2(math.ceil(params.fontSize * 1.25), math.ceil(params.fontSize * 1.25)),
                                     arrange = ui.ALIGNMENT.Center,
                                     align = ui.ALIGNMENT.Center,
@@ -920,7 +920,7 @@ function this.create(params)
                     interval(params.fontSize / 2, params.fontSize / 2),
                     {
                         type = ui.TYPE.Flex,
-                        props = {
+                        props = uiUtils.props{
                             horizontal = false,
                             arrange = ui.ALIGNMENT.Center,
                             align = ui.ALIGNMENT.Center,
@@ -928,7 +928,7 @@ function this.create(params)
                         content = ui.content{
                             {
                                 type = ui.TYPE.Flex,
-                                props = {
+                                props = uiUtils.props{
                                     size = util.vector2(math.ceil(params.fontSize * 1.25), math.ceil(params.fontSize * 1.25)),
                                     arrange = ui.ALIGNMENT.Center,
                                     align = ui.ALIGNMENT.Center,
@@ -955,7 +955,7 @@ function this.create(params)
         type = ui.TYPE.Flex,
         name = commonData.noteEditorMenuId,
         layer = commonData.messageLayer,
-        props = {
+        props = uiUtils.props{
             autoSize = true,
             horizontal = false,
             relativePosition = params.relativePosition,
@@ -970,13 +970,13 @@ function this.create(params)
             headerLayout,
             {
                 template = customTemplates.boxSolid,
-                props = {
+                props = uiUtils.props{
                     anchor = util.vector2(0.5, 0.5)
                 },
                 content = ui.content{
                     {
                         type = ui.TYPE.Flex,
-                        props = {
+                        props = uiUtils.props{
                             autoSize = true,
                             horizontal = false,
                             arrange = ui.ALIGNMENT.Center,
@@ -985,7 +985,7 @@ function this.create(params)
                         content = ui.content{
                             {
                                 type = ui.TYPE.Text,
-                                props = {
+                                props = uiUtils.props{
                                     text = l10n("Name")..":",
                                     textSize = config.data.ui.fontSize,
                                     textColor = config.data.ui.defaultColor,
@@ -996,7 +996,7 @@ function this.create(params)
                             interval(params.fontSize, params.fontSize),
                             {
                                 type = ui.TYPE.Text,
-                                props = {
+                                props = uiUtils.props{
                                     text = l10n("Description")..":",
                                     textSize = config.data.ui.fontSize,
                                     textColor = config.data.ui.defaultColor,

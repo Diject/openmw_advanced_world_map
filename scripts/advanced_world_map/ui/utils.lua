@@ -1,9 +1,7 @@
 local ui = require('openmw.ui')
-local util = require('openmw.util')
 
-local stringLib = require("scripts.advanced_world_map.utils.string")
-
-local config = require("scripts.advanced_world_map.config.config")
+local isPropsAvailable = ui.props ~= nil
+local isExternalAvailable = ui.external ~= nil
 
 local this = {}
 
@@ -128,5 +126,13 @@ function this.removeColorMarkers(text)
     return text:gsub("#%x%x%x%x%x%x", "")
 end
 
+
+function this.props(tb)
+    return isPropsAvailable and ui.props(tb) or tb
+end
+
+function this.external(tb)
+    return isExternalAvailable and ui.external(tb) or tb
+end
 
 return this

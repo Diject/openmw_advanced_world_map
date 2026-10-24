@@ -1,6 +1,8 @@
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
+
 
 local headerTextures = {
     ui.texture{ path = "textures/menu_head_block_top.dds" },
@@ -18,7 +20,7 @@ local headerTextures = {
 local fullHeader = {
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[5],
             tileH = true,
             tileV = true,
@@ -29,7 +31,7 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[1],
             tileH = true,
             tileV = false,
@@ -40,7 +42,7 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[2],
             tileH = false,
             tileV = true,
@@ -52,7 +54,7 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[3],
             tileH = true,
             tileV = false,
@@ -64,7 +66,7 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[4],
             tileH = false,
             tileV = true,
@@ -75,14 +77,14 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[6],
             size = util.vector2(2, 2),
         },
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[7],
             size = util.vector2(2, 2),
             position = util.vector2(-2, 0),
@@ -91,7 +93,7 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[8],
             size = util.vector2(2, 2),
             position = util.vector2(-2, -2),
@@ -100,7 +102,7 @@ local fullHeader = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[9],
             size = util.vector2(2, 2),
             position = util.vector2(0, -2),
@@ -113,7 +115,7 @@ local fullHeader = {
 local rightPart = {
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[2],
             tileH = false,
             tileV = true,
@@ -125,7 +127,7 @@ local rightPart = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[7],
             size = util.vector2(2, 2),
             position = util.vector2(-2, 0),
@@ -134,7 +136,7 @@ local rightPart = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[8],
             size = util.vector2(2, 2),
             position = util.vector2(-2, -2),
@@ -146,7 +148,7 @@ local rightPart = {
 local leftPart = {
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[4],
             tileH = false,
             tileV = true,
@@ -157,14 +159,14 @@ local leftPart = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[6],
             size = util.vector2(2, 2),
         },
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = headerTextures[9],
             size = util.vector2(2, 2),
             position = util.vector2(0, -2),
@@ -202,7 +204,7 @@ local buttonUpTextures = {
 local pinnedBtn = {
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[5],
             tileH = true,
             tileV = true,
@@ -213,7 +215,7 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[1],
             tileH = true,
             tileV = false,
@@ -224,7 +226,7 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[2],
             tileH = false,
             tileV = true,
@@ -236,7 +238,7 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[3],
             tileH = true,
             tileV = false,
@@ -248,7 +250,7 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[4],
             tileH = false,
             tileV = true,
@@ -259,14 +261,14 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[6],
             size = util.vector2(2, 2),
         },
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[7],
             size = util.vector2(2, 2),
             position = util.vector2(-2, 0),
@@ -275,7 +277,7 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[8],
             size = util.vector2(2, 2),
             position = util.vector2(-2, -2),
@@ -284,7 +286,7 @@ local pinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonDownTextures[9],
             size = util.vector2(2, 2),
             position = util.vector2(0, -2),
@@ -296,7 +298,7 @@ local pinnedBtn = {
 local unpinnedBtn = {
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[5],
             tileH = true,
             tileV = true,
@@ -307,7 +309,7 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[1],
             tileH = true,
             tileV = false,
@@ -318,7 +320,7 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[2],
             tileH = false,
             tileV = true,
@@ -330,7 +332,7 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[3],
             tileH = true,
             tileV = false,
@@ -342,7 +344,7 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[4],
             tileH = false,
             tileV = true,
@@ -353,14 +355,14 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[6],
             size = util.vector2(2, 2),
         },
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[7],
             size = util.vector2(2, 2),
             position = util.vector2(-2, 0),
@@ -369,7 +371,7 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[8],
             size = util.vector2(2, 2),
             position = util.vector2(-2, -2),
@@ -378,7 +380,7 @@ local unpinnedBtn = {
     },
     {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = buttonUpTextures[9],
             size = util.vector2(2, 2),
             position = util.vector2(0, -2),

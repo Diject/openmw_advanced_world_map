@@ -3,6 +3,7 @@ local ui = require("openmw.ui")
 
 local config = require("scripts.advanced_world_map.config.config")
 local eventSys = require("scripts.advanced_world_map.eventSys")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local this = {}
 
@@ -199,7 +200,7 @@ end
 function mapElementMeta:restoreLayout()
     local isVisibleChanged = (self._container.props.visible ~= false) ~= (self._params.visible ~= false)
     local elemLayout = self._elemLayout
-    elemLayout.props = {
+    elemLayout.props = uiUtils.props{
         text = self._params.text,
         textSize = self._params.text and (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(self._params.fontSize or 18, self._parent.zoom) or nil,
         textColor = self._params.text and (self._params.color or config.data.ui.defaultColor) or nil,

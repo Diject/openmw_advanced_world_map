@@ -930,7 +930,7 @@ local function createMarker(self, params, onlyInitialize)
     layout = {
         type = params.text and (params.autoHeight and ui.TYPE.TextEdit or ui.TYPE.Text) or ui.TYPE.Image,
         name = markerName,
-        props = {
+        props = uiUtils.props{
             text = params.text,
             textSize = params.text and fontSize and (params.scaleFunc or self.SCALE_FUNCTION.marker)(fontSize, self.zoom),
             autoSize = params.autoHeight and true or nil,
@@ -989,7 +989,7 @@ local function createMarker(self, params, onlyInitialize)
                     content = ui.content{
                         {
                             type = ui.TYPE.Image,
-                            props = {
+                            props = uiUtils.props{
                                 resource = uiUtils.whiteTexture,
                                 color = bgColor,
                                 relativeSize = util.vector2(1, 1),
@@ -1007,7 +1007,7 @@ local function createMarker(self, params, onlyInitialize)
                 template = template,
                 type = ui.TYPE.Container,
                 name = layout.name,
-                props = {
+                props = uiUtils.props{
                     anchor = anchor,
                     relativePosition = relPos,
                     visible = params.visible,
@@ -1332,7 +1332,7 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
             type = ui.TYPE.Image,
             name = tostring(cellId),
             userData = userData,
-            props = {
+            props = uiUtils.props{
                 resource = fogCellTexture,
                 size = szf,
                 color = config.data.ui.backgroundColor,
@@ -1345,7 +1345,7 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
         if texture then
             self:getMapLayout().content:add{
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = texture,
                     size = sz,
                     position = pos,
@@ -1362,7 +1362,7 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
                         type = ui.TYPE.Image,
                         name = tostring(cellId).."_"..tostring(i + j * 4),
                         userData = userData,
-                        props = {
+                        props = uiUtils.props{
                             resource = fogPartTexture,
                             size = sz / 8 * 3,
                             color = config.data.ui.backgroundColor,
@@ -1480,7 +1480,7 @@ local function placeInFog(self, cellId)
                                     scaleFunc = self.SCALE_FUNCTION.linear,
                                     size = fogUnscaledSize,
                                 },
-                                props = {
+                                props = uiUtils.props{
                                     resource = fogPartTexture,
                                     size = fogSize,
                                     color = config.data.ui.backgroundColor,
@@ -1533,7 +1533,7 @@ function mapWidgetMeta:updateFog(positionMasks)
             if texture then
                 self:getMapLayout().content:add{
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         resource = texture,
                         size = userData.size,
                         position = userData.pos,
@@ -1610,7 +1610,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
 
             mapLayout.content:add{
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = texture,
                     size = size,
                     position = startingPos,
@@ -1639,7 +1639,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
 
                         mapLayout.content:add{
                             type = ui.TYPE.Image,
-                            props = {
+                            props = uiUtils.props{
                                 resource = texture,
                                 size = tileSize,
                                 position = pos
@@ -1687,7 +1687,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                     if texture then
                         mapLayout.content:add{
                             type = ui.TYPE.Image,
-                            props = {
+                            props = uiUtils.props{
                                 resource = texture,
                                 size = sz,
                                 position = pos,
@@ -1795,7 +1795,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                         if texture then
                             mapLayout.content:add{
                                 type = ui.TYPE.Image,
-                                props = {
+                                props = uiUtils.props{
                                     resource = texture,
                                     size = sz,
                                     position = pos,
@@ -1822,7 +1822,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 if texture and not dt.preload then
                     mapLayout.content:add{
                         type = ui.TYPE.Image,
-                        props = {
+                        props = uiUtils.props{
                             resource = texture,
                             size = dt.sz,
                             position = dt.pos,
@@ -1898,7 +1898,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
 
     local mapLayout = oldMapLayout or {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             position = util.vector2(0, 0),
             relativeSize = util.vector2(1, 1),
         },
@@ -1910,7 +1910,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
 
         mapLayout.content:add{
             type = ui.TYPE.Image,
-            props = {
+            props = uiUtils.props{
                 resource = texture,
                 relativePosition = util.vector2(self.borderPadding.x / self.displayMapSize.x, self.borderPadding.y / self.displayMapSize.y),
                 relativeSize = util.vector2(self.mapInfo.width / self.displayMapSize.x, self.mapInfo.height / self.displayMapSize.y),
@@ -1920,7 +1920,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
     elseif mapInfo.version == 2 or mapInfo.version == 3 then
         mapLayout.content:add{
             type = ui.TYPE.Image,
-            props = {
+            props = uiUtils.props{
                 resource = uiUtils.whiteTexture,
                 relativePosition = util.vector2(self.borderPadding.x / self.displayMapSize.x, self.borderPadding.y / self.displayMapSize.y),
                 relativeSize = util.vector2(self.mapInfo.width / self.displayMapSize.x, self.mapInfo.height / self.displayMapSize.y),
@@ -1933,7 +1933,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
 
         local layout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 relativePosition = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -1951,7 +1951,7 @@ local function getWorldMapTextureLayout(self, mapInfo, texture, oldMapLayout)
 
             local lay = {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = uiUtils.whiteTexture,
                     color = config.data.ui.defaultTextureColor,
                     anchor = util.vector2(0, 1),
@@ -2068,7 +2068,7 @@ end
 local function getDefaultLayerLayout()
     return {
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             position = util.vector2(0, 0),
             relativeSize = util.vector2(1, 1),
             visible = true,
@@ -2236,7 +2236,7 @@ function mapWidgetMeta:setInActiveMode(active)
         this.playerMarkerMenu = ui.create{
             type = ui.TYPE.Widget,
             layer = commonData.playerMarkerLayer,
-            props = {
+            props = uiUtils.props{
                 position = self.screenPosition,
                 size = self.layout.props.size,
             },
@@ -2379,7 +2379,7 @@ function this.new(params)
 
         mapLayout = {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2463,7 +2463,7 @@ function this.new(params)
         -- for region names
         {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2475,7 +2475,7 @@ function this.new(params)
         -- for city names
         {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2487,7 +2487,7 @@ function this.new(params)
         -- for noninteractive markers
         {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2499,7 +2499,7 @@ function this.new(params)
         -- for transport markers
         {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2511,7 +2511,7 @@ function this.new(params)
         -- player marker
         {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2519,7 +2519,7 @@ function this.new(params)
             content = ui.content {
                 {
                     type = ui.TYPE.Image,
-                    props = {
+                    props = uiUtils.props{
                         relativePosition = meta:getRelativePositionByWorldPosition(playerPos.gexExteriorPos()),
                         resource = playerMarker.getTexture(not meta.cellId and not playerRef.cell.isExterior and northMarker.get(playerRef.cell.id) or
                             meta.northDirectionAngle or 0) or playerMarkerTexture,
@@ -2543,7 +2543,7 @@ function this.new(params)
         -- for interactive markers
         {
             type = ui.TYPE.Widget,
-            props = {
+            props = uiUtils.props{
                 position = util.vector2(0, 0),
                 relativeSize = util.vector2(1, 1),
             },
@@ -2650,7 +2650,7 @@ function this.new(params)
     main = {
         type = ui.TYPE.Widget,
         name = "mapWidget",
-        props = {
+        props = uiUtils.props{
             size = params.size,
             position = util.vector2(0, 0),
             relativePosition = params.relativePosition,
@@ -2768,7 +2768,7 @@ function this.new(params)
         content = ui.content {
             {
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = commonData.whiteTexture,
                     relativeSize = util.vector2(1, 1),
                     color = getMapBackgroundColor(meta),
@@ -2776,7 +2776,7 @@ function this.new(params)
             },
             {
                 type = ui.TYPE.Widget,
-                props = {
+                props = uiUtils.props{
                     position = util.vector2(0, 0),
                     size = meta.displayMapSize,
                 },

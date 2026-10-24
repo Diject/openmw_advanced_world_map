@@ -181,7 +181,7 @@ scrollBoxMeta.updateContent = function (self, strict)
 
     mainFlex.content:add{
         type = ui.TYPE.Widget,
-        props = {}
+        props = uiUtils.props{}
     }
 
     local content = self.params.content
@@ -220,7 +220,7 @@ scrollBoxMeta.updateContent = function (self, strict)
 
     mainFlex.content:add{
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = util.vector2(0, math.max(0, self.params.contentHeight - bottomFreeHeight))
         }
     }
@@ -308,7 +308,7 @@ return function(params)
 
     local flex = {
         type = ui.TYPE.Flex,
-        props = {
+        props = uiUtils.props{
             autoSize = true,
             horizontal = false,
             size = params.size,
@@ -362,7 +362,7 @@ return function(params)
 
     local scroll = {
         type = ui.TYPE.Image,
-        props = {
+        props = uiUtils.props{
             resource = whiteTexture,
             size = util.vector2(config.data.ui.scrollArrowSize, config.data.ui.scrollArrowSize * 3),
             anchor = util.vector2(1, 0),
@@ -418,7 +418,7 @@ return function(params)
     contentData = {
         template = params.withoutBorders ~= true and templates.box or nil,
         type = ui.TYPE.Widget,
-        props = {
+        props = uiUtils.props{
             size = params.size,
             position = params.position,
         },

@@ -7,6 +7,7 @@ local templates = require("scripts.advanced_world_map.ui.templates")
 local configData = require("scripts.advanced_world_map.config.config")
 local consts = require("scripts.advanced_world_map.common")
 local tableLib = require("scripts.advanced_world_map.utils.table")
+local uiUtils = require("scripts.advanced_world_map.ui.utils")
 
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local interval = require("scripts.advanced_world_map.ui.interval")
@@ -125,7 +126,7 @@ return function (params)
         local texture = params.iconTexture or ui.texture{ path = params.icon }
         buttonContent:add{
             type = ui.TYPE.Image,
-            props = {
+            props = uiUtils.props{
                 resource = texture,
                 size = params.iconSize,
                 color = params.iconColor,
@@ -140,7 +141,7 @@ return function (params)
     if params.text then
         buttonContent:add{
             type = ui.TYPE.Text,
-            props = {
+            props = uiUtils.props{
                 text = params.text or "Ok",
                 textSize = params.textSize or 18,
                 multiline = false,
@@ -162,7 +163,7 @@ return function (params)
     local layout
     layout = {
         template = templates.boxSolidThick,
-        props = {
+        props = uiUtils.props{
             propagateEvents = false,
             relativePosition = params.relativePosition,
             position = params.position,
@@ -186,7 +187,7 @@ return function (params)
         content = ui.content {
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     autoSize = params.size and false or true,
                     size = params.size,
                     horizontal = true,
