@@ -86,6 +86,7 @@ this.default = {
     tileset = {
         onlyDiscovered = true, -- fog
         visitedCellsOnWorldMap = false,
+        useLocalTexturesOnWorld = false,
         zoomToShow = 3.5,
     },
     fastTravel = {

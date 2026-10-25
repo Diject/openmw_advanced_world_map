@@ -63,6 +63,11 @@ this.mapInfo = nil
 ---@type string?
 this.mapDir = nil
 
+---@type string?
+this.tilemapDir = nil
+---@type advancedWorldMap.mapImageInfo?
+this.tilemapInfo = nil
+
 ---@type table<string, boolean|any>
 this.localMapTextureCache = {}
 
@@ -214,6 +219,27 @@ function this.init()
 end
 
 
+function this.initTilemap()
+    local dirPath, mapInfo
+    if this.mapDir and vfs.fileExists(this.mapDir..commonData.tilemapSubDir.."mapInfo.yaml") then
+        dirPath = this.mapDir..commonData.tilemapSubDir
+        mapInfo = markup.loadYaml(dirPath.."mapInfo.yaml")
+    elseif config.data.data.altExMapPath and config.data.data.altExMapInfo and
+            vfs.fileExists(config.data.data.altExMapPath..commonData.tilemapSubDir.."mapInfo.yaml") then
+        dirPath = config.data.data.altExMapPath..commonData.tilemapSubDir
+        mapInfo = markup.loadYaml(dirPath.."mapInfo.yaml")
+    end
+
+    if dirPath and mapInfo then
+        this.tilemapDir = dirPath
+        this.tilemapInfo = mapInfo
+    else
+        this.tilemapDir = nil
+        this.tilemapInfo = nil
+    end
+end
+
+
 
 ---@return any texture
 ---@return boolean? wasInCache
@@ -358,15 +384,21 @@ function this.isWorldMapTextureInCache()
 end
 
 
-function this.getWorldMapTextureV2(x, y)
-    if not this.mapDir then return end
+local function getV2TexturePath(mapInfo, dir, x, y)
     local fName = ("(%d,%d).png"):format(x, y)
     local path
-    if this.mapInfo.textures and not this.mapInfo.textures[fName] then
+    if mapInfo.textures and not mapInfo.textures[fName] then
         path = ""
     else
-        path = this.mapDir..fName
+        path = dir..fName
     end
+    return path, fName
+end
+
+
+function this.getWorldMapTextureV2(x, y)
+    if not this.mapDir then return end
+    local path, fName = getV2TexturePath(this.mapInfo, this.mapDir, x, y)
 
     if this.worldTextureCache[fName] then
         return this.worldTextureCache[fName]
@@ -387,13 +419,7 @@ function this.getWorldMapTextureV2_alt(x, y)
     local dataConfig = config.data.data
     if not dataConfig.altExMapPath then return end
 
-    local fName = ("(%d,%d).png"):format(x, y)
-    local path
-    if dataConfig.altExMapInfo.textures and not dataConfig.altExMapInfo.textures[fName] then
-        path = ""
-    else
-        path = dataConfig.altExMapPath..fName
-    end
+    local path, fName = getV2TexturePath(dataConfig.altExMapInfo, dataConfig.altExMapPath, x, y)
 
     local cacheKey = "a"..fName
     if this.worldTextureCache[cacheKey] then
@@ -413,6 +439,44 @@ end
 
 function this.isWorldMapTextureV2InCache(x, y)
     return this.worldTextureCache[string.format("(%d,%d).png", x, y)] ~= nil
+end
+
+
+---@return {s: number, e: number, t: any}[]?
+function this.getTilemapRowTextures(sGrX, eGrX, grY)
+    if not this.tilemapDir or not this.tilemapInfo then return end
+
+    ---@type advancedWorldMap.mapImageInfo
+    local mapInfo = this.tilemapInfo
+    local pixelsPerCell = mapInfo.pixelsPerCell
+    local tileSize = mapInfo.tileSize or (pixelsPerCell * 16)
+    local tileGridSize = tileSize / pixelsPerCell
+    local yTile = math.floor(grY / tileGridSize)
+
+    local res = {}
+    local p = sGrX * pixelsPerCell
+    local ep = (eGrX + 1) * pixelsPerCell
+    local offsetY = tileSize * (1 - (grY % tileGridSize) / tileGridSize)
+    for i = math.floor(sGrX / tileGridSize), math.floor(eGrX / tileGridSize) do
+        local path = getV2TexturePath(this.tilemapInfo, this.tilemapDir, i, yTile)
+
+        if vfs.fileExists(path) then
+            local tL = i * tileSize
+            local tR = tL + tileSize
+            local s = math.max(p, tL)
+            local e = math.min(ep, tR)
+
+            table.insert(res, {
+                s = s / pixelsPerCell,
+                e = e / pixelsPerCell,
+                t = ui.texture{ path = path, offset = util.vector2(s % tileSize, offsetY - pixelsPerCell), size = util.vector2(e - s, pixelsPerCell)}
+            })
+
+            p = e
+        end
+    end
+
+    return res
 end
 
 

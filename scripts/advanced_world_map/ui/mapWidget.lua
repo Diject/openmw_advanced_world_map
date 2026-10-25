@@ -161,6 +161,10 @@ function mapWidgetMeta:getMapLayout()
     return self:getLayerLayout(this.layerId.map)
 end
 
+function mapWidgetMeta:getFogLayout()
+    return self:getLayerLayout(this.layerId.fog)
+end
+
 function mapWidgetMeta:getRegionLayout()
     return self:getLayerLayout(this.layerId.region)
 end
@@ -1660,6 +1664,10 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         local maxGridX = math.ceil(region.right / 8192)
         local minGridY = math.floor(region.bottom / 8192)
         local maxGridY = math.ceil(region.top / 8192)
+        minGridX = math.max(minGridX, math.floor(self.mapInfo.gridX.min))
+        minGridY = math.max(minGridY, math.floor(self.mapInfo.gridY.min))
+        maxGridX = math.min(maxGridX, math.ceil(self.mapInfo.gridX.max))
+        maxGridY = math.min(maxGridY, math.ceil(self.mapInfo.gridY.max))
 
         local mapLayout = self:getMapLayout()
 
@@ -1719,6 +1727,10 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / tileGridSize - 1 or maxGridX / tileGridSize)
                 gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / tileGridSize - 1 or minGridY / tileGridSize)
                 gridTileMaxY = math.ceil(maxGridY < 0 and (maxGridY + 1) / tileGridSize - 1 or maxGridY / tileGridSize)
+                gridTileMinX = math.max(gridTileMinX, math.floor(self.mapInfo.gridX.min / tileGridSize))
+                gridTileMinY = math.max(gridTileMinY, math.floor(self.mapInfo.gridY.min / tileGridSize))
+                gridTileMaxX = math.min(gridTileMaxX, math.ceil(self.mapInfo.gridX.max / tileGridSize))
+                gridTileMaxY = math.min(gridTileMaxY, math.ceil(self.mapInfo.gridY.max / tileGridSize))
 
                 startPos = self:getAbsolutePositionByWorldPosition(
                     util.vector2(tileCoordSize * gridTileMinX, tileCoordSize * gridTileMinY - 8192)
@@ -1745,17 +1757,70 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         end
 
         local isZoomOut = not self:isInZoomInMode()
-        if isZoomOut and not config.data.tileset.visitedCellsOnWorldMap then return end
+        local visitedOnWorld = config.data.tileset.visitedCellsOnWorldMap
+        local onlyDiscovered = config.data.tileset.onlyDiscovered
+        if isZoomOut and not visitedOnWorld then return end
 
 
         local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
         startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
         local tileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
 
-        local mapLayout = self:getMapLayout()
+        local fogLayout = self:getFogLayout()
         local queue = {}
         local partialFog = {}
 
+        -- visited cells on world map by tilemap
+        if isZoomOut and visitedOnWorld and not config.data.tileset.useLocalTexturesOnWorld then
+            for y = minGridY, maxGridY do
+                local sx
+
+                local function placeTextures(textureData)
+                        if not textureData then return end
+                    for _, dt in ipairs(textureData) do
+                        local px = (dt.s - minGridX) * tileFullHeight
+                        local py = (minGridY - y + 1) * tileFullHeight
+                        local w = math.floor(tileFullHeight * (dt.e - dt.s) + px % 1)
+                        local h = math.abs(math.floor(tileFullHeight * y - (tileFullHeight * (y + 1)) + py % 1))
+
+                        fogLayout.content:add{
+                            type = ui.TYPE.Image,
+                            props = uiUtils.props{
+                                resource = dt.t,
+                                size = util.vector2(w, h),
+                                position = startPos + util.vector2(
+                                    math.floor(px),
+                                    math.floor(py)
+                                ),
+                                anchor = util.vector2(0, 1)
+                            }
+                        }
+                    end
+                end
+
+                for x = minGridX, maxGridX do
+                    local cellId = cellLib.getCellIdByGrid(x, y)
+                    local isVisited = discoveredLocs.isVisited(cellId)
+
+                    if isVisited then
+                        sx = sx or x
+                    elseif sx then
+                        local textureData = mapTextureHandler.getTilemapRowTextures(sx, x - 1, y)
+                        placeTextures(textureData)
+                        sx = nil
+                    end
+                end
+
+                if sx ~= nil then
+                    local textureData = mapTextureHandler.getTilemapRowTextures(sx, maxGridX, y)
+                    placeTextures(textureData)
+                end
+            end
+
+            return
+        end
+
+        -- local tiles or visited cells on world map by local textures
         local xP = startPos.x + tileFullHeight * -2
         for x = -1, maxGridX - minGridX do
             local lxP = xP
@@ -1771,8 +1836,8 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 local cellId = cellLib.getCellIdByGrid(grx, gry)
                 local isValidCell = cellId and (mapDataHandler.cellNameById[cellId] or mapDataHandler.validCellsWithoutName[cellId])
                 local isValid = isValidCell and (
-                    not isZoomOut and (not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
-                    isZoomOut and config.data.tileset.visitedCellsOnWorldMap and discoveredLocs.isVisited(cellId)
+                    not isZoomOut and (not onlyDiscovered or discoveredLocs.isDiscovered(cellId)) or
+                    isZoomOut and visitedOnWorld and discoveredLocs.isVisited(cellId)
                 )
 
                 local lyP = yP
@@ -1783,7 +1848,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 local sz = util.vector2(xS, yS)
 
                 local preloadTexture = false
-                if config.data.tileset.onlyDiscovered and not isZoomOut then
+                if onlyDiscovered and not isZoomOut then
                     local cellMaskData = discoveredLocs.getDiscoveredMaskData(cellId)
                     placeExFog(self, cellId, cellMaskData, sz, pos, grx, gry)
                     preloadTexture = cellMaskData == 0
@@ -2278,6 +2343,11 @@ end
 function this.new(params)
 
     this.destroyPlayerMarkerMenu()
+
+    if not params.cellId and config.data.tileset.visitedCellsOnWorldMap and
+            not config.data.tileset.useLocalTexturesOnWorld then
+        mapTextureHandler.initTilemap()
+    end
 
     params.fontSize = params.fontSize or 18
 
