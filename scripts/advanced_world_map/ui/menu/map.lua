@@ -82,34 +82,29 @@ end
 
 local mapBordersThin = auxUi.deepLayoutCopy(borders)
 local mapBordersThick = auxUi.deepLayoutCopy(thickBorders)
-mapBordersThick[1].events = resizerEvents
-mapBordersThick[1].userData = {getMeta = getMeta, left = true}
-mapBordersThick[1].props.cursor = cursors.moveHorizontal
-mapBordersThin[1].events = resizerEvents
-mapBordersThin[1].userData = {getMeta = getMeta, left = true}
-mapBordersThin[1].props.cursor = cursors.moveHorizontal
-mapBordersThick[2].events = resizerEvents
-mapBordersThick[2].userData = {getMeta = getMeta, right = true}
-mapBordersThick[2].props.cursor = cursors.moveHorizontal
-mapBordersThin[2].events = resizerEvents
-mapBordersThin[2].userData = {getMeta = getMeta, right = true}
-mapBordersThin[2].props.cursor = cursors.moveHorizontal
-mapBordersThick[3].events = resizerEvents
-mapBordersThick[3].userData = {getMeta = getMeta, top = true}
-mapBordersThick[3].props.cursor = cursors.moveVertical
-mapBordersThin[3].events = resizerEvents
-mapBordersThin[3].userData = {getMeta = getMeta, top = true}
-mapBordersThin[3].props.cursor = cursors.moveVertical
-mapBordersThick[4].events = resizerEvents
-mapBordersThick[4].userData = {getMeta = getMeta, bottom = true}
-mapBordersThick[4].props.cursor = cursors.moveVertical
-mapBordersThin[4].events = resizerEvents
-mapBordersThin[4].userData = {getMeta = getMeta, bottom = true}
-mapBordersThin[4].props.cursor = cursors.moveVertical
+
+local function setBorderParams(i, userData, cursor)
+    mapBordersThick[i].userData = userData
+    mapBordersThick[i].props.cursor = cursor
+    mapBordersThin[i].userData = userData
+    mapBordersThin[i].props.cursor = cursor
+end
+
+setBorderParams(1, {getMeta = getMeta, left = true}, cursors.moveHorizontal)
+setBorderParams(2, {getMeta = getMeta, right = true}, cursors.moveHorizontal)
+setBorderParams(3, {getMeta = getMeta, top = true}, cursors.moveVertical)
+setBorderParams(4, {getMeta = getMeta, bottom = true}, cursors.moveVertical)
+setBorderParams(5, {getMeta = getMeta, top = true, left = true}, cursors.moveDiagonal45)
+setBorderParams(6, {getMeta = getMeta, top = true, right = true}, cursors.moveDiagonal135)
+setBorderParams(7, {getMeta = getMeta, bottom = true, left = true}, cursors.moveDiagonal135)
+setBorderParams(8, {getMeta = getMeta, bottom = true, right = true}, cursors.moveDiagonal45)
+
 for _, lay in ipairs(mapBordersThin) do
+    lay.events = resizerEvents
     lay.name = tostring(getUniqueId())
 end
 for _, lay in ipairs(mapBordersThick) do
+    lay.events = resizerEvents
     lay.name = tostring(getUniqueId())
 end
 

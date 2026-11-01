@@ -80,13 +80,21 @@ local resizerEvents = {
             meta.defaultMainSize = meta.mainLayout.props.size
         end
 
-        if userData.left or userData.top then
+        local function setPos(xOffset, yOffset)
             local menuPos = meta.menu.layout.props.relativePosition:emul(screenSize)
-            local newMenuPos = util.vector2(menuPos.x - xDif, menuPos.y - yDif)
+            local newMenuPos = util.vector2(menuPos.x - xOffset, menuPos.y - yOffset)
             meta.menu.layout.props.relativePosition = newMenuPos:ediv(screenSize)
             meta.screenPosition = newMenuPos + util.vector2(meta:getWidgetWindowWidth(), meta.headerFullHeight) +
                 util.vector2(meta.borderSize, meta.borderSize)
             meta.mapWidget.screenPosition = meta.screenPosition
+        end
+
+        if (userData.left or userData.top) and not (userData.right or userData.bottom) then
+            setPos(xDif, yDif)
+        elseif userData.bottom and userData.left then
+            setPos(xDif, 0)
+        elseif userData.top and userData.right then
+            setPos(0, yDif)
         end
 
         eventSys.triggerEvent(eventSys.EVENT["onResized"], {

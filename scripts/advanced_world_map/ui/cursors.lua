@@ -29,5 +29,12 @@ this.moveDiagonal45 = isAvailable and ui.cursor{
     rotation = math.pi / 4,
 } or nil
 
+this.moveDiagonal135 = isAvailable and ui.cursor{
+    path = cursorMoveTexturePath,
+    size = util.vector2(32, 32),
+    hotspot = util.vector2(16, 16),
+    rotation = 3 * math.pi / 4,
+} or nil
+
 
 return this
