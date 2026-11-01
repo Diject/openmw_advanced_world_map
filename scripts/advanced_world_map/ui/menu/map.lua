@@ -480,7 +480,7 @@ function menuMeta:updateMapWidgetCell(cellId, skipHistory)
     self:closeQuickMenu()
 
     lay.props.position = util.vector2(self.borderSize + self:getWidgetWindowWidth(), self.borderSize)
-    self.mainLayout.content[1].content[2] = lay
+    self.mainLayout.content[1].content["mapWidget"] = lay
     meta:setLayoutPosition(util.vector2(self:getWidgetWindowWidth() + self.borderSize, self.borderSize))
 
     self.mapWidget = meta
@@ -1516,6 +1516,7 @@ function this.create(params)
                     meta.widgetWindowLayout,
                     {
                         type = ui.TYPE.Widget,
+                        name = "mapWidget",
                     },
                 }
             },
