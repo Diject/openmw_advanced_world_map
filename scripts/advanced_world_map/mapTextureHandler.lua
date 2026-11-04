@@ -442,7 +442,21 @@ function this.isWorldMapTextureV2InCache(x, y)
 end
 
 
----@return {s: number, e: number, t: any}[]?
+---@return number?
+function this.getTilemapTileGridSize()
+    if not this.tilemapDir or not this.tilemapInfo then return end
+
+    ---@type advancedWorldMap.mapImageInfo
+    local mapInfo = this.tilemapInfo
+    local pixelsPerCell = mapInfo.pixelsPerCell
+    local tileSize = mapInfo.tileSize or (pixelsPerCell * 16)
+    local tileGridSize = tileSize / pixelsPerCell
+
+    return tileGridSize
+end
+
+
+---@return {tx: number, ty: number, s: number, e: number, t: any}[]?
 function this.getTilemapRowTextures(sGrX, eGrX, grY)
     if not this.tilemapDir or not this.tilemapInfo then return end
 

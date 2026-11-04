@@ -64,13 +64,15 @@ this.getUniqueId = require("scripts.advanced_world_map.utils.uniqueId")
 ---@class advancedWorldMap.ui.mapWidget.layerId
 this.layerId = {
     map = 1,
-    fog = 2,
-    region = 3,
-    name = 4,
-    nonInteractive = 5,
-    transport = 6,
-    player = 7,
-    marker = 8,
+    mapOverlay = 2,
+    mapLocal = 3,
+    fog = 4,
+    region = 5,
+    name = 6,
+    nonInteractive = 7,
+    transport = 8,
+    player = 9,
+    marker = 10,
 }
 
 
@@ -507,15 +509,16 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
         return
     end
 
+    local isZoomChanged = self._lastOnZoomZoom ~= self.zoom
     local updateOnlyRect = not force and self._lastOnZoomZoomInMode == isInZoomInMode
 
     if isInZoomInMode then
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
-        self:placeGroundTextures(visibleRect, visibleRectOrig, force)
+        self:placeGroundTextures(visibleRect, visibleRectOrig, force or isZoomChanged)
         self:createZoomInMarkers(visibleRect, nil, not updateOnlyRect or force)
     else
         self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
-        self:placeGroundTextures(visibleRect, visibleRectOrig, force)
+        self:placeGroundTextures(visibleRect, visibleRectOrig, force or isZoomChanged)
         self:createZoomOutMarkers(visibleRect, nil, force)
     end
     self._lastOnZoomZoom = self.zoom
@@ -1298,17 +1301,27 @@ function mapWidgetMeta:removeOnZoomMarkers(allowRect)
 end
 
 
-function mapWidgetMeta:removeGroundTextures()
+---@param params {map: boolean?, overlay: boolean?, mlocal:boolean?, fog: boolean?}?
+function mapWidgetMeta:removeGroundTextures(params)
+    params = params or {}
     if self._groundTexturesCoroutine and coroutine.status(self._groundTexturesCoroutine) ~= "dead" then
         self._coroutineCancelFlags[self._groundTexturesCoroutine] = true
         coroutine.resume(self._groundTexturesCoroutine)
         self._groundTexturesCoroutine = nil
     end
 
-    local content = ui.content{self._defaultMapLayoutContent[1]}
-    self:getMapLayout().content = content
+    if params.map ~= false then
+        local content = ui.content{self._defaultMapLayoutContent[1]}
+        self:getMapLayout().content = content
+    end
+    if params.overlay ~= false then
+        self:getLayerLayout(self.LAYER.mapOverlay).content = ui.content{}
+    end
+    if params.mlocal ~= false then
+        self:getLayerLayout(self.LAYER.mapLocal).content = ui.content{}
+    end
 
-    if not self.cellId then
+    if not self.cellId and params.fog ~= false then
         self:getLayerLayout(self.LAYER.fog).content = ui.content{}
     end
 end
@@ -1323,6 +1336,8 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
         return
     end
 
+    local fogLayoutContent = self:getFogLayout().content
+
     local userData = {
         size = sz,
         pos = pos,
@@ -1330,9 +1345,10 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
         gry = gry,
     }
     local padding = util.vector2(math.ceil(sz.x * 0.075), math.ceil(sz.y * 0.075))
+
     if cellMaskData == 0 then
         local szf = sz + padding * 2
-        self:getLayerLayout(self.LAYER.fog).content:add{
+        fogLayoutContent:add{
             type = ui.TYPE.Image,
             name = tostring(cellId),
             userData = userData,
@@ -1344,19 +1360,6 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
                 anchor = util.vector2(0, 1)
             }
         }
-
-        local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
-        if texture then
-            self:getMapLayout().content:add{
-                type = ui.TYPE.Image,
-                props = uiUtils.props{
-                    resource = texture,
-                    size = sz,
-                    position = pos,
-                    anchor = util.vector2(0, 1)
-                }
-            }
-        end
     else
         for i = 0, 3 do
             for j = 0, 3 do
@@ -1377,9 +1380,27 @@ local function placeExFog(self, cellId, maskData, sz, pos, grx, gry, delayed)
                     if delayed then
                         table.insert(delayed, lay)
                     else
-                        self:getLayerLayout(self.LAYER.fog).content:add(lay)
+                        fogLayoutContent:add(lay)
                     end
                 end
+            end
+        end
+
+        local localLayoutConent = self:getLayerLayout(self.LAYER.mapLocal).content
+        local tname = string.format("%d_%d", grx, gry)
+        if not uiUtils.isExistsInContent(localLayoutConent, tname) then
+            local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
+            if texture then
+                localLayoutConent:add{
+                    type = ui.TYPE.Image,
+                    name = tname,
+                    props = uiUtils.props{
+                        resource = texture,
+                        size = sz,
+                        position = pos,
+                        anchor = util.vector2(0, 1)
+                    }
+                }
             end
         end
     end
@@ -1389,7 +1410,7 @@ end
 ---@param self advancedWorldMap.ui.mapWidgetMeta
 local function placeInFog(self, cellId)
     if self._requestForCellStaticsSent and not self.cellStatics then return end
-    local fogContent = self:getLayerLayout(self.LAYER.fog).content
+    local fogContent = self:getFogLayout().content
 
     local minBlockX
     local maxBlockX
@@ -1531,19 +1552,24 @@ function mapWidgetMeta:updateFog(positionMasks)
             local userData = fullBlock.userData
             uiUtils.removeFromContent(fogContent, tostring(cId))
 
-            placeExFog(self, cId, mask, userData.size, userData.pos)
+            placeExFog(self, cId, mask, userData.size, userData.pos, userData.grx, userData.gry)
 
-            local texture = mapTextureHandler.getLocalMapTexture(userData.grx, userData.gry)
-            if texture then
-                self:getMapLayout().content:add{
-                    type = ui.TYPE.Image,
-                    props = uiUtils.props{
-                        resource = texture,
-                        size = userData.size,
-                        position = userData.pos,
-                        anchor = util.vector2(0, 1)
+            local localLayoutConent = self:getLayerLayout(self.LAYER.mapLocal).content
+            local tname = string.format("%d_%d", userData.grx, userData.gry)
+            if not uiUtils.isExistsInContent(localLayoutConent, tname) then
+                local texture = mapTextureHandler.getLocalMapTexture(userData.grx, userData.gry)
+                if texture then
+                    localLayoutConent.content:add{
+                        type = ui.TYPE.Image,
+                        name = tname,
+                        props = uiUtils.props{
+                            resource = texture,
+                            size = userData.size,
+                            position = userData.pos,
+                            anchor = util.vector2(0, 1)
+                        }
                     }
-                }
+                end
             end
         else
             for i = 0, 3 do
@@ -1566,13 +1592,13 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
     end
     self._groundTextureRect = region
 
-    self:removeGroundTextures()
-
     if eventSys.triggerEvent(eventSys.EVENT.onGroundTexturesPlace, {mapWidget = self, region = region}) then
         return
     end
 
     if self.localCellInfo then
+        self:removeGroundTextures()
+
         if self.cellStatics then
             local cellSize = self.mapInfo.cellSize or 8192
             for _, dt in pairs(self.cellStatics) do
@@ -1660,6 +1686,15 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         end
 
     else
+        local isZoomOut = not self:isInZoomInMode()
+
+        self:removeGroundTextures{
+            map = force or false,
+            overlay = force or false,
+            mlocal = force or false,
+            fog = true,
+        }
+
         local minGridX = math.floor(region.left / 8192)
         local maxGridX = math.ceil(region.right / 8192)
         local minGridY = math.floor(region.bottom / 8192)
@@ -1669,60 +1704,88 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         maxGridX = math.min(maxGridX, math.ceil(self.mapInfo.gridX.max))
         maxGridY = math.min(maxGridY, math.ceil(self.mapInfo.gridY.max))
 
+        local basePos = self:getAbsolutePositionByWorldPosition(util.vector2(0, 0))
+        basePos = util.vector2(math.floor(basePos.x), math.floor(basePos.y))
+
         local mapLayout = self:getMapLayout()
+        local overlayLayout = self:getLayerLayout(self.LAYER.mapOverlay)
 
-        local function placeTiles(func, startPos, tileFullHeight, gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY, alpha)
-            -- tileFullHeight = tileFullHeight + (tileFullHeight % 2)
+        ---@param oldRect advancedWorldMap.ui.mapWidget.region
+        ---@param newRect advancedWorldMap.ui.mapWidget.region
+        local function removeTiles(layout, oldRect, newRect)
+            local function remove(x, y)
+                local name = string.format("%d_%d", x, y)
+                uiUtils.removeFromContent(layout.content, name)
+            end
 
-            local xP = startPos.x + tileFullHeight * -2
+            for y = oldRect.bottom, oldRect.top do
+                local l = math.floor(oldRect.left)
+                for x = math.floor(oldRect.left), math.floor(oldRect.right) do
+                    if self.isPointInRegion(newRect, x, y) then
+                        l = x + 1
+                        break
+                    else
+                        remove(x, y)
+                    end
+                end
+                for x = math.floor(oldRect.right), l, -1 do
+                    if self.isPointInRegion(newRect, x, y) then
+                        break
+                    else
+                        remove(x, y)
+                    end
+                end
+            end
+        end
+
+        local function placeTiles(layut, func, tileFullHeight, gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY, alpha)
+
             for x = -1, gridTileMaxX - gridTileMinX do
-                local lxP = xP
-                xP = startPos.x + tileFullHeight * x
-                local xPr = math.floor(xP)
-                local xS = math.ceil(xP) - math.floor(lxP)
-
-                local yP = startPos.y - tileFullHeight * -2
                 for y = -1, gridTileMaxY - gridTileMinY do
-                    local texture = func(gridTileMinX + x, gridTileMinY + y)
+                    local tileX = gridTileMinX + x
+                    local tileY = gridTileMinY + y
+                    local name = string.format("%d_%d", tileX, tileY)
+                    if not uiUtils.isExistsInContent(layut.content, name) then
+                        local texture = func(tileX, tileY)
 
-                    local lyP = yP
-                    yP = startPos.y - tileFullHeight * y
-                    local yPr = math.floor(yP)
-                    local yS = math.ceil(lyP) - math.floor(yP)
-                    local pos = util.vector2(xPr, yPr)
-                    local sz = util.vector2(xS, yS)
+                        if texture then
+                            local px = (tileX) * tileFullHeight
+                            local py = (-tileY) * tileFullHeight
+                            local w = math.floor(tileFullHeight + px % 1)
+                            local h = math.abs(math.floor(tileFullHeight * tileY - (tileFullHeight * (tileY + 1)) + py % 1))
+                            local pos = basePos + util.vector2(math.floor(px), math.floor(py))
+                            local sz = util.vector2(w, h)
 
-                    if texture then
-                        mapLayout.content:add{
-                            type = ui.TYPE.Image,
-                            props = uiUtils.props{
-                                resource = texture,
-                                size = sz,
-                                position = pos,
-                                anchor = util.vector2(0, 1),
-                                alpha = alpha,
+                            layut.content:add{
+                                type = ui.TYPE.Image,
+                                name = string.format("%d_%d", tileX, tileY),
+                                props = uiUtils.props{
+                                    resource = texture,
+                                    size = sz,
+                                    position = pos,
+                                    anchor = util.vector2(0, 1),
+                                    alpha = alpha,
+                                }
                             }
-                        }
+                        end
                     end
                 end
             end
         end
 
 
-        if self.mapInfo and (self.mapInfo.version == 2 or self.mapInfo.version == 3) then
+        local isVersion2or3 = self.mapInfo and (self.mapInfo.version == 2 or self.mapInfo.version == 3)
+        if isVersion2or3 then
             local tileSize
             local tileGridSize
-            local tileCoordSize
             local gridTileMinX
             local gridTileMaxX
             local gridTileMinY
             local gridTileMaxY
-            local startPos
 
             local function calcVars(mapInfo)
                 tileSize = mapInfo.tileSize or (mapInfo.pixelsPerCell * 16)
                 tileGridSize = tileSize / mapInfo.pixelsPerCell
-                tileCoordSize = tileGridSize * 8192
                 gridTileMinX = math.floor(minGridX < 0 and (minGridX + 1) / tileGridSize - 1 or minGridX / tileGridSize)
                 gridTileMaxX = math.ceil(maxGridX < 0 and (maxGridX + 1) / tileGridSize - 1 or maxGridX / tileGridSize)
                 gridTileMinY = math.floor(minGridY < 0 and (minGridY + 1) / tileGridSize - 1 or minGridY / tileGridSize)
@@ -1731,18 +1794,25 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 gridTileMinY = math.max(gridTileMinY, math.floor(self.mapInfo.gridY.min / tileGridSize))
                 gridTileMaxX = math.min(gridTileMaxX, math.ceil(self.mapInfo.gridX.max / tileGridSize))
                 gridTileMaxY = math.min(gridTileMaxY, math.ceil(self.mapInfo.gridY.max / tileGridSize))
-
-                startPos = self:getAbsolutePositionByWorldPosition(
-                    util.vector2(tileCoordSize * gridTileMinX, tileCoordSize * gridTileMinY - 8192)
-                )
-                startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
             end
 
             calcVars(self.mapInfo)
 
             local tileFullHeight = tileSize * self.zoom
+            local oldGridRect = not force and self._groundGridTextureRect or nil
+            ---@type advancedWorldMap.ui.mapWidget.region
+            self._groundGridTextureRect = {
+                left = gridTileMinX - 1,
+                right = gridTileMaxX,
+                bottom = gridTileMinY - 1,
+                top = gridTileMaxY
+            }
 
-            placeTiles(mapTextureHandler.getWorldMapTextureV2, startPos, tileFullHeight,
+            if oldGridRect then
+                removeTiles(mapLayout, oldGridRect, self._groundGridTextureRect)
+            end
+
+            placeTiles(mapLayout, mapTextureHandler.getWorldMapTextureV2, tileFullHeight,
                 gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY)
 
             ---@type advancedWorldMap.mapImageInfo?
@@ -1750,45 +1820,62 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
             if altMapInfo then
                 calcVars(altMapInfo)
                 local tileFullHeight = math.floor(tileSize * self.zoom * self._altTexturePxDiffMul)
+                local oldGridRect = not force and self._groundAltTextureGridRect or nil
+                ---@type advancedWorldMap.ui.mapWidget.region
+                self._groundAltTextureGridRect = {
+                    left = gridTileMinX - 1,
+                    right = gridTileMaxX,
+                    bottom = gridTileMinY - 1,
+                    top = gridTileMaxY
+                }
 
-                placeTiles(mapTextureHandler.getWorldMapTextureV2_alt, startPos, tileFullHeight,
+                if oldGridRect then
+                    removeTiles(overlayLayout, oldGridRect, self._groundGridTextureRect)
+                end
+
+                placeTiles(overlayLayout, mapTextureHandler.getWorldMapTextureV2_alt, tileFullHeight,
                     gridTileMinX, gridTileMaxX, gridTileMinY, gridTileMaxY, config.data.data.altExMapAlpha * 0.01)
             end
         end
 
-        local isZoomOut = not self:isInZoomInMode()
         local visitedOnWorld = config.data.tileset.visitedCellsOnWorldMap
         local onlyDiscovered = config.data.tileset.onlyDiscovered
         if isZoomOut and not visitedOnWorld then return end
 
 
-        local startPos = self:getAbsolutePositionByWorldPosition(util.vector2(8192 * minGridX, 8192 * minGridY))
-        startPos = util.vector2(math.floor(startPos.x), math.floor(startPos.y))
         local tileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
 
-        local fogLayout = self:getFogLayout()
         local queue = {}
-        local partialFog = {}
 
         -- visited cells on world map by tilemap
-        if isZoomOut and visitedOnWorld and not config.data.tileset.useLocalTexturesOnWorld then
+        local tilemapTileSize = mapTextureHandler.getTilemapTileGridSize()
+        if isZoomOut and tilemapTileSize and visitedOnWorld and not config.data.tileset.useLocalTexturesOnWorld then
+            self:removeGroundTextures{
+                map = false,
+                overlay = false,
+                mlocal = true,
+                fog = false,
+            }
+            local localLayout = self:getLayerLayout(self.LAYER.mapLocal)
+
             for y = minGridY, maxGridY do
                 local sx
 
                 local function placeTextures(textureData)
-                        if not textureData then return end
+                    if not textureData then return end
+
                     for _, dt in ipairs(textureData) do
-                        local px = (dt.s - minGridX) * tileFullHeight
-                        local py = (minGridY - y + 1) * tileFullHeight
+                        local px = (dt.s) * tileFullHeight
+                        local py = (-y) * tileFullHeight
                         local w = math.floor(tileFullHeight * (dt.e - dt.s) + px % 1)
                         local h = math.abs(math.floor(tileFullHeight * y - (tileFullHeight * (y + 1)) + py % 1))
 
-                        fogLayout.content:add{
+                        localLayout.content:add{
                             type = ui.TYPE.Image,
                             props = uiUtils.props{
                                 resource = dt.t,
                                 size = util.vector2(w, h),
-                                position = startPos + util.vector2(
+                                position = basePos + util.vector2(
                                     math.floor(px),
                                     math.floor(py)
                                 ),
@@ -1800,14 +1887,17 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
 
                 for x = minGridX, maxGridX do
                     local cellId = cellLib.getCellIdByGrid(x, y)
-                    local isVisited = discoveredLocs.isVisited(cellId)
 
-                    if isVisited then
-                        sx = sx or x
-                    elseif sx then
-                        local textureData = mapTextureHandler.getTilemapRowTextures(sx, x - 1, y)
-                        placeTextures(textureData)
-                        sx = nil
+                    local isValidCell = mapDataHandler.cellNameById[cellId] or mapDataHandler.validCellsWithoutName[cellId]
+                    if isValidCell then
+                        local isVisited = discoveredLocs.isVisited(cellId)
+                        if isVisited then
+                            sx = sx or x
+                        elseif sx then
+                            local textureData = mapTextureHandler.getTilemapRowTextures(sx, x - 1, y)
+                            placeTextures(textureData)
+                            sx = nil
+                        end
                     end
                 end
 
@@ -1821,14 +1911,21 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         end
 
         -- local tiles or visited cells on world map by local textures
-        local xP = startPos.x + tileFullHeight * -2
-        for x = -1, maxGridX - minGridX do
-            local lxP = xP
-            xP = startPos.x + tileFullHeight * x
-            local xPr = math.floor(xP)
-            local xS = xPr - math.floor(lxP) + 1
+        local localLayout = self:getLayerLayout(self.LAYER.mapLocal)
+        local oldLocalRect = not force and self._groundLocalTextureRect or nil
+        ---@type advancedWorldMap.ui.mapWidget.region
+        self._groundLocalTextureRect = {
+            left = minGridX - 1,
+            right = maxGridX,
+            bottom = minGridY,
+            top = maxGridY + 1
+        }
 
-            local yP = startPos.y - tileFullHeight * -2
+        if oldLocalRect then
+            removeTiles(localLayout, oldLocalRect, self._groundLocalTextureRect)
+        end
+
+        for x = -1, maxGridX - minGridX do
             for y = -1, maxGridY - minGridY do
                 local grx = minGridX + x
                 local gry = minGridY + y + 1
@@ -1840,12 +1937,12 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                     isZoomOut and visitedOnWorld and discoveredLocs.isVisited(cellId)
                 )
 
-                local lyP = yP
-                yP = startPos.y - tileFullHeight * y
-                local yPr = math.floor(yP)
-                local yS = math.floor(lyP) - yPr + 1
-                local pos = util.vector2(xPr, yPr)
-                local sz = util.vector2(xS, yS)
+                local px = (grx) * tileFullHeight
+                local py = (-gry + 1) * tileFullHeight
+                local w = math.floor(tileFullHeight + px % 1)
+                local h = math.abs(math.floor(tileFullHeight * gry - (tileFullHeight * (gry + 1)) + py % 1))
+                local pos = basePos + util.vector2(math.floor(px), math.floor(py))
+                local sz = util.vector2(w, h)
 
                 local preloadTexture = false
                 if onlyDiscovered and not isZoomOut then
@@ -1854,12 +1951,14 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                     preloadTexture = cellMaskData == 0
                 end
 
-                if isValid then
+                local name = string.format("%d_%d", grx, gry)
+                if isValid and not uiUtils.isExistsInContent(localLayout.content, name) then
                     if mapTextureHandler.isLocalWorldMapTextureInCache(grx, gry) and not preloadTexture then
                         local texture = mapTextureHandler.getLocalMapTexture(grx, gry)
                         if texture then
-                            mapLayout.content:add{
+                            localLayout.content:add{
                                 type = ui.TYPE.Image,
+                                name = name,
                                 props = uiUtils.props{
                                     resource = texture,
                                     size = sz,
@@ -1869,14 +1968,10 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                             }
                         end
                     else
-                        table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz, preload = preloadTexture})
+                        table.insert(queue, {grx = grx, gry = gry, pos = pos, sz = sz, name = name, preload = preloadTexture})
                     end
                 end
             end
-        end
-
-        for _, lay in ipairs(partialFog) do
-            self:getLayerLayout(self.LAYER.fog).content:add(lay)
         end
 
         local maxTilesPerFrame = isZoomOut and 400 or 6
@@ -1885,8 +1980,9 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
             for i, dt in pairs(queue) do
                 local texture = mapTextureHandler.getLocalMapTexture(dt.grx, dt.gry)
                 if texture and not dt.preload then
-                    mapLayout.content:add{
+                    localLayout.content:add{
                         type = ui.TYPE.Image,
+                        name = dt.name,
                         props = uiUtils.props{
                             resource = texture,
                             size = dt.sz,
@@ -2528,6 +2624,8 @@ function this.new(params)
     end
 
     local mapLayers = {
+        auxui.deepLayoutCopy(mapLayout),
+        auxui.deepLayoutCopy(mapLayout),
         auxui.deepLayoutCopy(mapLayout),
         auxui.deepLayoutCopy(mapLayout),
         -- for region names
