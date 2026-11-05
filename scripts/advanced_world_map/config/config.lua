@@ -62,6 +62,7 @@ this.default = {
         zoomToGroup = 7,
         zoomToName = 4.2,
         onlyDiscovered = true,
+        detailedIcons = true,
         visitedCellsOnWorldMap = false, -- deprecated
         transportOnlyDiscovered = false,
         localMarkerBackground = true,

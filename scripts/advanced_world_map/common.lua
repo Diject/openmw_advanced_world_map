@@ -182,6 +182,8 @@ this.playerMapMarkerPath = "textures/icons/advanced_world_map/playerMapMarker.dd
 this.playerMarkerDir = "textures/icons/advanced_world_map/playerMarker/"
 this.pinIconPath = "textures/icons/advanced_world_map/pinIco.png"
 
+this.doorIconsDir = "textures/icons/advanced_world_map/entrance/"
+
 this.searchWidgetIcon = "textures/icons/advanced_world_map/widget/searchIco.dds"
 this.searchWorldMarkerPath = "textures/icons/advanced_world_map/mapMarker1.png"
 this.noteMarkerPath = "textures/icons/advanced_world_map/featherIco.png"
@@ -219,6 +221,39 @@ this.fastTravelCurrencyTypes = {
     "FTCurrencyGold",
     "FTCurrencyHealth",
     "FTCurrencyFree",
+}
+
+
+this.doorTypeId = {
+    dwemer = 1,
+    daedra = 2,
+    cave = 3,
+    vault = 4,
+    velothi = 5, -- not used
+    faction = 6,
+    pub = 7,
+    shop = 8,
+    tomb = 9,
+    ashlander = 10,
+    ship = 11,
+    fort = 12,
+    mine = 13,
+    alchemyShop = 14,
+    lockpickShop = 15,
+    mageShop = 16,
+    trainerShop = 17,
+    bookShop = 18,
+    ingredientShop = 19,
+    armorShop = 20,
+    clothingShop = 21,
+    weaponShop = 22,
+    repairShop = 23,
+    telvanniHouse = 24,
+    redoranHouse = 25,
+    indorilHouse = 26,
+    dresHouse = 27,
+    hlaaluHouse = 28,
+    dagothHouse = 29,
 }
 
 

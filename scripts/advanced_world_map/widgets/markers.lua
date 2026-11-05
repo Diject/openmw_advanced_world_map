@@ -31,6 +31,41 @@ local l10n = core.l10n(commonData.l10nKey)
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local mapMarker45Texture = ui.texture{ path = commonData.mapMarkerForExPath }
 
+local detailedDoorTextures = {
+    [commonData.doorTypeId.dwemer] = ui.texture{ path = commonData.doorIconsDir.."dwemer.png" },
+    [commonData.doorTypeId.daedra] = ui.texture{ path = commonData.doorIconsDir.."daedric.png" },
+    [commonData.doorTypeId.cave] = ui.texture{ path = commonData.doorIconsDir.."cave.png" },
+    [commonData.doorTypeId.vault] = ui.texture{ path = commonData.doorIconsDir.."vault.png" },
+    [commonData.doorTypeId.velothi] = ui.texture{ path = commonData.doorIconsDir.."velothi.png" },
+    [commonData.doorTypeId.tomb] = ui.texture{ path = commonData.doorIconsDir.."tomb.png" },
+    [commonData.doorTypeId.ashlander] = ui.texture{ path = commonData.doorIconsDir.."ashlander.png" },
+    [commonData.doorTypeId.ship] = ui.texture{ path = commonData.doorIconsDir.."ship.png" },
+    [commonData.doorTypeId.fort] = ui.texture{ path = commonData.doorIconsDir.."fort.png" },
+    [commonData.doorTypeId.mine] = ui.texture{ path = commonData.doorIconsDir.."mine.png" },
+    [commonData.doorTypeId.pub] = ui.texture{ path = commonData.doorIconsDir.."pub.png" },
+    [commonData.doorTypeId.shop] = ui.texture{ path = commonData.doorIconsDir.."shop.png" },
+    [commonData.doorTypeId.alchemyShop] = ui.texture{ path = commonData.doorIconsDir.."alchemy.png" },
+    [commonData.doorTypeId.ingredientShop] = ui.texture{ path = commonData.doorIconsDir.."alchemy.png" },
+    [commonData.doorTypeId.mageShop] = ui.texture{ path = commonData.doorIconsDir.."mage.png" },
+    [commonData.doorTypeId.lockpickShop] = ui.texture{ path = commonData.doorIconsDir.."lockpick.png" },
+    [commonData.doorTypeId.bookShop] = ui.texture{ path = commonData.doorIconsDir.."book.png" },
+    [commonData.doorTypeId.repairShop] = ui.texture{ path = commonData.doorIconsDir.."smith.png" },
+    [commonData.doorTypeId.trainerShop] = ui.texture{ path = commonData.doorIconsDir.."trainer.png" },
+    [commonData.doorTypeId.armorShop] = ui.texture{ path = commonData.doorIconsDir.."armor.png" },
+    [commonData.doorTypeId.weaponShop] = ui.texture{ path = commonData.doorIconsDir.."weapon.png" },
+    [commonData.doorTypeId.clothingShop] = ui.texture{ path = commonData.doorIconsDir.."clothing.png" },
+
+    [commonData.doorTypeId.telvanniHouse] = ui.texture{ path = commonData.doorIconsDir.."telvanni.png" },
+    [commonData.doorTypeId.redoranHouse] = ui.texture{ path = commonData.doorIconsDir.."redoran.png" },
+    [commonData.doorTypeId.indorilHouse] = ui.texture{ path = commonData.doorIconsDir.."indoril.png" },
+    [commonData.doorTypeId.dresHouse] = ui.texture{ path = commonData.doorIconsDir.."dres.png" },
+    [commonData.doorTypeId.hlaaluHouse] = ui.texture{ path = commonData.doorIconsDir.."hlaalu.png" },
+    [commonData.doorTypeId.dagothHouse] = ui.texture{ path = commonData.doorIconsDir.."dagoth.png" },
+    [commonData.doorTypeId.faction] = ui.texture{ path = commonData.doorIconsDir.."faction.png" },
+}
+local detailedDoorTexture = ui.texture{ path = commonData.doorIconsDir.."door.png" }
+local detailedExitTexture = ui.texture{ path = commonData.doorIconsDir.."exit.png" }
+
 
 local this = {}
 
@@ -416,8 +451,11 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local isolatedMarkerMul = 1.75
     local markerFontSize = config.data.legend.markerSize
     local isolatedFontSize = math.floor(markerFontSize * isolatedMarkerMul)
-    local isolatedImageMarkerSize = util.vector2(config.data.legend.markerSize * 1.2, config.data.legend.markerSize * 1.2)
-    local unisolatedImageMarkerSize = util.vector2(config.data.legend.markerSize * 0.65, config.data.legend.markerSize * 0.65)
+    local useDetailedIcons = config.data.legend.detailedIcons
+    local isolatedImageMarkerSize = useDetailedIcons and util.vector2(config.data.legend.markerSize * 1.5, config.data.legend.markerSize * 1.5) or
+        util.vector2(config.data.legend.markerSize * 1.2, config.data.legend.markerSize * 1.2)
+    local unisolatedImageMarkerSize = useDetailedIcons and util.vector2(config.data.legend.markerSize * 1.0, config.data.legend.markerSize * 1.0) or
+        util.vector2(config.data.legend.markerSize * 0.65, config.data.legend.markerSize * 0.65)
 
     local anchorCacheMargin = fontInWorldCoords * 16
     local isAllowedToUseAnchorCache = region and
@@ -997,7 +1035,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
             ---@diagnostic disable-next-line: cast-local-type
             imageMarkerHandler = widget:createImageMarker{
                 id = imId,
-                texture = dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
+                texture = useDetailedIcons and (dt.isDLEx and detailedExitTexture or detailedDoorTextures[dt.tp or 0] or detailedDoorTexture) or
+                    dt.isDLEx and mapMarker45Texture or mapMarkerTexture,
                 color = color,
                 useCache = true,
                 layerId = widget.LAYER.marker,
