@@ -53,6 +53,14 @@ function AdvancedWorldMapMapElement:setPosition(pos) end
 ---@return Vector2|Vector3 pos World position vector
 function AdvancedWorldMapMapElement:getPosition() end
 
+---Sets the offset of the map element in pixels relative to its world position
+---@param offset Vector2 Offset vector in pixels
+function AdvancedWorldMapMapElement:setOffset(offset) end
+
+---Gets the current offset of the map element in pixels relative to its world position
+---@return Vector2? offset Offset vector in pixels
+function AdvancedWorldMapMapElement:getOffset() end
+
 ---Sets the texture resource of the map element.
 ---Only applicable for image elements; returns false if called on text elements.
 ---@param texture TextureResource

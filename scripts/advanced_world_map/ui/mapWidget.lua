@@ -636,26 +636,28 @@ function mapWidgetMeta:updateMarkersScale()
     playerMarkerLayout.content[1].props.resource = playerMarker.getTexture(not self.cellId and not playerRef.cell.isExterior and northMarker.get(playerRef.cell.id) or
         self.northDirectionAngle or 0) or playerMarkerTexture
 
-    local isInZoomInMode = self:isInZoomInMode()
-
     for _, layout in pairs({self:getLayerLayout(this.layerId.nonInteractive), self:getLayerLayout(this.layerId.marker),
             self:getLayerLayout(this.layerId.name), self:getLayerLayout(this.layerId.region), self:getLayerLayout(this.layerId.transport),
             self:getLayerLayout(this.layerId.fog) }) do
 
         for i, elem in ipairs(layout.content) do
-            if elem.userData and elem.userData.autoScale then
+            local userData = elem.userData
+            if userData and userData.autoScale then
 
-                local props = elem.userData.inContainer and elem.content[1].props or elem.props
+                local props = userData.inContainer and elem.content[1].props or elem.props
                 if props.text then
-                    local tSizeVal = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.fontSize, self.zoom)
+                    local tSizeVal = (userData.scaleFunc or self.SCALE_FUNCTION.marker)(userData.fontSize, self.zoom)
                     props.textSize = math.max(1, tSizeVal)
                     if props.size then
-                        props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
+                        props.size = (userData.scaleFunc or self.SCALE_FUNCTION.marker)(userData.size, self.zoom)
                     end
                 elseif props.resource then
-                    props.size = (elem.userData.scaleFunc or self.SCALE_FUNCTION.marker)(elem.userData.size, self.zoom)
+                    props.size = (userData.scaleFunc or self.SCALE_FUNCTION.marker)(userData.size, self.zoom)
                 end
 
+                if userData.offset then
+                    elem.props.position = (userData.scaleFunc or self.SCALE_FUNCTION.marker)(userData.offset, self.zoom)
+                end
             end
         end
     end
@@ -690,6 +692,7 @@ end
 ---@field layerId integer,
 ---@field id string?
 ---@field pos any in the game world
+---@field offset any
 ---@field texture any ui.texture
 ---@field events table?
 ---@field tooltipContent any
@@ -712,6 +715,7 @@ end
 ---@field layerId integer
 ---@field id string?
 ---@field pos any in the game world
+---@field offset any
 ---@field text string
 ---@field events table?
 ---@field tooltipContent any
@@ -845,6 +849,7 @@ local function createMarker(self, params, onlyInitialize)
 
     params.pos = params.pos or util.vector3(0, 0, 0)
     local relPos = self:getRelativePositionByWorldPosition(params.pos)
+    local offset = params.offset and params.offset * self.zoom or nil
 
     local placeOnMap = onlyInitialize == nil or self.cellId ~= nil or
         onlyInitialize == false and self._markerRect and this.isPointInRegion(self._markerRect, params.pos.x, params.pos.y) or false
@@ -943,6 +948,7 @@ local function createMarker(self, params, onlyInitialize)
             autoSize = params.autoHeight and true or nil,
             anchor = anchor,
             relativePosition = relPos,
+            position = offset,
             textColor = params.text and color or nil,
             textShadow = params.text and params.textShadow or nil,
             textShadowColor = params.text and params.shadowColor or nil,
@@ -963,6 +969,7 @@ local function createMarker(self, params, onlyInitialize)
             autoScale = true,
             fontSize = params.text and fontSize,
             size = size,
+            offset = params.offset,
             params = params,
             events = events,
             userData = params.userData,
@@ -970,7 +977,6 @@ local function createMarker(self, params, onlyInitialize)
             pressed = {},
             movedDistance = 0,
             inContainer = (params.template or params.text and params.textBackground) and true or nil,
-            onMouseWheel = isLayerInteractive and self.mouseWheelEvent or nil,
             _events = not self.inActiveMode and layoutEvents or nil,
         },
         events = self.inActiveMode and layoutEvents or nil,
@@ -980,6 +986,7 @@ local function createMarker(self, params, onlyInitialize)
     if layout.userData.inContainer then
         layout.props.anchor = nil
         layout.props.relativePosition = nil
+        layout.props.position = nil
         layout.props.alpha = nil
         layout.props.visible = nil
         local ev = layout.events
@@ -1017,6 +1024,7 @@ local function createMarker(self, params, onlyInitialize)
                 props = uiUtils.props{
                     anchor = anchor,
                     relativePosition = relPos,
+                    position = offset,
                     visible = params.visible,
                     alpha = alpha,
                 },

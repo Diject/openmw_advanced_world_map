@@ -93,6 +93,16 @@ function mapElementMeta:getPosition()
     return self._params.pos
 end
 
+function mapElementMeta:setOffset(offset)
+    self._params.offset = offset
+    self._elemLayout.userData.offset = offset
+    self._container.props.position = (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(offset, self._parent.zoom)
+end
+
+function mapElementMeta:getOffset()
+    return self._params.offset
+end
+
 function mapElementMeta:setTexture(texture)
     if self._elemLayout.type ~= ui.TYPE.Image then
         return false
@@ -129,6 +139,10 @@ function mapElementMeta:updateLayout(data)
     containerProps.anchor = data.anchor or containerProps.anchor
     if data.pos then
         containerProps.relativePosition = self._parent:getRelativePositionByWorldPosition(data.pos)
+    end
+    if data.offset then
+        containerProps.position = data.offset * self._parent.zoom
+        self._elemLayout.userData.offset = data.offset
     end
     if data.color then
         props.textColor = props.text and data.color or nil
@@ -175,6 +189,10 @@ function mapElementMeta:updateParams(data)
     self._params.fontSize = data.fontSize or self._params.fontSize
     self._params.anchor = data.anchor or self._params.anchor
     self._params.pos = data.pos or self._params.pos
+    if data.offset then
+        self._params.offset = data.offset
+        self._elemLayout.userData.offset = data.offset
+    end
     self._params.color = data.color or self._params.color
     if data.textShadow ~= nil then
         self._params.textShadow = data.textShadow
@@ -222,10 +240,13 @@ function mapElementMeta:restoreLayout()
     elemLayout.userData.autoScale = true
     elemLayout.userData.fontSize = self._params.text and (self._params.fontSize or 18) or nil
     elemLayout.userData.size = self._params.size
+    elemLayout.userData.offset = self._params.offset
 
     local containerProps = self._container.props
     containerProps.anchor = self._params.anchor or util.vector2(0.5, 0.5)
     containerProps.relativePosition = self._parent:getRelativePositionByWorldPosition(self._params.pos)
+    containerProps.position = elemLayout.userData.offset and
+        (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(elemLayout.userData.offset, self._parent.zoom) or nil
     containerProps.alpha = self._params.alpha or 1
     containerProps.visible = self._params.visible
 
