@@ -1604,6 +1604,8 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         return
     end
 
+    local cellTileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
+
     if self.localCellInfo then
         self:removeGroundTextures()
 
@@ -1643,7 +1645,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 ),
                 true
             )
-            local side = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+            local side = util.round(cellTileFullHeight)
             local size = util.vector2(self.localCellInfo.wT * side, self.localCellInfo.hT * side)
 
             mapLayout.content:add{
@@ -1666,7 +1668,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                 ),
                 true
             )
-            local tileHeight = util.round(self.mapInfo.pixelsPerCell * self.zoom)
+            local tileHeight = util.round(cellTileFullHeight)
             local tileSize = util.vector2(tileHeight, tileHeight)
             for y = 1, self.localCellInfo.height do
                 for x = 1, self.localCellInfo.width do
@@ -1758,7 +1760,7 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
 
                         if texture then
                             local px = (tileX) * tileFullHeight
-                            local py = (-tileY) * tileFullHeight
+                            local py = (-tileY) * tileFullHeight + cellTileFullHeight
                             local w = math.floor(tileFullHeight + px % 1)
                             local h = math.abs(math.floor(tileFullHeight * tileY - (tileFullHeight * (tileY + 1)) + py % 1))
                             local pos = basePos + util.vector2(math.floor(px), math.floor(py))
@@ -1850,9 +1852,6 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         local onlyDiscovered = config.data.tileset.onlyDiscovered
         if isZoomOut and not visitedOnWorld then return end
 
-
-        local tileFullHeight = self.mapInfo.pixelsPerCell * self.zoom
-
         local queue = {}
 
         -- visited cells on world map by tilemap
@@ -1873,10 +1872,10 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                     if not textureData then return end
 
                     for _, dt in ipairs(textureData) do
-                        local px = (dt.s) * tileFullHeight
-                        local py = (-y) * tileFullHeight
-                        local w = math.floor(tileFullHeight * (dt.e - dt.s) + px % 1)
-                        local h = math.abs(math.floor(tileFullHeight * y - (tileFullHeight * (y + 1)) + py % 1))
+                        local px = (dt.s) * cellTileFullHeight
+                        local py = (-y + 1) * cellTileFullHeight
+                        local w = math.floor(cellTileFullHeight * (dt.e - dt.s) + px % 1)
+                        local h = math.abs(math.floor(cellTileFullHeight * y - (cellTileFullHeight * (y + 1)) + py % 1))
 
                         localLayout.content:add{
                             type = ui.TYPE.Image,
@@ -1945,10 +1944,10 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
                     isZoomOut and visitedOnWorld and discoveredLocs.isVisited(cellId)
                 )
 
-                local px = (grx) * tileFullHeight
-                local py = (-gry + 1) * tileFullHeight
-                local w = math.floor(tileFullHeight + px % 1)
-                local h = math.abs(math.floor(tileFullHeight * gry - (tileFullHeight * (gry + 1)) + py % 1))
+                local px = (grx) * cellTileFullHeight
+                local py = (-gry + 1) * cellTileFullHeight
+                local w = math.floor(cellTileFullHeight + px % 1)
+                local h = math.abs(math.floor(cellTileFullHeight * gry - (cellTileFullHeight * (gry + 1)) + py % 1))
                 local pos = basePos + util.vector2(math.floor(px), math.floor(py))
                 local sz = util.vector2(w, h)
 
