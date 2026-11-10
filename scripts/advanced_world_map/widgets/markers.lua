@@ -28,6 +28,8 @@ local interval = require("scripts.advanced_world_map.ui.interval")
 
 local l10n = core.l10n(commonData.l10nKey)
 
+local vector05 = util.vector2(0.5, 0.5)
+
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local mapMarker45Texture = ui.texture{ path = commonData.mapMarkerForExPath }
 
@@ -262,7 +264,7 @@ local function createWorldMarkers(widget)
             id = id,
             layerId = widget.LAYER.name,
             text = dt.name,
-            anchor = util.vector2(0.5, 0.5),
+            anchor = vector05,
             pos = util.vector2(dt.posX, dt.posY),
             color = isVisited and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
             textShadow = config.data.legend.worldMarkerShadow and true or nil,
@@ -293,7 +295,7 @@ local function createWorldMarkers(widget)
         widget:createTextMarker{
             layerId = widget.LAYER.region,
             text = info.name,
-            anchor = util.vector2(0.5, 0.5),
+            anchor = vector05,
             pos = util.vector2(info.posX, info.posY),
             color = discoveredLocs.isVisited(info.name) and config.data.ui.worldDefaultLightColor or config.data.ui.worldDefaultColor,
             fontSize = fontSize,
@@ -313,6 +315,10 @@ local function createWorldMarkers(widget)
 end
 
 
+local function getPopulationMapId(x, y)
+    return x * 65536 + y
+end
+
 ---@return {c: table, cnt: number, bb: table}[]
 local function gridClustering(grid)
     local clusters = {}
@@ -324,7 +330,7 @@ local function gridClustering(grid)
 
         for x = dt.x - 1, dt.x + 1 do
             for y = dt.y - 1, dt.y + 1 do
-                local nKey = string.format("%d_%d", x, y)
+                local nKey = getPopulationMapId(x, y)
                 if not checked[nKey] then
                     local nDt = grid[nKey]
                     checked[nKey] = true
@@ -378,35 +384,84 @@ local function getWorldMarkerColor(cellId, destCellId, pos)
 end
 
 
+local markerEvents = {
+    mouseRelease = function (e, layout, pressed, marker)
+        if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
+
+        if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = marker}) then
+            return
+        end
+
+        local userData = marker:getUserData()
+        local dt = userData.dt
+        local isDoorDiscovered = discoveredLocs.isPositionDiscovered(dt.cId, dt.pos)
+
+        this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
+        if this.activeMenuMeta.mapWidget and dt.dPos then
+            local mapWidget = this.activeMenuMeta.mapWidget
+            mapWidget:focusOnWorldPosition(dt.dPos)
+            mapWidget:updateMarkers(true)
+
+            if isDoorDiscovered then
+                local tempDiscovery = discoveredLocs.getSetDiscoveryInfoForPosition(dt.dCId, dt.isDEx, dt.dPos)
+                if tempDiscovery then
+                    mapWidget:updateFog(tempDiscovery)
+                    mapWidget:update()
+                end
+            end
+        end
+
+        eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = marker})
+        this.activeMenuMeta:update()
+    end,
+
+    mouseMove = function(e, layout, marker)
+        if not tooltip.isExists(layout) then
+            local tooltipContent = ui.content{}
+            if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = marker}) then
+                return
+            end
+
+            if #tooltipContent > 0 then
+                local newTooltipContent = ui.content{}
+                for i = 1, #tooltipContent - 1 do
+                    local item = tooltipContent[i]
+                    newTooltipContent:add(item)
+                    newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
+                end
+                newTooltipContent:add(tooltipContent[#tooltipContent])
+
+                layout.userData.tooltipContent = newTooltipContent
+                tooltip.createOrMove(e, layout, newTooltipContent)
+            else
+                layout.userData.tooltipContent = nil
+            end
+        elseif tooltip.createOrMove(e, layout) then
+            eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
+                marker = marker,
+                content = layout.userData.tooltipContent,
+                tooltip = tooltip.get(layout)
+            })
+        end
+    end,
+}
+
+
 local entranceAnchors = {
-    util.vector2(0.5, -0.5),
-    util.vector2(0, 0.5),
-    util.vector2(1, 0.5),
-    util.vector2(0.5, 1.5),
-    util.vector2(0.25, 2),
-    util.vector2(0.75, 2),
-    util.vector2(0.25, -1),
-    util.vector2(0.75, -1),
+    { util.vector2(0.5, 0), util.vector2(0, 0.5) },
+    { util.vector2(0, 0.5), util.vector2(0.5, 0) },
+    { util.vector2(1, 0.5), util.vector2(-0.5, 0) },
+    { util.vector2(0.5, 1), util.vector2(0, -0.5) },
 
-    util.vector2(0.5, -1.5),
-    util.vector2(0, 1.5),
-    util.vector2(1, 1.5),
-    util.vector2(0.5, 2.5),
+    { util.vector2(0.1, 1.5), util.vector2(0, -0.5) },
+    { util.vector2(0.9, 1.5), util.vector2(0, -0.5) },
+    { util.vector2(0.1, -0.5), util.vector2(0, 0.5) },
+    { util.vector2(0.9, -0.5), util.vector2(0, 0.5) },
 
-    util.vector2(0.5, -2.5),
-    util.vector2(0, 2.5),
-    util.vector2(1, 2.5),
-    util.vector2(0.5, 3.5),
-
-    util.vector2(-0.25, 2),
-    util.vector2(1.25, 2),
-    util.vector2(-0.25, -1),
-    util.vector2(1.25, -1),
-
-    util.vector2(-0.25, 3),
-    util.vector2(1.25, 3),
-    util.vector2(-0.25, -2),
-    util.vector2(1.25, -2),
+    { util.vector2(0.25, 2.5), util.vector2(0, -0.5) },
+    { util.vector2(0.75, 2.5), util.vector2(0, -0.5) },
+    { util.vector2(0.25, -1.5), util.vector2(0, 0.5) },
+    { util.vector2(0.75, -1.5), util.vector2(0, 0.5) },
 }
 
 ---@type advancedWorldMap.ui.mapWidget.region
@@ -443,19 +498,31 @@ local function createMarkers(widget, cellId, allowedCells, region)
         bestAnchorCacheZoom = widgetZoom
     end
 
+    local function getWorldMarkerSize(size, zoom)
+        return widget.SCALE_FUNCTION.marker(size, zoom) * 8192 /
+            (widget.mapInfo.pixelsPerCell * zoom * (isExterior and 1 or widget.eScale))
+    end
+
     local targetZoom = allowedCells and widgetZoom or 30 / widget.eScale
-    local fontInWorldCoords = widget.SCALE_FUNCTION.marker(config.data.legend.markerSize, targetZoom) * 8192 /
-        (widget.mapInfo.pixelsPerCell * targetZoom * widget.eScale)
+    local fontInWorldCoords = getWorldMarkerSize(config.data.legend.markerSize, targetZoom)
     local charHeight = fontInWorldCoords
-    local lineHeight = cellId and charHeight / 10 or charHeight / 3
+    local lineHeight = charHeight
     local isolatedMarkerMul = 1.75
     local markerFontSize = config.data.legend.markerSize
     local isolatedFontSize = math.floor(markerFontSize * isolatedMarkerMul)
+    local isolatedFontInWorldCoords = getWorldMarkerSize(isolatedFontSize, targetZoom)
     local useDetailedIcons = config.data.legend.detailedIcons
-    local isolatedImageMarkerSize = useDetailedIcons and util.vector2(config.data.legend.markerSize * 1.5, config.data.legend.markerSize * 1.5) or
-        util.vector2(config.data.legend.markerSize * 1.2, config.data.legend.markerSize * 1.2)
-    local unisolatedImageMarkerSize = useDetailedIcons and util.vector2(config.data.legend.markerSize * 1.0, config.data.legend.markerSize * 1.0) or
-        util.vector2(config.data.legend.markerSize * 0.65, config.data.legend.markerSize * 0.65)
+    local isolatedImageMarkerSizeVal = useDetailedIcons and config.data.legend.markerSize * 1.5 or config.data.legend.markerSize * 1.2
+    local isolatedImageMarkerWorldSizeVal = getWorldMarkerSize(isolatedImageMarkerSizeVal, targetZoom)
+    local isolatedImageMarkerSize = util.vector2(isolatedImageMarkerSizeVal, isolatedImageMarkerSizeVal)
+    local unisolatedImageMarkerSizeVal = useDetailedIcons and config.data.legend.markerSize * 1 or config.data.legend.markerSize * 0.65
+    local unisolatedImageMarkerWorldSizeVal = getWorldMarkerSize(unisolatedImageMarkerSizeVal, targetZoom)
+    local unisolatedImageMarkerSize = util.vector2(unisolatedImageMarkerSizeVal, unisolatedImageMarkerSizeVal)
+
+    local offsetMul = unisolatedImageMarkerSizeVal
+    local offsetWorldMul = getWorldMarkerSize(offsetMul, targetZoom)
+    local offsetMulIsolated = isolatedImageMarkerSizeVal
+    local offsetWorldMulIsolated = getWorldMarkerSize(offsetMulIsolated, targetZoom)
 
     local anchorCacheMargin = fontInWorldCoords * 16
     local isAllowedToUseAnchorCache = region and
@@ -491,13 +558,13 @@ local function createMarkers(widget, cellId, allowedCells, region)
         entrancesData[cellId] = entranceData
     end
 
-    local nameGroups = {}
-    for _, lst in pairs(entrancesData) do
-        for _, dt in pairs(lst) do
-            nameGroups[dt.name] = nameGroups[dt.name] or {}
-            table.insert(nameGroups[dt.name], dt)
-        end
-    end
+    -- local nameGroups = {}
+    -- for _, lst in pairs(entrancesData) do
+    --     for _, dt in pairs(lst) do
+    --         nameGroups[dt.name] = nameGroups[dt.name] or {}
+    --         table.insert(nameGroups[dt.name], dt)
+    --     end
+    -- end
 
     ---@type table<any, {dt: any, entries: any[], textMarker: advancedWorldMap.ui.mapElementMeta?}>
     local dataForTextMarkers = {}
@@ -517,8 +584,6 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     ---@type table<integer, {dt: any, mInfo: any, line: integer, notParent: boolean?}[]>
     local entranceByLine = {}
-
-    local populationMap = {}
 
     -- group entrances by their parent hash and assign them to lines based on their y position
     for h, listDt in pairs(markersByParentHash) do
@@ -547,19 +612,66 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local prefixNames
     local lastCreatedMarkerByName = {}
 
+    ---@type {[1]: number, [2]: number, [3]: number, [4]: number, [5]: advancedWorldMap.ui.mapElementMeta?}[][]
+    local occupationIntervals = {}
+    ---@type table<string, advancedWorldMap.ui.mapElementMeta>
+    local activeTextMarkers = {}
+
+    local function addOccupiedRegion(interv)
+        local line0Id = math.floor(interv[3] / lineHeight)
+        local line1Id = math.ceil(interv[4] / lineHeight)
+        for i = line0Id, line1Id do
+            occupationIntervals[i] = occupationIntervals[i] or {}
+            table.insert(occupationIntervals[i], interv)
+        end
+    end
+
+    local function removeMarkerOccupation(interv)
+        local mrk = interv[5]
+        if not mrk then return end
+        local line0Id = math.floor(interv[3] / lineHeight)
+        local line1Id = math.ceil(interv[4] / lineHeight)
+        for i = line0Id, line1Id do
+            local line = occupationIntervals[i]
+            if line then
+                for j = #line, 1, -1 do
+                    local compared = line[j][5]
+                    if compared and compared._id == mrk._id then
+                        table.remove(line, j)
+                    end
+                end
+            end
+        end
+    end
+
+    local function getNewOccupationInterval(marker, pos, anchor, width, height, offset, offMul)
+        local px, py = pos.x, pos.y
+        if offset then
+            px = px + offset.x * offMul
+            py = py - offset.y * offMul
+        end
+        local baseYPos = py + anchor.y * height
+        local s = px - anchor.x * width
+        local e = px + (1 - anchor.x) * width
+        local ys = baseYPos - height
+        local ye = baseYPos
+
+        return {s, e, ys, ye, marker}
+    end
+
     -- create a grid of occupied intervals for each line based on the entrances' positions and sizes
     do
-        ---@type {[1] : number, [2] : number}[][]
-        local occupationIntervals = {}
         local ungrouped = {}
 
         -- create a population map to group entrances by their grid positions
         local eps = doGroup and 6 * fontInWorldCoords * config.data.ui.textHeightMul or 6144
         if isExterior then
+            local populationMap = {}
+
             for _, lst in pairs(entrancesData) do
                 for _, dt in pairs(lst) do
                     local x, y = math.floor(dt.pos.x / eps), math.floor(dt.pos.y / eps)
-                    local posId = string.format("%d_%d", x, y)
+                    local posId = getPopulationMapId(x, y)
                     populationMap[posId] = populationMap[posId] or {x = x, y = y, m = {}}
                     table.insert(populationMap[posId].m, dt)
                 end
@@ -579,37 +691,13 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
         end
 
-        -- create occupation intervals for each line based on the entrances' positions and sizes
-        for cId, lst in pairs(entrancesData) do
-            for _, dt in pairs(lst) do
-                local size = charHeight * 0.25
-                local imgS = dt.pos.x - size
-                local imgE = dt.pos.x + size
-                local line0Id = math.floor((dt.pos.y - size) / lineHeight)
-                local line1Id = math.ceil((dt.pos.y + size) / lineHeight)
-                for i = line0Id, line1Id do
-                    occupationIntervals[i] = occupationIntervals[i] or {}
-                    table.insert(occupationIntervals[i], {imgS, imgE})
-                end
-            end
-        end
-
         -- if grouping is enabled, create occupation intervals for the clusters and group them by name if doGroupToName
         if doGroup and groupClusters then
-            local function addOccupiedRegion(sx, ex, sy, ey)
-                local line0Id = math.floor(sy / lineHeight)
-                local line1Id = math.ceil(ey / lineHeight)
-                for i = line0Id, line1Id do
-                    occupationIntervals[i] = occupationIntervals[i] or {}
-                    table.insert(occupationIntervals[i], {sx, ex})
-                end
-            end
-
             prefixNames = {}
             for _, clusterDt in pairs(groupClusters) do
                 if not doGroupToName then
-                    addOccupiedRegion(clusterDt.bb.x.x - fontInWorldCoords * 5, clusterDt.bb.y.x + fontInWorldCoords * 5,
-                        clusterDt.bb.x.y, clusterDt.bb.y.y)
+                    addOccupiedRegion{clusterDt.bb.x.x - fontInWorldCoords * 5, clusterDt.bb.y.x + fontInWorldCoords * 5,
+                        clusterDt.bb.x.y, clusterDt.bb.y.y}
                 else
                     for _, dt in pairs(clusterDt.c) do
                         if dt.pN then
@@ -630,47 +718,12 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     prDt.nLen = namelen
                     local center = bb.center
                     local hLen = math.ceil(namelen * 0.5)
-                    addOccupiedRegion(center.x - fontInWorldCoords * hLen, center.x + fontInWorldCoords * hLen,
-                        center.y - fontInWorldCoords, center.y + fontInWorldCoords)
+                    addOccupiedRegion{center.x - fontInWorldCoords * hLen, center.x + fontInWorldCoords * hLen,
+                        center.y - fontInWorldCoords, center.y + fontInWorldCoords}
                 end
             end
         end
 
-        -- calculate the overlap of a text marker with existing occupation intervals based on its anchor position and size
-        local function getAnchorOverlap(anchor, linePosData, textWidth, textHeight)
-            textHeight = textHeight or charHeight
-            local pos = linePosData.pos
-            local baseYPos = pos.y + anchor.y * textHeight
-            local line0Id = math.floor((baseYPos - textHeight) / lineHeight)
-            local line1Id = math.ceil((baseYPos) / lineHeight)
-            local s = pos.x - anchor.x * textWidth
-            local e = pos.x + (1 - anchor.x) * textWidth
-            if anchor.x == 0 then s = s + textHeight end
-            if anchor.x == 1 then e = e - textHeight end
-
-            local overlap = 0
-            local collusions = {}
-            for i = line0Id, line1Id do
-                local intervals = occupationIntervals[i]
-                if intervals then
-                    for _, interv in ipairs(intervals) do
-                        local os = math.max(s, interv[1])
-                        local oe = math.min(e, interv[2])
-                        if os < oe then
-                            overlap = overlap + (oe - os)
-                            if interv[3] then
-                                table.insert(collusions, interv[3])
-                            end
-                        end
-                    end
-                end
-            end
-
-            return overlap, line0Id, line1Id, s, e, collusions
-        end
-
-        ---@type table<advancedWorldMap.ui.mapElementMeta, table<advancedWorldMap.ui.mapElementMeta, boolean>>
-        local markerCollusions = {}
 
         local function processLineElem(data)
             local dt = data.dt
@@ -684,7 +737,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local isTileDiscovered = cellId ~= nil or not config.data.tileset.onlyDiscovered or discoveredLocs.isDiscovered(dt.cId)
             local isTileDiscoveredStateEqual = textMarkerHandler and isTileDiscovered == textMarkerHandler:getUserData().isTileDiscovered or false
 
-            local text = "  "..dt.name.."  "
+            local text = " "..dt.name.." "
 
             if textMarkerHandler then
                 textMarkerHandler:setVisibility(textMarkerHandler:getVisibility())
@@ -696,60 +749,15 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     text == textMarkerHandler._params.text then
                 mInfo.textMarker = textMarkerHandler
                 lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
+                -- local userData = textMarkerHandler:getUserData()
+                -- local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
+                -- local textWidth = userData.textWidth * textHeight
+                -- local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
+                -- local oInterval = getNewOccupationInterval(textMarkerHandler, dt.pos, userData.anchor, textWidth,
+                --     textHeight, userData.offset, offsetWMul)
+                -- addOccupiedRegion(oInterval)
+                -- userData.occupation = oInterval
                 return
-            end
-
-            local textAnchor = entranceAnchors[1]
-            local textWidth = charHeight * stringLib.length(dt.name) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
-            local textHeight = charHeight * (isIsolated and isolatedMarkerMul or 1)
-
-            local bestAnchorData
-            local lockAnchor = false
-            local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(dt.pos)
-
-            -- if we can use the cache and have a cached anchor for this textId, use it; otherwise, find the best anchor by checking overlaps with existing markers
-            if canUseCache and bestAnchorCache[textId] then
-                bestAnchorData = {
-                    bestAnchorCache[textId],
-                    getAnchorOverlap(bestAnchorCache[textId], dt, textWidth, textHeight),
-                }
-            else
-                if not isExterior or not textMarkerHandler or not widget.isPointInRegion(lastExRect, dt.pos.x, dt.pos.y) then
-                    for k, anchor in ipairs(entranceAnchors) do
-                        local d = {
-                            anchor,
-                            getAnchorOverlap(anchor, dt, textWidth, textHeight),
-                        }
-                        if not bestAnchorData then
-                            bestAnchorData = d
-                        end
-
-                        if d[2] == 0 then
-                            bestAnchorData = d
-                            break
-                        elseif d[2] < bestAnchorData[2] then
-                            bestAnchorData = d
-                        end
-                    end
-                else
-                    local anchor = textMarkerHandler._params.anchor or util.vector2(0, 0)
-                    bestAnchorData = {
-                        anchor,
-                        getAnchorOverlap(anchor, dt, textWidth, textHeight),
-                    }
-                    lockAnchor = true
-                end
-
-                if canUseCache and not lockAnchor then
-                    bestAnchorCache[textId] = bestAnchorData[1]
-                end
-            end
-            textAnchor = bestAnchorData[1]
-
-            -- if the best anchor has at least 2 collusions, shorten the text to fit within the available space
-            if not lockAnchor and #bestAnchorData[7] >= 2 then
-                text = stringLib.utf8_sub(text, 2, 14)..((stringLib.length(text) - 2) > 14 and "..." or "")
-                textWidth = charHeight * (stringLib.length(text) - 2) * 0.6 * (isIsolated and isolatedMarkerMul or 1)
             end
 
             local cId = dt.dCId
@@ -790,16 +798,20 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local alpha = config.data.legend.alpha.entrance * 0.01
             local userData = textMarkerHandler and textMarkerHandler:getUserData()
 
+            local textAnchor = entranceAnchors[1][1]
+            local textOffset = entranceAnchors[1][2]
+            local worldFontSize = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
+            local textWidth = userData and userData.textWidth or stringLib.length(dt.name) * 0.7
+            local textWHeight = worldFontSize
+            local offsWorldMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
+
             -- if the text marker already exists and has the same grouping and clustering settings,and the tile discovery state is the same,
             -- update its anchor lock status; otherwise, create a new text marker with the appropriate parameters
             local doNextStep = false
             if userData and userData.grouped == (doGroup and not doGroupToName) and
                     userData.clustered == doGroupToName and isTileDiscoveredStateEqual then
-                userData.anchorLocked = lockAnchor
                 local params = textMarkerHandler._params ---@diagnostic disable-line: need-check-nil
-                local anchor = params.anchor or util.vector2(0, 0)
                 doNextStep = params.text == text and
-                    anchor.x == textAnchor.x and anchor.y == textAnchor.y and
                     params.alpha == alpha and
                     params.fontSize == fontSize and
                     params.visible == isCellDiscovered and
@@ -807,9 +819,12 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
 
             if not doNextStep then
+                local offsMul = isIsolated and offsetMulIsolated or offsetMul
+
                 -- if the text marker already exists, update its userData; otherwise, create a new userData
                 userData = userData or {
                     type = commonData.doorDescrMarkerType,
+                    pos = dt.pos,
                     cellId = dt.dCId,
                     hash = dt.dHash,
                     searchText = stringLib.utf8_lower(dt.name),
@@ -820,10 +835,11 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     linkedImageMarkers = {},
                 }
                 userData.anchor = textAnchor
-                userData.anchorLocked = lockAnchor
+                userData.offset = textOffset
+                userData.offsetMul = offsMul
                 userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
                 userData.textWidth = textWidth
-                userData.textHeight = textHeight
+                -- userData.textHeight = textHeight
                 userData.isTileDiscovered = isTileDiscovered
                 userData.isIsolated = isIsolated
 
@@ -836,6 +852,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     text = text,
                     alpha = alpha,
                     anchor = textAnchor,
+                    offset = textOffset and textOffset * offsMul or nil,
                     fontSize = fontSize,
                     pos = dt.pos,
                     color = color,
@@ -876,12 +893,12 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
             mInfo.textMarker = textMarkerHandler
             lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
-            for k = bestAnchorData[3], bestAnchorData[4] do
-                occupationIntervals[k] = occupationIntervals[k] or {}
-                table.insert(occupationIntervals[k], {bestAnchorData[5], bestAnchorData[6], textMarkerHandler})
-                if next(bestAnchorData[7]) then
-                    markerCollusions[textMarkerHandler] = bestAnchorData[7]
-                end
+
+            if isIsolated or not doGroup or ungrouped[dt] then
+                local oInterval = getNewOccupationInterval(textMarkerHandler, dt.pos, textAnchor, textWidth, textWHeight, textOffset, offsWorldMul)
+                addOccupiedRegion(oInterval)
+                textMarkerHandler:getUserData().occupation = oInterval
+                activeTextMarkers[textMarkerHandler._id] = textMarkerHandler
             end
         end
 
@@ -891,88 +908,6 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 processLineElem(data)
             end
         end
-
-        ---@param markerHandler advancedWorldMap.ui.mapElementMeta
-        ---@param collusions advancedWorldMap.ui.mapElementMeta[]
-        local function resolveCollusions(markerHandler, collusions)
-            local isMainLocked = markerHandler:getUserData().anchorLocked
-
-            local function getBounds(marker, anchor)
-                local pos = marker._params.pos
-                local textWidth = marker:getUserData().textWidth
-                local textHeight = marker:getUserData().textHeight
-                local baseYPos = pos.y + anchor.y * textHeight
-                local minY = baseYPos - textHeight
-                local maxY = baseYPos
-                local minX = pos.x - anchor.x * textWidth
-                local maxX = pos.x + (1 - anchor.x) * textWidth
-                if anchor.x == 0 then minX = minX + textHeight end
-                if anchor.x == 1 then maxX = maxX - textHeight end
-                return minX, maxX, minY, maxY
-            end
-
-            local function getOverlapArea(minX1, maxX1, minY1, maxY1, minX2, maxX2, minY2, maxY2)
-                local left = math.max(minX1, minX2)
-                local right = math.min(maxX1, maxX2)
-                local bottom = math.max(minY1, minY2)
-                local top = math.min(maxY1, maxY2)
-                if left < right and bottom < top then
-                    return (right - left) * (top - bottom)
-                end
-                return 0
-            end
-
-            for _, colMarker in pairs(collusions) do
-                local isColludedLocked = colMarker:getUserData().anchorLocked
-                local cont = isColludedLocked and isMainLocked
-
-                if not cont then
-
-                    local minX1, maxX1, minY1, maxY1 = getBounds(markerHandler, markerHandler._params.anchor)
-                    local minX2, maxX2, minY2, maxY2 = getBounds(colMarker, colMarker._params.anchor)
-
-                    local currentArea = getOverlapArea(minX1, maxX1, minY1, maxY1, minX2, maxX2, minY2, maxY2)
-                    local bestArea = currentArea
-                    if currentArea > 0 then
-                        local bestAnchor1 = markerHandler._params.anchor
-                        local bestAnchor2 = colMarker._params.anchor
-
-                        for _, a1 in ipairs(entranceAnchors) do
-                            local mAnchor = isMainLocked and bestAnchor1 or a1
-                            local nx1, nx2, ny1, ny2 = getBounds(markerHandler, mAnchor)
-                            for _, a2 in ipairs(entranceAnchors) do
-                                local colAnchor = isColludedLocked and bestAnchor2 or a2
-                                local nox1, nox2, noy1, noy2 = getBounds(colMarker, colAnchor)
-                                local area = getOverlapArea(nx1, nx2, ny1, ny2, nox1, nox2, noy1, noy2)
-                                if area < bestArea then
-                                    bestArea = area
-                                    bestAnchor1 = mAnchor
-                                    bestAnchor2 = colAnchor
-                                    if bestArea == 0 then break end
-                                end
-                                if isColludedLocked then break end
-                            end
-                            if bestArea == 0 or isMainLocked then break end
-                        end
-
-                        markerHandler._params.anchor = bestAnchor1
-                        markerHandler._container.props.anchor = bestAnchor1
-
-                        colMarker._params.anchor = bestAnchor2
-                        colMarker._container.props.anchor = bestAnchor2
-                    end
-
-                end
-            end
-        end
-
-        -- if grouping is not enabled, resolve collusions for each marker and its associated collusions
-        if not doGroup then
-            for marker, collusions in pairs(markerCollusions) do
-                resolveCollusions(marker, collusions)
-            end
-        end
-
     end
 
     -- create image markers for each entrance
@@ -987,6 +922,11 @@ local function createMarkers(widget, cellId, allowedCells, region)
         -- if the image marker already exists and has the same tile discovery state, update its alpha; otherwise, create a new image marker
         if imageMarkerHandler and isTileDiscoveredStateEqual then
             imageMarkerHandler:setAlpha(imageMarkerHandler:getAlpha())
+
+            local isIsolated = imageMarkerHandler:getUserData().isIsolated
+            local markerSize = isIsolated and isolatedImageMarkerWorldSizeVal or unisolatedImageMarkerWorldSizeVal
+            local oInt = getNewOccupationInterval(imageMarkerHandler, dt.pos, vector05, markerSize, markerSize)
+            addOccupiedRegion(oInt)
         else
 
             local mInfo = dataForTextMarkers[dt]
@@ -1016,6 +956,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
             local userData = imageMarkerHandler and imageMarkerHandler:getUserData() or {
                 type = commonData.doorMarkerType,
+                dt = dt,
                 cellId = dt.dCId,
                 hash = dt.dHash,
                 searchText = stringLib.utf8_lower(dt.name),
@@ -1024,6 +965,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 name = dt.name,
                 fullName = dt.fName,
                 sPref = doGroupToName and dt.ppN or nil,
+                isIsolated = isIsolated,
                 selectable = isIsolated or not doGroupToName
             }
 
@@ -1041,70 +983,14 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 useCache = true,
                 layerId = widget.LAYER.marker,
                 alpha = config.data.legend.alpha.entrance * 0.01,
-                anchor = util.vector2(0.5, 0.5),
+                anchor = vector05,
                 size = markerSize,
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 update = true,
                 visible = isCellDiscovered,
                 userData = userData,
-                events = {
-                    mouseRelease = function (e, layout, pressed)
-                        if e.button ~= 1 or not pressed or not this.activeMenuMeta then return end
-                        if eventSys.triggerEvent(eventSys.EVENT.onMarkerClick, {marker = imageMarkerHandler}) then
-                            return
-                        end
-                        local isDoorDiscovered = discoveredLocs.isPositionDiscovered(dt.cId, dt.pos)
-
-                        this.activeMenuMeta:updateMapWidgetCell(dt.dCId)
-                        if this.activeMenuMeta.mapWidget and dt.dPos then
-                            local mapWidget = this.activeMenuMeta.mapWidget
-                            mapWidget:focusOnWorldPosition(dt.dPos)
-                            mapWidget:updateMarkers(true)
-
-                            if isDoorDiscovered then
-                                local tempDiscovery = discoveredLocs.getSetDiscoveryInfoForPosition(dt.dCId, dt.isDEx, dt.dPos)
-                                if tempDiscovery then
-                                    mapWidget:updateFog(tempDiscovery)
-                                    mapWidget:update()
-                                end
-                            end
-                        end
-
-                        eventSys.triggerEvent(eventSys.EVENT.onMarkerClicked, {marker = imageMarkerHandler})
-                        this.activeMenuMeta:update()
-                    end,
-
-                    mouseMove = function(e, layout)
-                        if not tooltip.isExists(layout) then
-                            local tooltipContent = ui.content{}
-                            if eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShow, {content = tooltipContent, marker = imageMarkerHandler}) then
-                                return
-                            end
-
-                            if #tooltipContent > 0 then
-                                local newTooltipContent = ui.content{}
-                                for i = 1, #tooltipContent - 1 do
-                                    local item = tooltipContent[i]
-                                    newTooltipContent:add(item)
-                                    newTooltipContent:add(interval(0, config.data.ui.fontSize / 3))
-                                end
-                                newTooltipContent:add(tooltipContent[#tooltipContent])
-
-                                layout.userData.tooltipContent = newTooltipContent
-                                tooltip.createOrMove(e, layout, newTooltipContent)
-                            else
-                                layout.userData.tooltipContent = nil
-                            end
-                        elseif tooltip.createOrMove(e, layout) then
-                            eventSys.triggerEvent(eventSys.EVENT.onMarkerTooltipShowed, {
-                                marker = imageMarkerHandler,
-                                content = layout.userData.tooltipContent,
-                                tooltip = tooltip.get(layout)
-                            })
-                        end
-                    end,
-                },
+                events = markerEvents,
             }
 
             if imageMarkerHandler then
@@ -1123,6 +1009,9 @@ local function createMarkers(widget, cellId, allowedCells, region)
                         userData.linkedImageMarkers[imageMarkerHandler._id] = imageMarkerHandler
                     end
                 end
+
+                local mSize = isIsolated and isolatedImageMarkerWorldSizeVal or unisolatedImageMarkerWorldSizeVal
+                addOccupiedRegion(getNewOccupationInterval(imageMarkerHandler, dt.pos, vector05, mSize, mSize))
             end
         end
     end
@@ -1151,6 +1040,132 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 h._container.props.alpha = defaultAlpha * 0.5
             end
         end
+    end
+
+
+    -- calculate the overlap of a text marker with existing occupation intervals based on its anchor position and size
+    local function getAnchorOverlap(parent, pos, anchor, textWidth, textHeight, offset, offWorldMul)
+        textHeight = textHeight or charHeight
+        local px, py = pos.x, pos.y
+        if offset then
+            px = px + offset.x * offWorldMul
+            py = py - offset.y * offWorldMul
+        end
+        local baseYPos = py + anchor.y * textHeight
+        local line0Id = math.floor((baseYPos - textHeight) / lineHeight)
+        local line1Id = math.ceil((baseYPos) / lineHeight)
+        local s = px - anchor.x * textWidth
+        local e = px + (1 - anchor.x) * textWidth
+        local ys = baseYPos - textHeight
+        local ye = baseYPos
+
+        local overlap = 0
+        local collusions = {}
+        local checked = {}
+        for i = line0Id, line1Id do
+            local intervals = occupationIntervals[i]
+            if intervals then
+                for _, interv in ipairs(intervals) do
+                    if not checked[interv] then
+                        local os = math.max(s, interv[1])
+                        local oe = math.min(e, interv[2])
+                        local oys = math.max(ys, interv[3])
+                        local oye = math.min(ye, interv[4])
+                        if os < oe and oys < oye then
+                            local marker = interv[5]
+                            if marker ~= parent then
+                                overlap = overlap + (oe - os) * (oye - oys)
+                                if marker and activeTextMarkers[marker._id] then
+                                    collusions[marker._id] = marker
+                                end
+                            end
+                        end
+                        checked[interv] = true
+                    end
+                end
+            end
+        end
+
+        return overlap, {s, e, ys, ye, parent}, collusions
+    end
+
+    -- get the best anchor position for a text marker based on its overlap with existing occupation intervals
+    local function getBestAnchor(marker, useCache)
+        if useCache then
+            local dt = bestAnchorCache[marker._id]
+            if dt then
+                return table.unpack(dt)
+            end
+        end
+
+        local bestOverlap = math.huge
+        local bestCollusions
+        local bestInterval
+        local bestAnchor = entranceAnchors[1][1]
+        local bestOffset = entranceAnchors[1][2]
+        local userData = marker:getUserData()
+        local isIsolated = userData.isIsolated
+        local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
+        local textWidth = userData.textWidth * textHeight
+        local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
+        for k, anchorData in ipairs(entranceAnchors) do
+            local anchor = anchorData[1]
+            local offset = anchorData[2]
+            local overlap, interv, col = getAnchorOverlap(marker, userData.pos, anchor, textWidth, textHeight, offset, offsetWMul)
+
+            if overlap < bestOverlap then
+                bestAnchor = anchor
+                bestOffset = offset
+                bestOverlap = overlap
+                bestCollusions = col
+                bestInterval = interv
+                if overlap <= 0 then
+                    break
+                end
+            end
+        end
+
+        return bestAnchor, bestOffset, bestInterval, bestCollusions
+    end
+
+    -- setup the optimal anchor position for a text marker based on its overlap with existing occupation intervals and return the collusions
+    local function initializeOptimalMarkerAnchor(marker)
+        local userData = marker:getUserData()
+        local isIsolated = userData.isIsolated
+        local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
+        local textWidth = userData.textWidth * textHeight
+        local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
+        -- important: .occupation can be cached!!!
+        removeMarkerOccupation(userData.occupation or getNewOccupationInterval(marker, userData.pos, userData.anchor, textWidth,
+            textHeight, userData.offset, offsetWMul))
+
+        local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(userData.pos)
+        local bestAnchorData = {getBestAnchor(marker, canUseCache)}
+        bestAnchorCache[marker._id] = bestAnchorData
+
+        local anchor, offset, oInterval, col = bestAnchorData[1], bestAnchorData[2], bestAnchorData[3], bestAnchorData[4]
+
+        marker:setAnchor(anchor)
+        marker:setOffset(offset and offset * (userData.offsetMul or 1))
+        userData.anchor = anchor
+        userData.offset = offset
+        userData.occupation = oInterval
+
+        addOccupiedRegion(oInterval)
+
+        return col
+    end
+
+    ---@type table<string, advancedWorldMap.ui.mapElementMeta>
+    local collusions = {}
+
+    -- initialize the optimal anchor position for each active text marker
+    for mId, marker in pairs(activeTextMarkers) do
+        local col = initializeOptimalMarkerAnchor(marker)
+        tableLib.copy(col, collusions)
+    end
+    for mId, marker in pairs(collusions) do
+        initializeOptimalMarkerAnchor(marker)
     end
 
 
@@ -1321,7 +1336,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 update = true,
                 layerId = widget.LAYER.name,
                 text = dt.name,
-                anchor = util.vector2(0.5, 0.5),
+                anchor = vector05,
                 pos = dt.pos,
                 color = color,
                 textBackground = config.data.legend.localMarkerBackground,
@@ -1422,6 +1437,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                             anchor = qAnchor,
                             pos = center + util.vector2((i % columns) * columnWidth * posMulX, (math.floor(i / columns)) *
                                 newFontWorldSize * posMulY),
+                            offset = marker:getOffset() and util.vector2(0, 0) or nil,
                             fontSize = newFontSize,
                             alpha = marker:getAlpha(),
                             text = stringLib.utf8_sub(marker._params.text, 2, textMaxLength) ..
@@ -1488,15 +1504,17 @@ eventSys.registerHandler(eventSys.EVENT.onZoomMarkersUpdated, updateMarkers, 100
 
 
 eventSys.registerHandler(eventSys.EVENT.onZoomed, function (e)
-    if not e.mapWidget.cellId and not e.mapWidget.isRegionEqual(e.mapWidget.onZoomMarkersRect, lastExRect) then
-        updateMarkers({mapWidget = e.mapWidget, region = e.mapWidget.onZoomMarkersRect})
+    if not e.mapWidget.cellId and (not e.mapWidget.isRegionEqual(e.mapWidget.onZoomMarkersRect, lastExRect)
+            or e.zoom ~= lastExZoom) then
+        updateMarkers({mapWidget = e.mapWidget, region = e.mapWidget.onZoomMarkersRect, updateOccupation = true})
     end
 end)
 
 
 eventSys.registerHandler("onMapShown", function (e)
-    if not e.mapWidget.cellId and not e.mapWidget.isRegionEqual(e.mapWidget.onZoomMarkersRect, lastExRect) then
-        updateMarkers({mapWidget = e.mapWidget, region = e.mapWidget.onZoomMarkersRect})
+    if not e.mapWidget.cellId and (not e.mapWidget.isRegionEqual(e.mapWidget.onZoomMarkersRect, lastExRect)
+            or e.mapWidget.zoom ~= lastExZoom) then
+        updateMarkers({mapWidget = e.mapWidget, region = e.mapWidget.onZoomMarkersRect, updateOccupation = true})
     end
 end)
 
