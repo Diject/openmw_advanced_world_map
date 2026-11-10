@@ -48,7 +48,7 @@ scrollBoxMeta.scrollDown = function(self, val)
     local pos = fl.props.position
     if not pos then return end
 
-    fl.props.position = util.vector2(self.params.leftOffset, pos.y - val)
+    fl.props.position = util.vector2(self.params.leftOffset, math.max(-self.maxPositiveShift, pos.y - val))
 
     self:updateScrollPosition()
 
@@ -72,7 +72,11 @@ scrollBoxMeta.getScrollPosition = function(self)
 end
 
 ---@param height number
-scrollBoxMeta.setScrollPosition = function(self, height)
+scrollBoxMeta.setScrollPosition = function(self, height, limit)
+    if limit then
+        height = math.max(-self.maxPositiveShift, math.min(self.params.maxNegativeShift, -height))
+        height = -height
+    end
     self:moveScrollPanel(height)
     self:updateScrollPosition()
 
@@ -151,6 +155,7 @@ end
 ---@param value number
 scrollBoxMeta.setContentHeight = function (self, value)
     self.params.contentHeight = value
+    self.maxPositiveShift = math.max(0, math.floor(value - self.innnerSize.y * 0.25))
     self:updateScrollBarVisibility()
     self:updateScrollPosition()
 end
@@ -160,6 +165,7 @@ scrollBoxMeta.calcContentHeight = function (self)
     local mainFlex = self:getMainFlex()
     local height = uiUtils.getContentHeight(self.params.content)
     self.params.contentHeight = height
+    self.maxPositiveShift = math.max(0, math.floor(height - self.innnerSize.y * 0.25))
     self:updateScrollBarVisibility()
     self:updateScrollPosition()
 end
@@ -305,6 +311,7 @@ return function(params)
 
     if not params.leftOffset then params.leftOffset = 2 end
     params.maxNegativeShift = params.maxNegativeShift or (config.data.ui.scrollArrowSize * 4)
+    meta.maxPositiveShift = math.floor((params.contentHeight or 0) - params.size.y * 0.25)
 
     local flex = {
         type = ui.TYPE.Flex,
@@ -446,7 +453,6 @@ return function(params)
             inFocus = false,
             onMouseWheel = function (vertical)
                 if not contentData.userData.inFocus then return end
-
                 if vertical > 0 then
                     meta:scrollUp(config.data.ui.mouseScrollAmount * vertical)
                 elseif vertical < 0 then
@@ -465,9 +471,10 @@ return function(params)
         anchor = util.vector2(1, 0),
         icon = iconUp,
         iconSize = util.vector2(config.data.ui.scrollArrowSize, config.data.ui.scrollArrowSize),
-        alpha = 0.8,
+        alpha = 0.7,
         visible = not params.hideScrollBtns,
         parentScrollBoxUserData = contentData.userData,
+        useDefaultBtnTemplate = true,
         updateFunc = params.updateFunc,
         event = function (layout)
             if not lockEvent then
@@ -488,9 +495,10 @@ return function(params)
         anchor = util.vector2(1, 1),
         icon = iconDown,
         iconSize = util.vector2(config.data.ui.scrollArrowSize, config.data.ui.scrollArrowSize),
-        alpha = 0.8,
+        alpha = 0.7,
         visible = not params.hideScrollBtns,
         parentScrollBoxUserData = contentData.userData,
+        useDefaultBtnTemplate = true,
         updateFunc = params.updateFunc,
         event = function (layout)
             if not lockEvent then

@@ -578,6 +578,7 @@ local function create(menu)
             scrollAmount = config.data.ui.fontSize * 3,
             content = scrollBoxContent,
             autoOptimize = true,
+            hideScrollBtns = true,
         }
 
         ---@type advancedWorldMap.ui.scrollBox

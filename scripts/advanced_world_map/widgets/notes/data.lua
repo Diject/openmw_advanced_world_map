@@ -245,6 +245,24 @@ function this.getIterator()
 end
 
 
+---@return string[]
+function this.getCharacterNames()
+    local dataTable = getDataTable()
+    if not dataTable then return {} end
+
+    local names = {}
+    for cellId, cellData in pairs(dataTable) do
+        for id, markerData in pairs(cellData) do
+            if markerData.plName then
+                names[markerData.plName] = true
+            end
+        end
+    end
+
+    return tableLib.keys(names)
+end
+
+
 ---@param dt advancedWorldMap.widget.notes.data.markerData
 ---@return string
 function this.getPosText(dt)

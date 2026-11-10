@@ -13,6 +13,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
+local contextMenu = require("scripts.advanced_world_map.ui.contextMenu")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -89,6 +90,7 @@ local function menuOpened(menu)
         -- Widget close event
         onClose = function (menu)
             iconLayout.props.color = config.data.ui.defaultColor
+            contextMenu.destroy()
         end,
     }
 end

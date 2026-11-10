@@ -13,6 +13,7 @@ local playerPos = require("scripts.advanced_world_map.playerPosition")
 
 local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local stringLib = require("scripts.advanced_world_map.utils.string")
+local tableLib = require("scripts.advanced_world_map.utils.table")
 
 local widgetData = require("scripts.advanced_world_map.widgets.notes.data")
 local editorMenu = require("scripts.advanced_world_map.widgets.notes.editorMenu")
@@ -22,8 +23,10 @@ local l10n = core.l10n(commonData.l10nKey)
 local scrollBox = require("scripts.advanced_world_map.ui.scrollBox")
 local borders = require("scripts.advanced_world_map.ui.borders")
 local button = require("scripts.advanced_world_map.ui.button")
-local interval = require('scripts.advanced_world_map.ui.interval')
+local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
+local selector = require("scripts.advanced_world_map.ui.selector")
+local contextMenu = require("scripts.advanced_world_map.ui.contextMenu")
 
 local thinLineTexture = ui.texture{ path = "textures/menu_thin_border_top.dds" }
 local defaultMarkerTexture = ui.texture{ path = commonData.noteMarkerPath }
@@ -52,10 +55,10 @@ end
 ---@param menu AdvancedWorldMap.Menu.Map
 ---@param sb advancedWorldMap.ui.scrollBox
 ---@param filter string
-local function fill(menu, sb, filter)
+local function fill(menu, sb, filter, targetName)
     sb:clearContent()
 
-    local playerName = NPC.record(playerRef.recordId).name or ""
+    targetName = targetName or NPC.record(playerRef.recordId).name or ""
 
     local sbSize = sb:getSize()
     sbSize = util.vector2(sbSize.x - 4, sbSize.y)
@@ -100,7 +103,7 @@ local function fill(menu, sb, filter)
         }
 
         local posText = widgetData.getPosText(dt)
-        if dt.plName ~= playerName then
+        if dt.plName ~= targetName then
             posText = ""..dt.plName..", "..posText
         end
         local posTextHeight = uiUtils.getTextHeight(posText, config.data.ui.fontSize * 0.9, sbSize.x - config.data.ui.fontSize,
@@ -293,9 +296,9 @@ local function fill(menu, sb, filter)
     local noteData = {}
 
     for cellId, _, dt in widgetData.getIterator() do
-        local cont =  not config.data.notes.listForAllCharacters and (not dt.plName or dt.plName ~= playerName)
+        local valid =  config.data.notes.listForAllCharacters or (dt.plName and dt.plName == targetName)
 
-        if not cont then
+        if valid then
             local tags = ""
             local isEx = false
 
@@ -359,6 +362,7 @@ function  this.create(menu, content)
         scrollAmount = config.data.ui.fontSize * 2,
         content = scrollBoxContent,
         autoOptimize = true,
+        hideScrollBtns = true,
     }
 
     ---@type advancedWorldMap.ui.scrollBox
@@ -367,20 +371,78 @@ function  this.create(menu, content)
     local textFilter = ":here:"
     local inputText = ":here:"
 
-    fill(menu, scrollBoxMeta, textFilter)
+    ---@type advancedWorldMap.ui.horizontalSelector
+    local selectorMeta
+    local playerName = NPC.record(playerRef.recordId).name or ""
+    ---@type string?
+    local targetName = not config.data.notes.listForAllCharacters and playerName or playerName
 
-    local allNotesCB = checkBox{
-        updateFunc = menu.update,
-        text = l10n("ListAllCharactersNotes"),
-        textSize = config.data.ui.fontSize * 0.9,
-        anchor = util.vector2(0, 0.5),
-        position = util.vector2(4, config.data.ui.fontSize * 1),
-        checked = config.data.notes.listForAllCharacters,
-        event = function (checked, layout)
-            config.setValue("notes.listForAllCharacters", checked)
-            fill(menu, scrollBoxMeta, textFilter)
-        end
+    fill(menu, scrollBoxMeta, textFilter, targetName)
+
+    ---@type questGuider.ui.contextMenu.create.params.element[]
+    local contextMenuBtns = {
+        {type = 2, text = l10n("ListAllCharactersNotes"), callback = function (data, layout)
+            config.setValue("notes.listForAllCharacters", true)
+            selectorMeta:setText(1, l10n("ListAllCharactersNotes"))
+            contextMenu.destroy()
+            targetName = nil
+            fill(menu, scrollBoxMeta, textFilter, targetName)
+        end},
+        {type = 0},
+        {type = 2, text = l10n("YourNotes"), callback = function (data, layout)
+            config.setValue("notes.listForAllCharacters", false)
+            selectorMeta:setText(1, l10n("YourNotes"))
+            contextMenu.destroy()
+            targetName = nil
+            fill(menu, scrollBoxMeta, textFilter, targetName)
+        end},
     }
+
+    ---@param tb questGuider.ui.contextMenu.create.params.element[]
+    local function fillContextMenuBtns(tb)
+        local separatorAdded = false
+        local names = widgetData.getCharacterNames()
+        table.sort(names)
+        for _, name in ipairs(names) do
+            if name ~= playerName then
+                if not separatorAdded then
+                    table.insert(tb, {type = 0})
+                    separatorAdded = true
+                end
+                table.insert(tb, {type = 2, text = name, callback = function (data, layout)
+                    config.setValue("notes.listForAllCharacters", false)
+                    selectorMeta:setText(1, name)
+                    contextMenu.destroy()
+                    targetName = name
+                    fill(menu, scrollBoxMeta, textFilter, targetName)
+                end})
+            end
+        end
+    end
+
+    local characterSelectorButtons = {
+        {
+            text = config.data.notes.listForAllCharacters and l10n("ListAllCharactersNotes") or l10n("YourNotes"),
+            checked = true,
+            onClick = function (layout, e)
+                local btns = tableLib.copy(contextMenuBtns)
+                fillContextMenuBtns(btns)
+                contextMenu.create{
+                    position = e.position,
+                    fontSize = config.data.ui.fontSize,
+                    elements = btns,
+                }
+            end
+        },
+    }
+
+
+    local characterSelector = selector{
+        size = util.vector2(size.x, config.data.ui.fontSize * 2),
+        update = menu.update,
+        buttons = characterSelectorButtons,
+    }
+    selectorMeta = characterSelector.userData.meta
 
     local searchBarLayout
     searchBarLayout = {
@@ -426,7 +488,7 @@ function  this.create(menu, content)
                 anchor = util.vector2(1, 0.5),
                 position = util.vector2(size.x - 2, searchBarFontSize / 2 + 3),
                 event = function (layout)
-                    fill(menu, scrollBoxMeta, textFilter)
+                    fill(menu, scrollBoxMeta, textFilter, targetName)
                     menu:update()
                 end
             },
@@ -465,7 +527,7 @@ function  this.create(menu, content)
                         menu.mapWidget:updateMarkers()
                     end
                     widgetData.saveData()
-                    fill(menu, scrollBoxMeta, textFilter)
+                    fill(menu, scrollBoxMeta, textFilter, targetName)
                     menu.mapWidget:updateMarkers()
                     menu:update()
                 end
@@ -504,7 +566,7 @@ function  this.create(menu, content)
                             size = util.vector2(size.x, config.data.ui.fontSize * 2),
                         },
                         content = ui.content{
-                            allNotesCB,
+                            characterSelector,
                         }
                     },
                     scrollBoxLayout,
@@ -517,7 +579,7 @@ function  this.create(menu, content)
 
     this.update = function ()
         if menu:isWidgetActive("AdvancedWorldMap:Notes") then
-            fill(menu, scrollBoxMeta, textFilter)
+            fill(menu, scrollBoxMeta, textFilter, targetName)
         end
     end
 

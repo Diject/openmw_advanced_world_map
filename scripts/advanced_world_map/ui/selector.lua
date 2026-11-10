@@ -24,22 +24,33 @@ end
 
 
 ---@param index integer
-function selectorMeta:select(index)
+function selectorMeta:select(index, eventParams)
     local btn = self.buttons[index]
     if not btn then return end
 
     self:resetSelection()
     btn.content[1].props.visible = true
     if btn.userData.callback then
-        btn.userData.callback(btn)
+        btn.userData.callback(btn, eventParams)
     end
+    self.update()
+end
+
+
+---@param index integer
+function selectorMeta:setText(index, name)
+    local btn = self.buttons[index]
+    if not btn then return end
+
+    self:resetSelection()
+    btn.content[2].props.text = name
     self.update()
 end
 
 
 ---@class advancedWorldMap.ui.horizontalSelector.buttonParams
 ---@field text string
----@field onClick fun(layout: Layout)
+---@field onClick fun(layout: Layout, params: table?)
 ---@field checked boolean?
 
 
@@ -120,8 +131,10 @@ return function(params)
                 callback = btnParams.onClick,
             },
             events = {
-                mouseClick = async:callback(function()
-                    meta:select(btnIndex)
+                mouseRelease = async:callback(function(e)
+                    if e.button == 1 then
+                        meta:select(btnIndex, e)
+                    end
                 end)
             },
             content = ui.content {
