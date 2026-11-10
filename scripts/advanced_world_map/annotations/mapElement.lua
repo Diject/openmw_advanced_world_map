@@ -61,6 +61,14 @@ function AdvancedWorldMapMapElement:setOffset(offset) end
 ---@return Vector2? offset Offset vector in pixels
 function AdvancedWorldMapMapElement:getOffset() end
 
+--- Sets the anchor point of the map element.
+---@param anchor Vector2 Anchor point vector
+function AdvancedWorldMapMapElement:setAnchor(anchor) end
+
+--- Gets the current anchor point of the map element.
+---@return Vector2? anchor Anchor point vector
+function AdvancedWorldMapMapElement:getAnchor() end
+
 ---Sets the texture resource of the map element.
 ---Only applicable for image elements; returns false if called on text elements.
 ---@param texture TextureResource

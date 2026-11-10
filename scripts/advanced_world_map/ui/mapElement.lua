@@ -93,10 +93,23 @@ function mapElementMeta:getPosition()
     return self._params.pos
 end
 
+function mapElementMeta:setAnchor(anchor)
+    self._params.anchor = anchor
+    self._container.props.anchor = anchor
+end
+
+function mapElementMeta:getAnchor()
+    return self._params.anchor
+end
+
 function mapElementMeta:setOffset(offset)
     self._params.offset = offset
     self._elemLayout.userData.offset = offset
-    self._container.props.position = (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(offset, self._parent.zoom)
+    if offset then
+        self._container.props.position = (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(offset, self._parent.zoom)
+    else
+        self._container.props.position = nil
+    end
 end
 
 function mapElementMeta:getOffset()
@@ -141,7 +154,7 @@ function mapElementMeta:updateLayout(data)
         containerProps.relativePosition = self._parent:getRelativePositionByWorldPosition(data.pos)
     end
     if data.offset then
-        containerProps.position = data.offset * self._parent.zoom
+        containerProps.position = (self._params.scaleFunc or self._parent.SCALE_FUNCTION.marker)(data.offset, self._parent.zoom)
         self._elemLayout.userData.offset = data.offset
     end
     if data.color then
