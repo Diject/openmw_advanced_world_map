@@ -2739,7 +2739,7 @@ function this.new(params)
             local userData = layout.userData
             userData.pressed = {}
             userData.inFocus = false
-            if userData.events.focusLoss then userData.events.focusLoss(e, layout) end
+            if userData.events.focusLoss then userData.events.focusLoss(e, layout, userData.markerElement) end
             e = e or {}
             e.markerElement = userData.markerElement
             meta.layout.events.focusLoss(e, layout)
@@ -2755,7 +2755,7 @@ function this.new(params)
                     (e.position - meta.layout.userData.lastDraggedMousePos):length()
             end
 
-            if userData.events.mouseMove then userData.events.mouseMove(e, layout) end
+            if userData.events.mouseMove then userData.events.mouseMove(e, layout, userData.markerElement) end
             meta.layout.events.mouseMove(
                 {offset = e.offset, position = e.position, keepSelectedMarker = e.keepSelectedMarker, markerElement = userData.markerElement},
                 layout
@@ -2771,14 +2771,15 @@ function this.new(params)
                 layout.userData.movedDistance = 0
             end
 
-            if layout.userData.events.mousePress then layout.userData.events.mousePress(e, layout) end
+            if layout.userData.events.mousePress then layout.userData.events.mousePress(e, layout, layout.userData.markerElement) end
             e.markerElement = layout.userData.markerElement
             meta.layout.events.mousePress(e, layout)
         end),
 
         mouseRelease = async:callback(function(e, layout)
             if layout.userData.events.mouseRelease then
-                layout.userData.events.mouseRelease(e, layout, layout.userData.pressed[e.button] and layout.userData.movedDistance < 30 and true or false)
+                layout.userData.events.mouseRelease(e, layout, layout.userData.pressed[e.button] and layout.userData.movedDistance < 30 and true or false,
+                    layout.userData.markerElement)
             end
             layout.userData.pressed[e.button] = false
             e.markerElement = layout.userData.markerElement
