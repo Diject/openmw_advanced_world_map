@@ -524,15 +524,20 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local offsetMulIsolated = isolatedImageMarkerSizeVal
     local offsetWorldMulIsolated = getWorldMarkerSize(offsetMulIsolated, targetZoom)
 
-    local anchorCacheMargin = fontInWorldCoords * 16
-    local isAllowedToUseAnchorCache = region and
-        (math.abs(region.right - region.left) > anchorCacheMargin * 2 or math.abs(region.top - region.bottom) > anchorCacheMargin * 2) or false
+    local anchorCacheMarginHor
+    local anchorCacheMarginVert
+    local isAllowedToUseAnchorCache = false
+    if isExterior and region then
+        anchorCacheMarginHor = math.min(math.abs(region.right - region.left) * 0.125, fontInWorldCoords * 16)
+        anchorCacheMarginVert = math.min(math.abs(region.top - region.bottom) * 0.125, fontInWorldCoords * 16)
+        isAllowedToUseAnchorCache = (math.abs(region.right - region.left) > anchorCacheMarginHor or math.abs(region.top - region.bottom) > anchorCacheMarginVert) or false
+    end
 
     local function isInAnchorCacheSafeRegion(pos)
         if not isAllowedToUseAnchorCache then return false end
 
-        return pos.x >= region.left + anchorCacheMargin and pos.x <= region.right - anchorCacheMargin and ---@diagnostic disable-line: need-check-nil
-            pos.y >= region.bottom + anchorCacheMargin and pos.y <= region.top - anchorCacheMargin ---@diagnostic disable-line: need-check-nil
+        return pos.x >= region.left + anchorCacheMarginHor and pos.x <= region.right - anchorCacheMarginHor and ---@diagnostic disable-line: need-check-nil
+            pos.y >= region.bottom + anchorCacheMarginVert and pos.y <= region.top - anchorCacheMarginVert ---@diagnostic disable-line: need-check-nil
     end
 
     local entrancesData = {}
@@ -798,15 +803,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local alpha = config.data.legend.alpha.entrance * 0.01
             local userData = textMarkerHandler and textMarkerHandler:getUserData()
 
-            local textAnchor = entranceAnchors[1][1]
-            local textOffset = entranceAnchors[1][2]
-            local worldFontSize = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
-            local textWidth = userData and userData.textWidth or stringLib.length(dt.name) * 0.7
-            local textWHeight = worldFontSize
-            local offsWorldMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
-
-            -- if the text marker already exists and has the same grouping and clustering settings,and the tile discovery state is the same,
-            -- update its anchor lock status; otherwise, create a new text marker with the appropriate parameters
+            -- if the text marker already exists and has the same grouping and clustering settings,
+            -- and the tile discovery state is the same, skip its update; otherwise, create a new text marker with the appropriate parameters
             local doNextStep = false
             if userData and userData.grouped == (doGroup and not doGroupToName) and
                     userData.clustered == doGroupToName and isTileDiscoveredStateEqual then
@@ -817,6 +815,10 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     params.visible == isCellDiscovered and
                     params.pos.x == pos.x and params.pos.y == pos.y
             end
+
+            local worldFontSize = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
+            local textWHeight = worldFontSize
+            local offsWorldMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
 
             if not doNextStep then
                 local offsMul = isIsolated and offsetMulIsolated or offsetMul
@@ -834,11 +836,11 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     imageMarker = nil,
                     linkedImageMarkers = {},
                 }
-                userData.anchor = textAnchor
-                userData.offset = textOffset
+                userData.anchor = userData.anchor or entranceAnchors[1][1]
+                userData.offset = userData.offset or entranceAnchors[1][2]
                 userData.offsetMul = offsMul
                 userData.useWorldColor = not widget.cellId and not hasLocalTexture and true or false
-                userData.textWidth = textWidth
+                userData.textWidth = userData.textWidth or stringLib.length(dt.name) * 0.7
                 -- userData.textHeight = textHeight
                 userData.isTileDiscovered = isTileDiscovered
                 userData.isIsolated = isIsolated
@@ -851,8 +853,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     layerId = widget.LAYER.nonInteractive,
                     text = text,
                     alpha = alpha,
-                    anchor = textAnchor,
-                    offset = textOffset and textOffset * offsMul or nil,
+                    anchor = userData.anchor,
+                    offset = userData.offset and userData.offset * offsMul or nil,
                     fontSize = fontSize,
                     pos = dt.pos,
                     color = color,
@@ -891,13 +893,14 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
             if not textMarkerHandler then return end
 
+            local userData = textMarkerHandler:getUserData()
             mInfo.textMarker = textMarkerHandler
-            lastCreatedMarkerByName[textMarkerHandler:getUserData().name] = textMarkerHandler
+            lastCreatedMarkerByName[userData.name] = textMarkerHandler
 
             if isIsolated or not doGroup or ungrouped[dt] then
-                local oInterval = getNewOccupationInterval(textMarkerHandler, dt.pos, textAnchor, textWidth, textWHeight, textOffset, offsWorldMul)
+                local oInterval = getNewOccupationInterval(textMarkerHandler, dt.pos, userData.anchor, userData.textWidth, textWHeight, userData.offset, offsWorldMul)
                 addOccupiedRegion(oInterval)
-                textMarkerHandler:getUserData().occupation = oInterval
+                userData.occupation = oInterval
                 activeTextMarkers[textMarkerHandler._id] = textMarkerHandler
             end
         end
@@ -1065,7 +1068,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
         for i = line0Id, line1Id do
             local intervals = occupationIntervals[i]
             if intervals then
-                for _, interv in ipairs(intervals) do
+                for _, interv in pairs(intervals) do
                     if not checked[interv] then
                         local os = math.max(s, interv[1])
                         local oe = math.min(e, interv[2])
@@ -1094,23 +1097,22 @@ local function createMarkers(widget, cellId, allowedCells, region)
         if useCache then
             local dt = bestAnchorCache[marker._id]
             if dt then
-                return table.unpack(dt)
+                return dt
             end
         end
 
         local bestOverlap = math.huge
         local bestCollusions
         local bestInterval
-        local bestAnchor = entranceAnchors[1][1]
-        local bestOffset = entranceAnchors[1][2]
         local userData = marker:getUserData()
+        local bestAnchor = userData.anchor or entranceAnchors[1][1]
+        local bestOffset = userData.offset or entranceAnchors[1][2]
         local isIsolated = userData.isIsolated
         local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
         local textWidth = userData.textWidth * textHeight
         local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
-        for k, anchorData in ipairs(entranceAnchors) do
-            local anchor = anchorData[1]
-            local offset = anchorData[2]
+
+        local function tryAnchor(anchor, offset)
             local overlap, interv, col = getAnchorOverlap(marker, userData.pos, anchor, textWidth, textHeight, offset, offsetWMul)
 
             if overlap < bestOverlap then
@@ -1120,38 +1122,53 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 bestCollusions = col
                 bestInterval = interv
                 if overlap <= 0 then
+                    return true
+                end
+            end
+
+            return false
+        end
+
+        if not tryAnchor(bestAnchor, bestOffset) then
+            for k, anchorData in ipairs(entranceAnchors) do
+                local anchor = anchorData[1]
+                local offset = anchorData[2]
+                if tryAnchor(anchor, offset) then
                     break
                 end
             end
         end
 
-        return bestAnchor, bestOffset, bestInterval, bestCollusions
+        return {bestAnchor, bestOffset, bestInterval, bestCollusions}
     end
 
     -- setup the optimal anchor position for a text marker based on its overlap with existing occupation intervals and return the collusions
-    local function initializeOptimalMarkerAnchor(marker)
+    local function initializeOptimalMarkerAnchor(marker, useCache)
         local userData = marker:getUserData()
         local isIsolated = userData.isIsolated
         local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
         local textWidth = userData.textWidth * textHeight
         local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
-        -- important: .occupation can be cached!!!
-        removeMarkerOccupation(userData.occupation or getNewOccupationInterval(marker, userData.pos, userData.anchor, textWidth,
-            textHeight, userData.offset, offsetWMul))
 
-        local canUseCache = region ~= nil and isInAnchorCacheSafeRegion(userData.pos)
-        local bestAnchorData = {getBestAnchor(marker, canUseCache)}
+        local canUseCache = useCache == true and isInAnchorCacheSafeRegion(userData.pos)
+        local bestAnchorData = getBestAnchor(marker, canUseCache)
         bestAnchorCache[marker._id] = bestAnchorData
 
         local anchor, offset, oInterval, col = bestAnchorData[1], bestAnchorData[2], bestAnchorData[3], bestAnchorData[4]
 
-        marker:setAnchor(anchor)
-        marker:setOffset(offset and offset * (userData.offsetMul or 1))
-        userData.anchor = anchor
-        userData.offset = offset
-        userData.occupation = oInterval
+        if userData.anchor ~= anchor or userData.offset ~= offset then
+            -- important: .occupation can be cached!!!
+            removeMarkerOccupation(userData.occupation or getNewOccupationInterval(marker, userData.pos, userData.anchor, textWidth,
+                textHeight, userData.offset, offsetWMul))
 
-        addOccupiedRegion(oInterval)
+            marker:setAnchor(anchor)
+            marker:setOffset(offset and offset * (userData.offsetMul or 1))
+            userData.anchor = anchor
+            userData.offset = offset
+            userData.occupation = oInterval
+
+            addOccupiedRegion(oInterval)
+        end
 
         return col
     end
@@ -1161,11 +1178,11 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     -- initialize the optimal anchor position for each active text marker
     for mId, marker in pairs(activeTextMarkers) do
-        local col = initializeOptimalMarkerAnchor(marker)
+        local col = initializeOptimalMarkerAnchor(marker, true)
         tableLib.copy(col, collusions)
     end
     for mId, marker in pairs(collusions) do
-        initializeOptimalMarkerAnchor(marker)
+        initializeOptimalMarkerAnchor(marker, false)
     end
 
 
