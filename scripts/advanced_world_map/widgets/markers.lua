@@ -533,6 +533,14 @@ local function createMarkers(widget, cellId, allowedCells, region)
         isAllowedToUseAnchorCache = (math.abs(region.right - region.left) > anchorCacheMarginHor or math.abs(region.top - region.bottom) > anchorCacheMarginVert) or false
     end
 
+    local northAngle = widget.northDirectionAngle or 0
+    local hasNorthAngle = northAngle ~= 0
+    local northCos, northSin = 1, 0
+    if hasNorthAngle then
+        local dir = util.vector2(1, 0):rotate(northAngle)
+        northCos, northSin = dir.x, dir.y
+    end
+
     local function isInAnchorCacheSafeRegion(pos)
         if not isAllowedToUseAnchorCache then return false end
 
@@ -631,6 +639,25 @@ local function createMarkers(widget, cellId, allowedCells, region)
         end
     end
 
+    local function toScreen(x, y)
+        if not hasNorthAngle then return x, y end
+        return x * northCos - y * northSin, x * northSin + y * northCos
+    end
+
+    local function addOccupiedWorldRegion(s, e, ys, ye)
+        if not hasNorthAngle then
+            return addOccupiedRegion{s, e, ys, ye}
+        end
+        local x1, y1 = toScreen(s, ys)
+        local x2, y2 = toScreen(e, ys)
+        local x3, y3 = toScreen(s, ye)
+        local x4, y4 = toScreen(e, ye)
+        addOccupiedRegion{
+            math.min(x1, x2, x3, x4), math.max(x1, x2, x3, x4),
+            math.min(y1, y2, y3, y4), math.max(y1, y2, y3, y4)
+        }
+    end
+
     local function removeMarkerOccupation(interv)
         local mrk = interv[5]
         if not mrk then return end
@@ -650,7 +677,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
     end
 
     local function getNewOccupationInterval(marker, pos, anchor, width, height, offset, offMul)
-        local px, py = pos.x, pos.y
+        local px, py = toScreen(pos.x, pos.y)
         if offset then
             px = px + offset.x * offMul
             py = py - offset.y * offMul
@@ -701,8 +728,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
             prefixNames = {}
             for _, clusterDt in pairs(groupClusters) do
                 if not doGroupToName then
-                    addOccupiedRegion{clusterDt.bb.x.x - fontInWorldCoords * 5, clusterDt.bb.y.x + fontInWorldCoords * 5,
-                        clusterDt.bb.x.y, clusterDt.bb.y.y}
+                    addOccupiedWorldRegion(clusterDt.bb.x.x - fontInWorldCoords * 5, clusterDt.bb.y.x + fontInWorldCoords * 5,
+                        clusterDt.bb.x.y, clusterDt.bb.y.y)
                 else
                     for _, dt in pairs(clusterDt.c) do
                         if dt.pN then
@@ -723,8 +750,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     prDt.nLen = namelen
                     local center = bb.center
                     local hLen = math.ceil(namelen * 0.5)
-                    addOccupiedRegion{center.x - fontInWorldCoords * hLen, center.x + fontInWorldCoords * hLen,
-                        center.y - fontInWorldCoords, center.y + fontInWorldCoords}
+                    addOccupiedWorldRegion(center.x - fontInWorldCoords * hLen, center.x + fontInWorldCoords * hLen,
+                        center.y - fontInWorldCoords, center.y + fontInWorldCoords)
                 end
             end
         end
@@ -1049,7 +1076,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
     -- calculate the overlap of a text marker with existing occupation intervals based on its anchor position and size
     local function getAnchorOverlap(parent, pos, anchor, textWidth, textHeight, offset, offWorldMul)
         textHeight = textHeight or charHeight
-        local px, py = pos.x, pos.y
+        local px, py = toScreen(pos.x, pos.y)
         if offset then
             px = px + offset.x * offWorldMul
             py = py - offset.y * offWorldMul
