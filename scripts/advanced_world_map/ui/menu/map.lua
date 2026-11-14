@@ -346,6 +346,23 @@ local function toggleQuickMenu()
 end
 
 
+local function setupMapwidgetMousePos(widget)
+    local getCursorPos = ui.getCursorPosition
+    if getCursorPos then
+        local pos = getCursorPos()
+        local size = widget:getSize()
+        local scrPos = widget.screenPosition
+        local inFocus = pos.x >= scrPos.x and pos.x <= scrPos.x + size.x and
+            pos.y >= scrPos.y and pos.y <= scrPos.y + size.y
+        widget.layout.userData.inFocus = inFocus
+        if inFocus then
+            widget.layout.userData.mousePos = pos
+            widget.layout.userData.mainMouseOffset = util.vector2(math.floor(pos.x - scrPos.x), math.floor(pos.y - scrPos.y))
+        end
+    end
+end
+
+
 ---@param cellId string?
 ---@return table? layout
 ---@return advancedWorldMap.ui.mapWidgetMeta? meta
@@ -371,6 +388,8 @@ function menuMeta:getMapWidgetForCell(cellId)
     if meta then
         meta.screenPosition = self.screenPosition + util.vector2(self:getWidgetWindowWidth(), self.headerFullHeight)
     end
+
+    setupMapwidgetMousePos(meta)
 
     return this.cachedMapWidgetLayout[cellKeyId], meta, isNew
 end
@@ -708,6 +727,7 @@ function menuMeta:updateInteractiveElements(params)
         self.mainLayout.content[2].props.visible = true
         self:setBorders(config.data.ui.thickBorders, self.useDefaultHeader)
         self:updateHeaderPosition()
+        setupMapwidgetMousePos(self.mapWidget)
 
         self.isInMinimapMode = false
         self.isInActiveMode = true
