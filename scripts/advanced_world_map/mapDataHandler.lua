@@ -216,6 +216,9 @@ local function buildData(params)
     local world = require("openmw.world")
     local transportModule = require("scripts.advanced_world_map.mapData.transport")
     local cellDoorTypeModule = require("scripts.advanced_world_map.mapData.cellDoorType")
+    local localStorage = require("scripts.advanced_world_map.storage.localStorage")
+
+    local nonContentCells = localStorage.data[commonData.globalNonContentCellsFieldId] or {}
 
     local buildCellWorldMapData = params.buildCellWorldMapData
 
@@ -254,11 +257,6 @@ local function buildData(params)
         if gridX > 1000 or gridX < -1000 or gridY > 1000 or gridY < -1000 then
             return
         end
-
-        minGridX = math.min(minGridX, gridX)
-        maxGridX = math.max(maxGridX, gridX)
-        minGridY = math.min(minGridY, gridY)
-        maxGridY = math.max(maxGridY, gridY)
 
         if buildCellWorldMapData then
             if core.land then
@@ -371,8 +369,6 @@ local function buildData(params)
         log("Error building world map tile rectangles")
         this.worldMapTileRectangles = {}
     end
-
-    this.grid = {min = {x = minGridX, y = minGridY}, max = {x = maxGridX, y = maxGridY}}
 
     local function getCellName(cell)
         local name = cell.displayName or cell.name
@@ -551,9 +547,11 @@ local function buildData(params)
             end
         end
 
+        local hasObjects = false
 
         local npcs = cell:getAll(types.NPC)
         for _, npc in pairs(npcs) do
+            hasObjects = true
             if transportRecords[npc.recordId] then
                 transportCellData[cell] = transportCellData[cell] or {}
                 table.insert(transportCellData[cell], npc)
@@ -567,13 +565,26 @@ local function buildData(params)
 
         local doors = cell:getAll(types.Door)
         for _, door in pairs(doors) do
+            hasObjects = true
             processDoor(door)
         end
+
+        return hasObjects
     end
 
 
     for _, cell in pairs(world.cells) do
-        processCell(cell)
+        local hasObjects = processCell(cell)
+
+        if cell.isExterior and (hasObjects or not nonContentCells[cell.id]) then
+            local gridX = cell.gridX
+            local gridY = cell.gridY
+
+            minGridX = math.min(minGridX, gridX)
+            maxGridX = math.max(maxGridX, gridX)
+            minGridY = math.min(minGridY, gridY)
+            maxGridY = math.max(maxGridY, gridY)
+        end
     end
 
     for _, list in pairs(entrancesWithCellName) do
@@ -796,6 +807,8 @@ local function buildData(params)
         entrances[cellId] = tableLib.values(list)
     end
     this.entrances = entrances
+
+    this.grid = {min = {x = minGridX, y = minGridY}, max = {x = maxGridX, y = maxGridY}}
 
     this.transport = transportModule.buildTransportData(transportRecords, transportCellData, entrances)
 end
