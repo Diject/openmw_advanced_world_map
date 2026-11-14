@@ -596,7 +596,7 @@ local function buildData(params)
     end
 
 
-    local mergeDist = 768 * 768
+    local mergeDist = 1024 * 1024
     local nameGroups = {}
     for _, lst in pairs(entrances) do
         for _, dt in pairs(lst) do
@@ -684,7 +684,7 @@ local function buildData(params)
                         local popData = populationMap[i * 100000 + j]
                         if popData then
                             for _, d in pairs(popData.m) do
-                                if (d.name ~= dt.name and d.name:sub(1, #dt.name) ~= dt.name) and
+                                if (d.name ~= dt.name or d.name:sub(1, #dt.name) ~= dt.name) and
                                         (d.pN ~= nil) == (dt.pN ~= nil) and
                                         commonData.distance2D(d.pos, dt.pos) < maxDist then
                                     isolated = false

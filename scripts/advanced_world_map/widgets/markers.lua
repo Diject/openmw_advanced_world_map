@@ -939,6 +939,9 @@ local function createMarkers(widget, cellId, allowedCells, region)
         end
     end
 
+    ---@type table <advancedWorldMap.ui.mapElementMeta, any>
+    local createdIsolatedForText = {}
+
     -- create image markers for each entrance
     for _, lst in pairs(entrancesData) do
     for _, dt in pairs(lst) do
@@ -982,6 +985,16 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
 
             local isIsolated = textMarkerHandler and textMarkerHandler:getUserData().isIsolated or false
+            -- сheck if an marker has already been created for the associated text.
+            -- if not, mark it as created to avoid duplicate isolated markers
+            if isIsolated then
+                local n = stringLib.getBeforeComma(dt.name)
+                if createdIsolatedForText[n] then
+                    isIsolated = false
+                else
+                    createdIsolatedForText[n] = true ---@diagnostic disable-line: need-check-nil
+                end
+            end
 
             local userData = imageMarkerHandler and imageMarkerHandler:getUserData() or {
                 type = commonData.doorMarkerType,

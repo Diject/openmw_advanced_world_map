@@ -180,7 +180,11 @@ function this.getHighPriorityDoorType(door)
     local recordId = door.recordId
     local record = door.type.record(recordId)
     local doorType
-    if recordId:find("_vault", 1, true) or record.model and record.model:find("_vault", 1, true) then
+    if recordId:find("_dwrv", 1, true) or record.model and record.model:find("_dwrv", 1, true) then
+        doorType = doorTypes.dwemer
+    elseif recordId:find("_dae", 1, true) or record.model and record.model:find("_dae", 1, true) then
+        doorType = doorTypes.daedra
+    elseif recordId:find("_vault", 1, true) or record.model and record.model:find("_vault", 1, true) then
         doorType = doorTypes.vault
     end
     return doorType
@@ -192,18 +196,12 @@ function this.getDoorType(door, doorDest)
     local recordId = door.recordId
     local record = door.type.record(recordId)
     local doorType
-    if recordId:find("_dwrv", 1, true) or record.model and record.model:find("_dwrv", 1, true) then
-        doorType = doorTypes.dwemer
-    elseif recordId:find("_dae", 1, true) or record.model and record.model:find("_dae", 1, true) then
-        doorType = doorTypes.daedra
-    elseif doorDest.id:find(" mine", 1, true) then
+    if doorDest.id:find(" mine", 1, true) then
         doorType = doorTypes.mine
     elseif recordId:find("_cave", 1, true) or record.model and (record.model:find("_cave", 1, true) or
             record.model:find("_pelt", 1, true) or record.model:find("_dark", 1, true) or
             record.model:find("_black", 1, true)) or doorDest.id:find("cave", 1, true) then
         doorType = doorTypes.cave
-    elseif recordId:find("_vault", 1, true) or record.model and record.model:find("_vault", 1, true) then
-        doorType = doorTypes.vault
     elseif recordId:find("_tomb", 1, true) or record.model and record.model:find("_tomb", 1, true) or
             doorDest.id:find(" tomb", 1, true) or recordId:find("barrow", 1, true) or doorDest.id:find(" barrow", 1, true) or
             doorDest.id:find(" crypt", 1, true) then
