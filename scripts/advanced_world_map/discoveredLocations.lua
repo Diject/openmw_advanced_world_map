@@ -29,6 +29,9 @@ this.discovered = {}
 ---@type table<string, any>
 this.pending = {}
 
+---@type table<string, {x: integer, y:integer}>
+this.newVisitedExteriors = {}
+
 this.blockDiscovery = false
 
 ---@type table<string, any>
@@ -54,6 +57,10 @@ function this.addVisitedCell(cell)
                 this.visited[name] = timeStamp
                 table.insert(res, name)
             end
+        end
+
+        if cell.isExterior then
+            this.newVisitedExteriors[cell.id] = {x = cell.gridX, y = cell.gridY}
         end
 
         return res

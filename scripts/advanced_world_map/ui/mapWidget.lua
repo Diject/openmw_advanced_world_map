@@ -479,7 +479,7 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
     local size = self:getSize()
     local paddingBase = isInZoomInMode and 2048 or 4096
     local mul = paddingBase / (self.mapInfo.pixelsPerCell * self.zoom)
-    local minPadding = self.inActiveMode and 8192 or 2048
+    local minPadding = self.inActiveMode and 8192 or 3072
     local paddingX = math.max(minPadding, size.x * mul)
     local paddingY = math.max(minPadding, size.y * mul)
     local halfPaddingX = paddingX * 0.5
@@ -517,9 +517,9 @@ function mapWidgetMeta:updateOnZoomMarkers(force)
         self:placeGroundTextures(visibleRect, visibleRectOrig, force or isZoomChanged)
         self:createZoomInMarkers(visibleRect, nil, not updateOnlyRect or force)
     else
-        self:removeOnZoomMarkers(updateOnlyRect and visibleRect or nil)
+        self:removeOnZoomMarkers(not isZoomChanged and visibleRect or nil)
         self:placeGroundTextures(visibleRect, visibleRectOrig, force or isZoomChanged)
-        self:createZoomOutMarkers(visibleRect, nil, force)
+        self:createZoomOutMarkers(visibleRect, nil, force or isZoomChanged)
     end
     self._lastOnZoomZoom = self.zoom
     self._lastOnZoomZoomInMode = isInZoomInMode
@@ -1223,6 +1223,9 @@ function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly, force)
         return
     end
 
+    local oldCells = self._zoomOutMarkerCells or {}
+    local newCells = {}
+
     local minGridX = math.floor(region.left / 8192)
     local maxGridX = math.ceil(region.right / 8192)
     local minGridY = math.floor(region.bottom / 8192)
@@ -1230,12 +1233,18 @@ function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly, force)
     for x = minGridX - 1, maxGridX + 1 do
         for y = minGridY - 1, maxGridY + 1 do
             local cellId = cellLib.getCellIdByGrid(x, y)
+            newCells[cellId] = true
 
-            for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
-                tryCreateActiveMarker(self, dt.params, preloadOnly)
+            if force or not oldCells[cellId] then
+                for _, dt in pairs(self.zoomOutMarkers[cellId] or {}) do
+                    tryCreateActiveMarker(self, dt.params, preloadOnly)
+                end
             end
         end
     end
+
+    ---@type table<string, boolean>
+    self._zoomOutMarkerCells = newCells
 
     if preloadOnly then return end
 
@@ -1265,19 +1274,24 @@ function mapWidgetMeta:createZoomInMarkers(region, preloadOnly, force)
         local minGridY = math.floor(region.bottom / 8192)
         local maxGridY = math.floor(region.top / 8192)
 
+        local oldRegion = not force and self._zoomInExteriorRect
+
         for x = minGridX, maxGridX do
             for y = minGridY, maxGridY do
                 local cellId = commonData.exteriorCellIdFormat:format(x, y)
 
                 for _, dt in pairs(self.zoomInMarkers[cellId] or {}) do
                     local pos = dt.params.pos
-                    if this.isPointInRegion(region, pos.x, pos.y) then
+                    if (not oldRegion or not this.isPointInRegion(oldRegion, pos.x, pos.y)) and
+                            this.isPointInRegion(region, pos.x, pos.y) then
                         tryCreateActiveMarker(self, dt.params, preloadOnly)
                     end
                 end
 
             end
         end
+
+        self._zoomInExteriorRect = region
 
         if preloadOnly then return end
 
@@ -1857,61 +1871,120 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         -- visited cells on world map by tilemap
         local tilemapTileSize = mapTextureHandler.getTilemapTileGridSize()
         if isZoomOut and tilemapTileSize and visitedOnWorld and not config.data.tileset.useLocalTexturesOnWorld then
-            self:removeGroundTextures{
-                map = false,
-                overlay = false,
-                mlocal = true,
-                fog = false,
-            }
+
             local localLayout = self:getLayerLayout(self.LAYER.mapLocal)
 
-            for y = minGridY, maxGridY do
-                local sx
+            local function placeTextures(textureData, y, arr)
+                if not textureData then return end
 
-                local function placeTextures(textureData)
-                    if not textureData then return end
+                for _, dt in ipairs(textureData) do
+                    local px = (dt.s) * cellTileFullHeight
+                    local py = (-y + 1) * cellTileFullHeight
+                    local w = math.floor(cellTileFullHeight * (dt.e - dt.s) + px % 1)
+                    local h = math.abs(math.floor(cellTileFullHeight * y - (cellTileFullHeight * (y + 1)) + py % 1))
+                    local id = tostring(self:getUniqueId())
 
-                    for _, dt in ipairs(textureData) do
-                        local px = (dt.s) * cellTileFullHeight
-                        local py = (-y + 1) * cellTileFullHeight
-                        local w = math.floor(cellTileFullHeight * (dt.e - dt.s) + px % 1)
-                        local h = math.abs(math.floor(cellTileFullHeight * y - (cellTileFullHeight * (y + 1)) + py % 1))
-
-                        localLayout.content:add{
-                            type = ui.TYPE.Image,
-                            props = uiUtils.props{
-                                resource = dt.t,
-                                size = util.vector2(w, h),
-                                position = basePos + util.vector2(
-                                    math.floor(px),
-                                    math.floor(py)
-                                ),
-                                anchor = util.vector2(0, 1)
-                            }
+                    localLayout.content:add{
+                        type = ui.TYPE.Image,
+                        name = id,
+                        props = uiUtils.props{
+                            resource = dt.t,
+                            size = util.vector2(w, h),
+                            position = basePos + util.vector2(
+                                math.floor(px),
+                                math.floor(py)
+                            ),
+                            anchor = util.vector2(0, 1)
                         }
-                    end
+                    }
                 end
+            end
 
-                for x = minGridX, maxGridX do
-                    local cellId = cellLib.getCellIdByGrid(x, y)
+            local oldRect = self._visitedOnWorldTileRegion
+            ---@type advancedWorldMap.ui.mapWidget.region
+            local rect = {
+                left = math.floor(minGridX / tilemapTileSize), right = math.floor(maxGridX / tilemapTileSize),
+                bottom = math.floor(minGridY / tilemapTileSize), top = math.floor(maxGridY / tilemapTileSize)
+            }
+            self._visitedOnWorldTileRegion = rect
+            ---@type table<integer, table<integer, string[]>>
+            self._visitedOnWorldTileTextureIds = self._visitedOnWorldTileTextureIds or {}
 
-                    local isValidCell = mapDataHandler.cellNameById[cellId] or mapDataHandler.validCellsWithoutName[cellId]
-                    if isValidCell then
-                        local isVisited = discoveredLocs.isVisited(cellId)
-                        if isVisited then
-                            sx = sx or x
-                        elseif sx then
-                            local textureData = mapTextureHandler.getTilemapRowTextures(sx, x - 1, y)
-                            placeTextures(textureData)
-                            sx = nil
+            if not force then
+                for x, ydt in pairs(self._visitedOnWorldTileTextureIds) do
+                    for y, lst in pairs(ydt) do
+                        if not self.isPointInRegion(rect, x, y) then
+                            for _, name in pairs(lst) do
+                                uiUtils.removeFromContent(localLayout.content, name)
+                            end
+                            ydt[x] = nil
                         end
                     end
                 end
 
-                if sx ~= nil then
-                    local textureData = mapTextureHandler.getTilemapRowTextures(sx, maxGridX, y)
-                    placeTextures(textureData)
+                for _, dt in pairs(discoveredLocs.newVisitedExteriors) do
+                    local tx = math.floor(dt.x / tilemapTileSize)
+                    local ty = math.floor(dt.y / tilemapTileSize)
+                    if self.isPointInRegion(rect, tx, ty) and self.isPointInRegion(oldRect, tx, ty) then
+                        self._visitedOnWorldTileTextureIds[tx] = self._visitedOnWorldTileTextureIds[tx] or {}
+                        self._visitedOnWorldTileTextureIds[tx][ty] = self._visitedOnWorldTileTextureIds[tx][ty] or {}
+                        local textureData = mapTextureHandler.getTilemapRowTextures(dt.x, dt.x, dt.y)
+                        placeTextures(textureData, dt.y, self._visitedOnWorldTileTextureIds[tx][ty])
+                    end
                 end
+            else
+                self:removeGroundTextures{
+                    map = false,
+                    overlay = false,
+                    mlocal = true,
+                    fog = false,
+                }
+                self._visitedOnWorldTileTextureIds = {}
+            end
+
+            discoveredLocs.newVisitedExteriors = {}
+
+            for tileY = rect.bottom, rect.top do
+            for tileX = rect.left, rect.right do
+                if force or not self.isPointInRegion(oldRect, tileX, tileY) then
+                    local found = false
+                    local arr = {}
+                    local ys = math.floor(tileY * tilemapTileSize)
+                    for yi = 0, math.ceil(tilemapTileSize - 1) do
+                        local y = ys + yi
+                        local sx
+
+                        local xs = math.floor(tileX * tilemapTileSize)
+                        for xi = 0, 15 do
+                            local x = xs + xi
+                            local cellId = cellLib.getCellIdByGrid(x, y)
+
+                            local isValidCell = mapDataHandler.cellNameById[cellId] or mapDataHandler.validCellsWithoutName[cellId]
+                            if isValidCell then
+                                local isVisited = discoveredLocs.isVisited(cellId)
+                                if isVisited then
+                                    sx = sx or x
+                                    found = true
+                                elseif sx then
+                                    local textureData = mapTextureHandler.getTilemapRowTextures(sx, x - 1, y)
+                                    placeTextures(textureData, y, arr)
+                                    sx = nil
+                                end
+                            end
+                        end
+
+                        if sx ~= nil then
+                            local textureData = mapTextureHandler.getTilemapRowTextures(sx, xs + 15, y)
+                            placeTextures(textureData, y, arr)
+                        end
+                    end
+
+                    if found then
+                        self._visitedOnWorldTileTextureIds[tileX] = self._visitedOnWorldTileTextureIds[tileX] or {}
+                        self._visitedOnWorldTileTextureIds[tileX][tileY] = arr
+                    end
+                end
+            end
             end
 
             return
