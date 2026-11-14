@@ -147,7 +147,7 @@ local function initMapImage(initializerType)
                 if info then
                     local area = (info.gridX.max - info.gridX.min) * (info.gridY.max - info.gridY.min)
                     local v = area / mapGridArea
-                    if v > 0.9 and v < 1.1 then
+                    if v > 0.75 then
                         imagePath = path
                         mapInfo = info
                         dirPath = commonData.customMapDir
