@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 24,
+    version = 25,
     main = {
         menuKey = "M",
         menuKeyAlt = "C_RightShoulder + C_Back",
@@ -56,7 +56,9 @@ this.default = {
         zoomingMul = 1.4,
     },
     legend = {
-        markerSize = 7,
+        markerSize = 7, -- text
+        entranceSize = 7,
+        isolEntranceSize = 12,
         worldMarkerSize = 14,
         playerMarkerSize = 48,
         zoomToGroup = 7,

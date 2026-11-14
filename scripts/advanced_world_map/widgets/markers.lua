@@ -507,15 +507,14 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local fontInWorldCoords = getWorldMarkerSize(config.data.legend.markerSize, targetZoom)
     local charHeight = fontInWorldCoords
     local lineHeight = charHeight
-    local isolatedMarkerMul = 1.75
-    local markerFontSize = config.data.legend.markerSize
-    local isolatedFontSize = math.floor(markerFontSize * isolatedMarkerMul)
+    local textMarkerFontSize = config.data.legend.markerSize
+    local isolatedFontSize = math.floor(textMarkerFontSize * 1.75)
     local isolatedFontInWorldCoords = getWorldMarkerSize(isolatedFontSize, targetZoom)
     local useDetailedIcons = config.data.legend.detailedIcons
-    local isolatedImageMarkerSizeVal = useDetailedIcons and config.data.legend.markerSize * 1.5 or config.data.legend.markerSize * 1.2
+    local isolatedImageMarkerSizeVal = config.data.legend.isolEntranceSize
     local isolatedImageMarkerWorldSizeVal = getWorldMarkerSize(isolatedImageMarkerSizeVal, targetZoom)
     local isolatedImageMarkerSize = util.vector2(isolatedImageMarkerSizeVal, isolatedImageMarkerSizeVal)
-    local unisolatedImageMarkerSizeVal = useDetailedIcons and config.data.legend.markerSize * 1 or config.data.legend.markerSize * 0.65
+    local unisolatedImageMarkerSizeVal = useDetailedIcons and config.data.legend.entranceSize or config.data.legend.entranceSize * 0.65
     local unisolatedImageMarkerWorldSizeVal = getWorldMarkerSize(unisolatedImageMarkerSizeVal, targetZoom)
     local unisolatedImageMarkerSize = util.vector2(unisolatedImageMarkerSizeVal, unisolatedImageMarkerSizeVal)
 
@@ -825,7 +824,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 end
             end
 
-            local fontSize = isIsolated and isolatedFontSize or markerFontSize
+            local fontSize = isIsolated and isolatedFontSize or textMarkerFontSize
             local pos = dt.pos
             local alpha = config.data.legend.alpha.entrance * 0.01
             local userData = textMarkerHandler and textMarkerHandler:getUserData()
@@ -1283,7 +1282,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local bbWidth = bb.y.x - bb.x.x
 
             local fontSizeMul = pDt.cnt > 3 and 2.5 or 1.5
-            local fontSize = math.floor(config.data.legend.markerSize * fontSizeMul + math.min(64, bbWidth / 192, pDt.cnt * 0.5) * 0.25)
+            local fontSize = math.floor(textMarkerFontSize * fontSizeMul + math.min(64, bbWidth / 192, pDt.cnt * 0.5) * 0.25)
             fontSize = math.max(isolatedFontSize, fontSize)
             local fontSizeInWorldCoords = widget.SCALE_FUNCTION.marker(fontSize, targetZoom) * 8192 /
                 (widget.mapInfo.pixelsPerCell * targetZoom * widget.eScale)
@@ -1453,7 +1452,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             ) + util.vector2(fontInWorldCoords, fontInWorldCoords) * 12
 
             local newFontWorldSize = fontInWorldCoords
-            local newFontSize = config.data.legend.markerSize
+            local newFontSize = textMarkerFontSize
 
             -- determine the number of columns and the maximum text length for each quadrant based on the number of markers in the quadrant and the size of the quadrant
             for qn, quadrant in ipairs(quadrants) do
