@@ -2,6 +2,7 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local async = require("openmw.async")
 local core = require("openmw.core")
+local I = require("openmw.interfaces")
 
 local config = require("scripts.advanced_world_map.config.config")
 local commonData = require("scripts.advanced_world_map.common")
@@ -10,6 +11,8 @@ local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local templates = require("scripts.advanced_world_map.ui.templates")
 local realTimer = require("scripts.advanced_world_map.realTimer")
+local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
+local keysModule = require("scripts.advanced_world_map.input.keys")
 
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 
@@ -17,6 +20,8 @@ local this = {}
 
 this.menu = nil
 this.inFocus = nil
+this.closeTimestamp = 0
+this.selectedItemIndex = 0
 this.timer = nil
 
 ---@class questGuider.ui.contextMenu.create.params.element
@@ -32,6 +37,81 @@ this.timer = nil
 ---@field elements questGuider.ui.contextMenu.create.params.element[]
 
 
+local template = {
+    type = ui.TYPE.Container,
+    content = ui.content{
+        {
+            external = uiUtils.external{ slot = true },
+            props = uiUtils.props{
+                relativeSize = util.vector2(1, 1),
+                size = util.vector2(4, 4),
+            },
+            content = ui.content{
+                {
+                    type = ui.TYPE.Image,
+                    props = uiUtils.props{
+                        resource = uiUtils.whiteTexture,
+                        color = config.data.ui.defaultColor,
+                        relativeSize = util.vector2(1, 1),
+                        alpha = 0,
+                    }
+                },
+            }
+        },
+    },
+}
+
+local selectedTemplate = {
+    type = ui.TYPE.Container,
+    content = ui.content{
+        {
+            external = uiUtils.external{ slot = true },
+            props = uiUtils.props{
+                relativeSize = util.vector2(1, 1),
+                size = util.vector2(4, 4),
+            },
+            content = ui.content{
+                {
+                    type = ui.TYPE.Image,
+                    props = uiUtils.props{
+                        resource = uiUtils.whiteTexture,
+                        color = config.data.ui.defaultColor,
+                        relativeSize = util.vector2(1, 1),
+                        alpha = 0.2,
+                    }
+                },
+            }
+        },
+    },
+}
+
+
+local directionHotkeyFuncs = {}
+for i = 1, 2 do
+    directionHotkeyFuncs[i] = function ()
+        if not menuMode.isMenuInteractive() or not menuHandler.getMenu(commonData.mapMenuId) then return end
+
+        if i == 1 then
+            this.selectItem(this.selectedItemIndex - 1)
+        else
+            this.selectItem(this.selectedItemIndex + 1)
+        end
+    end
+end
+
+local function registerHotkeys()
+    I.DijectKeyBindings.action.register(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
+    I.DijectKeyBindings.action.register(commonData.bottomMarkerKeyId, directionHotkeyFuncs[2])
+    I.DijectKeyBindings.keybind.register("C_A", this.clickOnSelectedItem)
+end
+
+local function unregisterHotkeys()
+    I.DijectKeyBindings.action.unregister(commonData.topMarkerKeyId, directionHotkeyFuncs[1])
+    I.DijectKeyBindings.action.unregister(commonData.bottomMarkerKeyId, directionHotkeyFuncs[2])
+    I.DijectKeyBindings.keybind.unregister("C_A", this.clickOnSelectedItem)
+end
+
+
 ---@param params questGuider.ui.contextMenu.create.params
 ---@return number
 function this.create(params)
@@ -45,7 +125,7 @@ function this.create(params)
     local layout = {
         layer = commonData.messageLayer,
         template = templates.boxSolid,
-        props = {
+        props = uiUtils.props{
             alpha = 1,
             anchor = anchor,
         },
@@ -64,7 +144,7 @@ function this.create(params)
         content = ui.content{
             {
                 type = ui.TYPE.Flex,
-                props = {
+                props = uiUtils.props{
                     horizontal = false,
                     align = ui.ALIGNMENT.Center,
                     arrange = ui.ALIGNMENT.Center,
@@ -79,8 +159,8 @@ function this.create(params)
         type = ui.TYPE.Container,
         content = ui.content{
             {
-                external = { slot = true },
-                props = {
+                external = uiUtils.external{ slot = true },
+                props = uiUtils.props{
                     relativeSize = util.vector2(1, 1),
                     size = util.vector2(4, 4),
                 },
@@ -94,7 +174,7 @@ function this.create(params)
         if data.type == 0 then
             layout.content[1].content:add{
                 type = ui.TYPE.Image,
-                props = {
+                props = uiUtils.props{
                     resource = ui.texture{ path = "textures/menu_thin_border_top.dds" },
                     tileH = true,
                     tileV = false,
@@ -105,47 +185,22 @@ function this.create(params)
             return
         end
 
-        local template = {
-            type = ui.TYPE.Container,
-            content = ui.content{
-                {
-                    external = { slot = true },
-                    props = {
-                        relativeSize = util.vector2(1, 1),
-                        size = util.vector2(4, 4),
-                    },
-                    content = ui.content{
-                        {
-                            type = ui.TYPE.Image,
-                            props = {
-                                resource = uiUtils.whiteTexture,
-                                color = config.data.ui.defaultColor,
-                                relativeSize = util.vector2(1, 1),
-                                alpha = 0,
-                            }
-                        },
-                    }
-                },
-            },
-        }
-
         local element
         element = {
             template = template,
-            props = {
-
-            },
+            props = uiUtils.props{},
+            userData = {},
             events = {
                 mouseMove = async:callback(function(coord, layout)
                     if not this.menu then return end
-                    template.content[1].content[1].props.alpha = 0.2
+                    element.template = selectedTemplate
                     this.inFocus = true
                     this.menu:update()
                 end),
 
                 focusLoss = async:callback(function(e, layout)
                     if not this.menu then return end
-                    template.content[1].content[1].props.alpha = 0
+                    element.template = template
                     this.inFocus = false
                     this.menu:update()
                 end),
@@ -156,7 +211,7 @@ function this.create(params)
         if not data.type or data.type == 2 then
             element.content:add{
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = data.text or "",
                     textSize = data.fontSize or params.fontSize or config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -168,11 +223,12 @@ function this.create(params)
                     data.callback(nil, element)
                 end
             end)
+            element.userData.onClick = element.events.mousePress
 
         elseif data.type == 1 then
             element.content:add{
                 type = ui.TYPE.Text,
-                props = {
+                props = uiUtils.props{
                     text = data.text or "",
                     textSize = data.fontSize or params.fontSize or config.data.ui.fontSize,
                     textColor = config.data.ui.defaultColor,
@@ -197,6 +253,8 @@ function this.create(params)
             cb.events.focusLoss = element.events.focusLoss
             cb.events.mouseMove = element.events.mouseMove
             element.content:add(cb)
+            element.userData.onClick = cb.events.mousePress
+            element.userData.onClickLayout = cb
         end
 
         layout.content[1].content:add(element)
@@ -213,7 +271,7 @@ function this.create(params)
         params.position
 
     this.inFocus = nil
-    local closeTimestamp = core.getRealTime() + 3
+    this.closeTimestamp = core.getRealTime() + 3
 
     local func
     func = function ()
@@ -223,7 +281,7 @@ function this.create(params)
             local lastAlpha = layout.props.alpha
 
             if this.inFocus == nil then
-                if core.getRealTime() > closeTimestamp then
+                if core.getRealTime() > this.closeTimestamp then
                     this.destroy()
                     return
                 end
@@ -249,22 +307,108 @@ function this.create(params)
 
     this.menu = ui.create(layout)
 
+    this.selectedItemIndex = 0
+    if keysModule.isGamepad and this.menu then
+        this.selectItem(1)
+    end
+
+    hotkeyLayers.register{
+        id = commonData.hotkeyLayerContextMenu,
+        priority = 300,
+        activateFun = registerHotkeys,
+        deactivateFun = unregisterHotkeys,
+    }
+
     return id
 end
 
 
 function this.destroy()
+    hotkeyLayers.unregister(commonData.hotkeyLayerContextMenu)
     if not this.menu then return end
 
     pcall(function ()
         this.menu:destroy()
     end)
     this.menu = nil
+    this.selectedItemIndex = 0
 
     if this.timer then
         this.timer()
         this.timer = nil
     end
+end
+
+function this.update()
+    if this.menu and this.menu.layout then
+        this.menu:update()
+    end
+end
+
+
+local function resetSelection(content)
+    for i, lay in ipairs(content) do
+        if lay.template and lay.template == selectedTemplate then
+            lay.template = template
+        end
+    end
+end
+
+
+---@param index integer?
+function this.selectItem(index)
+    if not this.menu or not this.menu.layout then return false end
+
+    this.closeTimestamp = core.getRealTime() + 4
+
+    local content = this.menu.layout.content[1].content
+    local itemCount = #content
+
+    resetSelection(content)
+
+    if itemCount < 1 then return false end
+
+    local p, ind
+    for i = 1, 100 do
+        p = p or index or (this.selectedItemIndex + 1)
+        if p > itemCount then
+            p = 1
+        elseif p < 1 then
+            p = itemCount
+        end
+
+        local lay = uiUtils.getFromContent(content, p)
+        if lay and lay.userData and lay.userData.onClick then
+            ind = p
+            break
+        end
+
+        p = p + 1
+    end
+
+    if not ind then return false end
+
+    content[ind].template = selectedTemplate
+    this.selectedItemIndex = ind
+    this.update()
+
+    return true
+end
+
+
+function this.clickOnSelectedItem()
+    if not this.menu or not this.menu.layout then return false end
+
+    local content = this.menu.layout.content[1].content
+    local item = uiUtils.getFromContent(content, this.selectedItemIndex)
+    if not item or not item.userData or not item.userData.onClick then return false end
+
+    item.userData.onClick(
+        {offset = util.vector2(0, 0), position = util.vector2(0, 0), button = 1},
+        item.userData.onClickLayout or item
+    )
+
+    return true
 end
 
 

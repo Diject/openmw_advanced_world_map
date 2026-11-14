@@ -26,7 +26,7 @@ local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
 local checkBox = require("scripts.advanced_world_map.ui.checkBox")
 local selector = require("scripts.advanced_world_map.ui.selector")
-local contextMenu = require("scripts.advanced_world_map.ui.contextMenu")
+local contextMenu = require("scripts.advanced_world_map.ui.contextMenuAlt")
 
 local thinLineTexture = ui.texture{ path = "textures/menu_thin_border_top.dds" }
 local defaultMarkerTexture = ui.texture{ path = commonData.noteMarkerPath }

@@ -13,7 +13,7 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local tooltip = require("scripts.advanced_world_map.ui.tooltip")
 local button = require("scripts.advanced_world_map.ui.button")
 local interval = require("scripts.advanced_world_map.ui.interval")
-local contextMenu = require("scripts.advanced_world_map.ui.contextMenu")
+local contextMenu = require("scripts.advanced_world_map.ui.contextMenuAlt")
 
 local l10n = core.l10n(commonData.l10nKey)
 
