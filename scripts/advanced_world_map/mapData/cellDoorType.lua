@@ -176,6 +176,18 @@ end
 
 
 ---@return integer?
+function this.getHighPriorityDoorType(door)
+    local recordId = door.recordId
+    local record = door.type.record(recordId)
+    local doorType
+    if recordId:find("_vault", 1, true) or record.model and record.model:find("_vault", 1, true) then
+        doorType = doorTypes.vault
+    end
+    return doorType
+end
+
+
+---@return integer?
 function this.getDoorType(door, doorDest)
     local recordId = door.recordId
     local record = door.type.record(recordId)
@@ -204,6 +216,26 @@ function this.getDoorType(door, doorDest)
     elseif doorDest.id:find("fort", 1, true) or doorDest.id:find("tower", 1, true) then
         doorType = doorTypes.fort
     elseif doorDest.id:find(" smith", 1, true) then
+        doorType = doorTypes.repairShop
+    end
+
+    return doorType
+end
+
+
+---@return integer?
+function this.getDestDoorType(destId)
+    local doorType
+    if destId:find(" mine", 1, true) then
+        doorType = doorTypes.mine
+    elseif destId:find("cave", 1, true) then
+        doorType = doorTypes.cave
+    elseif destId:find(" tomb", 1, true) or destId:find(" barrow", 1, true) or
+            destId:find(" crypt", 1, true) then
+        doorType = doorTypes.tomb
+    elseif destId:find("fort", 1, true) then
+        doorType = doorTypes.fort
+    elseif destId:find(" smith", 1, true) then
         doorType = doorTypes.repairShop
     end
 

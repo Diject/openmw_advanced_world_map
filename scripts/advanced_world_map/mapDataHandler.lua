@@ -459,7 +459,7 @@ local function buildData(params)
 
             local doorType = nil
             if not dest.isExterior and not isDestQuasiExterior then
-                doorType = cellDoorTypes[dest.id]
+                doorType = cellDoorTypeModule.getHighPriorityDoorType(door) or cellDoorTypes[dest.id]
                 if not doorType then
                     doorType = cellDoorTypeModule.getDoorType(door, dest) or true
                     cellDoorTypes[dest.id] = doorType
@@ -561,7 +561,8 @@ local function buildData(params)
         end
 
         if not cell.isExterior and not isQuasiExterior then
-            cellDoorTypes[cell.id] = cellDoorTypeModule.getCellType(cell.id, npcs, cellTypeModuleData)
+            cellDoorTypes[cell.id] = cellDoorTypeModule.getDestDoorType(cell.id) or
+                cellDoorTypeModule.getCellType(cell.id, npcs, cellTypeModuleData)
         end
 
         local doors = cell:getAll(types.Door)
