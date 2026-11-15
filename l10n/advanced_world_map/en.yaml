@@ -101,7 +101,7 @@ FirstInitGridmapMessage: "Tamriel grid-map is active (can be disabled in the lau
 FirstInitGridmapPresetOff: "Off"
 FirstInitGridmapPresetTransparent: "Transparent"
 FirstInitGridmapPresetOpaque: "Opaque"
-firstInitOverrideDefaultMap: "Replace the default map menu. Requires a restart to disable. !!Does not work correctly with the controller menu!!"
+firstInitOverrideDefaultMap: "Replace the default map menu. Requires a restart to disable. The mod's context menu will be remapped to the middle mouse button. !!Does not work correctly with the controller menu!!"
 firstInitFogOfWar: "Fog of war"
 mapDataNotInitialized: "Map data is not available. You can report this issue on the Advanced World Map page at Nexus Mods."
 charGenNotFinished: "You cannot open the map until character generation is complete."

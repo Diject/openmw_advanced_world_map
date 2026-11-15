@@ -465,7 +465,11 @@ end
 local function registerHotkeys()
     I.DijectKeyBindings.action.register(commonData.contextMenuKeyId, controllerYCallback)
     if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
-        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
+        if config.data.main.overrideDefault then
+            I.DijectKeyBindings.keybind.register("MMB", controllerYCallback, 100)
+        else
+            I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
+        end
     end
     I.DijectKeyBindings.action.register(commonData.quickMenuKeyId, toggleQuickMenu)
     I.DijectKeyBindings.action.register(commonData.moveHistoryBackKeyId, historyBackCallback)
@@ -475,6 +479,7 @@ end
 local function unregisterHotkeys()
     I.DijectKeyBindings.action.unregister(commonData.contextMenuKeyId, controllerYCallback)
     I.DijectKeyBindings.keybind.unregister("RMB", controllerYCallback)
+    I.DijectKeyBindings.keybind.unregister("MMB", controllerYCallback)
     I.DijectKeyBindings.action.unregister(commonData.quickMenuKeyId, toggleQuickMenu)
     I.DijectKeyBindings.action.unregister(commonData.moveHistoryBackKeyId, historyBackCallback)
     I.DijectKeyBindings.action.unregister(commonData.moveHistoryForwardKeyId, hostoryForvardCallback)
