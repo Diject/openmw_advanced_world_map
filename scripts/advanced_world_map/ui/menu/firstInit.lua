@@ -55,14 +55,14 @@ local function getPreviewTooltipContent(imSize, imageIds, labels)
         content[1].content:add{
             type = ui.TYPE.Widget,
             props = uiUtils.props{
-                size = util.vector2(imSize, imSize)
+                size = imSize
             },
             content = ui.content{
                 {
                     type = ui.TYPE.Image,
                     props = uiUtils.props{
                         resource = ui.texture{ path = string.format("%s%dp.png", commonData.previewImagesDir, imId) },
-                        size = util.vector2(imSize, imSize),
+                        size = imSize,
                     }
                 },
                 {
@@ -71,7 +71,7 @@ local function getPreviewTooltipContent(imSize, imageIds, labels)
                         text = l10n(labels[i] or ""),
                         textSize = config.data.ui.fontSize * 1.75,
                         textColor = config.data.ui.whiteColor,
-                        position = util.vector2(8, imSize * 0.05),
+                        position = util.vector2(8, imSize.y * 0.05),
                     }
                 },
             }
@@ -120,6 +120,58 @@ local function HoverToPreviewBlock(imSize, imageIds, labels, cbLayout, size)
 end
 
 
+local function resetGridmapColorSettingsToDefault(gridmapStorage)
+    config.data.ui.worldDefaultColor = util.color.rgb(0, 0, 0)
+    gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
+    config.data.ui.worldDefaultAltColor = util.color.rgb(0.98, 0.98, 0.4)
+    gridmapStorage:set("worldDefaultAltColor", config.data.ui.worldDefaultAltColor)
+    config.data.ui.worldDefaultDarkColor = util.color.rgb(0.6, 0.6, 0)
+    gridmapStorage:set("worldDefaultDarkColor", config.data.ui.worldDefaultDarkColor)
+    config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0.760784, 0.631372, 0.494117)
+    gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
+    config.data.ui.markerBackgroundAltColor = util.color.rgb(0, 0, 0)
+    gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
+    config.data.legend.alpha.backgroundAlt = 70
+    gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
+    config.data.legend.worldMarkerShadow = true
+    gridmapStorage:get("worldMarkerShadow", true)
+end
+
+
+local function setGridmapLightColors(gridmapStorage)
+    local isEnabled = gridmapStorage:get("enableOldMapOverlay")
+    local alpha = gridmapStorage:get("oldMapOverlayAlpha")
+    resetGridmapColorSettingsToDefault(gridmapStorage)
+    if isEnabled == false or (alpha or 10) == 0 then
+        gridmapStorage:set("enableOldMapOverlay", false)
+    elseif alpha >= 90 then
+        config.data.ui.worldDefaultColor = commonData.defaultColor
+        gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
+        config.data.ui.worldDefaultAltColor = config.data.ui.worldDefaultColor
+        gridmapStorage:set("worldDefaultAltColor", config.data.ui.worldDefaultAltColor)
+        config.data.ui.worldDefaultDarkColor = commonData.defaultDarkColor
+        gridmapStorage:set("worldDefaultDarkColor", config.data.ui.worldDefaultDarkColor)
+        config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0, 0, 0)
+        gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
+        config.data.ui.markerBackgroundAltColor = config.default.ui.markerBackgroundColor
+        gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
+        config.data.legend.alpha.backgroundAlt = config.default.legend.alpha.background
+        gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
+    end
+
+    if config.data.tileset.visitedCellsOnWorldMap then
+        config.data.ui.worldDefaultColor = util.color.rgb(0.98, 0.98, 0.4)
+        gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
+        config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0, 0, 0)
+        gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
+        config.data.ui.markerBackgroundAltColor = util.color.rgb(0, 0, 0)
+        gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
+        config.data.legend.alpha.backgroundAlt = 70
+        gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
+    end
+end
+
+
 ---@param params advancedWorldMap.ui.menu.firstInit.params
 ---@return advancedWorldMap.ui.menu.firstInit
 function this.new(params)
@@ -136,7 +188,10 @@ function this.new(params)
     params.relativePosition = util.vector2(0.5, 0.5)
 
     local previewImageSize = math.floor(screenSize.x / 4 / 32) * 32
+    previewImageSize = util.vector2(previewImageSize, previewImageSize)
     local previewAltImageSize = math.floor(screenSize.x / 6 / 32) * 32
+    previewAltImageSize = util.vector2(previewAltImageSize, previewAltImageSize)
+    local previewHorImageSize = util.vector2(previewImageSize.x, math.floor(previewImageSize.x / 8))
 
     local mainSize = util.vector2(params.size.x, params.size.y)
 
@@ -237,6 +292,55 @@ function this.new(params)
     }
 
 
+    local showMoreBtn
+    local showLessBtn
+    local showMoreFunc
+    local showLessFunc
+    local shownMore = false
+    showMoreBtn = button{
+        updateFunc = meta.update,
+        textSize = params.fontSize,
+        text = keyModule.isGamepad and l10n("MoreX") or l10n("More"),
+        anchor = util.vector2(0.5, 0.5),
+        relativePosition = util.vector2(0.75, 0.5),
+        event = function (layout)
+            showMoreFunc()
+        end
+    }
+    showLessBtn = button{
+        updateFunc = meta.update,
+        textSize = params.fontSize,
+        text = keyModule.isGamepad and l10n("MoreX") or l10n("More"),
+        visible = false,
+        anchor = util.vector2(0.5, 0.5),
+        relativePosition = util.vector2(0.25, 0.5),
+        event = function (layout)
+            showLessFunc()
+        end
+    }
+
+
+    local bottomButtonBlock = {
+        props = uiUtils.props{
+            size = util.vector2(mainSize.x, params.fontSize * 2),
+        },
+        content = ui.content {
+            button{
+                updateFunc = meta.update,
+                textSize = params.fontSize,
+                text = keyModule.isGamepad and l10n("YesY") or core.getGMST("sYes"),
+                anchor = util.vector2(0.5, 0.5),
+                relativePosition = util.vector2(0.5, 0.5),
+                event = function (layout)
+                    meta:close()
+                end
+            },
+            showLessBtn,
+            showMoreBtn,
+        }
+    }
+
+
     local mainLayout
     mainLayout = {
         template = customTemplates.boxSolidThick,
@@ -261,12 +365,12 @@ function this.new(params)
                             text = l10n("firstInitMenuMessage"),
                             textSize = params.fontSize,
                             autoSize = false,
-                            size = util.vector2(mainSize.x, params.fontSize * 2),
+                            size = util.vector2(mainSize.x, math.floor(params.fontSize * 1.5)),
                             textColor = config.data.ui.defaultColor,
                             multiline = true,
                             wordWrap = true,
                             textAlignH = ui.ALIGNMENT.Center,
-                            textAlignV = ui.ALIGNMENT.Start,
+                            textAlignV = ui.ALIGNMENT.Center,
                         },
                     },
                     longHorizontalLineThin,
@@ -326,16 +430,20 @@ function this.new(params)
                         end
                     }, util.vector2(160, params.fontSize)),
                     longHorizontalLineThin,
-                    HoverToPreviewBlock(previewImageSize, {3, 4}, nil, checkBox{
+                    HoverToPreviewBlock(previewImageSize, {11, 12}, nil, checkBox{
                         updateFunc = meta.update,
-                        text = l10n("SettingLegendLocalMarkerBackgroundDescriptionInMenuShort"),
+                        text = l10n("SettingLegendVisitedCellsOnWorldMap"),
                         textSize = params.fontSize,
                         boxSize = checkboxSize,
                         textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
                         textAlignV = ui.ALIGNMENT.Center,
-                        checked = config.data.legend.localMarkerBackground,
+                        checked = config.data.tileset.visitedCellsOnWorldMap,
                         event = function (checked, layout)
-                            config.setValue("legend.localMarkerBackground", checked)
+                            config.setValue("tileset.visitedCellsOnWorldMap", checked)
+                            if isGridmapPresent then
+                                local gridmapStorage = storage.playerSection(commonData.gridmapSettingSectionName)
+                                setGridmapLightColors(gridmapStorage)
+                            end
                         end
                     }, util.vector2(160, params.fontSize)),
                     longHorizontalLineThin,
@@ -354,53 +462,84 @@ function this.new(params)
                     interval(0, params.fontSize / 2),
                     ftCurrencyLayout,
                     longHorizontalLineThin,
-                    {
-                        props = uiUtils.props{
-                            size = util.vector2(mainSize.x, params.fontSize * 2),
-                        },
-                        content = ui.content {
-                            button{
-                                updateFunc = meta.update,
-                                textSize = params.fontSize,
-                                text = keyModule.isGamepad and l10n("YesY") or core.getGMST("sYes"),
-                                anchor = util.vector2(0.5, 0.5),
-                                relativePosition = util.vector2(0.5, 0.5),
-                                event = function (layout)
-                                    meta:close()
-                                end
-                            },
-                        }
-                    }
+                    bottomButtonBlock,
                 },
             },
         },
     }
 
+    local altLayout = {
+        template = customTemplates.boxSolidThick,
+        type = ui.TYPE.Container,
+        props = uiUtils.props{},
+        userData = {},
+        content = ui.content {
+            {
+                type = ui.TYPE.Flex,
+                props = uiUtils.props{
+                    horizontal = false,
+                },
+                userData = {},
+                content = ui.content{
+                    HoverToPreviewBlock(previewImageSize, {15, 16}, nil, checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingLegendDetailedIcons"),
+                        textSize = params.fontSize,
+                        boxSize = checkboxSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        checked = config.data.legend.detailedIcons,
+                        event = function (checked, layout)
+                            config.setValue("legend.detailedIcons", checked)
+                        end
+                    }, util.vector2(160, params.fontSize)),
+                    longHorizontalLineThin,
+
+                    HoverToPreviewBlock(previewHorImageSize, {13, 14}, nil, checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingUICoverHeader"),
+                        textSize = params.fontSize,
+                        boxSize = checkboxSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        checked = config.data.ui.coverHeader,
+                        event = function (checked, layout)
+                            config.setValue("ui.coverHeader", checked)
+                        end
+                    }, util.vector2(160, params.fontSize)),
+                    longHorizontalLineThin,
+
+                    HoverToPreviewBlock(previewImageSize, {3, 4}, nil, checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingLegendLocalMarkerBackgroundDescriptionInMenuShort"),
+                        textSize = params.fontSize,
+                        boxSize = checkboxSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        checked = config.data.legend.localMarkerBackground,
+                        event = function (checked, layout)
+                            config.setValue("legend.localMarkerBackground", checked)
+                        end
+                    }, util.vector2(160, params.fontSize)),
+                    longHorizontalLineThin,
+                    bottomButtonBlock,
+                }
+            }
+        }
+    }
+
     if isGridmapPresent then
         local gridmapStorage = storage.playerSection(commonData.gridmapSettingSectionName)
         local function getCurrentType()
-            local isEnambed = gridmapStorage:get("enableOldMapOverlay")
+            local isEnabled = gridmapStorage:get("enableOldMapOverlay")
             local alpha = gridmapStorage:get("oldMapOverlayAlpha")
-            if isEnambed == false or (alpha or 9) == 0 then
+            if isEnabled == false or (alpha or 10) == 0 then
                 return "FirstInitGridmapPresetOff"
             elseif alpha < 90 then
                 return "FirstInitGridmapPresetTransparent"
             else
                 return "FirstInitGridmapPresetOpaque"
             end
-        end
-
-        local function resetGridmapColorSettingsToDefault()
-            config.data.ui.worldDefaultColor = util.color.rgb(0, 0, 0)
-            gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
-            config.data.ui.worldDefaultDarkColor = util.color.rgb(0.15, 0.15, 0)
-            gridmapStorage:set("worldDefaultDarkColor", config.data.ui.worldDefaultDarkColor)
-            config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0.760784, 0.631372, 0.494117)
-            gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
-            config.data.ui.markerBackgroundAltColor = util.color.rgb(0.55, 0.55, 0.55)
-            gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
-            config.data.legend.alpha.backgroundAlt = 80
-            gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
         end
 
         local function setNextType()
@@ -410,36 +549,55 @@ function this.new(params)
             end
 
             mapMenu.clearMapWidgetCache()
-            local isEnambed = gridmapStorage:get("enableOldMapOverlay")
+            local isEnabled = gridmapStorage:get("enableOldMapOverlay")
             local alpha = gridmapStorage:get("oldMapOverlayAlpha")
-            if isEnambed == false or (alpha or 10) == 0 then
+            if isEnabled == false or (alpha or 10) == 0 then
                 gridmapStorage:set("enableOldMapOverlay", true)
                 gridmapStorage:set("oldMapOverlayAlpha", 10)
-                resetGridmapColorSettingsToDefault()
             elseif alpha < 90 then
                 gridmapStorage:set("enableOldMapOverlay", true)
                 gridmapStorage:set("oldMapOverlayAlpha", 100)
-                config.data.ui.worldDefaultColor = commonData.defaultColor
-                gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
-                config.data.ui.worldDefaultDarkColor = commonData.defaultDarkColor
-                gridmapStorage:set("worldDefaultDarkColor", config.data.ui.worldDefaultDarkColor)
-                config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0, 0, 0)
-                gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)
-                config.data.ui.markerBackgroundAltColor = config.default.ui.markerBackgroundColor
-                gridmapStorage:set("markerBackgroundColor", config.data.ui.markerBackgroundAltColor)
-                config.data.legend.alpha.backgroundAlt = config.default.legend.alpha.background
-                gridmapStorage:set("alpha.background", config.data.legend.alpha.backgroundAlt)
             else
                 gridmapStorage:set("enableOldMapOverlay", false)
-                resetGridmapColorSettingsToDefault()
             end
+            setGridmapLightColors(gridmapStorage)
 
             if core.contentFiles.has(commonData.gridmapModFileName) then
                 eventSys.unregisterHandler(eventSys.EVENT.onConfigChanged, dummyFunc)
             end
         end
 
-        mainLayout.content[1].content:insert(6, HoverToPreviewBlock(
+        mainLayout.content[1].content:insert(5, HoverToPreviewBlock(
+            previewAltImageSize,
+            {8, 10},
+            {"FirstInitGridmapOn", "FirstInitGridmapOff"},
+            {
+                type = ui.TYPE.Widget,
+                props = uiUtils.props{
+                    size = util.vector2(mainSize.x - 160, params.fontSize * 1),
+                },
+                content = ui.content{
+                    {
+                        type = ui.TYPE.Text,
+                        props = uiUtils.props{
+                            text = l10n("FirstInitGridmapMessageNew"),
+                            textSize = params.fontSize,
+                            textColor = config.data.ui.defaultColor,
+                            autoSize = false,
+                            size = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
+                            multiline = true,
+                            wordWrap = true,
+                            textAlignH = ui.ALIGNMENT.Start,
+                            textAlignV = ui.ALIGNMENT.Center,
+                        }
+                    },
+                }
+            },
+            util.vector2(160, params.fontSize)
+        ))
+        mainLayout.content[1].content:insert(6, longHorizontalLineThin)
+
+        mainLayout.content[1].content:insert(8, HoverToPreviewBlock(
             previewAltImageSize,
             {7, 8, 9},
             {"FirstInitGridmapPresetOff", "FirstInitGridmapPresetTransparent", "FirstInitGridmapPresetOpaque"},
@@ -452,7 +610,7 @@ function this.new(params)
                     {
                         type = ui.TYPE.Text,
                         props = uiUtils.props{
-                            text = l10n("FirstInitGridmapMessage"),
+                            text = l10n("FirstInitGridmapOverlayMessage"),
                             textSize = params.fontSize,
                             textColor = config.data.ui.defaultColor,
                             autoSize = false,
@@ -535,18 +693,50 @@ function this.new(params)
         }
     }
 
+
+    showMoreFunc = function ()
+        showMoreBtn.props.visible = false
+        showLessBtn.props.visible = true
+
+        layout.content[1] = altLayout
+        shownMore = true
+        meta:update()
+    end
+
+    showLessFunc = function ()
+        showMoreBtn.props.visible = true
+        showLessBtn.props.visible = false
+
+        layout.content[1] = mainLayout
+        shownMore = false
+        meta:update()
+    end
+
+
     meta.controllerBCallback = function ()
         meta:close()
+    end
+
+    meta.controllerXCallback = function ()
+        if shownMore then
+            showLessFunc()
+        else
+            showMoreFunc()
+        end
     end
 
     local function registerHotkeys()
         I.DijectKeyBindings.keybind.register("C_Y", meta.controllerBCallback, -100)
         I.DijectKeyBindings.keybind.register("Y", meta.controllerBCallback, -100)
+        I.DijectKeyBindings.keybind.register("C_X", meta.controllerXCallback, -100)
+        I.DijectKeyBindings.keybind.register("X", meta.controllerXCallback, -100)
     end
 
     local function unregisterHotkeys()
         I.DijectKeyBindings.keybind.unregister("C_Y", meta.controllerBCallback, -100)
         I.DijectKeyBindings.keybind.unregister("Y", meta.controllerBCallback, -100)
+        I.DijectKeyBindings.keybind.unregister("C_X", meta.controllerXCallback, -100)
+        I.DijectKeyBindings.keybind.unregister("X", meta.controllerXCallback, -100)
     end
 
     hotkeyLayers.register{
@@ -571,6 +761,46 @@ function this.new(params)
 
     return meta
 end
+
+
+eventSys.registerHandler(eventSys.EVENT.onLegendWidgetCreate, function (e)
+    local content = e.content
+    local menu = e.menu
+
+    local setupBtn = button{
+        updateFunc = menu.update,
+        textSize = config.data.ui.fontSize * 0.9,
+        text = l10n("firstInitLegendBtn"),
+        parentScrollBoxUserData = e.scrollBox:getLayout().userData,
+        event = function (layout)
+            menuHandler.destroyAllMenus()
+            config.setValue("main.firstInitMenu", true)
+            I.AdvancedWorldMap.toggleMapMenu()
+        end
+    }
+
+
+    content:add{
+        type = ui.TYPE.Flex,
+        props = uiUtils.props{
+            horizontal = false,
+        },
+        content = ui.content{
+            interval(0, config.data.ui.fontSize),
+            {
+                type = ui.TYPE.Flex,
+                props = uiUtils.props{
+                    horizontal = true,
+                },
+                content = ui.content{
+                    interval(config.data.ui.fontSize, 0),
+                    setupBtn,
+                }
+            },
+            interval(0, config.data.ui.fontSize / 3),
+        }
+    }
+end, -10001)
 
 
 return this
