@@ -1841,7 +1841,8 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
 
             ---@type advancedWorldMap.mapImageInfo?
             local altMapInfo = config.data.data.altExMapInfo
-            if altMapInfo then
+            local altMapAlpha = config.data.data.altExMapAlpha
+            if altMapInfo and altMapAlpha and altMapAlpha > 0 then
                 calcVars(altMapInfo)
                 local tileFullHeight = math.floor(tileSize * self.zoom * self._altTexturePxDiffMul)
                 local oldGridRect = not force and self._groundAltTextureGridRect or nil
@@ -1865,8 +1866,15 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
         -- local tiles
         local visitedOnWorld = config.data.tileset.visitedCellsOnWorldMap
         local onlyDiscovered = config.data.tileset.onlyDiscovered
+        local altMapDir = config.data.data.altExMapPath
+        local altMapAlpha = config.data.data.altExMapAlpha
         local tilemapTileSize = isZoomOut and visitedOnWorld and mapTextureHandler.getTilemapTileGridSize() or nil
-        if isZoomOut and (not visitedOnWorld or not tilemapTileSize) then return end
+
+
+        if isZoomOut and (not visitedOnWorld or not tilemapTileSize or
+            mapTextureHandler.mapDir == mapTextureHandler.tilemapDir or
+            altMapDir and altMapDir == mapTextureHandler.tilemapDir and (altMapAlpha or 0) > 90) then return end
+
 
         local queue = {}
 

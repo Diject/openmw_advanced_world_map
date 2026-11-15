@@ -219,15 +219,26 @@ function this.init()
 end
 
 
+local function findTilemap(path)
+    if not path then return end
+
+    if string.find(path, commonData.tilemapSubDir, 1, true) and
+            vfs.fileExists(path.."mapInfo.yaml") then
+        local mapInfo = markup.loadYaml(path.."mapInfo.yaml")
+        return path, mapInfo
+
+    elseif vfs.fileExists(path..commonData.tilemapSubDir.."mapInfo.yaml") then
+        path = path..commonData.tilemapSubDir
+        local mapInfo = markup.loadYaml(path.."mapInfo.yaml")
+        return path, mapInfo
+    end
+end
+
+
 function this.initTilemap()
-    local dirPath, mapInfo
-    if this.mapDir and vfs.fileExists(this.mapDir..commonData.tilemapSubDir.."mapInfo.yaml") then
-        dirPath = this.mapDir..commonData.tilemapSubDir
-        mapInfo = markup.loadYaml(dirPath.."mapInfo.yaml")
-    elseif config.data.data.altExMapPath and config.data.data.altExMapInfo and
-            vfs.fileExists(config.data.data.altExMapPath..commonData.tilemapSubDir.."mapInfo.yaml") then
-        dirPath = config.data.data.altExMapPath..commonData.tilemapSubDir
-        mapInfo = markup.loadYaml(dirPath.."mapInfo.yaml")
+    local dirPath, mapInfo = findTilemap(this.mapDir)
+    if not dirPath or not mapInfo and config.data.data.altExMapPath then
+        dirPath, mapInfo = findTilemap(config.data.data.altExMapPath)
     end
 
     if dirPath and mapInfo then
