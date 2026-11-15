@@ -263,6 +263,8 @@ SettingLegendZoomToNameDescription: "The zoom level below which nearby markers a
 SettingLegendOnlyDiscoveredDescription: "Hide markers of undiscovered locations on the map."
 SettingLegendVisitedCellsOnWorldMap: "Show visited cells on world map"
 SettingLegendVisitedCellsOnWorldMapDescription: "When enabled, cells that have been visited by the player will be shown like local map tiles on the world map. Important: may highly impact performance."
+SettingLegendDetailedIcons: "Detailed entrance icons"
+SettingLegendDetailedIconsDescription: "When enabled, entrance markers use icons that match the contents of the location the entrance leads to. Otherwise, the default square markers are used."
 SettingLegendTextMarkerSize: "Text marker size"
 SettingLegendTextMarkerSizeDescription: "The size of the cell name markers displayed on the map."
 SettingLegendEntranceSize: "Entrance marker size"
