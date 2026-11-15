@@ -42,7 +42,6 @@ function selectorMeta:setText(index, name)
     local btn = self.buttons[index]
     if not btn then return end
 
-    self:resetSelection()
     btn.content[2].props.text = name
     self.update()
 end

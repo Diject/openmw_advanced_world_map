@@ -85,7 +85,7 @@ local function createTemporaryMarker(id, mapWidget, menu, loc, pos, color, textT
         color = color or config.data.ui.foundMarkerColor,
         texture = worldMarkerTexture,
         anchor = util.vector2(0.5, 1),
-        size = util.vector2(config.data.legend.markerSize * 2, config.data.legend.markerSize * 4),
+        size = util.vector2(config.data.legend.entranceSize * 2, config.data.legend.entranceSize * 4),
         showWhenZoomedOut = true,
         showWhenZoomedIn = showZoomIn,
         tooltipContent = textTable and ui.content{

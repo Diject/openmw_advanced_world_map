@@ -1862,14 +1862,15 @@ function mapWidgetMeta:placeGroundTextures(region, eRect, force)
             end
         end
 
+        -- local tiles
         local visitedOnWorld = config.data.tileset.visitedCellsOnWorldMap
         local onlyDiscovered = config.data.tileset.onlyDiscovered
-        if isZoomOut and not visitedOnWorld then return end
+        local tilemapTileSize = isZoomOut and visitedOnWorld and mapTextureHandler.getTilemapTileGridSize() or nil
+        if isZoomOut and (not visitedOnWorld or not tilemapTileSize) then return end
 
         local queue = {}
 
         -- visited cells on world map by tilemap
-        local tilemapTileSize = mapTextureHandler.getTilemapTileGridSize()
         if isZoomOut and tilemapTileSize and visitedOnWorld and not config.data.tileset.useLocalTexturesOnWorld then
 
             local localLayout = self:getLayerLayout(self.LAYER.mapLocal)

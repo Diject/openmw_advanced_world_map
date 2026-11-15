@@ -103,7 +103,7 @@ FirstInitGridmapPresetTransparent: "Transparent"
 FirstInitGridmapPresetOpaque: "Opaque"
 firstInitOverrideDefaultMap: "Replace the default map menu. Requires a restart to disable. !!Does not work correctly with the controller menu!!"
 firstInitFogOfWar: "Fog of war"
-mapDataNotInitialized: "Map data is not available. Report this issue on the mod page on Nexus Mods."
+mapDataNotInitialized: "Map data is not available. You can report this issue on the Advanced World Map page at Nexus Mods."
 charGenNotFinished: "You cannot open the map until character generation is complete."
 HoverToPreview: "(Hover to preview)"
 LastVisited: "Last visited: %s"
@@ -230,7 +230,7 @@ SettingDataInitializer: "World map texture initializer"
 SettingDataInitializerDescription: |
   Source of the world map texture. If a texture for the chosen source is not found, "Auto" will be used.
   "Auto" - selected automatically.
-  "Your custom" - a user-generated custom texture.
+  "Your custom" - a custom texture generated via Map Extractor.
   "Quest Guider's Quest Data" - from the quest data of the Quest Guider Lite mod.
   "Tamriel Rebuilt+" - built-in texture for TR + Project Cyrodiil + Skyrim: Home of the Nords.
   "Base game" - built-in texture for the original Morrowind + Bloodmoon.
@@ -270,7 +270,7 @@ SettingLegendEntranceSizeDescription: "The size of the entrance markers displaye
 SettingLegendIsolEntranceSize: "Isolated entrance marker size"
 SettingLegendIsolEntranceSizeDescription: "The size of isolated entrance markers on the world map, which usually indicate an essential location."
 SettingLegendLocalMarkerBackground: "Local marker background"
-SettingLegendLocalMarkerBackgroundDescription: "When enabled, local text markers will have a background to improve readability. Note: this reduces the map's performance by up to 40%."
+SettingLegendLocalMarkerBackgroundDescription: "When enabled, local text markers will have a background to improve readability."
 # SettingLegendLocalMarkerBackgroundDescriptionInMenu: "Add a background to markers for better visibility. Note: this reduces the map's performance by up to 40%."
 SettingLegendLocalMarkerBackgroundDescriptionInMenuShort: "Add a background to markers for better visibility."
 SettingLegendPlayerMarkerSize: "Player marker size"
