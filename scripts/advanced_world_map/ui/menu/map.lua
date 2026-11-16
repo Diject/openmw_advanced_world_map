@@ -261,7 +261,7 @@ function menuMeta:addWidget(params)
             content:insert(index, {
                 name = tostring(getUniqueId()),
                 props = uiUtils.props{
-                    size = util.vector2(self.params.fontSize * 0.6, 0),
+                    size = util.vector2(self.params.fontSize * 0.45, 0),
                 },
                 userData = {
                     __parent = params.layout
@@ -621,7 +621,7 @@ function menuMeta:setBorders(thick, coverHeader)
 
     for i, b in ipairs(mapBorders) do
         if i == 3 and self.useDefaultHeader then
-            content:add((thick and thickBorders or borders)[i])
+            content:add((thick and mapBordersThick or mapBordersThin)[i])
         else
             content:add(b)
         end
@@ -1086,7 +1086,7 @@ function this.create(params)
                         },
                         interval(0, 0),
 
-                        interval(meta.params.fontSize * 0.6, 0),
+                        interval(meta.params.fontSize * 0.45, 0),
                         {
                             props = uiUtils.props{
                                 size = util.vector2(2, meta.headerFullHeight),
@@ -1214,7 +1214,7 @@ function this.create(params)
                 props = uiUtils.props{
                     resource = ui.texture{ path = commonData.pinIconPath },
                     alpha = localStorage.data[commonData.pinnedStateFieldId] and 1 or 0.5,
-                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.6,
+                    size = util.vector2(meta.headerHeight, meta.headerHeight) * 0.45,
                     color = localStorage.data[commonData.pinnedStateFieldId] and config.data.ui.whiteColor or
                         config.data.ui.defaultColor,
                     anchor = util.vector2(0.5, 0.5),
