@@ -121,7 +121,7 @@ function this.updateDiscovered(newDiscovered)
                     handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultLightColor or
                         config.data.ui.defaultLightColor)
                 elseif discoveredLocs.isDiscovered(userData.cellId) then
-                    handler:setColor(userData.useWorldColor and config.data.ui.worldDefaultColor or
+                    handler:setColor(userData.useWorldColor and (config.data.ui.worldDefaultAltColor or config.data.ui.worldDefaultColor) or
                         config.data.ui.markerDefaultColor)
                 end
 
@@ -158,7 +158,7 @@ function this.updateDiscovered(newDiscovered)
         local tempMrk = temporaryMarkers[name]
         if tempMrk then
             updateVisibility(tempMrk)
-            tempMrk:setColor(tempMrk:getUserData().useWorldColor and config.data.ui.worldDefaultColor or
+            tempMrk:setColor(tempMrk:getUserData().useWorldColor and (config.data.ui.worldDefaultAltColor or config.data.ui.worldDefaultColor) or
                 config.data.ui.markerDefaultColor)
         end
     end
@@ -372,7 +372,7 @@ local function getWorldMarkerColor(cellId, destCellId, pos)
             color = hasTexture and config.data.ui.defaultLightColor or config.data.ui.worldDefaultLightColor
             shadowColor = hasTexture and config.data.ui.markerBackgroundColor or config.data.ui.markerBackgroundAltColor
         else
-            color = hasTexture and config.data.ui.markerDefaultColor or config.data.ui.worldDefaultColor
+            color = hasTexture and config.data.ui.markerDefaultColor or config.data.ui.worldDefaultAltColor or config.data.ui.worldDefaultColor
             shadowColor = hasTexture and config.data.ui.markerBackgroundColor or config.data.ui.markerBackgroundAltColor
         end
     else
@@ -1377,7 +1377,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local color
             local shadowColor
             if dt.isDiscovered then
-                color = hasTexture and config.data.ui.markerDefaultColor or config.data.ui.worldDefaultColor
+                color = hasTexture and config.data.ui.markerDefaultColor or config.data.ui.worldDefaultAltColor or config.data.ui.worldDefaultColor
                 shadowColor = hasTexture and config.data.ui.markerBackgroundColor or config.data.ui.markerBackgroundAltColor
             else
                 color = hasTexture and config.data.ui.defaultDarkColor or config.data.ui.worldDefaultDarkColor

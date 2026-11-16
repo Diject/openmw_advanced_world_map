@@ -156,6 +156,7 @@ this.default = {
         markerBackgroundColor = commonData.backgroundColor,
         markerBackgroundAltColor = commonData.backgroundColor,
         worldDefaultColor = commonData.markerDefaultColor,
+        worldDefaultAltColor = nil,
         worldDefaultLightColor = commonData.defaultLightColor,
         worldDefaultDarkColor = commonData.defaultDarkColor,
         worldMarkerShadowColor = commonData.backgroundColor,
