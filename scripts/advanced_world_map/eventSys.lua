@@ -43,6 +43,7 @@ this.EVENT = {
     onDiscover = "onDiscover",
     onConfigChanged = "onConfigChanged",
     onWorldMapTextureInit = "onWorldMapTextureInit",
+    onTileMapTextureInit = "onTileMapTextureInit",
     onWorldMapLocalTextureGet = "onWorldMapLocalTextureGet",
     onWorldMapTextureGet = "onWorldMapTextureGet",
     onWorldMapOverlayTextureGet = "onWorldMapOverlayTextureGet",
@@ -92,6 +93,7 @@ this.handlers = {}
 ---@overload fun(eventId : "onDiscover", handlerFunc: fun(e : {discoveredMap : table<string, boolean>}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onConfigChanged", handlerFunc: fun(e : {key : string, value : any}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onWorldMapTextureInit", handlerFunc: fun(e : {imagePath : string?, mapInfo : advancedWorldMap.mapImageInfo?, dirPath : string?, internal : boolean?}) : (boolean?), priority : number?)
+---@overload fun(eventId : "onTileMapTextureInit", handlerFunc: fun(e : {mapInfo : advancedWorldMap.mapImageInfo?, dirPath : string?, dirPathAlt : string?}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onWorldMapLocalTextureGet", handlerFunc: fun(e : {gridX : integer, gridY : integer, path : string}) : (boolean?), priority : number?)
 ---@overload fun(eventId : "onWorldMapTextureGet", handlerFunc: fun(e : {x : integer, y : integer, path : string, mapInfo : advancedWorldMap.mapImageInfo?, internal : boolean}) : (boolean?, string?), priority : number?)
 ---@overload fun(eventId : "onWorldMapOverlayTextureGet", handlerFunc: fun(e : {x : integer, y : integer, path : string, mapInfo : advancedWorldMap.mapImageInfo?, internal : boolean}) : (boolean?, string?), priority : number?)

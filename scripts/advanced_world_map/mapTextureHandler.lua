@@ -67,6 +67,8 @@ this.mapDir = nil
 this.tilemapDir = nil
 ---@type advancedWorldMap.mapImageInfo?
 this.tilemapInfo = nil
+---@type string?
+this.tilemapAltDir = nil
 
 ---@type table<string, boolean|any>
 this.localMapTextureCache = {}
@@ -241,12 +243,17 @@ function this.initTilemap()
         dirPath, mapInfo = findTilemap(config.data.data.altExMapPath)
     end
 
-    if dirPath and mapInfo then
-        this.tilemapDir = dirPath
-        this.tilemapInfo = mapInfo
+    local eventData = {mapInfo = mapInfo, dirPath = dirPath, dirPathAlt = nil}
+    eventSys.triggerEvent(eventSys.EVENT.onTileMapTextureInit, eventData)
+
+    if eventData.dirPath and eventData.mapInfo then
+        this.tilemapDir = eventData.dirPath
+        this.tilemapInfo = eventData.mapInfo
+        this.tilemapAltDir = eventData.dirPathAlt
     else
         this.tilemapDir = nil
         this.tilemapInfo = nil
+        this.tilemapAltDir = nil
     end
 end
 
@@ -483,21 +490,44 @@ function this.getTilemapRowTextures(sGrX, eGrX, grY)
     local ep = (eGrX + 1) * pixelsPerCell
     local offsetY = tileSize * (1 - (grY % tileGridSize) / tileGridSize)
     for i = math.floor(sGrX / tileGridSize), math.floor(eGrX / tileGridSize) do
-        local path = getV2TexturePath(this.tilemapInfo, this.tilemapDir, i, yTile)
+        local cacheId = string.format("_t_%d_%d", i, yTile)
+        local path = this.worldTextureCache[cacheId]
 
-        if vfs.fileExists(path) then
-            local tL = i * tileSize
-            local tR = tL + tileSize
-            local s = math.max(p, tL)
-            local e = math.min(ep, tR)
+        if type(path) ~= "boolean" then
+            if not path then
+                if this.tilemapAltDir then
+                    path = ("%s(%d,%d).png"):format(this.tilemapAltDir, i, yTile)
+                    if not vfs.fileExists(path) then
+                        path = nil
+                    else
+                        this.worldTextureCache[cacheId] = path
+                    end
+                end
+            end
+            if not path then
+                path = getV2TexturePath(this.tilemapInfo, this.tilemapDir, i, yTile)
+                if not vfs.fileExists(path) then
+                    path = nil
+                    this.worldTextureCache[cacheId] = false
+                else
+                    this.worldTextureCache[cacheId] = path
+                end
+            end
 
-            table.insert(res, {
-                s = s / pixelsPerCell,
-                e = e / pixelsPerCell,
-                t = ui.texture{ path = path, offset = util.vector2(s % tileSize, offsetY - pixelsPerCell), size = util.vector2(e - s, pixelsPerCell)}
-            })
+            if path then
+                local tL = i * tileSize
+                local tR = tL + tileSize
+                local s = math.max(p, tL)
+                local e = math.min(ep, tR)
 
-            p = e
+                table.insert(res, {
+                    s = s / pixelsPerCell,
+                    e = e / pixelsPerCell,
+                    t = ui.texture{ path = path, offset = util.vector2(s % tileSize, offsetY - pixelsPerCell), size = util.vector2(e - s, pixelsPerCell)}
+                })
+
+                p = e
+            end
         end
     end
 

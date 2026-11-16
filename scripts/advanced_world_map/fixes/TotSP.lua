@@ -14,6 +14,14 @@ eventSys.registerHandler(eventSys.EVENT.onWorldMapTextureInit, function (e)
             e.dirPath:find(commonData.defaultBaseMapDir, nil, true)) and true or false
 end, -123)
 
+eventSys.registerHandler(eventSys.EVENT.onTileMapTextureInit, function (e)
+    local isDefaultDir = e.dirPath and (e.dirPath:find(commonData.defaultTRMapDir, nil, true) or
+        e.dirPath:find(commonData.defaultBaseMapDir, nil, true)) and true or false
+
+    if isDefaultDir then
+        e.dirPathAlt = commonData.TotSPFixMapDir..commonData.tilemapSubDir
+    end
+end, -123)
 
 eventSys.registerHandler(eventSys.EVENT.onWorldMapTextureGet, function (e)
     if not isDefaultMap or not e.mapInfo then return end
