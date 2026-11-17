@@ -102,7 +102,7 @@ function this.updateDiscovered(newDiscovered)
 
     local function updateVisibility(handler)
         local userData = handler:getUserData()
-        if not userData then return end
+        if not userData or userData.hidden then return end
         userData.discovered = true
         if not userData.disabled and not userData.filtered and not userData.clustered then
             handler:setVisibility(true)
@@ -178,7 +178,7 @@ local function updateDoorMarkerVisibility(marker, visible)
         end
         userData.disabled = not visible
     elseif userData.type == commonData.doorMarkerType then
-        marker:setAlpha(visible and (config.data.legend.alpha.entrance * 0.01) or (config.data.legend.alpha.entrance * 0.01 / 4))
+        marker:setAlpha(visible and (config.data.legend.alpha.entrance * 0.01) or (config.data.legend.alpha.entrance * 0.01 / 6))
     end
 end
 
@@ -238,7 +238,10 @@ local function removeMarkerData(markerParams)
     end
 
     if userData.cellId then
-        this.entranceMarkersByDestCellId[userData.cellId] = nil
+        local dt = this.entranceMarkersByDestCellId[userData.cellId]
+        if dt then
+            dt[markerId] = nil
+        end
     end
 end
 
@@ -316,7 +319,7 @@ end
 
 
 local function getPopulationMapId(x, y)
-    return x * 65536 + y
+    return x * 16777216 + y
 end
 
 ---@return {c: table, cnt: number, bb: table}[]
@@ -326,8 +329,12 @@ local function gridClustering(grid)
     local checked = {}
     local function addNearby(key, arr)
         local dt = grid[key]
-        if not dt then return end
+        if not dt then return 0 end
 
+        local cnt = 0
+        if not dt.pHash then
+            cnt = cnt + 1
+        end
         for x = dt.x - 1, dt.x + 1 do
             for y = dt.y - 1, dt.y + 1 do
                 local nKey = getPopulationMapId(x, y)
@@ -336,22 +343,24 @@ local function gridClustering(grid)
                     checked[nKey] = true
                     if nDt then
                         tableLib.addValues(nDt.m, arr)
-                        addNearby(nKey, arr)
+                        cnt = cnt + addNearby(nKey, arr)
                     end
                 end
             end
         end
+
+        return cnt
     end
 
 
     for key, arr in pairs(grid) do
         if not checked[key] then
             local cluster = {}
-            addNearby(key, cluster)
+            local cnt = addNearby(key, cluster)
 
             table.insert(clusters, {
                 c = cluster,
-                cnt = #cluster,
+                cnt = cnt,
                 bb = mapDataHandler.getClusterBoundingBox(cluster)
             })
         end
@@ -492,6 +501,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local doGroup = isExterior and widgetZoom * 32 / widget.mapInfo.pixelsPerCell <= (config.data.legend.zoomToGroup / uiUtils.getUIScale())
     local doGroupToName = isExterior and doGroup and
         widgetZoom * 32 / widget.mapInfo.pixelsPerCell <= (config.data.legend.zoomToName / uiUtils.getUIScale())
+    local doHideGrouped = doGroup and not doGroupToName and config.data.legend.hideGroupedMarkers
 
     if bestAnchorCacheZoom ~= widgetZoom then
         bestAnchorCache = {}
@@ -527,9 +537,20 @@ local function createMarkers(widget, cellId, allowedCells, region)
     local anchorCacheMarginVert
     local isAllowedToUseAnchorCache = false
     if isExterior and region then
-        anchorCacheMarginHor = math.min(math.abs(region.right - region.left) * 0.125, fontInWorldCoords * 16)
-        anchorCacheMarginVert = math.min(math.abs(region.top - region.bottom) * 0.125, fontInWorldCoords * 16)
-        isAllowedToUseAnchorCache = (math.abs(region.right - region.left) > anchorCacheMarginHor or math.abs(region.top - region.bottom) > anchorCacheMarginVert) or false
+        if config.data.legend.zoomToName < widgetZoom then
+            local h = 4096
+            local v = 2048
+            ---@type advancedWorldMap.ui.mapWidget.region
+            region = tableLib.copy(region)
+            region.left = region.left - h
+            region.right = region.right + h
+            region.bottom = region.bottom - v
+            region.top = region.top + v
+        end
+
+        anchorCacheMarginHor = math.min(math.abs(region.right - region.left) * 0.128, fontInWorldCoords * 32)
+        anchorCacheMarginVert = math.min(math.abs(region.top - region.bottom) * 0.128, fontInWorldCoords * 16)
+        isAllowedToUseAnchorCache = true
     end
 
     local northAngle = widget.northDirectionAngle or 0
@@ -695,16 +716,18 @@ local function createMarkers(widget, cellId, allowedCells, region)
         local ungrouped = {}
 
         -- create a population map to group entrances by their grid positions
-        local eps = doGroup and 6 * fontInWorldCoords * config.data.ui.textHeightMul or 6144
+        local eps = doGroup and 6.5 * fontInWorldCoords * config.data.ui.textHeightMul or 6144
         if isExterior then
             local populationMap = {}
 
             for _, lst in pairs(entrancesData) do
                 for _, dt in pairs(lst) do
-                    local x, y = math.floor(dt.pos.x / eps), math.floor(dt.pos.y / eps)
-                    local posId = getPopulationMapId(x, y)
-                    populationMap[posId] = populationMap[posId] or {x = x, y = y, m = {}}
-                    table.insert(populationMap[posId].m, dt)
+                    if not dt.isIsl then
+                        local x, y = math.floor(dt.pos.x / eps), math.floor(dt.pos.y / eps)
+                        local posId = getPopulationMapId(x, y)
+                        populationMap[posId] = populationMap[posId] or {x = x, y = y, m = {}}
+                        table.insert(populationMap[posId].m, dt)
+                    end
                 end
             end
 
@@ -727,8 +750,10 @@ local function createMarkers(widget, cellId, allowedCells, region)
             prefixNames = {}
             for _, clusterDt in pairs(groupClusters) do
                 if not doGroupToName then
-                    addOccupiedWorldRegion(clusterDt.bb.x.x - fontInWorldCoords * 5, clusterDt.bb.y.x + fontInWorldCoords * 5,
-                        clusterDt.bb.x.y, clusterDt.bb.y.y)
+                    if not doHideGrouped then
+                        addOccupiedWorldRegion(clusterDt.bb.x.x - fontInWorldCoords * 5, clusterDt.bb.y.x + fontInWorldCoords * 5,
+                            clusterDt.bb.x.y, clusterDt.bb.y.y)
+                    end
                 else
                     for _, dt in pairs(clusterDt.c) do
                         if dt.pN then
@@ -939,7 +964,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
         end
     end
 
-    ---@type table <advancedWorldMap.ui.mapElementMeta, any>
+    ---@type table <advancedWorldMap.ui.mapElementMeta, advancedWorldMap.dynamicDataHandler.entranceData>
     local createdIsolatedForText = {}
 
     -- create image markers for each entrance
@@ -989,10 +1014,10 @@ local function createMarkers(widget, cellId, allowedCells, region)
             -- if not, mark it as created to avoid duplicate isolated markers
             if isIsolated then
                 local n = stringLib.getBeforeComma(dt.name)
-                if createdIsolatedForText[n] then
+                if createdIsolatedForText[n] and commonData.distance2D(dt.pos, createdIsolatedForText[n].pos) < 8192 then
                     isIsolated = false
                 else
-                    createdIsolatedForText[n] = true ---@diagnostic disable-line: need-check-nil
+                    createdIsolatedForText[n] = dt ---@diagnostic disable-line: need-check-nil
                 end
             end
 
@@ -1061,7 +1086,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     -- hide a marker and its linked image markers if it is not isolated or if forceHide is true
     ---@param marker advancedWorldMap.ui.mapElementMeta
-    local function hideMarker(marker, changeVisibility, forceHide)
+    local function hideMarker(marker, changeVisibility, forceHide, keepAlpha)
         local userData = marker:getUserData()
 
         if not userData.isIsolated or forceHide then
@@ -1075,11 +1100,13 @@ local function createMarkers(widget, cellId, allowedCells, region)
             end
         end
 
-        local linkedMarkers = userData.linkedImageMarkers
-        if linkedMarkers then
-            for _, h in pairs(linkedMarkers) do
-                local defaultAlpha = h:getAlpha()
-                h._container.props.alpha = defaultAlpha * 0.5
+        if not keepAlpha then
+            local linkedMarkers = userData.linkedImageMarkers
+            if linkedMarkers then
+                for _, h in pairs(linkedMarkers) do
+                    local defaultAlpha = h:getAlpha()
+                    h._container.props.alpha = defaultAlpha * 0.5
+                end
             end
         end
     end
@@ -1133,23 +1160,30 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
     -- get the best anchor position for a text marker based on its overlap with existing occupation intervals
     local function getBestAnchor(marker, useCache)
+        local userData = marker:getUserData()
+        local isIsolated = userData.isIsolated
+        local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
+        local textWidth = userData.textWidth * textHeight
+        local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
+
         if useCache then
             local dt = bestAnchorCache[marker._id]
             if dt then
-                return dt
+                local overlap, interv, col = getAnchorOverlap(marker, userData.pos, dt[1], textWidth, textHeight, dt[2], offsetWMul)
+                if overlap < textHeight * textWidth * 0.5 then
+                    dt[3] = interv
+                    dt[4] = col
+
+                    return dt
+                end
             end
         end
 
         local bestOverlap = math.huge
         local bestCollusions
         local bestInterval
-        local userData = marker:getUserData()
         local bestAnchor = userData.anchor or entranceAnchors[1][1]
         local bestOffset = userData.offset or entranceAnchors[1][2]
-        local isIsolated = userData.isIsolated
-        local textHeight = isIsolated and isolatedFontInWorldCoords or fontInWorldCoords
-        local textWidth = userData.textWidth * textHeight
-        local offsetWMul = isIsolated and offsetWorldMulIsolated or offsetWorldMul
 
         local function tryAnchor(anchor, offset)
             local overlap, interv, col = getAnchorOverlap(marker, userData.pos, anchor, textWidth, textHeight, offset, offsetWMul)
@@ -1191,7 +1225,9 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
         local canUseCache = useCache == true and isInAnchorCacheSafeRegion(userData.pos)
         local bestAnchorData = getBestAnchor(marker, canUseCache)
-        bestAnchorCache[marker._id] = bestAnchorData
+        if canUseCache then
+            bestAnchorCache[marker._id] = bestAnchorData
+        end
 
         local anchor, offset, oInterval, col = bestAnchorData[1], bestAnchorData[2], bestAnchorData[3], bestAnchorData[4]
 
@@ -1221,7 +1257,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
         tableLib.copy(col, collusions)
     end
     for mId, marker in pairs(collusions) do
-        initializeOptimalMarkerAnchor(marker, false)
+        initializeOptimalMarkerAnchor(marker, true)
     end
 
 
@@ -1390,7 +1426,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local newMarker = widget:createTextMarker{
                 id = "_NGr_"..dt.name,
                 update = true,
-                layerId = widget.LAYER.name,
+                layerId = widget.LAYER.nonInteractive,
                 text = dt.name,
                 anchor = vector05,
                 pos = dt.pos,
@@ -1417,6 +1453,22 @@ local function createMarkers(widget, cellId, allowedCells, region)
             newTemporaryMarkers[dt.name] = newMarker
         end
 
+
+    elseif doHideGrouped and groupClusters then
+        for _, cluster in pairs(groupClusters) do
+            for _, dt in pairs(cluster.c) do
+                local mDt = dataForTextMarkers[dt]
+                local marker = mDt and mDt.textMarker
+                if marker then
+                    hideMarker(marker, true, nil, true)
+
+                    local userData = marker:getUserData()
+                    userData.grouped = true
+                    userData.hidden = true
+                    userData.clustered = false
+                end
+            end
+        end
 
     -- if grouping by name is not enabled but grouping is enabled, process the clusters of entrances
     elseif groupClusters then
