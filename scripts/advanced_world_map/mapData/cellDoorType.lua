@@ -4,6 +4,9 @@ local tableLib = require("scripts.advanced_world_map.utils.table")
 local doorTypes = commonData.doorTypeId
 
 
+local isMwscriptsSupported = core.mwscripts ~= nil
+
+
 local this = {}
 
 
@@ -61,7 +64,7 @@ function this.fillActorRecordData(data, rec)
         data.guards[rec.id] = true
     end
 
-    if rec.mwscript and rec.mwscript:find("pub", 1, true) then
+    if isMwscriptsSupported and rec.mwscript and rec.mwscript:find("pub", 1, true) then
         local scr = core.mwscripts.records[rec.mwscript]
         if scr and scr.text:find("rent == 1", 1, true) then
             data.pubOwners[rec.id] = rec.primaryFaction or true
@@ -193,28 +196,39 @@ end
 
 ---@return integer?
 function this.getDoorType(door, doorDest)
+    local destId = doorDest.id
     local recordId = door.recordId
     local record = door.type.record(recordId)
     local doorType
-    if doorDest.id:find(" mine", 1, true) then
+    if destId:find(" mine", 1, true) then
         doorType = doorTypes.mine
     elseif recordId:find("_cave", 1, true) or record.model and (record.model:find("_cave", 1, true) or
             record.model:find("_pelt", 1, true) or record.model:find("_dark", 1, true) or
-            record.model:find("_black", 1, true)) or doorDest.id:find("cave", 1, true) then
+            record.model:find("_black", 1, true)) or destId:find("cave", 1, true) then
         doorType = doorTypes.cave
     elseif recordId:find("_tomb", 1, true) or record.model and record.model:find("_tomb", 1, true) or
-            doorDest.id:find(" tomb", 1, true) or recordId:find("barrow", 1, true) or doorDest.id:find(" barrow", 1, true) or
-            doorDest.id:find(" crypt", 1, true) then
+            destId:find(" tomb", 1, true) or recordId:find("barrow", 1, true) or destId:find(" barrow", 1, true) or
+            destId:find(" crypt", 1, true) then
         doorType = doorTypes.tomb
     elseif recordId:find("_ashl", 1, true) or record.model and record.model:find("_ashl", 1, true) or
-            doorDest.id:find(" yurt", 1, true) then
+            destId:find(" yurt", 1, true) then
         doorType = doorTypes.ashlander
     elseif recordId:find("_ship", 1, true) or record.model and record.model:find("_ship", 1, true) then
         doorType = doorTypes.ship
-    elseif doorDest.id:find("fort", 1, true) or doorDest.id:find("tower", 1, true) then
+    elseif destId:find("fort", 1, true) or destId:find("tower", 1, true) then
         doorType = doorTypes.fort
-    elseif doorDest.id:find(" smith", 1, true) then
+    elseif destId:find(" smith", 1, true) then
         doorType = doorTypes.repairShop
+    elseif destId:find(" clothier", 1, true) then
+        doorType = doorTypes.clothingShop
+    elseif destId:find(" armorer", 1, true) then
+        doorType = doorTypes.armorShop
+    elseif destId:find(" pawnbroker", 1, true) or destId:find(" trader", 1, true) then
+        doorType = doorTypes.clothingShop
+    elseif destId:find(" enchanter", 1, true) then
+        doorType = doorTypes.mageShop
+    elseif destId:find(" alchemist", 1, true) then
+        doorType = doorTypes.alchemyShop
     end
 
     return doorType

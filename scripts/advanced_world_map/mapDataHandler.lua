@@ -515,7 +515,7 @@ local function buildData(params)
             if cell.isExterior then
                 local x = math.floor(data.pos.x / 1024)
                 local y = math.floor(data.pos.y / 1024)
-                local id = x * 100000 + y
+                local id = x * 262144 + y
                 populationMap[id] = populationMap[id] or {x = x, y = y, m = {}}
                 table.insert(populationMap[id].m, data)
             end
@@ -681,7 +681,7 @@ local function buildData(params)
             local function check()
                 for i = x - steps, x + steps do
                     for j = y - steps, y + steps do
-                        local popData = populationMap[i * 100000 + j]
+                        local popData = populationMap[i * 262144 + j]
                         if popData then
                             for _, d in pairs(popData.m) do
                                 if (d.name ~= dt.name or d.name:sub(1, #dt.name) ~= dt.name) and

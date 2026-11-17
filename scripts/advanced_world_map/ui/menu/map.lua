@@ -19,12 +19,14 @@ local uiUtils = require("scripts.advanced_world_map.ui.utils")
 local tableLib = require("scripts.advanced_world_map.utils.table")
 local log = require("scripts.advanced_world_map.utils.log")
 
+local dataHandler = require("scripts.advanced_world_map.mapDataHandler")
 local mapTextureHandler = require("scripts.advanced_world_map.mapTextureHandler")
 local eventSys = require("scripts.advanced_world_map.eventSys")
 local menuMode = require("scripts.advanced_world_map.ui.menuMode")
 local menuHandler = require("scripts.advanced_world_map.menuHandler")
 local keysModule = require("scripts.advanced_world_map.input.keys")
 local hotkeyLayers = require("scripts.advanced_world_map.input.hotkeyLayers")
+local cellHelper = require("scripts.advanced_world_map.helpers.cell")
 
 local l10n = core.l10n(commonData.l10nKey)
 
@@ -82,6 +84,8 @@ end
 
 local mapBordersThin = auxUi.deepLayoutCopy(borders)
 local mapBordersThick = auxUi.deepLayoutCopy(thickBorders)
+local mapBorderLineThin = auxUi.deepLayoutCopy(borders[3])
+local mapBorderLineThick = auxUi.deepLayoutCopy(thickBorders[3])
 
 local function setBorderParams(i, userData, cursor)
     mapBordersThick[i].userData = userData
@@ -107,6 +111,8 @@ for _, lay in ipairs(mapBordersThick) do
     lay.events = resizerEvents
     lay.name = tostring(getUniqueId())
 end
+mapBorderLineThin.name = tostring(getUniqueId())
+mapBorderLineThick.name = tostring(getUniqueId())
 
 
 ---@class advancedWorldMap.ui.menu.map
@@ -467,9 +473,8 @@ local function registerHotkeys()
     if I.DijectKeyBindings.getActionKey(commonData.contextMenuKeyId) == config.default.input.contextMenuHotkey then
         if config.data.main.overrideDefault then
             I.DijectKeyBindings.keybind.register("MMB", controllerYCallback, 100)
-        else
-            I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
         end
+        I.DijectKeyBindings.keybind.register("RMB", controllerYCallback, 100)
     end
     I.DijectKeyBindings.action.register(commonData.quickMenuKeyId, toggleQuickMenu)
     I.DijectKeyBindings.action.register(commonData.moveHistoryBackKeyId, historyBackCallback)
@@ -621,7 +626,7 @@ function menuMeta:setBorders(thick, coverHeader)
 
     for i, b in ipairs(mapBorders) do
         if i == 3 and self.useDefaultHeader then
-            content:add((thick and mapBordersThick or mapBordersThin)[i])
+            content:add(thick and mapBorderLineThick or mapBorderLineThin)
         else
             content:add(b)
         end
@@ -2029,7 +2034,12 @@ eventSys.registerHandler(eventSys.EVENT.onZoomed, function (e)
 
     local blockZooming = false
     if cellId and zoom == mWidget.minZoom then
-        this.activeMenuMeta:updateMapWidgetCell()
+        local exitPoss = cellHelper.findExitPoss(menu.mapWidget.cellId, dataHandler.entrances)
+        menu:updateMapWidgetCell()
+        if exitPoss and next(exitPoss) then
+            menu.mapWidget:focusOnWorldPosition(exitPoss[1])
+            menu.mapWidget:updateMarkers()
+        end
         blockZooming = true
     elseif not cellId and zoom == mWidget.maxZoom and not playerRef.cell.isExterior then
         this.activeMenuMeta:updateMapWidgetCell(playerRef.cell.id)
