@@ -364,6 +364,7 @@ I.Settings.registerGroup{
     settings = {
         boolSetting{key = "legend.onlyDiscovered", name = "SettingLegendOnlyDiscovered", description = "SettingLegendOnlyDiscoveredDescription", default = config.default.legend.onlyDiscovered},
         numberSetting{key = "legend.zoomToGroup", name = "SettingLegendZoomToGroup", description = "SettingLegendZoomToGroupDescription", default = config.default.legend.zoomToGroup, min = 0},
+        boolSetting{key = "legend.hideGroupedMarkers", name = "SettingLegendHideGroupedMarkers", description = "SettingLegendHideGroupedMarkersDescription", default = config.default.legend.hideGroupedMarkers},
         numberSetting{key = "legend.zoomToName", name = "SettingLegendZoomToName", description = "SettingLegendZoomToNameDescription", default = config.default.legend.zoomToName, min = 0},
         boolSetting{key = "legend.detailedIcons", name = "SettingLegendDetailedIcons", description = "SettingLegendDetailedIconsDescription", default = config.default.legend.detailedIcons},
         numberSetting{key = "legend.markerSize", name = "SettingLegendTextMarkerSize", description = "SettingLegendTextMarkerSizeDescription", default = config.default.legend.markerSize, min = 1, max = 20},

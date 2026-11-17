@@ -65,6 +65,7 @@ this.default = {
         zoomToName = 4.2,
         onlyDiscovered = true,
         detailedIcons = true,
+        hideGroupedMarkers = true,
         visitedCellsOnWorldMap = false, -- deprecated
         transportOnlyDiscovered = false,
         localMarkerBackground = true,
@@ -189,7 +190,7 @@ this.default = {
         transportFeatureInfoShown = 0,
         minimapFeatureInfoShown = 0,
         firstInitMenuShown = 0,
-        firstInitMenuShownCurrent = 2, -- local
+        firstInitMenuShownCurrent = 3, -- local
     }
 }
 

@@ -495,6 +495,20 @@ function this.new(params)
                     }, util.vector2(160, params.fontSize)),
                     longHorizontalLineThin,
 
+                    HoverToPreviewBlock(previewImageSize, {17, 18}, nil, checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("SettingLegendHideGroupedMarkers"),
+                        textSize = params.fontSize,
+                        boxSize = checkboxSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        checked = config.data.legend.hideGroupedMarkers,
+                        event = function (checked, layout)
+                            config.setValue("legend.hideGroupedMarkers", checked)
+                        end
+                    }, util.vector2(160, params.fontSize)),
+                    longHorizontalLineThin,
+
                     HoverToPreviewBlock(previewHorImageSize, {13, 14}, nil, checkBox{
                         updateFunc = meta.update,
                         text = l10n("SettingUICoverHeader"),
