@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 25,
+    version = 26,
     main = {
         menuKey = "M",
         menuKeyAlt = "C_RightShoulder + C_Back",
@@ -100,7 +100,7 @@ this.default = {
         withFollowers = false,
         onlyReachable = true,
         passTime = false,
-        cooldown = 3,
+        cooldown = 0,
         baseMagickaCost = 30,
         additionalCost = 4,
         currency = "FTCurrencyMagicka", -- Magicka, Gold, Health, Free

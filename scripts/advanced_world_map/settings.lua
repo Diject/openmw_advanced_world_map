@@ -273,6 +273,12 @@ if configVersion < config.default.version then
             mainSettingsSection:set("main.discoveryRadius", 2048)
         end
     end
+    if configVersion < 26 then
+        local cd = mainSettingsSection:get("fastTravel.cooldown") or 0
+        if cd == 3 then
+            mainSettingsSection:set("fastTravel.cooldown", 0)
+        end
+    end
 end
 
 
