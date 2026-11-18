@@ -33,6 +33,8 @@ local vector05 = util.vector2(0.5, 0.5)
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local mapMarker45Texture = ui.texture{ path = commonData.mapMarkerForExPath }
 
+local detailedDoorTexture = ui.texture{ path = commonData.doorIconsDir.."door.png" }
+local detailedExitTexture = ui.texture{ path = commonData.doorIconsDir.."exit.png" }
 local detailedDoorTextures = {
     [commonData.doorTypeId.dwemer] = ui.texture{ path = commonData.doorIconsDir.."dwemer.png" },
     [commonData.doorTypeId.daedra] = ui.texture{ path = commonData.doorIconsDir.."daedric.png" },
@@ -64,9 +66,9 @@ local detailedDoorTextures = {
     [commonData.doorTypeId.hlaaluHouse] = ui.texture{ path = commonData.doorIconsDir.."hlaalu.png" },
     [commonData.doorTypeId.dagothHouse] = ui.texture{ path = commonData.doorIconsDir.."dagoth.png" },
     [commonData.doorTypeId.faction] = ui.texture{ path = commonData.doorIconsDir.."faction.png" },
+
+    [commonData.doorTypeId.regularDoor] = detailedDoorTexture,
 }
-local detailedDoorTexture = ui.texture{ path = commonData.doorIconsDir.."door.png" }
-local detailedExitTexture = ui.texture{ path = commonData.doorIconsDir.."exit.png" }
 
 
 local this = {}
@@ -102,9 +104,13 @@ function this.updateDiscovered(newDiscovered)
 
     local function updateVisibility(handler)
         local userData = handler:getUserData()
-        if not userData or userData.hidden then return end
+        if not userData then return end
+
         userData.discovered = true
-        if not userData.disabled and not userData.filtered and not userData.clustered then
+
+        if userData.clustered or userData.hidden then return end
+
+        if not userData.disabled and not userData.filtered then
             handler:setVisibility(true)
         else
             handler:updateParams{visible = true} ---@diagnostic disable-line: missing-fields
@@ -273,7 +279,7 @@ local function createWorldMarkers(widget)
             textShadow = config.data.legend.worldMarkerShadow and true or nil,
             shadowColor = config.data.legend.worldMarkerShadow and
                 (isVisited and config.data.ui.worldMarkerShadowColor or config.data.ui.worldMarkerShadowLightColor) or nil,
-            fontSize = util.round(config.data.legend.worldMarkerSize + math.min(8, dt.count) * 2),
+            fontSize = util.round((1 + math.min(8, dt.count) * 2 * 0.071) * config.data.legend.worldMarkerSize),
             scaleFunc = widget.SCALE_FUNCTION.linear,
             alpha = config.data.legend.alpha.city * 0.01,
             useCache = true,
@@ -503,6 +509,8 @@ local function createMarkers(widget, cellId, allowedCells, region)
         widgetZoom * 32 / widget.mapInfo.pixelsPerCell <= (config.data.legend.zoomToName / uiUtils.getUIScale())
     local doHideGrouped = doGroup and not doGroupToName and config.data.legend.hideGroupedMarkers
 
+    local bypassDiscovery = not config.data.legend.onlyDiscovered and not config.data.tileset.onlyDiscovered
+
     if bestAnchorCacheZoom ~= widgetZoom then
         bestAnchorCache = {}
         bestAnchorCacheZoom = widgetZoom
@@ -717,7 +725,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
         -- create a population map to group entrances by their grid positions
         local eps = doGroup and 6.5 * fontInWorldCoords * config.data.ui.textHeightMul or 6144
-        if isExterior then
+        if isExterior and doGroup then
             local populationMap = {}
 
             for _, lst in pairs(entrancesData) do
@@ -731,16 +739,14 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 end
             end
 
-            if doGroup then
-                local threshold = doGroupToName and 2 or 6
-                groupClusters = gridClustering(populationMap)
-                for i, clusterDt in pairs(groupClusters) do
-                    if clusterDt.cnt < threshold then
-                        for _, dt in pairs(clusterDt.c) do
-                            ungrouped[dt] = true
-                        end
-                        groupClusters[i] = nil
+            local threshold = doGroupToName and 2 or 6
+            groupClusters = gridClustering(populationMap)
+            for i, clusterDt in pairs(groupClusters) do
+                if clusterDt.cnt < threshold then
+                    for _, dt in pairs(clusterDt.c) do
+                        ungrouped[dt] = true
                     end
+                    groupClusters[i] = nil
                 end
             end
         end
@@ -796,6 +802,11 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local text = " "..dt.name.." "
 
             if textMarkerHandler then
+                if temporaryMarkers[textId] == textMarkerHandler and data.notParent then
+                    temporaryMarkers[textId] = nil
+                    newTemporaryMarkers[textId] = textMarkerHandler
+                end
+
                 textMarkerHandler:setVisibility(textMarkerHandler:getVisibility())
             end
 
@@ -819,7 +830,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local cId = dt.dCId
             this.markersByName[dt.name] = this.markersByName[dt.name] or {}
 
-            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
+            local isCellDiscovered = bypassDiscovery or discoveredLocs.isDiscovered(cId)
 
             -- determine the color and background color of the text marker based on whether it is in an exterior cell,
             -- whether the destination cell is discovered or visited, and whether there is a local texture for the world map
@@ -859,6 +870,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             local doNextStep = false
             if userData and userData.grouped == (doGroup and not doGroupToName) and
                     userData.clustered == doGroupToName and isTileDiscoveredStateEqual then
+                userData.hidden = nil
                 local params = textMarkerHandler._params ---@diagnostic disable-line: need-check-nil
                 doNextStep = params.text == text and
                     params.alpha == alpha and
@@ -910,7 +922,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     pos = dt.pos,
                     color = color,
                     showWhenZoomedIn = true,
-                    visible = isCellDiscovered,
+                    visible = isCellDiscovered and isTileDiscovered,
                     update = true,
                     textBackground = config.data.legend.localMarkerBackground,
                     textBackgroundColor = backgroundColor,
@@ -994,7 +1006,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             this.markersByName[dt.name] = this.markersByName[dt.name] or {}
             this.markersByDoorHash[dt.dHash] = this.markersByDoorHash[dt.dHash] or {}
 
-            local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(cId)
+            local isCellDiscovered = bypassDiscovery or discoveredLocs.isDiscovered(cId)
 
             local color, _, hasLocalTexture
             if isExterior then
@@ -1055,7 +1067,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 update = true,
-                visible = isCellDiscovered,
+                visible = isCellDiscovered and isTileDiscovered,
                 userData = userData,
                 events = markerEvents,
             }
@@ -1182,8 +1194,9 @@ local function createMarkers(widget, cellId, allowedCells, region)
         local bestOverlap = math.huge
         local bestCollusions
         local bestInterval
-        local bestAnchor = userData.anchor or entranceAnchors[1][1]
-        local bestOffset = userData.offset or entranceAnchors[1][2]
+        local useOldAnchor = userData.anchorZoom == widgetZoom
+        local bestAnchor = useOldAnchor and userData.anchor or entranceAnchors[1][1]
+        local bestOffset = useOldAnchor and userData.offset or entranceAnchors[1][2]
 
         local function tryAnchor(anchor, offset)
             local overlap, interv, col = getAnchorOverlap(marker, userData.pos, anchor, textWidth, textHeight, offset, offsetWMul)
@@ -1202,7 +1215,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
             return false
         end
 
-        if not tryAnchor(bestAnchor, bestOffset) then
+        if not useOldAnchor or not tryAnchor(bestAnchor, bestOffset) then
             for k, anchorData in ipairs(entranceAnchors) do
                 local anchor = anchorData[1]
                 local offset = anchorData[2]
@@ -1244,6 +1257,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
 
             addOccupiedRegion(oInterval)
         end
+        userData.anchorZoom = widgetZoom
 
         return col
     end

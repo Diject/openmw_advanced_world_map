@@ -160,7 +160,7 @@ local function setGridmapLightColors(gridmapStorage)
     end
 
     if config.data.tileset.visitedCellsOnWorldMap then
-        config.data.ui.worldDefaultColor = util.color.rgb(0.98, 0.98, 0.4)
+        config.data.ui.worldDefaultColor = util.color.rgb(0.95, 0.95, 0.95)
         gridmapStorage:set("worldDefaultColor", config.data.ui.worldDefaultColor)
         config.data.ui.worldMarkerShadowLightColor = util.color.rgb(0, 0, 0)
         gridmapStorage:set("worldMarkerShadowLightColor", config.data.ui.worldMarkerShadowLightColor)

@@ -254,6 +254,7 @@ this.doorTypeId = {
     dresHouse = 27,
     hlaaluHouse = 28,
     dagothHouse = 29,
+    regularDoor = 30,
 }
 
 

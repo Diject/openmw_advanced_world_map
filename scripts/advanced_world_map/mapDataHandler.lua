@@ -430,17 +430,18 @@ local function buildData(params)
     ---@type table<string, advancedWorldMap.dynamicDataHandler.entranceData[]>
     local entrancesWithCellName = {}
     local populationMap = {}
-    -- local exNames = {}
+    local cellsWithObjects = {}
 
     local function processCell (cell)
-        if not cell.id then return end
+        local cellId = cell.id
+        if not cellId or this.cellNameById[cellId] or this.validCellsWithoutName[cellId] then return cellsWithObjects[cellId] end
 
         local isQuasiExterior = cell:hasTag("QuasiExterior")
 
         local cellName = getCellName(cell)
-        this.cellNameById[cell.id] = cellName
+        this.cellNameById[cellId] = cellName
         if not cellName then
-            this.validCellsWithoutName[cell.id] = true
+            this.validCellsWithoutName[cellId] = true
         end
 
         local processDoor = function (door)
@@ -455,10 +456,19 @@ local function buildData(params)
 
             local doorType = nil
             if not dest.isExterior and not isDestQuasiExterior then
-                doorType = cellDoorTypeModule.getHighPriorityDoorType(door) or cellDoorTypes[dest.id]
+                local destId = dest.id
+                doorType = cellDoorTypeModule.getHighPriorityDoorType(door, destId) or cellDoorTypes[destId]
+
                 if not doorType then
-                    doorType = cellDoorTypeModule.getDoorType(door, dest) or true
-                    cellDoorTypes[dest.id] = doorType
+                    if type(doorType) ~= "boolean" then
+                        processCell(dest)
+                        doorType = cellDoorTypes[destId]
+                    end
+
+                    if type(doorType) ~= "number" then
+                        doorType = cellDoorTypeModule.getDoorType(door, dest) or true
+                        cellDoorTypes[destId] = doorType
+                    end
                 end
 
                 if type(doorType) ~= "number" then
@@ -493,11 +503,11 @@ local function buildData(params)
 
             local doorHash = commonData.doorHash(door, dest.id or "")
 
-            entrances[cell.id] = entrances[cell.id] or {}
+            entrances[cellId] = entrances[cellId] or {}
             ---@type advancedWorldMap.dynamicDataHandler.entranceData
             local data = {
                 pos = door.position,
-                cId = cell.id,
+                cId = cellId,
                 isEx = cell.isExterior,
                 dCId = dest.id or "",
                 dPos = destPos,
@@ -510,7 +520,7 @@ local function buildData(params)
                 isLEx = cell.isExterior or isQuasiExterior,
                 tp = doorType
             }
-            entrances[cell.id][doorHash] = data
+            entrances[cellId][doorHash] = data
 
             if cell.isExterior then
                 local x = math.floor(data.pos.x / 1024)
@@ -559,8 +569,8 @@ local function buildData(params)
         end
 
         if not cell.isExterior and not isQuasiExterior then
-            cellDoorTypes[cell.id] = cellDoorTypeModule.getDestDoorType(cell.id) or
-                cellDoorTypeModule.getCellType(cell.id, npcs, cellTypeModuleData)
+            cellDoorTypes[cellId] = cellDoorTypeModule.getDestDoorType(cellId) or
+                cellDoorTypeModule.getCellType(cellId, npcs, cellTypeModuleData) or false
         end
 
         local doors = cell:getAll(types.Door)
@@ -568,6 +578,8 @@ local function buildData(params)
             hasObjects = true
             processDoor(door)
         end
+
+        cellsWithObjects[cellId] = hasObjects
 
         return hasObjects
     end
@@ -679,16 +691,23 @@ local function buildData(params)
 
             local isolated = true
             local function check()
+                local cnt = 0
                 for i = x - steps, x + steps do
                     for j = y - steps, y + steps do
                         local popData = populationMap[i * 262144 + j]
                         if popData then
                             for _, d in pairs(popData.m) do
-                                if (d.name ~= dt.name or d.name:sub(1, #dt.name) ~= dt.name) and
-                                        (d.pN ~= nil) == (dt.pN ~= nil) and
-                                        commonData.distance2D(d.pos, dt.pos) < maxDist then
-                                    isolated = false
-                                    return
+                                local idDist = commonData.distance2D(d.pos, dt.pos) < maxDist
+                                if d ~= dt and idDist then
+                                    if (d.name ~= dt.name and d.pN and dt.name ~= d.pN) then
+                                        isolated = false
+                                        return
+                                    elseif cnt < 1 and not d.pN and not dt.pN or d.name == dt.name then
+                                        cnt = cnt + 1
+                                    else
+                                        isolated = false
+                                        return
+                                    end
                                 end
                             end
                         end
@@ -815,7 +834,10 @@ end
 
 
 function this.globalBuildData(playerRef, options)
+    local tm = core.getRealTime()
     buildData(options)
+    tm = core.getRealTime() - tm
+    log(string.format("Map data generation completed in %.2f s", tm))
     playerRef:sendEvent("AdvWMap:updateMapData", {
         cellNameData = this.cellNameData,
         regionNameData = this.regionNameData,

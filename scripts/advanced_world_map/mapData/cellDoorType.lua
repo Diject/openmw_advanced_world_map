@@ -179,7 +179,7 @@ end
 
 
 ---@return integer?
-function this.getHighPriorityDoorType(door)
+function this.getHighPriorityDoorType(door, destId)
     local recordId = door.recordId
     local record = door.type.record(recordId)
     local doorType
@@ -189,6 +189,10 @@ function this.getHighPriorityDoorType(door)
         doorType = doorTypes.daedra
     elseif recordId:find("_vault", 1, true) or record.model and record.model:find("_vault", 1, true) then
         doorType = doorTypes.vault
+    elseif destId:find(" mine", 1, true) then
+        doorType = doorTypes.mine
+    elseif recordId:find("_cavern_", 1, true) then
+        doorType = doorTypes.cave
     end
     return doorType
 end
@@ -200,9 +204,7 @@ function this.getDoorType(door, doorDest)
     local recordId = door.recordId
     local record = door.type.record(recordId)
     local doorType
-    if destId:find(" mine", 1, true) then
-        doorType = doorTypes.mine
-    elseif recordId:find("_cave", 1, true) or record.model and (record.model:find("_cave", 1, true) or
+    if recordId:find("_cave", 1, true) or record.model and (record.model:find("_cave", 1, true) or
             record.model:find("_pelt", 1, true) or record.model:find("_dark", 1, true) or
             record.model:find("_black", 1, true)) or destId:find("cave", 1, true) then
         doorType = doorTypes.cave
@@ -215,20 +217,8 @@ function this.getDoorType(door, doorDest)
         doorType = doorTypes.ashlander
     elseif recordId:find("_ship", 1, true) or record.model and record.model:find("_ship", 1, true) then
         doorType = doorTypes.ship
-    elseif destId:find("fort", 1, true) or destId:find("tower", 1, true) then
+    elseif destId:find("tower", 1, true) then
         doorType = doorTypes.fort
-    elseif destId:find(" smith", 1, true) then
-        doorType = doorTypes.repairShop
-    elseif destId:find(" clothier", 1, true) then
-        doorType = doorTypes.clothingShop
-    elseif destId:find(" armorer", 1, true) then
-        doorType = doorTypes.armorShop
-    elseif destId:find(" pawnbroker", 1, true) or destId:find(" trader", 1, true) then
-        doorType = doorTypes.clothingShop
-    elseif destId:find(" enchanter", 1, true) then
-        doorType = doorTypes.mageShop
-    elseif destId:find(" alchemist", 1, true) then
-        doorType = doorTypes.alchemyShop
     end
 
     return doorType
@@ -245,12 +235,25 @@ function this.getDestDoorType(destId)
     elseif destId:find(" tomb", 1, true) or destId:find(" barrow", 1, true) or
             destId:find(" crypt", 1, true) then
         doorType = doorTypes.tomb
-    elseif destId:find("fort", 1, true) then
-        doorType = doorTypes.fort
     elseif destId:find(" smith", 1, true) then
         doorType = doorTypes.repairShop
+    elseif destId:find(" clothier", 1, true) then
+        doorType = doorTypes.clothingShop
+    elseif destId:find(" armorer", 1, true) then
+        doorType = doorTypes.armorShop
+    elseif destId:find(" bookseller", 1, true) then
+        doorType = doorTypes.bookShop
+    elseif destId:find(" pawnbroker", 1, true) or destId:find(" trader", 1, true) then
+        doorType = doorTypes.shop
+    elseif destId:find(" enchanter", 1, true) then
+        doorType = doorTypes.mageShop
+    elseif destId:find(" alchemist", 1, true) then
+        doorType = doorTypes.alchemyShop
+    elseif destId:find("%f[%a]fort%f[%A]") then
+        doorType = doorTypes.fort
+    elseif destId:find(" office", 1, true) then
+        doorType = doorTypes.regularDoor
     end
-
     return doorType
 end
 

@@ -168,7 +168,7 @@ function mapElementMeta:updateLayout(data)
     if data.visible ~= nil then
         local last = containerProps.visible
         containerProps.visible = data.visible
-        if last ~= containerProps.visible then
+        if (last ~= false) ~= data.visible or (self._params.visible ~= false) ~= data.visible then
             self._parent:setElementVisibility(self._id, self._layerId, data.visible)
         end
     end

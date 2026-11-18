@@ -849,7 +849,7 @@ local function createMarker(self, params, onlyInitialize)
 
     params.pos = params.pos or util.vector3(0, 0, 0)
     local relPos = self:getRelativePositionByWorldPosition(params.pos)
-    local offset = params.offset and params.offset * self.zoom or nil
+    local offset = params.offset and (params.scaleFunc or self.SCALE_FUNCTION.marker)(params.offset, self.zoom)
 
     local placeOnMap = onlyInitialize == nil or self.cellId ~= nil or
         onlyInitialize == false and self._markerRect and this.isPointInRegion(self._markerRect, params.pos.x, params.pos.y) or false
@@ -890,7 +890,7 @@ local function createMarker(self, params, onlyInitialize)
 
             addZoomInOutData(id, cachedLayout)
 
-            if params.visible == false or cachedLayout.props.visible == false then
+            if not handler:getVisibility() or cachedLayout.props.visible == false then
                 self.hiddenElements[params.layerId][id] = cachedLayout
                 eventSys.triggerEvent(eventSys.EVENT.onMapElementCreated, {mapWidget = self, marker = handler})
                 return id, params.layerId, handler, cachedLayout
@@ -1227,11 +1227,11 @@ function mapWidgetMeta:createZoomOutMarkers(region, preloadOnly, force)
     local newCells = {}
 
     local minGridX = math.floor(region.left / 8192)
-    local maxGridX = math.ceil(region.right / 8192)
+    local maxGridX = math.floor(region.right / 8192)
     local minGridY = math.floor(region.bottom / 8192)
-    local maxGridY = math.ceil(region.top / 8192)
-    for x = minGridX - 1, maxGridX + 1 do
-        for y = minGridY - 1, maxGridY + 1 do
+    local maxGridY = math.floor(region.top / 8192)
+    for x = minGridX, maxGridX do
+        for y = minGridY, maxGridY do
             local cellId = cellLib.getCellIdByGrid(x, y)
             newCells[cellId] = true
 
