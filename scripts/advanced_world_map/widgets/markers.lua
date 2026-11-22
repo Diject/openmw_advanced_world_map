@@ -33,6 +33,42 @@ local vector05 = util.vector2(0.5, 0.5)
 local mapMarkerTexture = ui.texture{ path = commonData.mapMarkerPath }
 local mapMarker45Texture = ui.texture{ path = commonData.mapMarkerForExPath }
 
+local iconPaths = {
+    [commonData.doorTypeId.dwemer] = commonData.doorIconsDir.."dwemer.png",
+    [commonData.doorTypeId.daedra] = commonData.doorIconsDir.."daedric.png",
+    [commonData.doorTypeId.cave] = commonData.doorIconsDir.."cave.png",
+    [commonData.doorTypeId.vault] = commonData.doorIconsDir.."vault.png",
+    [commonData.doorTypeId.velothi] = commonData.doorIconsDir.."velothi.png",
+    [commonData.doorTypeId.tomb] = commonData.doorIconsDir.."tomb.png",
+    [commonData.doorTypeId.ashlander] = commonData.doorIconsDir.."ashlander.png",
+    [commonData.doorTypeId.ship] = commonData.doorIconsDir.."ship.png",
+    [commonData.doorTypeId.fort] = commonData.doorIconsDir.."fort.png",
+    [commonData.doorTypeId.mine] = commonData.doorIconsDir.."mine.png",
+    [commonData.doorTypeId.pub] = commonData.doorIconsDir.."pub.png",
+    [commonData.doorTypeId.shop] = commonData.doorIconsDir.."shop.png",
+    [commonData.doorTypeId.alchemyShop] = commonData.doorIconsDir.."alchemy.png",
+    [commonData.doorTypeId.ingredientShop] = commonData.doorIconsDir.."alchemy.png",
+    [commonData.doorTypeId.mageShop] = commonData.doorIconsDir.."mage.png",
+    [commonData.doorTypeId.lockpickShop] = commonData.doorIconsDir.."lockpick.png",
+    [commonData.doorTypeId.bookShop] = commonData.doorIconsDir.."book.png",
+    [commonData.doorTypeId.repairShop] = commonData.doorIconsDir.."smith.png",
+    [commonData.doorTypeId.trainerShop] = commonData.doorIconsDir.."trainer.png",
+    [commonData.doorTypeId.armorShop] = commonData.doorIconsDir.."armor.png",
+    [commonData.doorTypeId.weaponShop] = commonData.doorIconsDir.."weapon.png",
+    [commonData.doorTypeId.clothingShop] = commonData.doorIconsDir.."clothing.png",
+
+    [commonData.doorTypeId.telvanniHouse] = commonData.doorIconsDir.."telvanni.png",
+    [commonData.doorTypeId.redoranHouse] = commonData.doorIconsDir.."redoran.png",
+    [commonData.doorTypeId.indorilHouse] = commonData.doorIconsDir.."indoril.png",
+    [commonData.doorTypeId.dresHouse] = commonData.doorIconsDir.."dres.png",
+    [commonData.doorTypeId.hlaaluHouse] = commonData.doorIconsDir.."hlaalu.png",
+    [commonData.doorTypeId.dagothHouse] = commonData.doorIconsDir.."dagoth.png",
+    [commonData.doorTypeId.faction] = commonData.doorIconsDir.."faction.png",
+
+    [commonData.doorTypeId.regularDoor] = commonData.doorIconsDir.."door.png",
+    [commonData.doorTypeId.exitDoor] = commonData.doorIconsDir.."exit.png",
+}
+
 local detailedDoorTexture = ui.texture{ path = commonData.doorIconsDir.."door.png" }
 local detailedExitTexture = ui.texture{ path = commonData.doorIconsDir.."exit.png" }
 local detailedDoorTextures = {
@@ -202,6 +238,16 @@ function this.updateDoorMarkerVisibility(doorRef)
     for _, marker in pairs(markers) do
         updateDoorMarkerVisibility(marker, visible)
     end
+end
+
+
+function this.getIconPath(entranceData)
+    if not entranceData then return end
+
+    if entranceData.isDLEx then return iconPaths[commonData.doorTypeId.exitDoor] end
+
+    local path = entranceData.tp and iconPaths[entranceData.tp] or iconPaths[commonData.doorTypeId.regularDoor]
+    return path
 end
 
 

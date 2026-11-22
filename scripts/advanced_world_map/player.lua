@@ -880,6 +880,9 @@ return {
             ---@diagnostic disable-next-line: return-type-mismatch
             return mapTextureHandler.mapInfo, mapTextureHandler.mapDir, mapTextureHandler.mapImagePath
         end,
+        getEntranceDataIconPath = function (dt)
+            return markers.getIconPath(dt)
+        end,
         _clearCache = function ()
             mapMenu.clearMapWidgetCache()
         end,
