@@ -8,7 +8,7 @@ local this = {}
 
 ---@class questGuider.config
 this.default = {
-    version = 26,
+    version = 27,
     main = {
         menuKey = "M",
         menuKeyAlt = "C_RightShoulder + C_Back",
