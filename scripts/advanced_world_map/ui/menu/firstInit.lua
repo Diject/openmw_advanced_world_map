@@ -536,6 +536,20 @@ function this.new(params)
                         end
                     }, util.vector2(160, params.fontSize)),
                     longHorizontalLineThin,
+
+                    HoverToPreviewBlock(previewImageSize, {12, 19}, nil, checkBox{
+                        updateFunc = meta.update,
+                        text = l10n("firstInitForceWorldDiscoveryDescription"),
+                        textSize = params.fontSize,
+                        boxSize = checkboxSize,
+                        textElementSize = util.vector2(mainSize.x - params.fontSize * 2 - 145, params.fontSize * 1),
+                        textAlignV = ui.ALIGNMENT.Center,
+                        checked = config.data.legend.forceWorldDiscovery,
+                        event = function (checked, layout)
+                            config.setValue("legend.forceWorldDiscovery", checked)
+                        end
+                    }, util.vector2(160, params.fontSize)),
+                    longHorizontalLineThin,
                     bottomButtonBlock,
                 }
             }

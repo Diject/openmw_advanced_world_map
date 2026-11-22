@@ -370,6 +370,7 @@ I.Settings.registerGroup{
     order = 3,
     settings = {
         boolSetting{key = "legend.onlyDiscovered", name = "SettingLegendOnlyDiscovered", description = "SettingLegendOnlyDiscoveredDescription", default = config.default.legend.onlyDiscovered},
+        boolSetting{key = "legend.forceWorldDiscovery", name = "SettingLegendForceWorldDiscovery", description = "SettingLegendForceWorldDiscoveryDescription", default = config.default.legend.forceWorldDiscovery},
         numberSetting{key = "legend.zoomToGroup", name = "SettingLegendZoomToGroup", description = "SettingLegendZoomToGroupDescription", default = config.default.legend.zoomToGroup, min = 0},
         boolSetting{key = "legend.hideGroupedMarkers", name = "SettingLegendHideGroupedMarkers", description = "SettingLegendHideGroupedMarkersDescription", default = config.default.legend.hideGroupedMarkers},
         numberSetting{key = "legend.zoomToName", name = "SettingLegendZoomToName", description = "SettingLegendZoomToNameDescription", default = config.default.legend.zoomToName, min = 0},

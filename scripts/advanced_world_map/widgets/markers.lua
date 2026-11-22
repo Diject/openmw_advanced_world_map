@@ -257,13 +257,15 @@ local function createWorldMarkers(widget)
         return
     end
 
+    local bypassDiscovery = not config.data.legend.onlyDiscovered or config.data.legend.forceWorldDiscovery
+
     local playerJournal = not localStorage.data[commonData.disableDialogueMarkersFieldId] and types.Player.journal and
         types.Player.journal(playerRef) or nil
 
     for _, dt in pairs(mapDataHandler.cellNameData or {}) do
         local id = string.format("%s%d_%d", dt.name, dt.posX, dt.posY)
 
-        local isCellDiscovered = not config.data.legend.onlyDiscovered or discoveredLocs.isDiscovered(dt.name) or
+        local isCellDiscovered = bypassDiscovery or discoveredLocs.isDiscovered(dt.name) or
             playerJournal and playerJournal.topics[dt.name] and true or false
 
         this.markersByName[dt.name] = this.markersByName[dt.name] or {}

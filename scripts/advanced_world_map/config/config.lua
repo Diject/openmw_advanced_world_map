@@ -64,6 +64,7 @@ this.default = {
         zoomToGroup = 7,
         zoomToName = 4.2,
         onlyDiscovered = true,
+        forceWorldDiscovery = false,
         detailedIcons = true,
         hideGroupedMarkers = true,
         visitedCellsOnWorldMap = false, -- deprecated
