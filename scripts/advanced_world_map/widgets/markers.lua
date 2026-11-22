@@ -509,7 +509,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
         widgetZoom * 32 / widget.mapInfo.pixelsPerCell <= (config.data.legend.zoomToName / uiUtils.getUIScale())
     local doHideGrouped = doGroup and not doGroupToName and config.data.legend.hideGroupedMarkers
 
-    local bypassDiscovery = not config.data.legend.onlyDiscovered and not config.data.tileset.onlyDiscovered
+    local bypassDiscovery = not config.data.legend.onlyDiscovered
 
     if bestAnchorCacheZoom ~= widgetZoom then
         bestAnchorCache = {}
@@ -922,7 +922,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                     pos = dt.pos,
                     color = color,
                     showWhenZoomedIn = true,
-                    visible = isCellDiscovered and isTileDiscovered,
+                    visible = isCellDiscovered,
                     update = true,
                     textBackground = config.data.legend.localMarkerBackground,
                     textBackgroundColor = backgroundColor,
@@ -1067,7 +1067,7 @@ local function createMarkers(widget, cellId, allowedCells, region)
                 pos = dt.pos,
                 showWhenZoomedIn = true,
                 update = true,
-                visible = isCellDiscovered and isTileDiscovered,
+                visible = isCellDiscovered,
                 userData = userData,
                 events = markerEvents,
             }
