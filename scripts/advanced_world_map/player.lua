@@ -85,6 +85,9 @@ pcall(function ()
     if not ui.layers.indexOf(commonData.HUDLayer) then
         ui.layers.insertAfter("HUD", commonData.HUDLayer, { interactive = false })
     end
+    if not ui.layers.indexOf(commonData.playerMarkerLayer) then
+        ui.layers.insertAfter("Windows", commonData.playerMarkerLayer, { interactive = false })
+    end
 end)
 
 
