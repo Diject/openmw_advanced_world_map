@@ -220,6 +220,7 @@ local function onInit()
         localStorage.data[commonData.disableDialogueMarkersFieldId] = true
     end
     core.sendGlobalEvent("AdvWMap:requestTimeUpdate", self.object)
+    core.sendGlobalEvent("AdvWMap:initMapData", {plRef = self.object, options = {tryRebuild = true}})
 end
 
 

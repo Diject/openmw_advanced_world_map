@@ -884,6 +884,10 @@ function this.playerInit(playerRef, cellCount, options)
     if not options.skipRebuild then
         shouldRebuild = options.force or stor:get("version") ~= this.version or stor:get("cellCount") ~= cellCount or
             stor:get("contentFileCount") ~= #core.contentFiles.list
+
+        if options.tryRebuild then
+            if shouldRebuild then return end
+        end
     else
         shouldRebuild = false
     end
