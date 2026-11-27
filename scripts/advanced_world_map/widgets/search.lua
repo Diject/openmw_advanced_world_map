@@ -57,6 +57,9 @@ local searchModes = {
     Items = "items"
 }
 
+local searchMode = searchModes.Locations
+local showUnrevealed
+
 
 ---@param handler advancedWorldMap.ui.mapElementMeta
 local function getMarkerId(handler)
@@ -167,11 +170,13 @@ local function setMarkerColor(handler, color, reset)
     if reset then
         handler:updateLayout{ ---@diagnostic disable-line: missing-fields
             color = handler._params.color or defaultColor,
+            visible = handler._params.visible
         }
         modifiedMarkers[getMarkerId(handler)] = nil
     else
         handler:updateLayout{ ---@diagnostic disable-line: missing-fields
             color = color,
+            visible = true,
         }
         modifiedMarkers[getMarkerId(handler)] = handler
     end
@@ -191,15 +196,21 @@ local function updateLayoutForMarker(handler, textFilter)
     if not userData then return end
 
     if userData.allowSearchFilter then
+        if not showUnrevealed and not discoveredLocations.isDiscovered(userData.cellId) then return end
+
         local posHash = getPosHash(handler._parent.cellId, handler._params.pos)
         local data = searchData[posHash]
 
-        if data and next(data) then
+        local locationMode = searchMode == searchModes.Locations
+
+        if locationMode and data and next(data) then
             local params = data[1]
             setMarkerColor(handler, params.color or config.data.ui.defaultColor)
-        elseif userData.searchText and (userData.searchText:find(textFilter, 1, true) or
+        elseif locationMode and userData.searchText and (userData.searchText:find(textFilter, 1, true) or
                 usePatternSearch and userData.searchText:find(textFilter)) then
             setMarkerColor(handler, config.data.ui.foundMarkerColor)
+        elseif targetCells[userData.cellId or " "] then
+            setMarkerVisibility(handler, true)
         end
     end
 end
@@ -429,7 +440,6 @@ local function create(menu)
     local textFilter = ""
     local userInputText = ""
 
-    local showUnrevealed
     if localStorage.data[commonData.showUnrevealedFieldId] ~= nil then
         showUnrevealed = localStorage.data[commonData.showUnrevealedFieldId]
     else
@@ -448,7 +458,7 @@ local function create(menu)
         nearbySearch = true
     end
 
-    local searchMode = localStorage.data[commonData.searchModeFieldId] or searchModes.Locations
+    searchMode = localStorage.data[commonData.searchModeFieldId] or searchModes.Locations
     if not commonData.isSaveBloatFixed() and searchMode ~= searchModes.Locations then
         searchMode = searchModes.Locations
     end
@@ -472,7 +482,7 @@ local function create(menu)
         end
 
         local cellId = e.mapWidget.cellId
-        if cellId == nil and not targetCells[userData.cellId or " "] then return end
+        if (not cellId or not targetCells[cellId]) and not targetCells[userData.cellId or " "] then return end
 
         setMarkerVisibility(handler, true)
     end
@@ -494,6 +504,11 @@ local function create(menu)
         end
 
         e.menu:update()
+    end
+
+    local onMapShownCallback = function (e)
+        if not temporaryMarkersData or textFilter == "" then return end
+        updateVisibilityForActiveMarkers(e.mapWidget, textFilter)
     end
 
     local updateExistingMarkers = function ()
@@ -554,6 +569,7 @@ local function create(menu)
         eventSys.registerHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
         eventSys.registerHandler(eventSys.EVENT.onMapClosed, onMapClosedCallback)
         eventSys.registerHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
+        eventSys.registerHandler(eventSys.EVENT.onMapShown, onMapShownCallback)
 
         local size = util.vector2(
             math.max(mapWidgetSize.x / 3, 250),
@@ -1195,6 +1211,7 @@ local function create(menu)
         eventSys.unregisterHandler(eventSys.EVENT.onMapElementCreated, onMapElementCreatedCallback)
         eventSys.unregisterHandler(eventSys.EVENT.onMapClosed, onMapClosedCallback)
         eventSys.unregisterHandler(eventSys.EVENT.onMapInitialized, mapInitCallbackFunc)
+        eventSys.unregisterHandler(eventSys.EVENT.onMapShown, onMapShownCallback)
     end
 
     menu:addWidget{
