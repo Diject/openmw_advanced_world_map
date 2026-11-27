@@ -83,6 +83,17 @@ local forbiddenCellPrefixes = { -- lowercase
 ---@field ars string[]? list of actor record ids that are on this node
 
 
+local function restrictGridBounds()
+    if not this.grid then return end
+    local max = this.grid.max or {}
+    max.x = math.min(1000, math.max(-1000, max.x or 0))
+    max.y = math.min(1000, math.max(-1000, max.y or 0))
+    local min = this.grid.min or {}
+    min.x = math.min(1000, math.max(-1000, min.x or 0))
+    min.y = math.min(1000, math.max(-1000, min.y or 0))
+end
+
+
 function this.getCellCount()
     local cells = require("openmw.world").cells
     local localStorage = require("scripts.advanced_world_map.storage.localStorage")
@@ -828,6 +839,7 @@ local function buildData(params)
     this.entrances = entrances
 
     this.grid = {min = {x = minGridX, y = minGridY}, max = {x = maxGridX, y = maxGridY}}
+    restrictGridBounds()
 
     this.transport = transportModule.buildTransportData(transportRecords, transportCellData, entrances)
 end
@@ -900,6 +912,8 @@ function this.playerInit(playerRef, cellCount, options)
         this.cellCount = data.cellCount or 0
         this.contentFileCount = data.contentFileCount or 0
 
+        restrictGridBounds()
+
         core.sendGlobalEvent("AdvWMap:updateMapData", {
             cellNameData = this.cellNameData,
             regionNameData = this.regionNameData,
@@ -937,6 +951,8 @@ function this.updateData(playerRef, data)
     this.cellCount = data.cellCount or 0
     this.contentFileCount = data.contentFileCount or 0
 
+    restrictGridBounds()
+
     local stor = storage.playerSection(commonData.mapDataStorageName)
     stor:set("cellNameData", this.cellNameData)
     stor:set("regionNameData", this.regionNameData)
@@ -973,6 +989,8 @@ function this.loadMapData(data)
     this.grid = data.grid or {min = {x = 0, y = 0}, max = {x = 0, y = 0}}
     this.worldMapTileRectangles = data.worldMapTileRectangles or {}
     this.transport = data.transport or {}
+
+    restrictGridBounds()
 
     buildWorldNameByIdData()
 
