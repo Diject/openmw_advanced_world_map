@@ -107,7 +107,8 @@ function this.centerOnNextMarker(params)
         if best._container.events and best._container.events.mouseMove then
             best._container.events.mouseMove(
                 {position = mapWidget.screenPosition + halfSize, offset = halfSize, keepSelectedMarker = true},
-                best._container
+                best._container,
+                best
             )
         else
             mapWidget.layout.events.mouseMove(
@@ -163,8 +164,8 @@ function this.clickOnSelected()
     local halfSize = mapWidget.layout.props.size:emul(util.vector2(0.5, 0.5))
 
     local eParam = {position = mapWidget.screenPosition + halfSize, offset = halfSize, button = 1}
-    if userData.events.mousePress then userData.events.mousePress(eParam, this.lastSelected._container) end
-    if userData.events.mouseRelease then userData.events.mouseRelease(eParam, this.lastSelected._container, true) end
+    if userData.events.mousePress then userData.events.mousePress(eParam, this.lastSelected._container, this.lastSelected) end
+    if userData.events.mouseRelease then userData.events.mouseRelease(eParam, this.lastSelected._container, true, this.lastSelected) end
 end
 
 
